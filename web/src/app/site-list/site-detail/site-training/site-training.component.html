@@ -1,0 +1,86 @@
+<div class="container-fluid mt-4">
+  <!-- 頁面標題和新增按鈕 -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-person-badge me-2"></i>教育訓練管理
+    </h2>
+    <button class="btn btn-primary" (click)="createNewTraining()">
+      <i class="bi bi-plus-circle me-2"></i>新增教育訓練
+    </button>
+  </div>
+
+  <!-- 教育訓練列表 -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      @if (trainingForms().length === 0) {
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>目前沒有教育訓練記錄
+      </div>
+      } @else {
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">上課日期</th>
+              <th scope="col">課程名稱</th>
+              <th scope="col">講師</th>
+              <th scope="col">簽到人數</th>
+              <th scope="col">狀態</th>
+              <th scope="col" style="width: 120px">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (training of trainingForms(); track training._id) {
+            <tr>
+              <td>{{ training.trainingDate }}</td>
+              <td>{{ training.courseName }}</td>
+              <td>{{ training.instructor }}</td>
+              <td>{{ getSignedParticipantsCount(training) }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [ngClass]="{
+                    'bg-warning': training.status === 'draft',
+                    'bg-success': training.status === 'published',
+                    'bg-danger': training.status === 'revoked'
+                  }"
+                  >{{ this.getStatusName(training.status) }}</span
+                >
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <button
+                    class="btn btn-sm btn-outline-primary"
+                    title="查看詳細資料"
+                    (click)="viewTraining(training._id!)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  @if (training.status === 'draft') {
+                  <button
+                    class="btn btn-sm btn-outline-secondary"
+                    title="編輯"
+                    (click)="editTraining(training._id!)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  } @if (training.status !== 'revoked') {
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    title="作廢"
+                    (click)="revokeTraining(training._id!)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                  }
+                </div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </div>
+  </div>
+</div>

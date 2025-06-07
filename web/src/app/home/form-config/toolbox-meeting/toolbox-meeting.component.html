@@ -1,0 +1,195 @@
+<div class="container">
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h3>工具箱會議表單管理</h3>
+        <div>
+          <button class="btn btn-success me-2" (click)="createNewVersion()">
+            新增版本
+          </button>
+          @if (!isEditing && selectedVersion) {
+            <button class="btn btn-primary me-2" (click)="editVersion()">編輯</button>
+            <button class="btn btn-secondary" (click)="previewForm()">預覽</button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 版本列表 -->
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">版本列表</div>
+        <div class="card-body">
+          <div class="list-group">
+            @if (formVersions.length === 0) {
+              <div class="alert alert-info">
+                目前沒有任何版本，請點擊上方「新增版本」按鈕來創建第一個版本。
+              </div>
+            }
+            @for (version of formVersions; track version._id) {
+              <button
+                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                [class.active]="selectedVersion?._id === version._id"
+                (click)="selectVersion(version)">
+                {{ version.name }} ({{ version.version }})
+                <span class="badge bg-secondary">{{ version.createdAt | date:'yyyy-MM-dd' }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 版本詳情或編輯表單 -->
+    <div class="col-md-8">
+      @if (selectedVersion && !isEditing && !showPreview) {
+        <div class="card">
+          <div class="card-header">表單詳情</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <strong>表單名稱:</strong> {{ selectedVersion.name }}
+            </div>
+            <div class="mb-3">
+              <strong>版本:</strong> {{ selectedVersion.version }}
+            </div>
+            <div class="mb-3">
+              <strong>Logo:</strong>
+              <img [src]="selectedVersion.logo" alt="Logo" style="max-width: 100px; max-height: 100px;" class="d-block mt-2">
+            </div>
+            <div class="mb-3">
+              <strong>表頭:</strong> {{ selectedVersion.header }}
+            </div>
+            <div class="mb-3">
+              <strong>建立日期:</strong> {{ selectedVersion.createdAt | date:'yyyy-MM-dd HH:mm' }}
+            </div>
+            @if (selectedVersion.remarks) {
+              <div class="mb-3">
+                <strong>備註:</strong>
+                <p class="mt-2">{{ selectedVersion.remarks }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- 編輯表單 -->
+      @if (isEditing) {
+        <div class="card mb-3">
+          <div class="card-header">顯示於表單中的欄位</div>
+          <div class="card-body">
+            <form [formGroup]="editForm">
+              <div class="mb-3">
+                <label for="name" class="form-label">表單名稱</label>
+                <input type="text" class="form-control" id="name" formControlName="name">
+              </div>
+              <div class="mb-3">
+                <label for="header" class="form-label">表頭</label>
+                <input type="text" class="form-control" id="header" formControlName="header">
+              </div>
+              <div class="mb-3">
+                <label for="logo" class="form-label">Logo</label>
+                <div class="logo-upload-container"
+                  (dragover)="onDragOver($event)"
+                  (dragleave)="onDragLeave($event)"
+                  (drop)="onDrop($event)"
+                  [class.drag-over]="isDragging">
+                  @if (logoPreview) {
+                    <div class="logo-preview">
+                      <img [src]="logoPreview" alt="Logo預覽" class="logo-preview-img">
+                    </div>
+                  }
+                  @if (!logoPreview) {
+                    <div class="upload-area">
+                      <i class="bi bi-upload"></i>
+                      <p>拖放圖片至此處或</p>
+                    </div>
+                  }
+                  <input type="file" class="form-control" id="logo-file"
+                    accept=".jpg,.jpeg,.png"
+                    (change)="onFileSelected($event)"
+                    aria-label="選擇Logo圖片檔案">
+                    <small class="form-text text-muted">
+                      支援JPG或PNG格式，圖片長寬最大為200像素
+                    </small>
+                  </div>
+                  <input type="hidden" class="form-control" id="logo" formControlName="logo">
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="card mb-3">
+            <div class="card-header">備註</div>
+            <div class="card-body">
+              <form [formGroup]="editForm">
+                <div class="mb-3">
+                  <label for="remarks" class="form-label">備註內容</label>
+                  <textarea
+                    class="form-control"
+                    id="remarks"
+                    rows="3"
+                    formControlName="remarks"
+                  placeholder="請輸入備註內容，此欄位不會顯示在表單上"></textarea>
+                </div>
+                <div class="d-flex justify-content-end">
+                  <button type="button" class="btn btn-secondary me-2" (click)="cancelEdit()">取消</button>
+                  <button type="button" class="btn btn-primary" (click)="saveVersion()">儲存為新版本</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        }
+
+        <!-- 預覽表單 -->
+        @if (showPreview && selectedVersion) {
+          <div class="card">
+            <div class="card-header">表單預覽</div>
+            <div class="card-body">
+              <div class="preview-container border p-4">
+                <!-- 表單頭部 -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                  <div>
+                    <img [src]="selectedVersion.logo" alt="Logo" style="max-width: 100px; max-height: 100px;">
+                  </div>
+                  <div class="text-center fw-bold fs-4">
+                    {{ selectedVersion.header }}
+                  </div>
+                  <div>
+                    <small>版本: {{ selectedVersion.version }}</small>
+                  </div>
+                </div>
+
+                <!-- 工具箱會議表單內容模擬 -->
+                <div class="mb-3">
+                  <label class="form-label" for="meeting-date">會議日期</label>
+                  <input type="date" class="form-control" id="meeting-date" disabled aria-label="會議日期">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="site-name">工地名稱</label>
+                  <input type="text" class="form-control" id="site-name" disabled aria-label="工地名稱">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="host">主持人</label>
+                  <input type="text" class="form-control" id="host" disabled aria-label="主持人">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="topic">會議主題</label>
+                  <input type="text" class="form-control" id="topic" disabled aria-label="會議主題">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="content">會議內容</label>
+                  <textarea class="form-control" id="content" rows="3" disabled aria-label="會議內容"></textarea>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="participants">參與人員</label>
+                  <textarea class="form-control" id="participants" rows="2" disabled aria-label="參與人員"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>

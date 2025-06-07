@@ -1,0 +1,674 @@
+<div class="container mt-4">
+  <!-- 頁面標題區域 -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-person-badge me-2"></i>
+      @if (workerId) {
+        編輯工作人員資料
+      } @else {
+        新增工作人員
+      }
+    </h2>
+    <small class="text-muted bg-warning-subtle px-2 py-1 rounded">
+      <i class="bi bi-info-circle me-1"></i>黃色底色為必填欄位
+    </small>
+  </div>
+
+  <form #workerForm="ngForm" (ngSubmit)="onSubmit()" class="mt-4">
+    <!-- 基本資料卡片 -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>基本資料</h5>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="name" class="form-label">姓名 *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person"></i></span>
+              <input type="text" class="form-control" id="name" name="name"
+                [(ngModel)]="worker.name" required #name="ngModel"
+                aria-label="姓名" title="請輸入工作人員姓名">
+            </div>
+            <div class="invalid-feedback" [class.d-block]="name.invalid && name.touched">
+              請輸入姓名
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="idno" class="form-label">身分證字號 *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
+              <input type="text" class="form-control" id="idno" name="idno"
+                [(ngModel)]="worker.idno" required pattern="^[A-Z][12]\d{8}$" #idno="ngModel"
+                aria-label="身分證字號" title="請輸入有效的身分證字號">
+            </div>
+            <div class="invalid-feedback" [class.d-block]="idno.invalid && idno.touched">
+              請輸入有效的身分證字號
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label for="gender" class="form-label">性別 *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-gender-ambiguous"></i></span>
+              <select class="form-select" id="gender" name="gender"
+                [(ngModel)]="worker.gender" required #gender="ngModel"
+                aria-label="性別" title="請選擇性別">
+                <option value="">請選擇性別</option>
+                <option value="male">男</option>
+                <option value="female">女</option>
+                <option value="unknown">未知</option>
+              </select>
+            </div>
+            <div class="invalid-feedback" [class.d-block]="gender.invalid && gender.touched">
+              請選擇性別
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label for="birthday" class="form-label">生日 *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
+              <input type="date" class="form-control" id="birthday" name="birthday"
+                [(ngModel)]="worker.birthday" required (ngModelChange)="calculateAge()" #birthday="ngModel"
+                aria-label="生日" title="請選擇生日">
+            </div>
+            <div class="invalid-feedback" [class.d-block]="birthday.invalid && birthday.touched">
+              請選擇生日
+            </div>
+            @if (age) {
+              <small class="text-muted">{{ age }}</small>
+            }
+          </div>
+
+          <div class="col-md-4">
+            <label for="bloodType" class="form-label">血型</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-droplet"></i></span>
+              <select class="form-select" id="bloodType" name="bloodType" [(ngModel)]="worker.bloodType"
+                aria-label="血型" title="請選擇血型">
+                <option value="">請選擇血型</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="O">O</option>
+                <option value="AB">AB</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="profilePicture" class="form-label">大頭貼</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person-circle"></i></span>
+              <input type="file" accept="image/*" class="form-control" id="profilePicture" name="profilePicture"
+                (change)="handleProfilePictureUpload($event)"
+                aria-label="大頭貼" title="請上傳大頭貼">
+            </div>
+            @if (worker.profilePicture) {
+              <div class="mt-2">
+                <img [src]="worker.profilePicture" class="img-thumbnail" style="max-height: 200px;"
+                  alt="大頭貼" title="大頭貼">
+                <button type="button" class="btn btn-sm btn-outline-danger ms-2"
+                  (click)="worker.profilePicture = ''" aria-label="移除大頭貼">
+                  <i class="bi bi-x-circle"></i> 移除
+                </button>
+              </div>
+            }
+          </div>
+
+          <div class="col-md-6">
+            <label for="idCardFrontPicture" class="form-label">身份證正面</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
+              <input type="file" accept="image/*" class="form-control" id="idCardFrontPicture" name="idCardFrontPicture"
+                (change)="handleIdCardFrontUpload($event)"
+                aria-label="身份證正面" title="請上傳身份證正面">
+            </div>
+            @if (worker.idCardFrontPicture) {
+              <div class="mt-2">
+                <img [src]="worker.idCardFrontPicture" class="img-thumbnail" style="max-height: 200px;"
+                  alt="身份證正面" title="身份證正面">
+                <button type="button" class="btn btn-sm btn-outline-danger ms-2"
+                  (click)="removeImage('idCardFrontPicture')" aria-label="移除身份證正面">
+                  <i class="bi bi-x-circle"></i> 移除
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="idCardBackPicture" class="form-label">身份證反面</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-credit-card-2-back"></i></span>
+              <input type="file" accept="image/*" class="form-control" id="idCardBackPicture" name="idCardBackPicture"
+                (change)="handleIdCardBackUpload($event)"
+                aria-label="身份證反面" title="請上傳身份證反面">
+            </div>
+            @if (worker.idCardBackPicture) {
+              <div class="mt-2">
+                <img [src]="worker.idCardBackPicture" class="img-thumbnail" style="max-height: 200px;"
+                  alt="身份證反面" title="身份證反面">
+                <button type="button" class="btn btn-sm btn-outline-danger ms-2"
+                  (click)="removeImage('idCardBackPicture')" aria-label="移除身份證反面">
+                  <i class="bi bi-x-circle"></i> 移除
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 聯絡資訊卡片 -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="bi bi-telephone me-2"></i>聯絡資訊</h5>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="tel" class="form-label">電話 *</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-phone"></i></span>
+              <input type="tel" class="form-control" id="tel" name="tel"
+                [(ngModel)]="worker.tel" required #tel="ngModel"
+                aria-label="電話" title="請輸入電話號碼">
+            </div>
+            <div class="invalid-feedback" [class.d-block]="tel.invalid && tel.touched">
+              請輸入電話
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label for="emergencyTel" class="form-label">緊急聯絡電話</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-telephone-plus"></i></span>
+              <input type="tel" class="form-control" id="emergencyTel" name="emergencyTel"
+                [(ngModel)]="worker.emergencyTel"
+                aria-label="緊急聯絡電話" title="請輸入緊急聯絡電話">
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="address" class="form-label">地址</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+            <input type="text" class="form-control" id="address" name="address"
+              [(ngModel)]="worker.address"
+              aria-label="地址" title="請輸入地址">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 安全訓練資訊卡片 -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>安全衛生訓練</h5>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <!-- <div class="col-md-4">
+          <label for="hazardNotifyDate" class="form-label">危害告知日期</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+            <input type="date" class="form-control" id="hazardNotifyDate" name="hazardNotifyDate"
+              [(ngModel)]="worker.hazardNotifyDate"
+              aria-label="危害告知日期" title="請選擇危害告知日期">
+          </div>
+        </div> -->
+
+        <div class="col-md-4">
+          <label for="sixHourTrainingDate" class="form-label">六小時訓練日期</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+            <input type="date" class="form-control" id="sixHourTrainingDate" name="sixHourTrainingDate"
+              [(ngModel)]="worker.sixHourTrainingDate"
+              aria-label="六小時訓練日期" title="請選擇六小時訓練日期">
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <label for="supplierIndustrialSafetyNumber" class="form-label">承攬商工安證號</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-patch-check"></i></span>
+            <input type="text" class="form-control" id="supplierIndustrialSafetyNumber"
+              name="supplierIndustrialSafetyNumber"
+              [(ngModel)]="worker.supplierIndustrialSafetyNumber"
+              aria-label="承攬商工安證號" title="請輸入承攬商工安證號">
+          </div>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label for="generalSafetyTrainingDate" class="form-label">一般安全衛生教育訓練日期</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+            <input type="date" class="form-control" id="generalSafetyTrainingDate"
+              name="generalSafetyTrainingDate"
+              [(ngModel)]="worker.generalSafetyTrainingDate"
+              aria-label="一般安全衛生教育訓練日期" title="請選擇一般安全衛生教育訓練日期">
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <label for="generalSafetyTrainingDueDate" class="form-label">安全衛生教育訓練到期日</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-calendar-x"></i></span>
+            <input type="date" class="form-control" id="generalSafetyTrainingDueDate"
+              name="generalSafetyTrainingDueDate"
+              [(ngModel)]="worker.generalSafetyTrainingDueDate"
+              aria-label="安全衛生教育訓練到期日" title="請選擇安全衛生教育訓練到期日">
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="laborAssociationDate" class="form-label">工會申請日期</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-people"></i></span>
+          <input type="date" class="form-control" id="laborAssociationDate"
+            name="laborAssociationDate"
+            [(ngModel)]="worker.laborAssociationDate"
+            aria-label="工會申請日期" title="請選擇工會申請日期">
+        </div>
+      </div>
+
+      <!-- 六小時證明圖片上傳區域 -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="sixHourTrainingFrontPicture" class="form-label">六小時證明正面</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-file-earmark-image"></i></span>
+            <input type="file" accept="image/*" class="form-control" id="sixHourTrainingFrontPicture"
+              name="sixHourTrainingFrontPicture"
+              (change)="handleSixHourTrainingFrontUpload($event)"
+              aria-label="六小時證明正面" title="請上傳六小時證明正面圖片">
+          </div>
+          @if (worker.sixHourTrainingFrontPicture) {
+            <div class="mt-2">
+              <img [src]="worker.sixHourTrainingFrontPicture" class="img-thumbnail" style="max-height: 200px;"
+                alt="六小時證明正面圖片" title="六小時證明正面圖片">
+              <button type="button" class="btn btn-sm btn-outline-danger ms-2"
+                (click)="removeImage('sixHourTrainingFrontPicture')" aria-label="移除六小時證明正面圖片">
+                <i class="bi bi-x-circle"></i> 移除
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="col-md-6">
+          <label for="sixHourTrainingBackPicture" class="form-label">六小時證明反面</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-file-earmark-image"></i></span>
+            <input type="file" accept="image/*" class="form-control" id="sixHourTrainingBackPicture"
+              name="sixHourTrainingBackPicture"
+              (change)="handleSixHourTrainingBackUpload($event)"
+              aria-label="六小時證明反面" title="請上傳六小時證明反面圖片">
+          </div>
+          @if (worker.sixHourTrainingBackPicture) {
+            <div class="mt-2">
+              <img [src]="worker.sixHourTrainingBackPicture" class="img-thumbnail" style="max-height: 200px;"
+                alt="六小時證明反面圖片" title="六小時證明反面圖片">
+              <button type="button" class="btn btn-sm btn-outline-danger ms-2"
+                (click)="removeImage('sixHourTrainingBackPicture')" aria-label="移除六小時證明反面圖片">
+                <i class="bi bi-x-circle"></i> 移除
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 勞保資料卡片 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0"><i class="bi bi-briefcase me-2"></i>勞保資料</h5>
+    </div>
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="laborInsuranceApplyDate" class="form-label">勞保申請日期</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+            <input type="date" class="form-control" id="laborInsuranceApplyDate"
+              name="laborInsuranceApplyDate"
+              [(ngModel)]="worker.laborInsuranceApplyDate"
+              aria-label="勞保申請日期" title="請選擇勞保申請日期">
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="laborInsuranceProof" class="form-label">勞保證明上傳</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-file-earmark-arrow-up"></i></span>
+          <input type="file" accept="image/*" class="form-control" id="laborInsuranceProof"
+            name="laborInsuranceProof"
+            (change)="handleLaborInsuranceProofUpload($event)"
+            aria-label="勞保證明上傳" title="請上傳勞保證明圖片">
+        </div>
+        @if (worker.laborInsurancePicture) {
+          <div class="mt-2">
+            <img [src]="worker.laborInsurancePicture" class="img-thumbnail" style="max-height: 200px;"
+              alt="勞保證明圖片" title="勞保證明圖片">
+            <button type="button" class="btn btn-sm btn-outline-danger ms-2"
+              (click)="removeImage('laborInsurancePicture')" aria-label="移除勞保證明圖片">
+              <i class="bi bi-x-circle"></i> 移除
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- 意外保險資料卡片 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>意外保險資料</h5>
+      <button type="button" class="btn btn-sm btn-primary" (click)="addAccidentInsurance()"
+        aria-label="新增保險資料">
+        <i class="bi bi-plus-circle me-1"></i>新增保險資料
+      </button>
+    </div>
+    <div class="card-body">
+      @if (worker.accidentInsurances.length === 0) {
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle me-2"></i>尚未新增任何意外險資料
+        </div>
+      }
+
+      @for (insurance of worker.accidentInsurances; track insurance; let i = $index) {
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="mb-0">意外險 #{{i + 1}}</h6>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeAccidentInsurance(i)"
+                aria-label="刪除此保險資料">
+                <i class="bi bi-trash"></i> 刪除
+              </button>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label [for]="'insuranceStart' + i" class="form-label">開始日期</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-calendar-plus"></i></span>
+                  <input type="date" class="form-control" [id]="'insuranceStart' + i"
+                    [name]="'insuranceStart' + i"
+                    [(ngModel)]="insurance.start"
+                    [attr.aria-label]="'保險開始日期 #' + (i + 1)" [attr.title]="'請選擇保險 #' + (i + 1) + ' 的開始日期'">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label [for]="'insuranceEnd' + i" class="form-label">結束日期</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-calendar-minus"></i></span>
+                  <input type="date" class="form-control" [id]="'insuranceEnd' + i"
+                    [name]="'insuranceEnd' + i"
+                    [(ngModel)]="insurance.end"
+                    [attr.aria-label]="'保險結束日期 #' + (i + 1)" [attr.title]="'請選擇保險 #' + (i + 1) + ' 的結束日期'">
+                </div>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label [for]="'insuranceAmount' + i" class="form-label">保險金額</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                  <input type="number" class="form-control" [id]="'insuranceAmount' + i"
+                    [name]="'insuranceAmount' + i"
+                    [(ngModel)]="insurance.amount"
+                    [attr.aria-label]="'保險金額 #' + (i + 1)" [attr.title]="'請輸入保險 #' + (i + 1) + ' 的金額'">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label [for]="'insuranceSignDate' + i" class="form-label">簽約日期</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-pen"></i></span>
+                  <input type="date" class="form-control" [id]="'insuranceSignDate' + i"
+                    [name]="'insuranceSignDate' + i"
+                    [(ngModel)]="insurance.signDate"
+                    [attr.aria-label]="'保險簽約日期 #' + (i + 1)" [attr.title]="'請選擇保險 #' + (i + 1) + ' 的簽約日期'">
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label [for]="'insuranceCompany' + i" class="form-label">保險公司</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-building"></i></span>
+                <input type="text" class="form-control" [id]="'insuranceCompany' + i"
+                  [name]="'insuranceCompany' + i"
+                  [(ngModel)]="insurance.companyName"
+                  [attr.aria-label]="'保險公司 #' + (i + 1)" [attr.title]="'請輸入保險 #' + (i + 1) + ' 的保險公司名稱'">
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- 證照資料卡片 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="bi bi-patch-check me-2"></i>證照資料</h5>
+      <button type="button" class="btn btn-sm btn-primary" (click)="addCertification()"
+        aria-label="新增證照">
+        <i class="bi bi-plus-circle me-1"></i>新增證照
+      </button>
+    </div>
+    <div class="card-body">
+      @if (worker.certifications.length === 0) {
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle me-2"></i>尚未新增任何證照資料
+        </div>
+      }
+
+      @for (cert of worker.certifications; track cert; let i = $index) {
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="mb-0">證照 #{{i + 1}}</h6>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeCertification(i)"
+                aria-label="刪除此證照">
+                <i class="bi bi-trash"></i> 刪除
+              </button>
+            </div>
+            <div class="mb-3">
+              <label [for]="'certName' + i" class="form-label">證照名稱</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-award"></i></span>
+                <select class="form-select" [id]="'certType' + i"
+                  [name]="'certType' + i"
+                  [(ngModel)]="cert.type"
+                  [attr.aria-label]="'證照類型 #' + (i + 1)" [attr.title]="'請選擇證照 #' + (i + 1) + ' 的類型'">
+                  @for (type of getCertificationTypes(); track type) {
+                    <option [value]="type.value">{{ type.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label [for]="'certName' + i" class="form-label">證照描述</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                <input type="text" class="form-control" [id]="'certName' + i"
+                  [name]="'certName' + i"
+                  [(ngModel)]="cert.name"
+                  [attr.aria-label]="'證照描述 #' + (i + 1)" [attr.title]="'請輸入證照 #' + (i + 1) + ' 的額外描述'">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label [for]="'certIssue' + i" class="form-label">發證日期</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
+                  <input type="date" class="form-control" [id]="'certIssue' + i"
+                    [name]="'certIssue' + i"
+                    [(ngModel)]="cert.issue"
+                    [attr.aria-label]="'證照發證日期 #' + (i + 1)" [attr.title]="'請選擇證照 #' + (i + 1) + ' 的發證日期'">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label [for]="'certWithdraw' + i" class="form-label">撤銷日期</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-calendar-x"></i></span>
+                  <input type="date" class="form-control" [id]="'certWithdraw' + i"
+                    [name]="'certWithdraw' + i"
+                    [(ngModel)]="cert.withdraw"
+                    [attr.aria-label]="'證照撤銷日期 #' + (i + 1)" [attr.title]="'請選擇證照 #' + (i + 1) + ' 的撤銷日期'">
+                </div>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label [for]="'certFrontPic' + i" class="form-label">正面照片</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-file-image"></i></span>
+                  <input type="file" accept="image/*" class="form-control" [id]="'certFrontPic' + i"
+                    [name]="'certFrontPic' + i"
+                    (change)="handleCertificateImageUpload($event, i, 'front')"
+                    [attr.aria-label]="'證照正面照片 #' + (i + 1)" [attr.title]="'請上傳證照 #' + (i + 1) + ' 的正面照片'">
+                </div>
+                @if (cert.frontPicture) {
+                  <div class="mt-2">
+                    <img [src]="cert.frontPicture" class="img-thumbnail" style="max-height: 150px;"
+                      [alt]="'證照 #' + (i + 1) + ' 正面照片'"
+                      [title]="'證照 #' + (i + 1) + ' 正面照片'">
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-2"
+                      (click)="removeImage('frontPicture', i)" aria-label="移除正面照片">
+                      <i class="bi bi-x-circle"></i> 移除
+                    </button>
+                  </div>
+                }
+              </div>
+              <div class="col-md-6">
+                <label [for]="'certBackPic' + i" class="form-label">背面照片</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-file-image"></i></span>
+                  <input type="file" accept="image/*" class="form-control" [id]="'certBackPic' + i"
+                    [name]="'certBackPic' + i"
+                    (change)="handleCertificateImageUpload($event, i, 'back')"
+                    [attr.aria-label]="'證照背面照片 #' + (i + 1)" [attr.title]="'請上傳證照 #' + (i + 1) + ' 的背面照片'">
+                </div>
+                @if (cert.backPicture) {
+                  <div class="mt-2">
+                    <img [src]="cert.backPicture" class="img-thumbnail" style="max-height: 150px;"
+                      [alt]="'證照 #' + (i + 1) + ' 背面照片'"
+                      [title]="'證照 #' + (i + 1) + ' 背面照片'">
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-2"
+                      (click)="removeImage('backPicture', i)" aria-label="移除背面照片">
+                      <i class="bi bi-x-circle"></i> 移除
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- 公司資訊卡片 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0"><i class="bi bi-building me-2"></i>公司資訊</h5>
+    </div>
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="contractingCompanyName" class="form-label">承攬公司名稱</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-building"></i></span>
+            <input type="text" class="form-control" id="contractingCompanyName"
+              name="contractingCompanyName"
+              [(ngModel)]="worker.contractingCompanyName"
+              aria-label="承攬公司名稱" title="請輸入承攬公司名稱">
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="viceContractingCompanyName" class="form-label">次承攬公司名稱</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-building-fill"></i></span>
+            <input type="text" class="form-control" id="viceContractingCompanyName"
+              name="viceContractingCompanyName"
+              [(ngModel)]="worker.viceContractingCompanyName"
+              aria-label="次承攬公司名稱" title="請輸入次承攬公司名稱">
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="reviewStaff" class="form-label">審查人員</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person-check"></i></span>
+          <input type="text" class="form-control" id="reviewStaff" name="reviewStaff"
+            [(ngModel)]="worker.reviewStaff"
+            aria-label="審查人員" title="請輸入審查人員姓名">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 體檢報告卡片 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0"><i class="bi bi-clipboard-pulse me-2"></i>體檢報告</h5>
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <label for="medicalExamPicture" class="form-label">體檢報告上傳</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-file-earmark-medical"></i></span>
+          <input type="file" accept="image/*" class="form-control" id="medicalExamPicture"
+            name="medicalExamPicture"
+            (change)="handleMedicalExamUpload($event)"
+            aria-label="體檢報告上傳" title="請上傳體檢報告圖片">
+        </div>
+        @if (worker.medicalExamPicture) {
+          <div class="mt-2">
+            <img [src]="worker.medicalExamPicture" class="img-thumbnail" style="max-height: 200px;"
+              alt="體檢報告圖片" title="體檢報告圖片">
+            <button type="button" class="btn btn-sm btn-outline-danger ms-2"
+              (click)="removeImage('medicalExamPicture')" aria-label="移除體檢報告圖片">
+              <i class="bi bi-x-circle"></i> 移除
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- 按鈕區域 -->
+  <div class="d-flex gap-2 justify-content-end mb-4">
+    <button type="button" class="btn btn-outline-secondary" (click)="navigateToList()"
+      aria-label="返回列表">
+      <i class="bi bi-arrow-left me-2"></i>返回
+    </button>
+    <button type="submit" class="btn btn-primary" [disabled]="!workerForm.form.valid || isSaving"
+      aria-label="儲存資料">
+      <i class="bi bi-save me-2"></i>
+      {{ isSaving ? '儲存中...' : '儲存' }}
+    </button>
+  </div>
+</form>
+
+<!-- 成功訊息 -->
+@if (showSaveSuccess) {
+  <div class="alert alert-success" role="alert">
+    <i class="bi bi-check-circle me-2"></i>儲存成功！即將返回列表...
+  </div>
+}
+</div>

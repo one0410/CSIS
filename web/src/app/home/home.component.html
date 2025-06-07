@@ -1,0 +1,14 @@
+<div id="container" class="d-flex flex-column vh-100" [class.menu-open]="isMenuOpen">
+  <!-- 顶部导航栏组件 -->
+  <app-top-bar (menuToggle)="toggleMenu()"></app-top-bar>
+
+  <div class="d-flex flex-fill">
+    <!-- 左侧菜单组件 -->
+    <app-side-menu [isMenuOpen]="isMenuOpen" [siteId]="siteId"></app-side-menu>
+
+    <!-- 右側內容區 -->
+    <div class="flex-fill" style="overflow-y: auto">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

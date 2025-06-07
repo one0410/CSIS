@@ -1,0 +1,33 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Angular 編碼風格指南
+
+## 元件開發
+- 使用 Standalone Components
+- 元件命名使用 kebab-case（例如：user-profile.component.ts）
+- 使用 OnPush 變更偵測策略提高性能
+- 使用 signal() 和 computed() 代替傳統的狀態管理
+
+## 模板語法
+- 使用 @if/@else 替代 *ngIf
+- 使用 @for 替代 *ngFor
+- 使用 @switch/@case 替代 ngSwitch
+
+## 資料獲取
+- 使用原生 fetch API 取代 HttpClient
+- 使用 async/await 處理非同步操作
+- 資料獲取邏輯放在服務層
+
+## 表單處理
+- 優先使用 Template-driven forms
+- 表單驗證邏輯放在元件類中
+- 使用 ngModel 進行雙向綁定
+
+## 樣式指南
+- 使用 SCSS 預處理器
+- 元件樣式使用元件封裝
+- 共用樣式放在全局樣式文件中
+

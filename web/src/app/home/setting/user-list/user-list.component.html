@@ -1,0 +1,14 @@
+<div class="d-flex flex-column w-100 h-100">
+  <div class="d-flex justify-content-end m-2">
+    <button class="btn btn-primary" (click)="navigateToAddUser()">
+      <i class="bi bi-person-plus me-2"></i>新增使用者
+    </button>
+  </div>
+
+  <!-- ag-grid -->
+  <ag-grid-angular
+    class="ag-theme-quartz w-100 h-100"
+    [gridOptions]="gridOptions"
+    (gridReady)="onGridReady($event)"
+  ></ag-grid-angular>
+</div>

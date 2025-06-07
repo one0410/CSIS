@@ -1,0 +1,375 @@
+// 全局變量
+$primary-color: #3f51b5;
+$secondary-color: #f5f5f5;
+$text-color: #333;
+$border-color: #e0e0e0;
+$shadow-color: rgba(0, 0, 0, 0.1);
+$success-color: #4caf50;
+$error-color: #f44336;
+$border-radius: 8px;
+
+// 容器樣式
+.profile-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.profile-header {
+  margin-bottom: 2rem;
+  text-align: center;
+  
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: $primary-color;
+  }
+  
+  .subtitle {
+    color: #666;
+    font-weight: lighter;
+  }
+}
+
+// 載入動畫
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid $secondary-color;
+    border-top-color: $primary-color;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  span {
+    color: #666;
+  }
+}
+
+// 錯誤提示
+.error-container {
+  background-color: rgba($error-color, 0.1);
+  border-radius: $border-radius;
+  padding: 2rem;
+  text-align: center;
+  margin: 2rem 0;
+  
+  p {
+    color: $error-color;
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+// 卡片樣式
+.profile-card {
+  background-color: white;
+  border-radius: $border-radius;
+  box-shadow: 0 8px 30px $shadow-color;
+  overflow: hidden;
+}
+
+// 區段樣式
+.profile-section {
+  padding: 2rem;
+  border-bottom: 1px solid $border-color;
+  
+  h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    color: $primary-color;
+    font-weight: 500;
+  }
+}
+
+// 表單樣式
+.form-group {
+  margin-bottom: 1.5rem;
+  
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: 500;
+  }
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  .form-group {
+    flex: 1;
+    min-width: 250px;
+  }
+}
+
+.input-container {
+  position: relative;
+  
+  i {
+    position: absolute;
+    left: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    opacity: 0.6;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  
+  // 各種圖標
+  .user-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z'/%3E%3C/svg%3E");
+  }
+  
+  .name-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z'/%3E%3C/svg%3E");
+  }
+  
+  .email-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-.4 4.25l-7.07 4.42c-.32.2-.74.2-1.06 0L4.4 8.25c-.25-.16-.4-.43-.4-.72 0-.67.73-1.07 1.3-.72L12 11l6.7-4.19c.57-.35 1.3.05 1.3.72 0 .29-.15.56-.4.72z'/%3E%3C/svg%3E");
+  }
+  
+  .phone-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z'/%3E%3C/svg%3E");
+  }
+  
+  .department-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z'/%3E%3C/svg%3E");
+  }
+  
+  .password-icon, .confirm-password-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'/%3E%3C/svg%3E");
+  }
+  
+  .id-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23555'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z'/%3E%3C/svg%3E");
+  }
+  
+  input {
+    width: 100%;
+    padding: 0.8rem 0.8rem 0.8rem 2.5rem;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+    }
+    
+    &:read-only {
+      background-color: $secondary-color;
+      opacity: 0.8;
+    }
+  }
+}
+
+// 按鈕區域
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  background-color: $secondary-color;
+  
+  button {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: $border-radius;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+    
+    &:active {
+      transform: scale(0.98);
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+  
+  .btn-save {
+    background-color: $primary-color;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background-color: darken($primary-color, 10%);
+    }
+  }
+  
+  .btn-cancel {
+    background-color: white;
+    color: #666;
+    border: 1px solid $border-color;
+    
+    &:hover:not(:disabled) {
+      background-color: darken(white, 5%);
+    }
+  }
+}
+
+// 響應式設計
+@media (max-width: 768px) {
+  .profile-header {
+    h1 {
+      font-size: 1.8rem;
+    }
+  }
+  
+  .profile-section {
+    padding: 1.5rem;
+  }
+  
+  .avatar-section {
+    .avatar-container {
+      flex-direction: column;
+      text-align: center;
+      gap: 1.5rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-actions {
+    flex-direction: column;
+    
+    button {
+      width: 100%;
+    }
+  }
+}
+
+// 大頭貼區域樣式
+.avatar-section {
+  .avatar-container {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    
+    .avatar-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid $border-color;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      .avatar-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      
+      .avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, $primary-color, lighten($primary-color, 20%));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        
+        .avatar-icon {
+          position: absolute;
+          width: 60px;
+          height: 60px;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.67-10 5v2h20v-2c0-3.33-6.67-5-10-5z'/%3E%3C/svg%3E");
+          background-size: contain;
+          background-repeat: no-repeat;
+          background-position: center;
+          opacity: 0.3;
+        }
+        
+        span {
+          font-size: 2.5rem;
+          font-weight: bold;
+          color: white;
+          z-index: 1;
+        }
+      }
+    }
+    
+    .avatar-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      
+      button {
+        padding: 0.6rem 1.2rem;
+        border: none;
+        border-radius: $border-radius;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.1s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        &:active {
+          transform: scale(0.98);
+        }
+        
+        i {
+          width: 16px;
+          height: 16px;
+          background-size: contain;
+          background-repeat: no-repeat;
+          background-position: center;
+        }
+        
+        .upload-icon {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-3-7v4h-2v-4h-2l3-3 3 3h-2z'/%3E%3C/svg%3E");
+        }
+        
+        .remove-icon {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E");
+        }
+      }
+      
+      .btn-upload {
+        background-color: $primary-color;
+        color: white;
+        
+        &:hover {
+          background-color: darken($primary-color, 10%);
+        }
+      }
+      
+      .btn-remove {
+        background-color: $error-color;
+        color: white;
+        
+        &:hover {
+          background-color: darken($error-color, 10%);
+        }
+      }
+    }
+  }
+}

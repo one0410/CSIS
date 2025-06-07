@@ -1,0 +1,93 @@
+<nav class="navbar bg-light">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" (click)="toggleMenu()" title="打开菜单">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <!-- 導航按鈕區域 -->
+    <div class="d-flex align-items-center gap-2">
+      <!-- 工地信息和選擇按鈕 -->
+      @if (currentSite()) {
+      <div class="d-flex align-items-center site-info">
+        <span class="site-name fs-6 m-2">{{ currentSite()?.projectName }}</span>
+        <button class="btn btn-sm btn-outline-primary" (click)="goToSiteSelector()" title="切換工地">
+          <i class="bi bi-buildings me-1"></i>切換工地
+        </button>
+      </div>
+      }
+
+      <!-- 系統管理選單 - 只有管理員才能看到 -->
+      <div class="d-flex align-items-center gap-1">
+        @if (currentUser()?.role === 'admin' || currentUser()?.role === 'manager' || currentUser()?.role === 'secretary')
+        {
+        <!-- 總覽按鈕 -->
+        <a class="btn btn-sm btn-outline-success" routerLink="/dashboard" title="總覽">
+          <i class="bi bi-house me-1"></i>總覽
+        </a>
+        }
+        @if (currentUser()?.role === 'admin' || currentUser()?.role === 'manager')
+        {
+        <!-- 系統管理下拉選單 -->
+        <div class="dropdown">
+          <button class="btn btn-sm btn-outline-info dropdown-toggle" type="button" id="systemDropdown"
+            data-bs-toggle="dropdown" aria-expanded="false" (click)="toggleSystemMenu()">
+            <i class="bi bi-gear me-1"></i>系統管理
+          </button>
+          <ul class="dropdown-menu" id="systemMenu" aria-labelledby="systemDropdown">
+            <li><a class="dropdown-item" routerLink="/sitelist">工地管理</a></li>
+            <li><a class="dropdown-item" routerLink="/user">使用者管理</a></li>
+            <li><a class="dropdown-item" routerLink="/worker">人才管理</a></li>
+            <li>
+              <a class="dropdown-item d-flex align-items-center justify-content-between" routerLink="/feedback-admin">
+                <span>意見箱管理</span>
+                @if (pendingFeedbackCount() > 0) {
+                  <span class="badge bg-danger rounded-pill">{{ pendingFeedbackCount() }}</span>
+                }
+              </a>
+            </li>
+          </ul>
+        </div>
+        }
+      </div>
+    </div>
+
+    <span class="ms-auto"></span>
+    <!-- 最右邊人頭, 點擊後會跳出 profile, logout 選單 -->
+    <div class="d-flex justify-content-end align-items-center position-relative" (click)="toggleProfileMenu()"
+      style="cursor: pointer">
+      <span class="me-2">
+        @if (currentUser()) {
+        {{ currentUser()?.name }} {{ getRoleDisplay(currentUser()?.role || '') }}，{{ greeting }}
+        } @else {
+        訪客，{{ greeting }}
+        }
+      </span>
+      
+      <!-- 動態頭像顯示 -->
+      @if (currentUser()?.avatar) {
+        <img [src]="getUserAvatar()" alt="user avatar" class="img-fluid rounded-circle border"
+          style="width: 36px; height: 36px; object-fit: cover;" />
+      } @else {
+        <div class="avatar-placeholder rounded-circle border d-flex align-items-center justify-content-center"
+          style="width: 36px; height: 36px; background: linear-gradient(135deg, #3f51b5, #7986cb); color: white; font-weight: bold; font-size: 14px;">
+          {{ getUserInitial() }}
+        </div>
+      }
+      
+      <div class="profile-menu position-absolute p-0 mt-2" style="top: 100%; right: 0;" id="profileMenu">
+        <a routerLink="/feedback" title="意見箱">
+          <i class="bi bi-chat-dots"></i>意見箱
+        </a>
+        <a routerLink="/profile" title="個人資料">
+          <i class="bi bi-person"></i>個人資料
+        </a>
+        <a routerLink="/settings" title="設定">
+          <i class="bi bi-gear"></i>設定
+        </a>
+        <a href="#" (click)="logout(); $event.stopPropagation()" title="登出">
+          <i class="bi bi-box-arrow-right"></i>登出
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>

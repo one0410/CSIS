@@ -1,0 +1,25 @@
+.equipment-photo {
+  height: 200px;
+  object-fit: cover;
+  object-position: center;
+}
+
+@media (max-width: 768px) {
+  .equipment-photo {
+    height: 150px;
+  }
+}
+
+/* 唯讀欄位樣式 */
+input[readonly], textarea[readonly] {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding-left: 0;
+  cursor: default;
+  
+  &:focus {
+    outline: none;
+    box-shadow: none;
+  }
+} 

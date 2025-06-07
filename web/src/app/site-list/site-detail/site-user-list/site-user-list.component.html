@@ -1,0 +1,444 @@
+<div class="container-fluid mt-4">
+  <!-- 頁面標題 -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-people-fill me-2"></i>工地存取權限管理
+    </h2>
+  </div>
+
+  <!-- 搜尋與添加使用者區域 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0"><i class="bi bi-person-plus me-2"></i>添加使用者</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-10">
+          <label for="userSearch" class="form-label fw-semibold">搜尋使用者</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              id="userSearch"
+              placeholder="輸入姓名、帳號或部門進行搜尋"
+              [(ngModel)]="searchQuery"
+              (input)="searchUsers()"
+              aria-label="搜尋使用者"
+              >
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              (click)="searchUsers()"
+              aria-label="執行搜尋"
+              title="執行搜尋"
+              >
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <button
+            class="btn btn-primary w-100"
+            (click)="showAddUserModal()"
+            [disabled]="isLoading"
+            title="顯示所有可選使用者"
+            >
+            <i class="bi bi-person-plus me-2"></i>選擇使用者
+          </button>
+        </div>
+      </div>
+
+      <!-- 搜尋結果列表 -->
+      @if (searchResults.length > 0) {
+        <div class="search-results mt-3">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" style="width: 50px;"></th>
+                  <th scope="col">姓名</th>
+                  <th scope="col">工號</th>
+                  <th scope="col">帳號</th>
+                  <th scope="col">部門</th>
+                  <th scope="col">角色</th>
+                  <th scope="col">工地權限</th>
+                  <th scope="col" style="width: 120px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (user of searchResults; track user) {
+                  <tr>
+                    <td class="text-center">
+                      <div
+                        class="avatar rounded-circle d-flex align-items-center justify-content-center"
+                        [style.backgroundColor]="getRandomColor(user.name)"
+                        >
+                        {{ user.name.charAt(0) }}
+                      </div>
+                    </td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.employeeId || '-' }}</td>
+                    <td>{{ user.account }}</td>
+                    <td>{{ user.department }}</td>
+                    <td>
+                      <span class="badge rounded-pill"
+                    [ngClass]="{
+                      'bg-danger': user.role === 'admin',
+                      'bg-primary': user.role === 'manager',
+                      'bg-success': user.role === 'secretary',
+                      'bg-secondary': user.role === 'user'
+                    }"
+                        >
+                        {{ getRoleDisplay(user.role) }}
+                      </span>
+                    </td>
+                    <td>
+                      @if (canEditSiteRole()) {
+                        <select
+                          class="form-select form-select-sm"
+                          [(ngModel)]="user.siteRole"
+                          title="選擇使用者的工地權限角色"
+                          aria-label="選擇使用者的工地權限角色"
+                          >
+                          <option value="admin">系統管理員</option>
+                          <option value="safetyManager">環安主管</option>
+                          <option value="safetyEngineer">環安工程師</option>
+                          <option value="projectManager">專案經理</option>
+                          <option value="siteManager">工地經理</option>
+                          <option value="secretary">專案秘書</option>
+                          <option value="projectEngineer">專案工程師</option>
+                          <option value="vendor">協力廠商</option>
+                        </select>
+                      } @else {
+                        <span class="badge bg-info text-dark">
+                          {{ getSiteRoleDisplay(user.siteRole || 'projectEngineer') }}
+                        </span>
+                      }
+                    </td>
+                    <td>
+                      <button
+                        class="btn btn-sm btn-success"
+                        (click)="addUserToSite(user)"
+                        title="添加此使用者到工地"
+                        >
+                        <i class="bi bi-plus-circle me-1"></i>添加
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- 無搜尋結果提示 -->
+      @if (searchPerformed && searchResults.length === 0) {
+        <div class="alert alert-info mt-3">
+          <i class="bi bi-info-circle me-2"></i>找不到符合條件的使用者
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- 已授權使用者列表 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="bi bi-people me-2"></i>已授權使用者 ({{ siteUsers.length }})</h5>
+      <div class="form-check form-switch">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="showOnlyActive"
+          [(ngModel)]="showOnlyActive"
+          (change)="filterActiveUsers()"
+          aria-label="只顯示啟用的使用者"
+          >
+        <label class="form-check-label" for="showOnlyActive">僅顯示啟用帳號</label>
+      </div>
+    </div>
+
+    <div class="card-body">
+      @if (isLoading) {
+        <div class="text-center my-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">載入中...</span>
+          </div>
+          <p class="mt-2">載入使用者資料中...</p>
+        </div>
+      } @else {
+        @if (siteUsers.length === 0) {
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>目前沒有使用者被授權存取此工地
+          </div>
+        } @else {
+          <!-- 使用者列表表格 -->
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" style="width: 50px;"></th>
+                  <th scope="col">姓名</th>
+                  <th scope="col">工號</th>
+                  <th scope="col">帳號</th>
+                  <th scope="col">部門</th>
+                  <th scope="col">角色</th>
+                  <th scope="col">工地權限</th>
+                  <th scope="col">狀態</th>
+                  <th scope="col" style="width: 120px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (user of filteredSiteUsers; track user) {
+                  <tr>
+                    <td class="text-center">
+                      <div
+                        class="avatar rounded-circle d-flex align-items-center justify-content-center"
+                        [style.backgroundColor]="getRandomColor(user.name)"
+                        >
+                        {{ user.name.charAt(0) }}
+                      </div>
+                    </td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.employeeId || '-' }}</td>
+                    <td>{{ user.account }}</td>
+                    <td>{{ user.department }}</td>
+                    <td>
+                      <span class="badge rounded-pill"
+                      [ngClass]="{
+                        'bg-danger': user.role === 'admin',
+                        'bg-primary': user.role === 'manager',
+                        'bg-success': user.role === 'secretary',
+                        'bg-secondary': user.role === 'user'
+                      }"
+                        >
+                        {{ getRoleDisplay(user.role) }}
+                      </span>
+                    </td>
+                    <td>
+                      @if (canEditSiteRole()) {
+                        <select
+                          class="form-select form-select-sm"
+                          [(ngModel)]="user.siteRole"
+                          (change)="updateUserSiteRole(user)"
+                          title="修改使用者的工地權限角色"
+                          aria-label="修改使用者的工地權限角色"
+                          >
+                          <option value="admin">系統管理員</option>
+                          <option value="safetyManager">環安主管</option>
+                          <option value="safetyEngineer">環安工程師</option>
+                          <option value="projectManager">專案經理</option>
+                          <option value="siteManager">工地經理</option>
+                          <option value="secretary">專案秘書</option>
+                          <option value="projectEngineer">專案工程師</option>
+                          <option value="vendor">協力廠商</option>
+                        </select>
+                      } @else {
+                        <span class="badge bg-info text-dark">
+                          {{ getSiteRoleDisplay(user.siteRole || 'projectEngineer') }}
+                        </span>
+                      }
+                    </td>
+                    <td>
+                      @if (user.enabled) {
+                        <span class="badge rounded-pill bg-success">啟用</span>
+                      }
+                      @if (!user.enabled) {
+                        <span class="badge rounded-pill bg-secondary">停用</span>
+                      }
+                    </td>
+                    <td>
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        (click)="removeUserFromSite(user)"
+                        title="移除此使用者的工地存取權限"
+                        aria-label="移除使用者"
+                        >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 分頁控制 -->
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>顯示 {{ filteredSiteUsers.length }} 位使用者，共 {{ siteUsers.length }} 位</div>
+            <nav aria-label="使用者列表分頁">
+              <ul class="pagination pagination-sm">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage - 1)" aria-label="上一頁">
+                    <i class="bi bi-chevron-left"></i>
+                  </a>
+                </li>
+                @for (page of getPageNumbers(); track page) {
+                  <li class="page-item" [class.active]="currentPage === page">
+                    <a class="page-link" href="javascript:void(0)" (click)="goToPage(page)">{{ page }}</a>
+                  </li>
+                }
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage + 1)" aria-label="下一頁">
+                    <i class="bi bi-chevron-right"></i>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>
+
+<!-- 添加使用者的模態框 -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addUserModalLabel">
+          <i class="bi bi-person-plus me-2"></i>添加使用者到工地
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉" title="關閉"></button>
+      </div>
+      <div class="modal-body">
+        <!-- 搜尋框 -->
+        <div class="mb-3">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="搜尋使用者"
+              [(ngModel)]="modalSearchQuery"
+              (input)="searchModalUsers()"
+              aria-label="在模態框中搜尋使用者"
+              >
+          </div>
+        </div>
+
+        <!-- 使用者列表 -->
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" style="width: 50px;">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="selectAllUsers"
+                      [checked]="allUsersSelected"
+                      (change)="toggleAllUsers()"
+                      aria-label="選取所有使用者"
+                      >
+                  </div>
+                </th>
+                <th scope="col">姓名</th>
+                <th scope="col">工號</th>
+                <th scope="col">帳號</th>
+                <th scope="col">部門</th>
+                <th scope="col">角色</th>
+                <th scope="col">工地權限</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of filteredModalUsers; track user) {
+                <tr>
+                  <td>
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        [id]="'user-' + user._id"
+                        [(ngModel)]="user.selected"
+                        (change)="updateSelectAllStatus()"
+                        [attr.aria-label]="'選取 ' + user.name"
+                        >
+                    </div>
+                  </td>
+                  <td>{{ user.name }}</td>
+                  <td>{{ user.employeeId || '-' }}</td>
+                  <td>{{ user.account }}</td>
+                  <td>{{ user.department }}</td>
+                  <td>
+                    <span class="badge rounded-pill"
+                    [ngClass]="{
+                      'bg-danger': user.role === 'admin',
+                      'bg-primary': user.role === 'manager',
+                      'bg-success': user.role === 'secretary',
+                      'bg-secondary': user.role === 'user'
+                    }"
+                      >
+                      {{ getRoleDisplay(user.role) }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (canEditSiteRole()) {
+                      <select
+                        class="form-select form-select-sm"
+                        [(ngModel)]="user.siteRole"
+                        title="選擇使用者的工地權限角色"
+                        aria-label="選擇使用者的工地權限角色"
+                        >
+                        <option value="admin">系統管理員</option>
+                        <option value="safetyManager">環安主管</option>
+                        <option value="safetyEngineer">環安工程師</option>
+                        <option value="projectManager">專案經理</option>
+                        <option value="siteManager">工地經理</option>
+                        <option value="secretary">專案秘書</option>
+                        <option value="projectEngineer">專案工程師</option>
+                        <option value="vendor">協力廠商</option>
+                      </select>
+                    } @else {
+                      <span class="badge bg-info text-dark">
+                        {{ getSiteRoleDisplay(user.siteRole || 'projectEngineer') }}
+                      </span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 無結果提示 -->
+        @if (filteredModalUsers.length === 0) {
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>找不到符合條件的使用者
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>取消
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="addSelectedUsers()"
+          [disabled]="getSelectedUsersCount() === 0"
+          >
+          <i class="bi bi-check-circle me-1"></i>添加已選 ({{ getSelectedUsersCount() }}) 位使用者
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 樣式 -->
+<style>
+  .avatar {
+  width: 32px;
+  height: 32px;
+  color: white;
+  font-weight: bold;
+}
+
+.search-results {
+max-height: 300px;
+overflow-y: auto;
+}
+</style>

@@ -1,0 +1,31 @@
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-pointer:hover {
+  background-color: var(--bs-light);
+}
+
+.card {
+  transition: all 0.2s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.position-sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bg-warning-subtle {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-left: 3px solid var(--bs-warning);
+} 

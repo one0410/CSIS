@@ -1,0 +1,144 @@
+<div class="container">
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <h3>工地表單配置</h3>
+      <p class="text-muted">為每個工地指定使用的表單版本</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- 工地列表 -->
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-header">工地列表</div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            @for (site of sites; track site._id) {
+              <button 
+                class="list-group-item list-group-item-action"
+                [class.active]="selectedSite?._id === site._id"
+                (click)="selectSite(site)">
+                {{ site.projectName }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 工地表單配置 -->
+    <div class="col-md-9">
+      @if (selectedSite && !isEditing && !selectedConfig) {
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>{{ selectedSite.projectName }} - 尚未配置表單</span>
+            <button class="btn btn-primary btn-sm" (click)="createNewConfig()">新增配置</button>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info">
+              此工地尚未配置表單版本，請點擊「新增配置」按鈕以設定表單版本。
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (selectedSite && !isEditing && selectedConfig) {
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>{{ selectedSite.projectName }} - 表單配置</span>
+            <button class="btn btn-primary btn-sm" (click)="editConfig()">編輯配置</button>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <strong>最後更新時間:</strong> {{ selectedConfig.updatedAt | date:'yyyy-MM-dd HH:mm' }}
+            </div>
+            
+            <h5 class="border-bottom pb-2 mb-3">表單版本配置</h5>
+            
+            <div class="mb-3 row">
+              <label class="col-sm-3 col-form-label">工地許可單:</label>
+              <div class="col-sm-9">
+                <p class="form-control-plaintext">
+                  {{ getVersionName(selectedConfig.sitePermitVersionId, sitePermitVersions) }}
+                </p>
+              </div>
+            </div>
+            
+            <div class="mb-3 row">
+              <label class="col-sm-3 col-form-label">工具箱會議:</label>
+              <div class="col-sm-9">
+                <p class="form-control-plaintext">
+                  {{ getVersionName(selectedConfig.toolboxMeetingVersionId, toolboxMeetingVersions) }}
+                </p>
+              </div>
+            </div>
+            
+            <div class="mb-3 row">
+              <label class="col-sm-3 col-form-label">安衛自主檢點表:</label>
+              <div class="col-sm-9">
+                <p class="form-control-plaintext">
+                  {{ getVersionName(selectedConfig.safetyChecklistVersionId, safetyChecklistVersions) }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (selectedSite && isEditing && selectedConfig) {
+        <div class="card">
+          <div class="card-header">
+            <span>{{ selectedSite.projectName }} - 編輯表單配置</span>
+          </div>
+          <div class="card-body">
+            <form>
+              <div class="mb-3 row">
+                <label class="col-sm-3 col-form-label">工地許可單:</label>
+                <div class="col-sm-9">
+                  <select class="form-select" [(ngModel)]="selectedConfig.sitePermitVersionId" name="sitePermit" aria-label="選擇工地許可單版本">
+                    @for (version of sitePermitVersions; track version._id) {
+                      <option [value]="version._id">
+                        {{ version.name }} ({{ version.version }}) - {{ version.createdAt | date:'yyyy-MM-dd' }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              </div>
+              
+              <div class="mb-3 row">
+                <label class="col-sm-3 col-form-label">工具箱會議:</label>
+                <div class="col-sm-9">
+                  <select class="form-select" [(ngModel)]="selectedConfig.toolboxMeetingVersionId" name="toolboxMeeting" aria-label="選擇工具箱會議版本">
+                    @for (version of toolboxMeetingVersions; track version._id) {
+                      <option [value]="version._id">
+                        {{ version.name }} ({{ version.version }}) - {{ version.createdAt | date:'yyyy-MM-dd' }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              </div>
+              
+              <div class="mb-3 row">
+                <label class="col-sm-3 col-form-label">安衛自主檢點表:</label>
+                <div class="col-sm-9">
+                  <select class="form-select" [(ngModel)]="selectedConfig.safetyChecklistVersionId" name="safetyChecklist" aria-label="選擇安衛自主檢點表版本">
+                    @for (version of safetyChecklistVersions; track version._id) {
+                      <option [value]="version._id">
+                        {{ version.name }} ({{ version.version }}) - {{ version.createdAt | date:'yyyy-MM-dd' }}
+                      </option>
+                    }
+                  </select>
+                </div>
+              </div>
+              
+              <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-secondary me-2" (click)="cancelEdit()">取消</button>
+                <button type="button" class="btn btn-primary" (click)="saveConfig()">儲存配置</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div> 

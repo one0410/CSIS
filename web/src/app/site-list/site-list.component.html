@@ -1,0 +1,152 @@
+<div id="site-list-container" class="p-4">
+  <div class="d-flex justify-content-end align-items-center mb-4">
+    <div class="btn-group me-2" role="group" aria-label="View toggle">
+      <button type="button" class="btn btn-outline-secondary" (click)="setViewMode('card')" [class.active]="viewMode === 'card'" title="卡片檢視">
+        <i class="bi bi-grid-3x3-gap"></i> <!-- Card view icon -->
+      </button>
+      <button type="button" class="btn btn-outline-secondary" (click)="setViewMode('list')" [class.active]="viewMode === 'list'" title="列表檢視">
+        <i class="bi bi-list"></i> <!-- List view icon -->
+      </button>
+    </div>
+    <button class="btn btn-primary" routerLink="/site/new">新增工地</button>
+  </div>
+  <!-- Current Card View -->
+  @if (viewMode === 'card') {
+  <div class="site-grid">
+    @for (site of sites; track site.projectNo) {
+    <div
+      [class]="isExpired(site.endDate) ? 'site-card-expired' : ''"
+      class="site-card position-relative bg-white border rounded-3 overflow-hidden"
+      [routerLink]="['/site', site._id]"
+      style="cursor: pointer;"
+    >
+      @if (isExpired(site.endDate)) {
+      <div
+        class="position-absolute fs-1 text-nowrap text-danger px-5 py-2 border border-4 border-danger"
+        style="
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) rotate(-15deg);
+        "
+      >
+        已過期
+      </div>
+      }
+
+      <div class="site-image overflow-hidden" style="height: 200px">
+        <img
+          class="object-fit-cover w-100 h-100"
+          [src]="site.image || '/assets/site.jpg'"
+          alt="{{ site.projectName }}"
+        />
+      </div>
+      <div class="site-content p-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <h4>{{ site.projectName }}</h4>
+          <p class="project-no text-muted m-0" style="font-size: 0.9rem">
+            專案編號：{{ site.projectNo }}
+          </p>
+        </div>
+
+        <div class="date-info my-2">
+          <p class="my-1 fs-6 text-muted" style="font-size: 0.9rem">
+            開始日期：{{ site.startDate }}
+          </p>
+          <p class="my-1 fs-6 text-muted" style="font-size: 0.9rem">
+            結束日期：{{ site.endDate }}
+          </p>
+        </div>
+
+        <div class="location my-2">
+          <p class="my-1 fs-6 text-muted">{{ site.county }} {{ site.town }}</p>
+        </div>
+
+        <div class="factories">
+          @for (factory of site.factories; track factory.name) {
+          <div class="factory-item my-2">
+            <p class="factory-name fw-medium mb-1">{{ factory.name }}</p>
+            <div class="areas d-flex flex-wrap gap-1">
+              @for (area of factory.areas; track area) {
+              <span
+                class="area-tag bg-info-subtle px-2 py-1 rounded-1"
+                style="font-size: 0.8rem"
+                >{{ area }}</span
+              >
+              }
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- Placeholder for List View -->
+  @if (viewMode === 'list') {
+  <div class="list-view">
+    <table class="table table-hover border">
+      <thead class="bg-light">
+        <tr>
+          <th style="width: 120px">圖片</th>
+          <th>專案資訊</th>
+          <th>工期</th>
+          <th>地點</th>
+          <th>廠區資訊</th>
+          <th style="width: 100px">狀態</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (site of sites; track site.projectNo) {
+        <tr 
+          [class.table-danger]="isExpired(site.endDate)"
+          [routerLink]="['/site', site.projectNo]"
+          style="cursor: pointer; vertical-align: middle;"
+        >
+          <td class="p-2">
+            <div class="position-relative" style="width: 100px; height: 70px;">
+              <img
+                class="object-fit-cover w-100 h-100 rounded"
+                [src]="site.image || '/assets/site.jpg'"
+                alt="{{ site.projectName }}"
+              />
+            </div>
+          </td>
+          <td>
+            <div class="mb-1 fw-bold">{{ site.projectName }}</div>
+            <div class="text-muted small">專案編號：{{ site.projectNo }}</div>
+          </td>
+          <td>
+            <div class="small">開始：{{ site.startDate }}</div>
+            <div class="small">結束：{{ site.endDate }}</div>
+          </td>
+          <td>{{ site.county }} {{ site.town }}</td>
+          <td>
+            <div class="factories">
+              @for (factory of site.factories; track factory.name) {
+              <div class="factory-item small mb-1">
+                <span class="fw-medium">{{ factory.name }}：</span>
+                <span class="areas">
+                  @for (area of factory.areas; track area) {
+                  <span class="badge bg-info-subtle text-info me-1">{{ area }}</span>
+                  }
+                </span>
+              </div>
+              }
+            </div>
+          </td>
+          <td>
+            @if (isExpired(site.endDate)) {
+              <span class="badge bg-danger px-2 py-1">已過期</span>
+            } @else {
+              <span class="badge bg-success px-2 py-1">進行中</span>
+            }
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+</div>

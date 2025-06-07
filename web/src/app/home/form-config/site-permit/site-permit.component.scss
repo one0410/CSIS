@@ -1,0 +1,83 @@
+.active {
+  background-color: #007bff !important;
+  color: white !important;
+}
+
+.preview-container {
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.card-header {
+  background-color: #f5f5f5;
+  font-weight: 600;
+}
+
+.list-group-item {
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #f5f5f5;
+  }
+}
+
+.logo-upload-container {
+  border: 2px dashed #ced4da;
+  border-radius: 5px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 10px;
+  transition: all 0.3s;
+  
+  &.drag-over {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+  
+  .logo-preview {
+    max-width: 200px;
+    max-height: 200px;
+    margin: 0 auto 15px;
+    
+    .logo-preview-img {
+      max-width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+    }
+  }
+  
+  .upload-area {
+    color: #6c757d;
+    margin-bottom: 15px;
+    
+    i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+  }
+  
+  input[type="file"] {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+  }
+}
+
+.dragging {
+  opacity: 0.5;
+  background-color: #f8f9fa;
+}
+
+.list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+.bi-grip-vertical {
+  cursor: grab;
+} 

@@ -1,0 +1,26 @@
+<div class="container-fluid p-4">
+  <h2>表單管理</h2>
+  
+  <div class="row mt-4">
+    <div class="col-md-3">
+      <div class="list-group">
+        <a routerLink="site-permit" class="list-group-item list-group-item-action" routerLinkActive="active">
+          工地許可單
+        </a>
+        <a routerLink="toolbox-meeting" class="list-group-item list-group-item-action" routerLinkActive="active">
+          工具箱會議
+        </a>
+        <a routerLink="safety-checklist" class="list-group-item list-group-item-action" routerLinkActive="active">
+          安衛自主檢點表
+        </a>
+        <a routerLink="site-config" class="list-group-item list-group-item-action" routerLinkActive="active">
+          工地表單配置
+        </a>
+      </div>
+    </div>
+    
+    <div class="col-md-9">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div> 

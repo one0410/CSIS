@@ -1,0 +1,193 @@
+<div class="container-fluid h-100">
+  <!-- 標題區域 -->
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center py-3">
+        <h2 class="mb-0">
+          <i class="bi bi-chat-dots me-2"></i>意見回饋
+        </h2>
+        
+        <!-- 操作按鈕 -->
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary" (click)="toggleForm()">
+            <i class="bi bi-plus-circle me-1"></i>提交意見
+          </button>
+          <button class="btn btn-outline-secondary" (click)="loadFeedbacks()">
+            <i class="bi bi-arrow-clockwise me-1"></i>重新整理
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 篩選區域 -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body py-2">
+          <div class="row align-items-center">
+            <div class="col-md-4">
+              <label class="form-label small mb-1">狀態篩選</label>
+              <select class="form-select form-select-sm" [(ngModel)]="filterStatus" title="狀態篩選">
+                <option value="all">全部狀態</option>
+                @for (status of statusOptions; track status.value) {
+                  <option [value]="status.value">{{ status.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small mb-1">分類篩選</label>
+              <select class="form-select form-select-sm" [(ngModel)]="filterCategory" title="分類篩選">
+                <option value="all">全部分類</option>
+                @for (category of categories; track category) {
+                  <option [value]="category">{{ category }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small mb-1">統計</label>
+              <div class="text-muted small">
+                總計: {{ filteredFeedbacks().length }} 筆
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增意見表單 -->
+  @if (showForm()) {
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">提交新意見</h5>
+            <button class="btn-close" (click)="toggleForm()" title="關閉表單"></button>
+          </div>
+        </div>
+        <div class="card-body">
+          <form (ngSubmit)="submitFeedback()" #feedbackForm="ngForm">
+            <div class="row">
+              <div class="col-md-8">
+                <label class="form-label">標題 <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" [(ngModel)]="newFeedback.title" 
+                       name="title" required placeholder="請簡短描述問題">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">分類</label>
+                <select class="form-select" [(ngModel)]="newFeedback.category" name="category" title="選擇分類">
+                  @for (category of categories; track category) {
+                    <option [value]="category">{{ category }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">優先級</label>
+                <select class="form-select" [(ngModel)]="newFeedback.priority" name="priority" title="選擇優先級">
+                  @for (priority of priorityOptions; track priority.value) {
+                    <option [value]="priority.value">{{ priority.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="form-label">詳細說明 <span class="text-danger">*</span></label>
+              <textarea class="form-control" rows="4" [(ngModel)]="newFeedback.description" 
+                        name="description" required placeholder="請詳細描述問題或建議..."></textarea>
+            </div>
+            <div class="mt-3 d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="loading() || !feedbackForm.form.valid">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1"></span>
+                }
+                提交意見
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="toggleForm()">取消</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- 我的意見列表 -->
+  <div class="row">
+    <div class="col-12">
+      <h5 class="mb-3">我的意見回饋</h5>
+      @if (loading()) {
+        <div class="text-center py-5">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">載入中...</span>
+          </div>
+          <p class="mt-2">載入中...</p>
+        </div>
+      } @else if (filteredFeedbacks().length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-inbox display-1 text-muted"></i>
+          <p class="text-muted mt-3">您尚未提交任何意見反饋</p>
+          <button class="btn btn-primary" (click)="toggleForm()">
+            <i class="bi bi-plus-circle me-1"></i>提交第一個意見
+          </button>
+        </div>
+      } @else {
+        <div class="d-flex flex-column gap-3">
+          @for (feedback of filteredFeedbacks(); track feedback._id) {
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div class="flex-grow-1">
+                    <h6 class="card-title mb-1">
+                      {{ feedback.title }}
+                    </h6>
+                    <div class="d-flex align-items-center gap-2 small text-muted">
+                      <span class="badge {{ getStatusClass(feedback.status) }}">
+                        {{ getStatusLabel(feedback.status) }}
+                      </span>
+                      <span class="badge {{ getPriorityClass(feedback.priority) }}">
+                        {{ getPriorityLabel(feedback.priority) }}
+                      </span>
+                      <span class="badge bg-light text-dark">{{ feedback.category }}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <p class="card-text">{{ feedback.description }}</p>
+                
+                <div class="d-flex justify-content-between align-items-center small text-muted">
+                  <span>
+                    <i class="bi bi-clock me-1"></i>{{ formatDate(feedback.submittedAt) }}
+                  </span>
+                  @if (feedback.replies && feedback.replies.length > 0) {
+                    <span class="text-success">
+                      <i class="bi bi-reply me-1"></i>{{ feedback.replies.length }} 則回覆
+                    </span>
+                  }
+                </div>
+                
+                @if (feedback.replies && feedback.replies.length > 0) {
+                  <div class="mt-3 border-top pt-3">
+                    <h6 class="small mb-2">管理員回覆：</h6>
+                    @for (reply of feedback.replies; track reply._id) {
+                      @if (!reply.isInternal) {
+                        <div class="bg-light p-2 rounded mb-2">
+                          <div class="small text-muted d-flex justify-content-between">
+                            <span>{{ reply.replierName }}</span>
+                            <span>{{ formatDate(reply.repliedAt) }}</span>
+                          </div>
+                          <p class="small mb-0">{{ reply.message }}</p>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div> 

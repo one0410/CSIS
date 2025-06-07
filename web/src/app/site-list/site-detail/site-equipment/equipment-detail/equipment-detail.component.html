@@ -1,0 +1,395 @@
+<div class="container-fluid">
+  <div class="d-flex align-items-center mb-4">
+    <button class="btn btn-outline-secondary me-3" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i> 返回
+    </button>
+    <h2 class="mb-0">
+      @if (isNewEquipment()) {
+        新增設備
+      } @else {
+        設備詳情
+      }
+    </h2>
+  </div>
+
+  @if (isLoading()) {
+    <div class="d-flex justify-content-center my-5">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">讀取中...</span>
+      </div>
+    </div>
+  } @else if (!equipment() && !isNewEquipment()) {
+    <div class="alert alert-danger">
+      找不到設備資訊，請返回設備列表。
+    </div>
+  } @else {
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">基本資訊</h5>
+            @if (!isEditing()) {
+              <button class="btn btn-primary btn-sm" (click)="startEditing()">
+                編輯
+              </button>
+            } @else {
+              <div>
+                <button type="button" class="btn btn-secondary btn-sm me-2" (click)="cancelEditing()">
+                  @if (isNewEquipment()) { 取消 } @else { 取消 }
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" (click)="saveEquipment()">
+                  @if (isNewEquipment()) { 新增 } @else { 儲存 }
+                </button>
+              </div>
+            }
+          </div>
+          <div class="card-body">
+            <form>
+              <div class="row mb-3">
+                <label for="company" class="col-sm-3 col-form-label">承攬公司</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="company" 
+                      [(ngModel)]="editedEquipment!.company" 
+                      name="company"
+                    >
+                  } @else {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      [ngModel]="equipment()!.company" 
+                      name="company" 
+                      readonly
+                    >
+                  }
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="name" class="col-sm-3 col-form-label">設備名稱</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="name" 
+                      [(ngModel)]="editedEquipment!.name" 
+                      name="name" 
+                      required
+                    >
+                  } @else {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      [ngModel]="equipment()!.name" 
+                      name="name" 
+                      readonly
+                    >
+                  }
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="model" class="col-sm-3 col-form-label">型號</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="model" 
+                      [(ngModel)]="editedEquipment!.model" 
+                      name="model"
+                    >
+                  } @else {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      [ngModel]="equipment()!.model" 
+                      name="model" 
+                      readonly
+                    >
+                  }
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="serialNumber" class="col-sm-3 col-form-label">序號</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="serialNumber" 
+                      [(ngModel)]="editedEquipment!.serialNumber" 
+                      name="serialNumber"
+                    >
+                  } @else {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      [ngModel]="equipment()!.serialNumber" 
+                      name="serialNumber" 
+                      readonly
+                    >
+                  }
+                </div>
+              </div>
+              
+              <div class="row mb-3">
+                <label for="purchaseDate" class="col-sm-3 col-form-label">購買日期</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <input 
+                      type="date" 
+                      class="form-control" 
+                      id="purchaseDate" 
+                      [(ngModel)]="editedEquipment!.purchaseDate" 
+                      name="purchaseDate"
+                    >
+                  } @else {
+                    <input 
+                      type="date" 
+                      class="form-control" 
+                      [ngModel]="equipment()!.purchaseDate" 
+                      name="purchaseDate" 
+                      readonly
+                    >
+                  }
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="maintenanceDate" class="col-sm-3 col-form-label">最近維護日期</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <input 
+                      type="date" 
+                      class="form-control" 
+                      id="maintenanceDate" 
+                      [(ngModel)]="editedEquipment!.maintenanceDate" 
+                      name="maintenanceDate"
+                    >
+                  } @else {
+                    <input 
+                      type="date" 
+                      class="form-control" 
+                      [ngModel]="equipment()!.maintenanceDate" 
+                      name="maintenanceDate" 
+                      readonly
+                    >
+                  }
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="inspectionDate" class="col-sm-3 col-form-label">檢查日期</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <input 
+                      type="date" 
+                      class="form-control" 
+                      id="inspectionDate" 
+                      [(ngModel)]="editedEquipment!.inspectionDate" 
+                      name="inspectionDate"
+                    >
+                  } @else {
+                    <input 
+                      type="date" 
+                      class="form-control" 
+                      [ngModel]="equipment()!.inspectionDate" 
+                      name="inspectionDate" 
+                      readonly
+                    >
+                  }
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="isQualified" class="col-sm-3 col-form-label">合格狀態</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <select 
+                      class="form-select" 
+                      id="isQualified" 
+                      [(ngModel)]="editedEquipment!.isQualified" 
+                      name="isQualified"
+                    >
+                      <option [ngValue]="true">合格</option>
+                      <option [ngValue]="false">不合格</option>
+                    </select>
+                  } @else {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="isQualified" 
+                      [ngModel]="equipment()!.isQualified === undefined ? '未檢查' : (equipment()!.isQualified ? '合格' : '不合格')" 
+                      name="isQualified"
+                      readonly
+                    >
+                  }
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="status" class="col-sm-3 col-form-label">狀態</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <select 
+                      class="form-select" 
+                      id="status" 
+                      [(ngModel)]="editedEquipment!.status" 
+                      name="status"
+                    >
+                      <option value="available">可用</option>
+                      <option value="inUse">使用中</option>
+                      <option value="maintenance">維修中</option>
+                      <option value="retired">已報廢</option>
+                    </select>
+                  } @else {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="status" 
+                      [ngModel]="equipment()!.status === 'available' ? '可用' : 
+                                equipment()!.status === 'inUse' ? '使用中' : 
+                                equipment()!.status === 'maintenance' ? '維修中' : '已報廢'" 
+                      name="status"
+                      readonly
+                    >
+                  }
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="location" class="col-sm-3 col-form-label">位置</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="location" 
+                      [(ngModel)]="editedEquipment!.location" 
+                      name="location"
+                    >
+                  } @else {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      [ngModel]="equipment()!.location" 
+                      name="location" 
+                      readonly
+                    >
+                  }
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label for="description" class="col-sm-3 col-form-label">描述</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <textarea 
+                      class="form-control" 
+                      id="description" 
+                      [(ngModel)]="editedEquipment!.description" 
+                      name="description"
+                      rows="3"
+                    ></textarea>
+                  } @else {
+                    <textarea 
+                      class="form-control" 
+                      id="description" 
+                      [ngModel]="equipment()!.description" 
+                      name="description"
+                      rows="3"
+                      readonly
+                    ></textarea>
+                  }
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">設備照片</h5>
+          </div>
+          <div class="card-body">
+            @if (isNewEquipment()) {
+            <div class="alert alert-info">
+              請先儲存設備基本資訊後，再上傳照片。
+            </div>
+            } @else {
+            <form class="mb-4" (ngSubmit)="uploadPhoto()">
+              <div class="mb-3">
+                <label for="photo-upload" class="form-label">上傳新照片</label>
+                <input 
+                  type="file" 
+                  class="form-control" 
+                  id="photo-upload" 
+                  accept="image/*" 
+                  (change)="onFileSelected($event)"
+                >
+              </div>
+              <div class="mb-3">
+                <label for="caption" class="form-label">照片說明</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="caption" 
+                  [(ngModel)]="photoCaption" 
+                  name="caption"
+                >
+              </div>
+              <div class="d-flex justify-content-end">
+                <button 
+                  type="submit" 
+                  class="btn btn-primary" 
+                  [disabled]="!selectedFile || isUploading()"
+                >
+                  @if (isUploading()) {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    上傳中...
+                  } @else {
+                    上傳照片
+                  }
+                </button>
+              </div>
+            </form>
+
+            @if (equipment()!.photos) {
+              <div class="row row-cols-1 row-cols-md-2 g-4">
+                @for (photo of equipment()!.photos ?? []; track photo.filename; let i = $index) {
+                  <div class="col">
+                    <div class="card h-100">
+                      <img 
+                        [src]="getPhotoUrl(photo.filename)" 
+                        class="card-img-top equipment-photo" 
+                        alt="設備照片"
+                      >
+                      <div class="card-body">
+                        <p class="card-text">{{ photo.caption || '無說明' }}</p>
+                        <p class="card-text"><small class="text-muted">
+                          上傳於: {{ photo.uploadDate | date:'yyyy-MM-dd HH:mm' }}
+                        </small></p>
+                      </div>
+                      <div class="card-footer d-flex justify-content-end">
+                        <button 
+                          class="btn btn-sm btn-danger" 
+                          (click)="deletePhoto(i)"
+                        >
+                          刪除
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="alert alert-info">
+                目前沒有設備照片，請上傳新照片。
+              </div>
+            }
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div> 

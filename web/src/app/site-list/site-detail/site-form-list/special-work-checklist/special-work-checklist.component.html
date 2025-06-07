@@ -1,0 +1,525 @@
+<div class="container-fluid bg-light min-vh-100 p-3">
+  <div class="card form-card shadow-sm">
+    <div class="card-body p-4">
+      <!-- 實際表單內容容器 -->
+      <div class="print-content">
+        <!-- 表單頭部 -->
+        <div
+          class="d-flex justify-content-between align-items-center mb-3 pb-2"
+        >
+          <div>
+            <!-- @if (site()?.formLogo) {
+            <img
+              [src]="site()?.formLogo"
+              alt="公司Logo"
+              class="img-fluid"
+              style="max-width: 100px; max-height: 100px"
+              />
+            } -->
+            <img
+              src="assets/miclogo.jpg"
+              alt="公司Logo"
+              class="img-fluid"
+              style="max-width: 100px; max-height: 100px"
+            />
+          </div>
+          <div class="form-title text-center fw-bold p-2 flex-grow-1 mx-3">
+            <h5 class="m-0 fw-bold">帆宣系統科技南科分公司</h5>
+            <h6 class="m-0 fw-bold fst-italic">
+              Marketech International Corp.
+            </h6>
+            <h5 class="m-1 fw-bold">特殊作業工安自主檢點表</h5>
+          </div>
+          <div style="width: 100px"></div>
+        </div>
+
+        <!-- 作業類型選擇 -->
+        <div class="mb-3">
+          <div class="fw-bold mb-2">作業名稱：</div>
+          <div class="border border-dark p-3">
+            <div class="row">
+              @for (workType of workTypes; track $index) {
+              <div class="col-md-3 mb-2">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="workType"
+                    [id]="'workType' + $index"
+                    [value]="workType"
+                    [(ngModel)]="checklistData.workType"
+                    (change)="onWorkTypeChange()"
+                    [title]="'選擇作業類型' + workType"
+                    [attr.aria-label]="'選擇作業類型' + workType"
+                  />
+                  <label class="form-check-label" [for]="'workType' + $index">
+                    {{ workType }}
+                  </label>
+                </div>
+              </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- 基本資訊表格 -->
+        <table class="table table-bordered border-dark mb-3">
+          <tbody>
+            <tr>
+              <td class="bg-light fw-normal" style="width: 15%">施工地點：</td>
+              <td style="width: 20%" class="py-2 px-2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0"
+                  id="location"
+                  name="location"
+                  [(ngModel)]="checklistData.location"
+                  aria-label="施工地點"
+                />
+              </td>
+              <td class="bg-light fw-normal" style="width: 10%">廠區：</td>
+              <td style="width: 20%" class="py-2 px-2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0"
+                  id="factoryArea"
+                  name="factoryArea"
+                  [(ngModel)]="checklistData.factoryArea"
+                  aria-label="廠區"
+                />
+              </td>
+              <td class="bg-light fw-normal" style="width: 15%">作業單位：</td>
+              <td style="width: 20%" class="py-2 px-2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0"
+                  id="projectNo"
+                  name="projectNo"
+                  [(ngModel)]="checklistData.projectNo"
+                  aria-label="作業單位"
+                />
+              </td>
+              <td class="bg-light fw-normal" style="width: 10%">日期：</td>
+              <td style="width: 15%" class="py-2 px-2">
+                <input
+                  type="date"
+                  class="form-control border-0 bg-transparent p-0"
+                  id="checkDate"
+                  name="checkDate"
+                  [(ngModel)]="checklistData.applyDate"
+                  aria-label="檢查日期"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- 施工前檢點表 -->
+        <table class="table table-bordered border-dark mb-4">
+          <thead>
+            <tr class="bg-light">
+              <th style="width: 5%" class="text-center fw-bold py-2">項目</th>
+              <th style="width: 5%" class="text-center fw-bold py-2">代碼</th>
+              <th style="width: 60%" class="text-center fw-bold py-2">
+                檢點項目
+              </th>
+              <th style="width: 15%" class="text-center fw-bold py-2">
+                <div>結果</div>
+                <div class="d-flex justify-content-around small mt-1">
+                  <span class="cursor-pointer text-decoration-underline" 
+                        (click)="selectAllForColumn('正常', 'preWork')"
+                        title="點擊選擇所有項目為正常">正常</span>
+                  <span class="cursor-pointer text-decoration-underline" 
+                        (click)="selectAllForColumn('異常', 'preWork')"
+                        title="點擊選擇所有項目為異常">異常</span>
+                  <span >不適用</span>
+                </div>
+              </th>
+              <th style="width: 15%" class="text-center fw-bold py-2">
+                異常改善措施
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td
+                [attr.rowspan]="getPreWorkItems().length + 1"
+                class="align-middle text-center bg-light fw-bold"
+                style="writing-mode: vertical-lr; text-orientation: upright"
+              >
+                一、施工前
+              </td>
+              <td colspan="4" class="bg-light fw-bold text-center py-2">
+                {{ checklistData.workType }}施工前檢查項目
+              </td>
+            </tr>
+
+            @for (item of getPreWorkItems(); track item.code) {
+            <tr>
+              <td>{{ item.code }}</td>
+              <td>{{ item.description }}</td>
+              <td class="text-center">
+                <div class="d-flex justify-content-around">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    [(ngModel)]="checklistData.items[item.code]"
+                    [name]="item.code"
+                    [id]="item.code + '_normal'"
+                    value="正常"
+                    [title]="'選擇' + item.code + '狀態為正常'"
+                    [attr.aria-label]="'選擇' + item.code + '狀態為正常'"
+                  />
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    [(ngModel)]="checklistData.items[item.code]"
+                    [name]="item.code"
+                    [id]="item.code + '_abnormal'"
+                    value="異常"
+                    [title]="'選擇' + item.code + '狀態為異常'"
+                    [attr.aria-label]="'選擇' + item.code + '狀態為異常'"
+                  />
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    [(ngModel)]="checklistData.items[item.code]"
+                    [name]="item.code"
+                    [id]="item.code + '_na'"
+                    value="不適用"
+                    [title]="'選擇' + item.code + '為不適用'"
+                    [attr.aria-label]="'選擇' + item.code + '為不適用'"
+                  />
+                </div>
+
+                <!-- 顯示額外的輸入欄位 -->
+                @if (item.inputFields && item.inputFields.length > 0) {
+                <div class="mt-2 border-top pt-2">
+                  @for (field of item.inputFields; track field.key) {
+                  <div class="form-group row mb-1">
+                    <label
+                      [for]="item.code + '_' + field.key"
+                      class="col-form-label col-sm-3 text-end"
+                      >{{ field.label }}:</label
+                    >
+                    <div class="col-sm-9">
+                      <input
+                        [type]="field.type"
+                        class="form-control form-control-sm"
+                        [id]="item.code + '_' + field.key"
+                        [(ngModel)]="
+                          checklistData.itemInputs[item.code][field.key]
+                        "
+                        [name]="item.code + '_' + field.key"
+                        [placeholder]="field.placeholder"
+                        [title]="field.label"
+                        [attr.aria-label]="field.label"
+                      />
+                    </div>
+                  </div>
+                  }
+                </div>
+                }
+              </td>
+              <td>
+                @if (checklistData.items[item.code] === '異常') {
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="checklistData.fixes[item.code]"
+                  [name]="'fix_' + item.code"
+                  placeholder="請輸入改善措施"
+                  [title]="item.code + '改善措施'"
+                />
+                }
+              </td>
+            </tr>
+            }
+            <!-- 施工前簽名行 -->
+            <tr class="bg-light">
+              <td colspan="2" class="text-center fw-bold py-2">監工</td>
+              <td class="text-center fw-bold py-2">作業人員</td>
+              <td colspan="2" class="text-center fw-bold py-2">檢點時間</td>
+            </tr>
+            <tr>
+              <td
+                colspan="2"
+                class="text-center signature-area"
+                (click)="openSignatureDialog(SignatureType.PreWorkSupervisor)"
+                style="height: 60px; cursor: pointer"
+              >
+                @if (preWorkSupervisorSignature) {
+                <img
+                  [src]="preWorkSupervisorSignature"
+                  alt="施工前監工簽名"
+                  class="signature-image"
+                  style="max-height: 58px"
+                />
+                } @else {
+                <div class="signature-placeholder text-muted small">
+                  點擊簽名
+                </div>
+                }
+              </td>
+              <td
+                class="text-center signature-area"
+                (click)="openSignatureDialog(SignatureType.PreWorkWorker)"
+                style="height: 60px; cursor: pointer"
+              >
+                @if (preWorkWorkerSignature) {
+                <img
+                  [src]="preWorkWorkerSignature"
+                  alt="施工前作業人員簽名"
+                  class="signature-image"
+                  style="max-height: 58px"
+                />
+                } @else {
+                <div class="signature-placeholder text-muted small">
+                  點擊簽名
+                </div>
+                }
+              </td>
+              <td colspan="2" class="py-2 px-2 align-middle">
+                <input
+                  type="datetime-local"
+                  class="form-control border-0 bg-transparent small"
+                  name="preWorkCheckTime"
+                  [(ngModel)]="checklistData.preWorkCheckTime"
+                  aria-label="施工前檢點時間"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- 收工前檢點表 -->
+        <table class="table table-bordered border-dark mb-4">
+          <thead>
+            <tr class="bg-light">
+              <th style="width: 5%" class="text-center fw-bold py-2">項目</th>
+              <th style="width: 5%" class="text-center fw-bold py-2">代碼</th>
+              <th style="width: 60%" class="text-center fw-bold py-2">
+                檢點項目
+              </th>
+              <th style="width: 15%" class="text-center fw-bold py-2">
+                <div>結果</div>
+                <div class="d-flex justify-content-around small mt-1">
+                  <span class="cursor-pointer text-decoration-underline" 
+                        (click)="selectAllForColumn('正常', 'postWork')"
+                        title="點擊選擇所有項目為正常">正常</span>
+                  <span class="cursor-pointer text-decoration-underline" 
+                        (click)="selectAllForColumn('異常', 'postWork')"
+                        title="點擊選擇所有項目為異常">異常</span>
+                  <span class="cursor-pointer text-decoration-underline" 
+                        (click)="selectAllForColumn('不適用', 'postWork')"
+                        title="點擊選擇所有項目為不適用">不適用</span>
+                </div>
+              </th>
+              <th style="width: 15%" class="text-center fw-bold py-2">
+                異常改善措施
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td
+                [attr.rowspan]="getPostWorkItems().length + 1"
+                class="align-middle text-center bg-light fw-bold"
+                style="writing-mode: vertical-lr; text-orientation: upright"
+              >
+                二、收工前
+              </td>
+              <td colspan="4" class="bg-light fw-bold text-center py-2">
+                收工前檢查項目
+              </td>
+            </tr>
+
+            @for (item of getPostWorkItems(); track item.code) {
+            <tr>
+              <td>{{ item.code }}</td>
+              <td>{{ item.description }}</td>
+              <td class="text-center">
+                <div class="d-flex justify-content-around">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    [(ngModel)]="checklistData.items[item.code]"
+                    [name]="item.code"
+                    [id]="item.code + '_normal'"
+                    value="正常"
+                    [title]="'選擇' + item.code + '狀態為正常'"
+                    [attr.aria-label]="'選擇' + item.code + '狀態為正常'"
+                  />
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    [(ngModel)]="checklistData.items[item.code]"
+                    [name]="item.code"
+                    [id]="item.code + '_abnormal'"
+                    value="異常"
+                    [title]="'選擇' + item.code + '狀態為異常'"
+                    [attr.aria-label]="'選擇' + item.code + '狀態為異常'"
+                  />
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    [(ngModel)]="checklistData.items[item.code]"
+                    [name]="item.code"
+                    [id]="item.code + '_na'"
+                    value="不適用"
+                    [title]="'選擇' + item.code + '為不適用'"
+                    [attr.aria-label]="'選擇' + item.code + '為不適用'"
+                  />
+                </div>
+
+                <!-- 顯示額外的輸入欄位 -->
+                @if (item.inputFields && item.inputFields.length > 0) {
+                <div class="mt-2 border-top pt-2">
+                  @for (field of item.inputFields; track field.key) {
+                  <div class="form-group row mb-1">
+                    <label
+                      [for]="item.code + '_' + field.key"
+                      class="col-form-label col-sm-3 text-end"
+                      >{{ field.label }}:</label
+                    >
+                    <div class="col-sm-9">
+                      <input
+                        [type]="field.type"
+                        class="form-control form-control-sm"
+                        [id]="item.code + '_' + field.key"
+                        [(ngModel)]="
+                          checklistData.itemInputs[item.code][field.key]
+                        "
+                        [name]="item.code + '_' + field.key"
+                        [placeholder]="field.placeholder"
+                        [title]="field.label"
+                        [attr.aria-label]="field.label"
+                      />
+                    </div>
+                  </div>
+                  }
+                </div>
+                }
+              </td>
+              <td>
+                @if (checklistData.items[item.code] === '異常') {
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="checklistData.fixes[item.code]"
+                  [name]="'fix_' + item.code"
+                  placeholder="請輸入改善措施"
+                  [title]="item.code + '改善措施'"
+                />
+                }
+              </td>
+            </tr>
+            }
+            <!-- 收工前簽名行 -->
+            <tr class="bg-light">
+              <td colspan="2" class="text-center fw-bold py-2">監工</td>
+              <td class="text-center fw-bold py-2">作業人員</td>
+              <td colspan="2" class="text-center fw-bold py-2">檢點時間</td>
+            </tr>
+            <tr>
+              <td
+                colspan="2"
+                class="text-center signature-area"
+                (click)="openSignatureDialog(SignatureType.PostWorkSupervisor)"
+                style="height: 60px; cursor: pointer"
+              >
+                @if (postWorkSupervisorSignature) {
+                <img
+                  [src]="postWorkSupervisorSignature"
+                  alt="收工前監工簽名"
+                  class="signature-image"
+                  style="max-height: 58px"
+                />
+                } @else {
+                <div class="signature-placeholder text-muted small">
+                  點擊簽名
+                </div>
+                }
+              </td>
+              <td
+                class="text-center signature-area"
+                (click)="openSignatureDialog(SignatureType.PostWorkWorker)"
+                style="height: 60px; cursor: pointer"
+              >
+                @if (postWorkWorkerSignature) {
+                <img
+                  [src]="postWorkWorkerSignature"
+                  alt="收工前作業人員簽名"
+                  class="signature-image"
+                  style="max-height: 58px"
+                />
+                } @else {
+                <div class="signature-placeholder text-muted small">
+                  點擊簽名
+                </div>
+                }
+              </td>
+              <td colspan="2" class="py-2 px-2 align-middle">
+                <input
+                  type="datetime-local"
+                  class="form-control border-0 bg-transparent small"
+                  name="postWorkCheckTime"
+                  [(ngModel)]="checklistData.postWorkCheckTime"
+                  aria-label="收工前檢點時間"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- 備註說明 -->
+        <div class="mb-3">
+          <div class="fw-bold mb-2 bg-light p-2 border">備註</div>
+          <div class="border border-dark p-3">
+            <div class="small">
+              <div class="mb-2">
+                <span class="fw-bold">1.使用時機：</span
+                >本表單應於每日作業前及收工前檢查；各分批作業時，各小組均應進行本表單之檢點並標示於明顯處。
+              </div>
+              <div class="mb-2">
+                <span class="fw-bold">2.檢點方式：</span
+                >作業人員應於適合的檢查欄位內標註選擇「正常」、「異常」或「不適用」。
+              </div>
+              <div class="mb-2">
+                <span class="fw-bold">3.歸檔：</span
+                >本表最晚於每日作業檢點後，與工作許可單一併保存備查。
+              </div>
+              <div>
+                <span class="fw-bold">4.檢點項目：</span
+                >檢點內容若不足時可自行增加於空白處。
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 表單編號 -->
+        <div class="text-end mb-3">
+          <small class="text-muted">EE-4404-03A</small>
+        </div>
+      </div>
+
+      <!-- 按鈕區域 -->
+      <div class="d-flex justify-content-center gap-3 mt-4 pt-3">
+        <button
+          type="button"
+          class="btn btn-outline-secondary px-4"
+          (click)="cancel()"
+        >
+          <i class="bi bi-x-circle me-1"></i>取消
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary px-4"
+          (click)="saveChecklist()"
+        >
+          <i class="bi bi-save me-1"></i>保存
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,427 @@
+// 變數
+$primary-color: #1890ff;
+$secondary-color: #52c41a;
+$danger-color: #ff4d4f;
+$background-color: #001529;
+$background-gradient: linear-gradient(135deg, #1a365d 0%, #0f766e 100%);
+$card-background: rgba(255, 255, 255, 0.1);
+$text-color: #ffffff;
+$border-radius: 12px;
+$box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+$transition: all 0.3s ease;
+
+// 容器樣式
+.weather-detail-container {
+  padding: 20px;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  background: $background-gradient;
+  color: $text-color;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+// 返回按鈕
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 30px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: $transition;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+  
+  i {
+    font-size: 1.2rem;
+  }
+}
+
+// 載入狀態
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: $primary-color;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 16px;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+}
+
+// 錯誤狀態
+.error-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  
+  i {
+    font-size: 3rem;
+    color: $danger-color;
+    margin-bottom: 16px;
+  }
+  
+  p {
+    font-size: 1.2rem;
+  }
+}
+
+// 頭部樣式
+.weather-header {
+  text-align: center;
+  margin-bottom: 30px;
+  width: 100%;
+  
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    
+    @media (max-width: 768px) {
+      font-size: 1.5rem;
+    }
+  }
+  
+  p {
+    font-size: 1rem;
+    opacity: 0.8;
+  }
+}
+
+// 當前天氣
+.current-weather {
+  background-color: $card-background;
+  border-radius: $border-radius;
+  padding: 24px;
+  margin-bottom: 30px;
+  box-shadow: $box-shadow;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  width: 100%;
+  box-sizing: border-box;
+  
+  .current-weather-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    img {
+      width: 90px;
+      height: 90px;
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+    }
+    
+    .temp-condition {
+      margin-left: 20px;
+      
+      @media (max-width: 768px) {
+        margin-left: 0;
+        margin-top: 16px;
+      }
+      
+      h2 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin: 0;
+        
+        @media (max-width: 768px) {
+          font-size: 2.5rem;
+        }
+      }
+      
+      p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// 天氣詳情網格
+.weather-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  width: 100%;
+  
+  @media (max-width: 576px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .weather-detail-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.15);
+    padding: 16px 8px;
+    border-radius: 8px;
+    transition: $transition;
+    text-align: center;
+    min-height: 100px;
+    
+    @media (max-width: 576px) {
+      padding: 12px 6px;
+      min-height: 85px;
+    }
+    
+    &:hover {
+      transform: translateY(-3px);
+      background-color: rgba(0, 0, 0, 0.25);
+    }
+    
+    i {
+      font-size: 1.8rem;
+      color: $primary-color;
+      margin-bottom: 8px;
+      
+      @media (max-width: 576px) {
+        font-size: 1.5rem;
+        margin-bottom: 6px;
+      }
+    }
+    
+    span {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 4px;
+      
+      @media (max-width: 576px) {
+        font-size: 0.8rem;
+      }
+    }
+    
+    strong {
+      font-size: 1.1rem;
+      font-weight: 600;
+      
+      @media (max-width: 576px) {
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+// 預報區塊
+.forecast-section {
+  margin-bottom: 30px;
+  width: 100%;
+  
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    @media (max-width: 768px) {
+      font-size: 1.3rem;
+    }
+  }
+}
+
+// 預報天數卡片
+.forecast-days {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  width: 100%;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .forecast-day-card {
+    background-color: $card-background;
+    border-radius: $border-radius;
+    overflow: hidden;
+    box-shadow: $box-shadow;
+    transition: $transition;
+    
+    &:hover {
+      transform: translateY(-5px);
+    }
+    
+    .forecast-day-header {
+      background-color: rgba(0, 0, 0, 0.2);
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      h3 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+      
+      img {
+        width: 50px;
+        height: 50px;
+      }
+    }
+    
+    .forecast-day-body {
+      padding: 16px;
+      
+      .forecast-temp {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        
+        .max-temp {
+          font-size: 1.3rem;
+          font-weight: 600;
+          color: #ff7875;
+        }
+        
+        .min-temp {
+          font-size: 1.3rem;
+          font-weight: 600;
+          color: #69c0ff;
+        }
+      }
+      
+      p {
+        text-align: center;
+        margin-bottom: 16px;
+      }
+      
+      .forecast-extra {
+        display: flex;
+        justify-content: space-between;
+        
+        div {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          
+          i {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+          }
+          
+          span {
+            font-size: 0.9rem;
+            opacity: 0.9;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 每小時預報
+.hourly-forecast-section {
+  margin-bottom: 30px;
+  width: 100%;
+  
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    @media (max-width: 768px) {
+      font-size: 1.3rem;
+    }
+  }
+}
+
+.hourly-forecast-container {
+  display: flex;
+  overflow-x: auto;
+  padding: 10px 0;
+  gap: 12px;
+  width: 100%;
+  
+  /* 滾動條樣式 */
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+  }
+  
+  .hourly-forecast-item {
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: $card-background;
+    padding: 12px 8px;
+    border-radius: 8px;
+    transition: $transition;
+    position: relative;
+    flex-shrink: 0;
+    
+    &:hover {
+      transform: translateY(-3px);
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    span {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+    
+    img {
+      width: 40px;
+      height: 40px;
+      margin-bottom: 8px;
+    }
+    
+    .hour-temp {
+      font-weight: 600;
+    }
+    
+    .hour-rain-chance {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: rgba(24, 144, 255, 0.2);
+      border-radius: 0 0 8px 8px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      
+      span {
+        font-size: 0.8rem;
+        opacity: 0.9;
+        padding: 2px 0;
+      }
+    }
+  }
+}

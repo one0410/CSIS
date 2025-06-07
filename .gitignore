@@ -1,0 +1,9 @@
+.DS_Store
+server/meeting
+server/csiserver.exe
+server/csiserver
+*.lockb
+yarn.lock
+server/logs/
+server/node_modules/
+server/wwwroot/

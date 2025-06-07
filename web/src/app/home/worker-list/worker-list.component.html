@@ -1,0 +1,132 @@
+<div class="d-flex flex-column w-100 h-100">
+  <div class="d-flex justify-content-end m-2 gap-2">
+    <button class="btn btn-primary" [routerLink]="['/worker', 'new']">新增人才</button>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importWorkerModal">匯入人才</button>
+  </div>
+
+  <!-- ag-grid -->
+  <ag-grid-angular
+    class="ag-theme-quartz w-100 h-100"
+    [gridOptions]="gridOptions"
+    (gridReady)="onGridReady($event)"
+  ></ag-grid-angular>
+</div>
+
+<!-- 匯入人才 modal -->
+<div class="modal fade" id="importWorkerModal" tabindex="-1" aria-labelledby="importWorkerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="importWorkerModalLabel">匯入人才</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <!-- 第一階段：檔案選擇 (只在未處理且無結果時顯示) -->
+          @if (!isProcessing && !importResult) {
+            <div class="mb-3">
+              <div class="drop-zone" 
+                   (dragover)="onDragOver($event)" 
+                   (dragleave)="onDragLeave($event)" 
+                   (drop)="onDrop($event)">
+                請上傳 人員.zip 檔案, 或將檔案拖放至此
+              </div>
+              <input type="file" class="form-control" id="fileUpload" accept=".zip" (change)="onFileSelected($event)"/>
+              <div class="mt-2 text-muted small">
+                <p>
+                  <i class="bi bi-info-circle"></i> 
+                  ZIP檔案中應包含「人員入場資料」目錄，其中有「人員入場清單.xlsx」檔案。
+                  <a href="assets/人員入場資料.zip" download="人員入場資料.zip" class="link-primary">下載範例檔案</a>
+                </p>
+                <p>
+                  <strong>資料格式要求：</strong> Excel檔案必須包含「承攬公司」欄位，以及其他相關人員資訊。
+                </p>
+              </div>
+            </div>
+          }
+          
+          <!-- 處理狀態 -->
+          @if (isProcessing) {
+            <div class="mt-3">
+              <div class="progress mb-2">
+                <div class="progress-bar" 
+                     role="progressbar" 
+                     [style.width.%]="processProgress" 
+                     [attr.aria-valuenow]="processProgress" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100">
+                  {{processProgress}}%
+                </div>
+              </div>
+              <p class="text-muted" style="white-space: pre-line;">{{processStatus}}</p>
+            </div>
+          }
+          
+          <!-- 結果顯示 -->
+          @if (importResult) {
+            <div class="mt-3">
+              <div class="alert" [ngClass]="importResult.success ? 'alert-success' : 'alert-danger'">
+                <h6>處理結果</h6>
+                <p>{{importResult.message}}</p>
+                @if (importResult.details && importResult.details.length > 0) {
+                  @if (!importResult.success && importResult.formattedErrors) {
+                    <table class="table table-sm table-striped">
+                      <thead>
+                        <tr>
+                          <th>行號</th>
+                          <th>姓名</th>
+                          <th>身分證字號</th>
+                          <th>錯誤類型</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (error of importResult.formattedErrors; track error) {
+                          <tr>
+                            <td>{{error.row}}</td>
+                            <td>{{error.name}}</td>
+                            <td>{{error.idno}}</td>
+                            <td>{{error.errorType}}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                    @if (importResult.moreErrors) {
+                      <p class="text-muted small">...還有 {{importResult.moreErrors}} 筆未顯示</p>
+                    }
+                  } @else {
+                    <ul>
+                      @for (detail of importResult.details; track detail) {
+                        <li>{{detail}}</li>
+                      }
+                    </ul>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </form>
+      </div>
+      <div class="modal-footer">
+        <!-- 關閉按鈕：處理中時禁用，其他時候都可用 -->
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" [disabled]="isProcessing" (click)="closeModal()">關閉</button>
+        
+        <!-- 第一階段：有成功解析結果且未處理且未完成時，顯示匯入按鈕 -->
+        @if (importResult?.success && !isProcessing && !isCompleted) {
+          <button type="button" class="btn btn-primary" (click)="refreshData()">
+            匯入並刷新
+          </button>
+        }
+        
+        <!-- 第二階段：處理中時，顯示處理中按鈕 -->
+        @if (isProcessing) {
+          <button type="button" class="btn btn-primary" disabled>
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            處理中...
+          </button>
+        }
+        
+        <!-- 第三階段：處理完成後，只顯示關閉按鈕（上面已有） -->
+      </div>
+    </div>
+  </div>
+</div>

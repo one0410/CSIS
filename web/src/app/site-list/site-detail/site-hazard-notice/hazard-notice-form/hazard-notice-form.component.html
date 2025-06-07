@@ -1,0 +1,1075 @@
+<div class="container-fluid bg-light min-vh-100 p-3">
+  <div class="card form-card shadow-sm">
+    <div class="card-body p-4">
+      <!-- 實際表單內容容器 -->
+      <div class="print-content">
+        <!-- 表單頭部 -->
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
+          <div>
+            <!-- @if (site()?.formLogo) {
+            <img
+              [src]="site()?.formLogo"
+              alt="公司Logo"
+              class="img-fluid"
+              style="max-width: 100px; max-height: 100px"
+            />
+            } -->
+            <img
+              src="assets/miclogo.jpg"
+              alt="公司Logo"
+              class="img-fluid"
+              style="max-width: 100px; max-height: 100px"
+            />
+          </div>
+          <div class="form-title text-center p-2 flex-grow-1 mx-3">
+            <h3 class="fw-bold">施工作業安全暨危害因素告知單</h3>
+          </div>
+          <div style="width: 100px"></div>
+        </div>
+
+        <!-- 表單內容 -->
+        <!-- 表頭資訊 -->
+        <div class="form-header-info">
+          <!-- 第一行：公司（長）、廠區、事業處 -->
+          <div class="info-row mb-2">
+            <div style="flex: 4" class="d-flex">
+              <span class="info-label fw-normal">公司：</span>
+              <input
+                type="text"
+                class="info-input company-input w-100"
+                [(ngModel)]="formData.company"
+                readonly
+                aria-label="公司"
+              />
+            </div>
+            <div style="flex: 3" class="d-flex">
+              <span class="info-label fw-normal"
+                >廠區<span class="required">*</span>：</span
+              >
+              <input
+                type="text"
+                class="info-input w-100"
+                [(ngModel)]="formData.area"
+                [readonly]="isViewMode"
+                required
+                aria-label="廠區"
+              />
+            </div>
+            <div style="flex: 3" class="d-flex">
+              <span class="info-label fw-normal">事業處：</span>
+              <input
+                type="text"
+                class="info-input w-100"
+                [(ngModel)]="formData.division"
+                [readonly]="isViewMode"
+                aria-label="事業處"
+              />
+            </div>
+          </div>
+
+          <!-- 第二行：專案編號、施工廠商、施工地點 -->
+          <div class="info-row">
+            <div style="width: 20%" class="d-flex border border-dark py-2">
+              <span class="info-label fw-normal">專案編號：</span>
+              <input
+                type="text"
+                class="info-input w-100"
+                [(ngModel)]="formData.projectNo"
+                [readonly]="isViewMode"
+                aria-label="專案編號"
+              />
+            </div>
+            <div style="width: 55%" class="d-flex border border-dark border-start-0 py-2">
+              <span class="info-label fw-normal"
+                >施工廠商<span class="required">*</span>：</span
+              >
+              <input
+                type="text"
+                class="info-input w-100"
+                [(ngModel)]="formData.contractor"
+                [readonly]="isViewMode"
+                required
+                aria-label="施工廠商"
+              />
+            </div>
+            <div style="width: 25%" class="d-flex border border-dark border-start-0 py-2">
+              <span class="info-label fw-normal"
+                >施工地點<span class="required">*</span>：</span
+              >
+              <input
+                type="text"
+                class="info-input w-100"
+                [(ngModel)]="formData.workLocation"
+                [readonly]="isViewMode"
+                required
+                aria-label="施工地點"
+              />
+            </div>
+          </div>
+
+          <!-- 第三行：工程(作業)名稱、日期 -->
+          <div class="info-row">
+            <div style="width: 75%" class="d-flex border border-dark border-top-0 py-2">
+              <span class="info-label fw-normal"
+                >工程(作業)名稱<span class="required">*</span>：</span
+              >
+              <input
+                type="text"
+                class="info-input work-name-input w-100"
+                [(ngModel)]="formData.workName"
+                [readonly]="isViewMode"
+                required
+                aria-label="工程(作業)名稱"
+              />
+            </div>
+            <div style="width: 25%" class="d-flex border border-dark border-top-0 border-start-0 py-2">
+              <span class="info-label fw-normal">日期<span class="required">*</span>：</span>
+              <input
+                type="date"
+                class="info-input date-input w-100"
+                [(ngModel)]="formData.applyDate"
+                [readonly]="isViewMode"
+                required
+                aria-label="日期"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- 一般安全衛生遵守事項 -->
+        <div class="">
+          <h5 class="m-0 p-2 fw-bold border border-dark border-top-0 text-center">工作環境危害因素及安全衛生告知事項</h5>
+          <div class="section-content p-3 border border-dark border-top-0">
+            <h5 class="section-title m-0 py-2 fw-bold">一、一般安全衛生遵守事項</h5>
+            <p>(一) 承攬商必須遵守有關職安法令及業主有關之安全衛生規章。</p>
+            <p>
+              (二)
+              承攬商之再承攬人，其責任與義務與承攬人相同，亦須遵照本作業辦法。
+            </p>
+            <p>
+              (三)
+              承攬商於工程開工作業前，位工作場所環境可能潛在危險、消防設施及安全衛生規定事項，應採取必要之防範措施。
+            </p>
+            <p>(四) 承攬商施工人員需進廠，須經過業主審核通過才能入廠施工。</p>
+            <p>
+              (五)『共同作業』承攬商，於承攬工程開工前，應加入『安全衛生協議組織』，並遵守協議規定及決議事項。
+            </p>
+            <p>
+              (六)
+              承攬商須參加由專案工程承攬商的協議組織會議，加入成員共同繳交協議組織運作清安基金，
+            </p>
+            <p>
+              (七)
+              施工期間，承攬商應擬定緊急應變計畫，對於可能發生之災害及意外事故，事先採取必要之防護措施。
+            </p>
+            <p>(八) 有關協議事項、會議記錄、緊急應變計畫，均應妥善保管。</p>
+            <p>
+              (九)
+              因預防措施不足及疏於管理、教育，造成人員傷害、工作損失、觸犯法令之一切責任，由承攬商負完全責任。
+            </p>
+            <p>
+              (十)
+              作業人員進入工作場所，應依作業特性，配帶必要之個人安全衛生防護具。
+            </p>
+            <p>(十一) 危險性機械設備操作人員，須依法取得合格執照，始可操作。</p>
+            <p>
+              (十二)
+              承攬商對於所僱用之工作人員，應實施必要之安全衛生教育訓練及災害預防訓練。
+            </p>
+            <p>
+              (十三)
+              承攬商必須負責施工現場環境清潔、整頓，工程所產生之廢棄物應自行清除。
+            </p>
+            <p>
+              (十四) 因應COVID
+              19疫情施工人員須確實配戴口罩，人員進出/場所須以業主規定時間團進團出，集中管理。
+            </p>
+            <p>
+              (十五) 因應COVID
+              19疫情承攬商用餐/休息時程/場所方式，須依業主規定指定時間/位置，須採取固定區域、團體活動、集中管理，承攬商不得有異議
+            </p>
+            <p>(十六) *遇有異常狀況時，立即停止作業，並與監工人員聯繫*</p>
+            <p>
+              工地監工：<input
+                type="text"
+                class="inline-input"
+                [(ngModel)]="formData.siteSupervisor"
+                [readonly]="isViewMode"
+                required
+                aria-label="工地監工"
+              />
+            </p>
+            <p>
+              安衛人員：<input
+                type="text"
+                class="inline-input"
+                [(ngModel)]="formData.safetyOfficer"
+                [readonly]="isViewMode"
+                required
+                aria-label="安衛人員"
+              />
+            </p>
+            <p>(十七) 如上述未提到者，請依帆宣EE-4411安全衛生管理程序辦理</p>
+          </div>
+
+          <!-- 作業中注意事項 -->
+          <div class="section-content p-3 border border-dark border-top-0">
+            <h5 class="section-title m-0 py-2 fw-bold">二、作業中注意事項</h5>
+            <p>(一) 工作中須戴安全帽、穿工作鞋等個人防護具。</p>
+            <p>(二) 人員不得上身赤膊、穿著無袖上衣、短褲、拖鞋</p>
+            <p>(三) 每日作業前，應實施作業前安全裝備檢查級機具檢點。</p>
+            <p>(四) 危險區域應設置警告標示。</p>
+            <p>(五) 易燃物應標示並隔離存放。</p>
+            <p>(六) 嚴禁使用堆高機當作工作平台。</p>
+            <p>(七) 人員不得搭乘堆高機或吊車等搬運機具。</p>
+            <p>(八) 充氣瓶使用，必須分類並做好管理。</p>
+            <p>(九) 吊掛作業下方嚴禁人員行走或逗留。</p>
+            <p>(十) 不得任意啟動非所屬單位內機器開關。</p>
+            <p>(十一) 經常定期檢查及保養機械設備。</p>
+            <p>(十二) 正確使用防護具，防護具應檢點。</p>
+            <p>(十三) 電器接線應按指定開關相接用，絕緣損壞之電器用品嚴禁使用。</p>
+            <p>
+              (十四)
+              作業前使用機具、工具應確實實施點檢，所有捲夾設備嚴禁配戴手套。
+            </p>
+            <p>(十五) 收工前和作業結束時，應保持環境整潔。</p>
+            <p>(十六) 如上述未提到者，請依帆宣EE-4411安全衛生管理程序辦理</p>
+          </div>
+        </div>
+
+        <!-- 作業危害因素 -->
+        <div class="">
+          <h5 class="m-0 p-2 fw-bold border border-dark border-top-0 text-center">作業危害因素</h5>
+          <div class="table-responsive border border-dark border-top-0">
+            <table class="table hazard-table m-0">
+              <thead>
+                <tr>
+                  <th class="text-center fw-bold" width="20%">作業項目</th>
+                  <th class="text-center fw-bold" width="15%">潛在危害因素</th>
+                  <th class="text-center fw-bold">危害防止對策</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-start">
+                    <div class="form-check text-start">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-1"
+                        [(ngModel)]="formData.workItems[0].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="局限空間作業"
+                      />
+                      <label for="work-1">
+                        <span class="fw-bold">1. 局限空間作業</span>
+                        （例如下水道作業、人孔進出作業、水塔清洗作業、污水設施清洗作業等）
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>缺氧</li>
+                      <li>溺水</li>
+                      <li>感電</li>
+                      <li>可燃性氣體</li>
+                      <li>有害物接觸</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>機械通風</li>
+                      <li>個人防護器具(呼吸式防護具)及防護索</li>
+                      <li>實施氧氣及有毒氣體測定</li>
+                      <li>每2小時測定(O2/可燃性氣體濃度)</li>
+                      <li>
+                        蓄水池、化糞池及儲槽等如有液體應予抽乾，避免人員不慎掉落溺斃
+                      </li>
+                      <li>落實自動檢查管理</li>
+                      <li>提出工作許可申請</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-2"
+                        [(ngModel)]="formData.workItems[1].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="動火作業"
+                      />
+                      <label for="work-2">
+                        <span class="fw-bold">2. 動火作業</span>
+                        (例如使用電器工具及能發生燃燒或熱之設備工作，如氧乙炔，電焊等作業，或能產生火花的設備)
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>灼傷</li>
+                      <li>燃燒</li>
+                      <li>爆炸</li>
+                      <li>感電</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>電銲個人防護器具(電焊/面罩/皮手套等)。</li>
+                      <li>備乾粉滅火器/二氧化碳滅火器。</li>
+                      <li>遮火圍幕</li>
+                      <li>電焊機金屬外殼接地，備電擊防止裝置。</li>
+                      <li>
+                        氧乙炔作業須有安全擺放位置/鋼瓶須上下兩條鐵鍊固定/安全眼鏡或安全面罩/防火毯/防火手套/滅火器(不能過期)/通風設備/SDS安全資料/防止逆流或回火之安全裝置/專人作業且有證照。
+                      </li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-3"
+                        [(ngModel)]="formData.workItems[2].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="高架作業"
+                      />
+                      <label for="work-3">
+                        <span class="fw-bold">3. 高架作業</span>
+                        （2公尺以上作業）包含高空作業車
+                        （例如樹木截枝作業、建物屋頂從事拆除作業、大樓外牆清洗作業、空調維護保養作業等）
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>掉落</li>
+                      <li>施工架倒塌</li>
+                      <li>高架作業墜落</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>
+                        CNS 14253背負式安全帶、CNS 14253-3 捲揚式
+                        防墜緩衝器索、安全帽、良好梯子。
+                      </li>
+                      <li>施工架確實牢靠固定。</li>
+                      <li>
+                        施工架頂層應設置九十公分以上護欄，並應包括上欄杆、中欄杆。
+                      </li>
+                      <li>酒醉或有酒醉之虞者、身體虛弱有安全顧慮者不得施工。</li>
+                      <li>情緒不穩定，經醫師診斷認為身體狀況不良者不得施工。</li>
+                      <li>
+                        施工架以鋼管、門型架為之若用孟宗竹應於節點處搭接，以十號以下鍍鋅鐵線紮結牢固。
+                      </li>
+                      <li>
+                        大樓外牆清洗作業吊籠之構造，應符合吊籠安全檢查構造標準，使用足夠長度之捲揚用之鋼索。
+                      </li>
+                      <li>
+                        高度超過1.5公尺以上之場所作業時，應設置能使勞工安全上下之設備。
+                      </li>
+                      <li>
+                        如超過兩公尺且無法安裝施工架或使用工空作業車時，可使用A自梯施作，但施工人員施穿戴背負式安全帶，並天花板或牆面施打壁虎安裝勾環勾住安全掛鉤、並要有人員攙扶梯子。
+                      </li>
+                      <li>
+                        於2公尺以上開口部分作業應設置護蓋或安全網等防護設備。
+                      </li>
+                      <li>落實自動檢查管理。</li>
+                      <li>提出工作許可申請。</li>
+                      <li>從事高空工作車作業人員，須具資格人員才可操作。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-4"
+                        [(ngModel)]="formData.workItems[3].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="吊裝作業"
+                      />
+                      <label for="work-4">
+                        <span class="fw-bold">4. 吊裝作業</span>
+                        (使用各式動力捲揚機械，使吊裝物水平或垂直移位，進而抵達所需位置知作業)
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>翻倒</li>
+                      <li>感電</li>
+                      <li>荷件掉落</li>
+                      <li>交通事故</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>合格人員之操作。</li>
+                      <li>吊車具合格證。</li>
+                      <li>捆綁索檢點。</li>
+                      <li>高壓線防護派人監視。</li>
+                      <li>嚴禁人員待於吊裝物下方。</li>
+                      <li>工作人員得待在吊裝物上方。</li>
+                      <li>
+                        道路吊掛作業須做安全警示及人員指揮，人員須穿戴安全帽反光背心。
+                      </li>
+                      <li>提出工作許可申請。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-5"
+                        [(ngModel)]="formData.workItems[4].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="電氣作業"
+                      />
+                      <label for="work-5">
+                        <span class="fw-bold">5. 電氣作業</span>
+                        (使用電氣設備或電器工具進行作業，如電焊、電鋸、電鑽等)
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>感電</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>備漏電斷路器。</li>
+                      <li>電線架高。</li>
+                      <li>禁經潮溼地。</li>
+                      <li>須先行切斷電源並檢測是否斷電</li>
+                      <li>須有漏電裝置檢測。</li>
+                      <li>
+                        對電路之檢查、修理等活線作業時，應使該作業勞工戴用絕緣用防護具，或應使用活線作業用器具或其他類似之器具。
+                      </li>
+                      <li>
+                        電氣作業應在斷電情況下作業，並將該電路開關上鎖或標示「禁止送電」、「停電作業中」或設置監視人員監視之。
+                      </li>
+                      <li>發電室、變電室或受電室，非工作人員不得任意進入。</li>
+                      <li>交流電焊機裝設自動電擊防止裝置。</li>
+                      <li>落實自動檢查管理。</li>
+                      <li>提出工作許可申請。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-6"
+                        [(ngModel)]="formData.workItems[5].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="管線拆離作業"
+                      />
+                      <label for="work-6">
+                        <span class="fw-bold">6. 管線拆離作業</span>
+                        (拆除舊有電力、化學或氣體管線作業)
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>燃燒</li>
+                      <li>爆炸</li>
+                      <li>感電</li>
+                      <li>有害物接觸</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>
+                        舊有電力、化學或氣體管線拆除前，確認管內電力是否已斷電和管內已無殘留化學或氣體危害物程序
+                      </li>
+                      <li>
+                        管路拆除範圍，有防止非相關人員進入之標示及管制措施。
+                      </li>
+                      <li>應做好安全防護。</li>
+                      <li>提出工作許可申請。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-7"
+                        [(ngModel)]="formData.workItems[6].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="化學作業"
+                      />
+                      <label for="work-7">
+                        <span class="fw-bold">7. 化學作業</span>
+                        (包含有機溶劑(例如強力膠結合劑))
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>有害物接觸</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>機械通風。</li>
+                      <li>裝有有機溶劑之容器皆清楚標示。</li>
+                      <li>使用完畢後，置於指定地點。</li>
+                      <li>提出工作許可申請。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-8"
+                        [(ngModel)]="formData.workItems[7].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="切割作業"
+                      />
+                      <label for="work-8">
+                        <span class="fw-bold">8. 切割作業</span>
+                        (使用切割工具進行切割作業，如砂輪機、圓盤鋸等)
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>感電</li>
+                      <li>夾捲切割擦傷</li>
+                      <li>物體爆裂</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>須配戴安全眼鏡或面罩。</li>
+                      <li>使用砂輪機、圓盤鋸等機具時，安全護罩不得拆除。</li>
+                      <li>使用前和更換切片時須運轉1分鐘。</li>
+                      <li>
+                        應選用Ⅱ類手持電動工具，Ⅱ類電動工具採用雙重絕緣或加強絕緣來防止觸電，銘牌上有「回」字型標誌
+                      </li>
+                      <li>
+                        使用前先檢查砂輪片是否完好；受潮、變形、裂紋、破碎、磕邊缺口或接觸過油類、鹼類的砂輪不得使用。受潮的砂輪片，不得自行烘乾使用。砂輪與接盤軟墊應安裝穩妥，螺帽不得過緊。
+                      </li>
+                      <li>
+                        使用砂輪機應使用防火毯、防火罩，並面向牆壁和放置滅火器。
+                      </li>
+                      <li>使用圓盤鋸應有反撥預防裝置和鋸齒接觸預防裝置。</li>
+                      <li>提出工作許可申請。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-9"
+                        [(ngModel)]="formData.workItems[8].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="拆除作業"
+                      />
+                      <label for="work-9">
+                        <span class="fw-bold">9. 拆除作業</span>
+                        (拆除建築物或構造物作業)
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>墜落</li>
+                      <li>感電</li>
+                      <li>夾捲切割擦傷</li>
+                      <li>有害物接觸</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>進入工地要正確佩戴安全帽。</li>
+                      <li>合梯梯腳間繫材要扣牢。</li>
+                      <li>臨時用電要裝設漏電斷路器。</li>
+                      <li>砂輪機、圓盤鋸等機具要設置護罩。</li>
+                      <li>拆除應按序由外而內、由上而下，逐步拆除。</li>
+                      <li>拆除配電設備及線路，應先切斷電源。</li>
+                      <li>拆除可燃性氣體管線，應先將管中殘存氣體釋放。</li>
+                      <li>
+                        2公尺以上作業要使用移動式施工架或高空工作車並穿戴穿戴CNS
+                        14253背負式安全帶。
+                      </li>
+                      <li>
+                        超過兩公尺且無法安裝施工架或使用工空作業車時，可使用A自梯施作，施工人員施穿戴背負式安全帶，並天花板或牆面施打壁虎掛勾勾住。
+                      </li>
+                      <li>
+                        屋頂拆除，應設置適當強度，且寬度在30公分以上的踏板或裝設安全護網，並使勞工穿戴CNS
+                        14253背負式安全帶並配戴CNS 14253-3 捲揚式 防墜緩衝器。
+                      </li>
+                      <li>
+                        拆除區域應設置圍柵或標示，並選任專人於現場指揮監督。
+                      </li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-10"
+                        [(ngModel)]="formData.workItems[9].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="裝修作業"
+                      />
+                      <label for="work-10">
+                        <span class="fw-bold">10. 裝修作業</span>
+                        (進行裝修作業，如油漆、防水、木工、泥作等)
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>墜落</li>
+                      <li>感電</li>
+                      <li>夾捲切割擦傷</li>
+                      <li>有害物接觸</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>合梯梯腳間繫材要扣牢。</li>
+                      <li>進入工地要正確佩戴安全帽。</li>
+                      <li>臨時用電要裝設漏電斷路器。</li>
+                      <li>砂輪機、圓盤鋸等機具要設置護罩。</li>
+                      <li>開口處要設置90公分高的護欄或安全網。</li>
+                      <li>電焊切割作業，要移除易燃物，並設置滅火器。</li>
+                      <li>油漆、防水作業，要保持空氣流通，並遠離火源。</li>
+                      <li>2公尺以上作業要使用移動式施工架或高空工作車。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-11"
+                        [(ngModel)]="formData.workItems[10].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="油漆作業"
+                      />
+                      <label for="work-11">
+                        <span class="fw-bold">11. 油漆作業</span>
+                        (進行油漆作業，如油漆、防水、木工、泥作等)
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>墜落</li>
+                      <li>有害物接觸</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>
+                        利用合梯作業時，除應注意合梯之構造、材質及規格須符合規定外，使用時應將繫材確實扣牢，人員不得利用合梯行走。
+                      </li>
+                      <li>
+                        勞工工作場所之通道、地板、階梯，應保持不致使勞工跌倒、滑倒、踩傷等之安全狀態，或採取必要之預防措施（例如放置警告標示）。
+                      </li>
+                      <li>現場通風或配戴防護器具。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-12"
+                        [(ngModel)]="formData.workItems[11].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="垃圾清運作業(廢棄物清運)"
+                      />
+                      <label for="work-12">
+                        <span class="fw-bold">12. 垃圾清運作業</span>
+                        (廢棄物清運)
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>墜落</li>
+                      <li>夾傷</li>
+                      <li>跌倒</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>車輛於行駛中，禁止人員攀附於車廂或車頂外。</li>
+                      <li>
+                        請按工作性質配戴口罩、手套，及戴反光帽、穿斑馬衣，著安全鞋等安全配備。
+                      </li>
+                      <li>夜間或雨天作業，須加設警告燈號。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-13"
+                        [(ngModel)]="formData.workItems[12].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="地面清潔作業"
+                      />
+                      <label for="work-13">
+                        <span class="fw-bold">13. 地面清潔作業</span>
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>跌倒</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>
+                        工作場所之通道、地板、階梯，應保持不致使勞工跌倒、滑倒、踩傷等之安全狀態。
+                      </li>
+                      <li>臨時用電要裝設漏電斷路器。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-14"
+                        [(ngModel)]="formData.workItems[13].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="搬運作業(例如物品裝卸)"
+                      />
+                      <label for="work-14">
+                        <span class="fw-bold">14. 搬運作業</span>
+                        (例如物品裝卸)
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>夾傷</li>
+                      <li>跌倒</li>
+                      <li>物體倒塌</li>
+                      <li>崩塌</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>
+                        採取繩索捆綁護網、擋樁、限制高度或變更堆積等必要措施。
+                      </li>
+                      <li>作業時佩戴安全帽、防護手套等。</li>
+                      <li>搬運道路淨空。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-15"
+                        [(ngModel)]="formData.workItems[14].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="環境消毒作業"
+                      />
+                      <label for="work-15">
+                        <span class="fw-bold">15. 環境消毒作業</span>
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>有害物接觸</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>
+                        噴藥時，要穿著個人安全防護裝備安全帽、防護眼鏡、耳塞、防毒面具、手套、長袖、衣袖、長統膠鞋。
+                      </li>
+                      <li>噴藥完畢，立即沐浴更衣，並收妥藥劑空瓶以備收。</li>
+                      <li>操作消毒機應注意噴槍以防噴傷人員。</li>
+                    </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="text-center">
+                    <div class="form-check">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        id="work-16"
+                        [(ngModel)]="formData.workItems[15].selected"
+                        [disabled]="isViewMode || isWorkerSigningMode"
+                        aria-label="外牆修繕作業"
+                      />
+                      <label for="work-16">
+                        <span class="fw-bold">16. 外牆修繕作業</span>
+                      </label>
+                    </div>
+                  </td>
+                  <td>
+                    <ul class="mb-0 ps-0 list-unstyled">
+                      <li>墜落</li>
+                      <li>感電</li>
+                      <li>夾捲切割擦傷</li>
+                      <li>高架作業墜落</li>
+                      <li>施工架倒塌</li>
+                    </ul>
+                  </td>
+                  <td>
+                    <ol class="mb-0 ps-3">
+                      <li>進入工地要正確佩戴安全帽。</li>
+                      <li>
+                        搭設施工架：內、外兩側要設置交叉拉桿及下拉桿；於適當之垂直、水平距離處以壁連桿與構造物妥實連接；構件之連接部分應以適當插銷連接固定穩固；板料應設金屬扣鎖及防脫落鉤；底部之立架，應使用可調型基腳座版。
+                      </li>
+                      <li>
+                        施工架基礎地面應平整，且夯實緊密，並襯以適當材質之墊材。
+                      </li>
+                      <li>
+                        懸臂式施工架或高度超過5公尺以上施工架之構築，要專人妥為安全設計並簽章確認強度計算書。
+                      </li>
+                      <li>
+                        以捲揚機吊運物料，安裝前須核對並確認設計資料及強度計算書。
+                      </li>
+                      <li>
+                        颱風來臨前，受風面積過大的防塵網及帆布，應先予以拆卸固定。
+                      </li>
+                      <li>臨時用電要裝設漏電斷路器。</li>
+                    </ol>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 承攬商人員簽署表 -->
+        <div class="mt-3">
+          <h4 class="signature-title text-center p-2 m-0 fw-bold">
+            安全暨危害因素告知單承攬商人員簽署表
+          </h4>
+          <div class="worker-signatures-list border border-dark border-top-0">
+            @if (formData.workerSignatures.length > 0) {
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
+              @for (signature of formData.workerSignatures; track
+              signature.signedAt) {
+              <div class="col">
+                <div class="card signature-card h-100">
+                  <div class="card-body p-2">
+                    <h6 class="card-title mb-2 fw-bold">{{ signature.name }}{{ signature.company }}</h6>
+                    <img
+                      [src]="signature.signature"
+                      alt="工人簽名"
+                      class="signature-image img-fluid mb-2 w-100"
+                    />
+                    <p class="card-text text-muted small mb-0" title="簽名時間">
+                      {{
+                        signature.signedAt | date : "yyyy-MM-dd HH:mm:ss"
+                      }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              }
+            </div>
+            } @else {
+            <p class="text-muted text-center py-4 fst-italic">尚未有工人簽名</p>
+            }
+          </div>
+        </div>
+
+        <!-- 底部按鈕區域 - 只在登入狀態或非工人簽名模式下顯示 -->
+        @if (isLoggedIn && !isWorkerSigningMode) {
+        <div class="d-flex justify-content-between mt-4 pt-3">
+          <div>
+            <button
+              type="button"
+              (click)="showWorkerVerificationModal()"
+              class="btn btn-secondary btn-sm"
+              aria-label="新增簽名"
+            >
+              <i class="bi bi-plus-circle me-1"></i>新增簽名
+            </button>
+          </div>
+          <div>
+            <button
+              class="btn btn-outline-secondary btn-sm me-2"
+              (click)="cancel()"
+            >
+              <i class="bi bi-x-circle me-1"></i>取消
+            </button>
+            <button class="btn btn-primary btn-sm me-2" (click)="saveForm()">
+              <i class="bi bi-save me-1"></i>儲存
+            </button>
+            @if (formId) {
+            <button class="btn btn-info btn-sm" (click)="showQrCodeModal()">
+              <i class="bi bi-qr-code me-1"></i>顯示 QR Code
+            </button>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- 工人簽名專用按鈕 -->
+        @if (isWorkerSigningMode) {
+        <div class="text-center mt-4 pt-3">
+          <button
+            type="button"
+            (click)="showWorkerVerificationModal()"
+            class="btn btn-primary btn-lg px-4 py-3"
+            aria-label="我要簽名"
+          >
+            <i class="bi bi-pen me-2"></i>我要簽名
+          </button>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- 工人身份驗證 Modal -->
+  <div
+    class="modal fade"
+    id="workerVerificationModal"
+    tabindex="-1"
+    aria-labelledby="workerVerificationModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="workerVerificationModalLabel">
+            工人身份驗證
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="關閉"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="verificationId" class="form-label"
+              >請輸入身份證號碼或手機號碼</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="verificationId"
+              [(ngModel)]="verificationIdOrPhone"
+              placeholder="身份證號碼或手機號碼"
+            />
+          </div>
+          @if (verificationError) {
+          <div class="alert alert-danger">{{ verificationError }}</div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="verifyWorker()"
+          >
+            驗證
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Code Modal -->
+  <div
+    class="modal fade"
+    id="qrCodeModal"
+    tabindex="-1"
+    aria-labelledby="qrCodeModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="qrCodeModalLabel">表單 QR Code</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="關閉"
+          ></button>
+        </div>
+        <div class="modal-body text-center">
+          <p class="mb-3">掃描此 QR Code 可直接在手機上開啟表單進行簽名</p>
+          <div
+            class="qrcode-container mx-auto mb-3"
+            style="width: 250px; height: 250px"
+          >
+            <qrcode
+              [qrdata]="formQrCodeUrl"
+              [width]="250"
+              [errorCorrectionLevel]="'M'"
+            ></qrcode>
+          </div>
+          <small class="text-muted d-block mb-3">{{ formQrCodeUrl }}</small>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            關閉
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

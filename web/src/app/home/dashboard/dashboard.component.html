@@ -1,0 +1,83 @@
+<div class="container-fluid h-100">
+  <h3>各工地進度總覽</h3>
+
+
+
+  <!-- 載入狀態 -->
+  @if (isLoading) {
+    <div class="row g-4">
+      <div class="col-12 text-center">
+        <div class="text-white">
+          <i class="bi bi-hourglass-split me-2"></i>
+          載入工地資料中...
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- 工地列表 -->
+  @if (!isLoading) {
+    @if (sites.length > 0) {
+      <div class="row g-4">
+        @for (site of sites; track site._id) {
+          <div class="col-12 col-lg-6 col-xl-4">
+            <div class="card p-3">
+              <div class="site-card-header mb-3">
+                <h5 class="text-white mb-1">{{ site.projectName }}
+                @if (site.location) {
+                  <small class="text-light opacity-75 fs-6">
+                    <i class="bi bi-geo-alt me-1"></i>{{ site.location }}
+                  </small>
+                }
+                @if (site.county && site.county !== site.location) {
+                  <small class="text-light opacity-75 ms-2 fs-6">
+                    <i class="bi bi-building me-1"></i>{{ site.county }}
+                  </small>
+                }</h5>
+              </div>
+              
+              <div class="site-progress-section">
+                <app-progress-trend-chart [siteId]="site._id"></app-progress-trend-chart>
+              </div>
+              
+              @if (site.startDate && site.endDate) {
+                <div class="site-timeline mt-3">
+                  <div class="row">
+                    <div class="col-6">
+                      <small class="text-light opacity-75">開始日期</small>
+                      <div class="text-white">{{ formatDate(site.startDate) }}</div>
+                    </div>
+                    <div class="col-6">
+                      <small class="text-light opacity-75">結束日期</small>
+                      <div class="text-white">{{ formatDate(site.endDate) }}</div>
+                    </div>
+                  </div>
+                </div>
+              }
+              
+              <div class="site-actions mt-3">
+                <button class="btn btn-outline-light btn-sm" 
+                        (click)="navigateToSite(site._id)"
+                        title="查看工地詳細資訊">
+                  <i class="bi bi-eye me-1"></i>
+                  查看詳情
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- 沒有工地資料 -->
+      <div class="row g-4">
+        <div class="col-12 text-center">
+          <div class="card p-5">
+            <i class="bi bi-building text-light opacity-50 mb-3" style="font-size: 3rem;"></i>
+            <h5 class="text-white mb-2">目前沒有工地資料</h5>
+            <p class="text-light opacity-75">請新增工地後再查看進度總覽</p>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

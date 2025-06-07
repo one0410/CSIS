@@ -1,0 +1,215 @@
+.calendar-container {
+  padding: 20px;
+  height: calc(100vh - 160px); // 自動填滿可用高度，減去導航欄和其他元素的高度
+  min-height: 600px; // 設置最小高度
+  display: flex;
+  flex-direction: column;
+}
+
+// 提醒事件的閃爍動畫
+@keyframes blink {
+  from {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// 提醒事件樣式
+// .reminder-event {
+//   cursor: pointer;
+//   transition: all 0.2s ease;
+//   min-height: 40px;
+//   display: flex;
+//   flex-direction: column;
+//   justify-content: flex-start;
+//   word-break: break-word;
+//   overflow-wrap: break-word;
+//   max-width: 100%;
+// }
+
+// .reminder-event:hover {
+//   transform: scale(1.05);
+//   box-shadow: 0 0 8px rgba(255, 204, 0, 0.7);
+// }
+
+// 一般事件樣式
+.custom-event {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-event:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+// 工地許可單特殊樣式
+.permit-event {
+  height: auto !important;
+  
+  .signature-container {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .signature-icon {
+    display: inline-block;
+    margin: 0 1px;
+  }
+}
+
+// 日曆自定義樣式
+:host ::ng-deep {
+  // 讓FullCalendar組件填滿容器
+  full-calendar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+
+  // 針對 FullCalendar 事件內容自動換行
+  .fc-event-title, 
+  .fc-event-main {
+    white-space: normal !important;
+    word-break: break-all;
+  }
+  
+  // 日曆基本樣式
+  .fc {
+    height: 100% !important;
+    flex: 1;
+    
+    // // 表格樣式
+    // .fc-scrollgrid {
+    //   border: 1px solid #ddd;
+    // }
+    
+    // // 日期格子樣式
+    // .fc-daygrid-day {
+    //   border: 1px solid #ddd;
+    // }
+    
+    // 週/日標題行樣式
+    // .fc-col-header-cell {
+    //   padding: 8px 0;
+    //   background-color: #f8f9fa;
+    //   font-weight: bold;
+    // }
+    
+    // // 日期數字樣式
+    // .fc-daygrid-day-number {
+    //   padding: 4px 8px;
+    //   font-weight: 500;
+    // }
+    
+    // 今天日期樣式
+    // .fc-day-today {
+    //   background-color: rgba(66, 133, 244, 0.05) !important;
+    // }
+    
+    // 事件基本樣式 - 保持最小化
+    // .fc-event {
+    //   margin: 2px 0;
+    //   border-radius: 4px !important;
+    //   overflow: hidden;
+    //   word-break: break-word;
+    //   white-space: normal !important;
+    // }
+    
+    // 確保事件內容可以正確換行
+    // .fc-event-title {
+    //   word-break: break-word;
+    //   white-space: normal !important;
+    //   overflow-wrap: break-word;
+    // }
+    
+    
+    // // 讓事件內容填滿寬度
+    // .fc-daygrid-event-harness {
+    //   margin: 0px 3px !important;
+    // }
+    
+    // // 確保跨天事件顯示正確
+    // .fc-daygrid-block-event .fc-event-time, 
+    // .fc-daygrid-block-event .fc-event-title {
+    //   padding: 1px 4px;
+    // }
+    
+    // 日期格子的最小高度
+    // .fc-daygrid-day-frame {
+    //   min-height: 100px;
+    // }
+    
+    // 周視圖的日格子高度和事件顯示
+    // .fc-dayGridWeek-view .fc-daygrid-day-frame,
+    // .fc-view-harness[style*="week"] .fc-daygrid-day-frame {
+    //   min-height: 350px !important; // 為周視圖提供更大的垂直空間
+    // }
+    
+    // // 確保周視圖中的事件完全顯示
+    // .fc-dayGridWeek-view .fc-daygrid-more-link,
+    // .fc-view-harness[style*="week"] .fc-daygrid-more-link {
+    //   display: none !important; // 強制隱藏「顯示更多」按鈕
+    // }
+    
+    // 確保周視圖中的事件容器可以容納所有事件
+    // .fc-dayGridWeek-view .fc-daygrid-day-events,
+    // .fc-view-harness[style*="week"] .fc-daygrid-day-events {
+    //   position: relative !important;
+    //   min-height: 300px !important;
+    //   max-height: none !important;
+    // }
+    
+    // 直接針對顯示更多按鈕的樣式進行覆蓋
+    // button.fc-daygrid-more-button {
+    //   display: none !important;
+    // }
+    
+    // 強制顯示所有隱藏的事件（周視圖）
+    // .fc-dayGridWeek-view .fc-daygrid-event.fc-event-start.fc-event-end,
+    // .fc-view-harness[style*="week"] .fc-daygrid-event {
+    //   display: block !important;
+    //   visibility: visible !important;
+    //   opacity: 1 !important;
+    // }
+    
+    // 周視圖和日視圖中移除事件數量限制
+    // .fc-dayGridWeek-view .fc-daygrid-body-balanced .fc-daygrid-day-events,
+    // .fc-dayGridDay-view .fc-daygrid-body-balanced .fc-daygrid-day-events {
+    //   position: static !important;
+    //   height: auto !important;
+    //   min-height: auto !important;
+    // }
+    
+    // 日視圖的日格子高度
+    // .fc-dayGridDay-view .fc-daygrid-day-frame {
+    //   min-height: 500px; // 為日視圖提供最大的垂直空間
+    // }
+    
+    // 修復「顯示更多」彈出框的背景
+    // .fc-popover {
+    //   background-color: #fff !important;
+    //   border: 1px solid #ddd !important;
+    //   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+    // }
+    
+    // // 確保彈出框標題有適當背景
+    // .fc-popover-header {
+    //   background-color: #f8f9fa !important;
+    //   padding: 8px !important;
+    // }
+    
+    // // 彈出框內事件樣式
+    // .fc-popover-body .fc-daygrid-event-harness {
+    //   margin: 4px !important;
+    // }
+  }
+}

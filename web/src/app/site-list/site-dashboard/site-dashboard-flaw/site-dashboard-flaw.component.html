@@ -1,0 +1,67 @@
+<div class="flaw-detail-container">
+  <div class="back-button" (click)="location.back()">
+    <i class="bi bi-arrow-left"></i> 返回
+  </div>
+
+  <!-- 載入中狀態 -->
+  @if (loading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>正在載入缺失單資料...</p>
+    </div>
+  }
+  
+  <!-- 錯誤狀態 -->
+  @if (error) {
+    <div class="error-container">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <p>{{ error }}</p>
+    </div>
+  }
+  
+  <!-- 缺失單資料 -->
+  @if (!loading && !error) {
+    <div class="flaw-header">
+      <h1>{{ site?.projectName }} 缺失單統計</h1>
+      <div class="header-actions">
+        <!-- 日期範圍選擇 -->
+        <div class="date-range-selector">
+          <select [(ngModel)]="selectedRange" (change)="onRangeChange()" title="選擇統計時間範圍" aria-label="選擇統計時間範圍">
+            <option value="30">最近30天</option>
+            <option value="60">最近60天</option>
+            <option value="90">最近90天</option>
+            <option value="custom">自訂日期範圍</option>
+          </select>
+        </div>
+
+        <!-- 自訂日期範圍 -->
+        @if (selectedRange === 'custom') {
+          <div class="custom-date-range">
+            <div class="date-input">
+              <label for="startDate">開始日期</label>
+              <input type="date" id="startDate" [(ngModel)]="customStartDate" (change)="onCustomDateChange()" title="選擇開始日期">
+            </div>
+            <div class="date-input">
+              <label for="endDate">結束日期</label>
+              <input type="date" id="endDate" [(ngModel)]="customEndDate" (change)="onCustomDateChange()" title="選擇結束日期">
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+    
+    <!-- 缺失單統計圖表 -->
+    <div class="flaw-chart-container">
+      @if (flaws.length === 0) {
+        <div class="empty-state">
+          <i class="bi bi-clipboard-x"></i>
+          <p>暫無缺失單資料</p>
+        </div>
+      } @else {
+        <div class="chart-wrapper">
+          <canvas #flawChart id="flawChart"></canvas>
+        </div>
+      }
+    </div>
+  }
+</div> 

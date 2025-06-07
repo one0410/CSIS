@@ -1,0 +1,470 @@
+<div class="container-fluid mt-4">
+  <!-- 頁面標題 -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-person-badge-fill me-2"></i>工地工作人員管理
+    </h2>
+  </div>
+
+  <!-- 搜尋與添加工作人員區域 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0"><i class="bi bi-person-plus me-2"></i>添加工作人員</h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-10">
+          <label for="workerSearch" class="form-label fw-semibold">搜尋工作人員</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              id="workerSearch"
+              placeholder="輸入姓名、身分證號碼或承攬公司進行搜尋"
+              [(ngModel)]="searchQuery"
+              (input)="searchWorkers()"
+              aria-label="搜尋工作人員"
+              >
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              (click)="searchWorkers()"
+              aria-label="執行搜尋"
+              title="執行搜尋"
+              >
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <button
+            class="btn btn-primary w-100"
+            (click)="showAddWorkerModal()"
+            [disabled]="isLoading"
+            title="顯示所有可選工作人員"
+            >
+            <i class="bi bi-person-plus me-2"></i>選擇工作人員
+          </button>
+        </div>
+      </div>
+
+      <!-- 搜尋結果列表 -->
+      @if (searchResults.length > 0) {
+        <div class="search-results mt-3">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" style="width: 50px;"></th>
+                  <th scope="col">姓名</th>
+                  <th scope="col">身分證號碼</th>
+                  <th scope="col">性別</th>
+                  <th scope="col">年齡</th>
+                  <th scope="col">供應商認證</th>
+                  <th scope="col">承攬公司</th>
+                  <th scope="col" style="width: 120px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (worker of searchResults; track worker) {
+                  <tr>
+                    <td class="text-center">
+                      <div
+                        class="avatar rounded-circle d-flex align-items-center justify-content-center"
+                        [style.backgroundColor]="getRandomColor(worker.name)"
+                        >
+                        {{ worker.name.charAt(0) }}
+                      </div>
+                    </td>
+                    <td>{{ worker.name }}</td>
+                    <td>{{ worker.idno }}</td>
+                    <td>{{ formatGender(worker.gender) }}</td>
+                    <td>{{ calculateAge(worker.birthday || '') }}</td>
+                    <td>{{ worker.supplierIndustrialSafetyNumber }}</td>
+                    <td>{{ worker.contractingCompanyName }}</td>
+                    <td>
+                      <button
+                        class="btn btn-sm btn-success"
+                        (click)="addWorkerToSite(worker)"
+                        title="添加此工作人員到工地"
+                        >
+                        <i class="bi bi-plus-circle me-1"></i>添加
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- 無搜尋結果提示 -->
+      @if (searchPerformed && searchResults.length === 0) {
+        <div class="alert alert-info mt-3">
+          <i class="bi bi-info-circle me-2"></i>找不到符合條件的工作人員
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- 公司篩選與統計資訊 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>篩選與統計</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <label for="companyFilter" class="form-label fw-semibold">依公司篩選</label>
+          <select
+            class="form-select"
+            id="companyFilter"
+            [(ngModel)]="filterCompany"
+            (change)="filterWorkers()"
+            >
+            <option value="">全部公司</option>
+            @for (company of companies; track company) {
+              <option [value]="company">{{ company }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-8">
+          <div class="d-flex flex-wrap gap-3 align-items-center h-100 pt-4">
+            <div class="stats-item">
+              <i class="bi bi-people-fill text-primary fs-4"></i>
+              <div class="ms-2">
+                <div class="small text-muted">總工作人數</div>
+                <div class="fw-bold">{{ siteWorkers.length }} 人</div>
+              </div>
+            </div>
+            <div class="stats-item">
+              <i class="bi bi-building text-success fs-4"></i>
+              <div class="ms-2">
+                <div class="small text-muted">廠商數量</div>
+                <div class="fw-bold">{{ companies.length }} 家</div>
+              </div>
+            </div>
+            @if (filterCompany) {
+              <div class="stats-item">
+                <i class="bi bi-funnel-fill text-info fs-4"></i>
+                <div class="ms-2">
+                  <div class="small text-muted">當前篩選</div>
+                  <div class="fw-bold">{{ filterCompany }}</div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 已授權工作人員列表 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="bi bi-person-badge me-2"></i>工地工作人員
+        <span class="badge bg-primary ms-2">{{ filteredSiteWorkers.length }}/{{ siteWorkers.length }}</span>
+      </h5>
+    </div>
+
+    <div class="card-body">
+      @if (isLoading) {
+        <div class="text-center my-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">載入中...</span>
+          </div>
+          <p class="mt-2">載入工作人員資料中...</p>
+        </div>
+      } @else {
+        @if (siteWorkers.length === 0) {
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>目前沒有工作人員被添加到此工地
+          </div>
+        } @else if (filteredSiteWorkers.length === 0) {
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>沒有符合篩選條件的工作人員
+          </div>
+        } @else {
+          <!-- 工作人員列表表格 -->
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" style="width: 50px;"></th>
+                  <th scope="col">姓名</th>
+                  <th scope="col">身分證號碼</th>
+                  <th scope="col">性別</th>
+                  <th scope="col">年齡</th>
+                  <th scope="col">供應商認證</th>
+                  <th scope="col">承攬公司</th>
+                  <th scope="col">次承攬公司</th>
+                  <th scope="col">危害告知</th>
+                  <th scope="col">教育訓練</th>
+                  <th scope="col">證照</th>
+                  <th scope="col" style="width: 120px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (worker of filteredSiteWorkers; track worker) {
+                  <tr>
+                    <td class="text-center">
+                      <div
+                        class="avatar rounded-circle d-flex align-items-center justify-content-center"
+                        [style.backgroundColor]="getRandomColor(worker.name)"
+                        >
+                        {{ worker.name.charAt(0) }}
+                      </div>
+                    </td>
+                    <td>{{ worker.name }}</td>
+                    <td>{{ worker.idno }}</td>
+                    <td>{{ formatGender(worker.gender) }}</td>
+                    <td>{{ calculateAge(worker.birthday || '') }}</td>
+                    <td>{{ worker.supplierIndustrialSafetyNumber }}</td>
+                    <td>{{ worker.contractingCompanyName }}</td>
+                    <td>{{ worker.viceContractingCompanyName }}</td>
+                    <td>
+                      @if (hasHazardNotice(worker)) {
+                        <button
+                          class="btn btn-link p-0 text-success"
+                          (click)="goToHazardNotice(worker)"
+                          title="查看危害告知表單"
+                          aria-label="查看危害告知表單"
+                          >
+                          <i class="bi bi-check-circle-fill fs-5"></i>
+                        </button>
+                      } @else {
+                        <button
+                          class="btn btn-link p-0 text-danger"
+                          (click)="goToHazardNotice(worker)"
+                          title="填寫危害告知表單"
+                          aria-label="填寫危害告知表單"
+                          >
+                          <i class="bi bi-x-circle-fill fs-5"></i>
+                        </button>
+                      }
+                    </td>
+                    <td>
+                      @if (hasTraining(worker)) {
+                        <button
+                          class="btn btn-link p-0 text-success"
+                          (click)="goToTraining(worker)"
+                          title="查看教育訓練記錄"
+                          aria-label="查看教育訓練記錄"
+                          >
+                          <i class="bi bi-check-circle-fill fs-5"></i>
+                        </button>
+                      } @else {
+                        <button
+                          class="btn btn-link p-0 text-danger"
+                          (click)="goToTraining(worker)"
+                          title="填寫教育訓練記錄"
+                          aria-label="填寫教育訓練記錄"
+                          >
+                          <i class="bi bi-x-circle-fill fs-5"></i>
+                        </button>
+                      }
+                    </td>
+                    <td>
+                      @if (hasCertification(worker)) {
+                        <span
+                          class="badge rounded-pill bg-success me-1"
+                          title="有證照"
+                          >
+                          <i class="bi bi-patch-check me-1"></i>{{ worker.certifications.length || 0 }}
+                        </span>
+                      }
+                      @if (!hasCertification(worker)) {
+                        <span
+                          class="badge rounded-pill bg-secondary"
+                          title="無證照"
+                          >
+                          <i class="bi bi-x-circle me-1"></i>無
+                        </span>
+                      }
+                    </td>
+                    <td>
+                      <div class="d-flex gap-1">
+                        <a
+                          [routerLink]="['/worker', worker._id]"
+                          class="btn btn-sm btn-outline-primary"
+                          title="查看工作人員詳細資料"
+                          aria-label="查看工作人員詳細資料"
+                          >
+                          <i class="bi bi-eye"></i>
+                        </a>
+                        <a
+                          [routerLink]="['/worker-history', worker._id]"
+                          class="btn btn-sm btn-outline-info"
+                          title="查看工作人員歷史軌跡"
+                          aria-label="查看工作人員歷史軌跡"
+                          >
+                          <i class="bi bi-clock-history"></i>
+                        </a>
+                        <button
+                          class="btn btn-sm btn-outline-danger"
+                          (click)="removeWorkerFromSite(worker)"
+                          title="移除此工作人員"
+                          aria-label="移除工作人員"
+                          >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 分頁控制 -->
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>顯示 {{ filteredSiteWorkers.length }} 位工作人員，共 {{ siteWorkers.length }} 位</div>
+            <nav aria-label="工作人員列表分頁">
+              <ul class="pagination pagination-sm">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage - 1)" aria-label="上一頁">
+                    <i class="bi bi-chevron-left"></i>
+                  </a>
+                </li>
+                @for (page of getPageNumbers(); track page) {
+                  <li class="page-item" [class.active]="currentPage === page">
+                    <a class="page-link" href="javascript:void(0)" (click)="goToPage(page)">{{ page }}</a>
+                  </li>
+                }
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage + 1)" aria-label="下一頁">
+                    <i class="bi bi-chevron-right"></i>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>
+
+<!-- 添加工作人員的模態框 -->
+<div class="modal fade" id="addWorkerModal" tabindex="-1" aria-labelledby="addWorkerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addWorkerModalLabel">
+          <i class="bi bi-person-plus me-2"></i>添加工作人員到工地
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉" title="關閉"></button>
+      </div>
+      <div class="modal-body">
+        <!-- 搜尋框 -->
+        <div class="mb-3">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="搜尋工作人員"
+              [(ngModel)]="modalSearchQuery"
+              (input)="searchModalWorkers()"
+              aria-label="在模態框中搜尋工作人員"
+              >
+          </div>
+        </div>
+
+        <!-- 工作人員列表 -->
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" style="width: 50px;">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="selectAllWorkers"
+                      [checked]="allWorkersSelected"
+                      (change)="toggleAllWorkers()"
+                      aria-label="選取所有工作人員"
+                      >
+                  </div>
+                </th>
+                <th scope="col">姓名</th>
+                <th scope="col">身分證號碼</th>
+                <th scope="col">性別</th>
+                <th scope="col">承攬公司</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (worker of filteredModalWorkers; track worker) {
+                <tr>
+                  <td>
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        [id]="'worker-' + worker._id"
+                        [(ngModel)]="worker.selected"
+                        (change)="updateSelectAllStatus()"
+                        [attr.aria-label]="'選取 ' + worker.name"
+                        >
+                    </div>
+                  </td>
+                  <td>{{ worker.name }}</td>
+                  <td>{{ worker.idno }}</td>
+                  <td>{{ worker.gender }}</td>
+                  <td>{{ worker.contractingCompanyName }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 無結果提示 -->
+        @if (filteredModalWorkers.length === 0) {
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>找不到符合條件的工作人員
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i>取消
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="addSelectedWorkers()"
+          [disabled]="getSelectedWorkersCount() === 0"
+          >
+          <i class="bi bi-check-circle me-1"></i>添加已選 ({{ getSelectedWorkersCount() }}) 位工作人員
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 樣式 -->
+<style>
+  .avatar {
+  width: 32px;
+  height: 32px;
+  color: white;
+  font-weight: bold;
+}
+
+.search-results {
+max-height: 300px;
+overflow-y: auto;
+}
+
+.stats-item {
+display: flex;
+padding: 10px 15px;
+border-radius: 8px;
+background-color: #f8f9fa;
+border-left: 3px solid #0d6efd;
+}
+</style>

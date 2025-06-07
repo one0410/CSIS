@@ -1,0 +1,115 @@
+<!-- add background video -->
+<video autoplay muted loop id="backgroundVideo"
+oncanplay="this.play()"
+onloadedmetadata="this.muted = true"
+>
+  <source src="assets/video.mp4" type="video/mp4" />
+</video>
+
+<div class="container-fluid min-vh-100">
+  <div class="row justify-content-center align-items-center vh-100 p-4">
+    <!-- <div class="col-lg-8 col-md-10"> -->
+      <div class="card p-4" style="max-width: 880px;">
+        <div class="card-body">
+          <!-- 分成左右2個區塊, 左邊區塊在小畫面時不顯示 -->
+          <div class="row p-2 align-items-center" style="min-height: 500px;">
+            <div class="col-lg-6 d-none d-lg-block">
+              <div class="text-center m-4">
+                <!-- <img
+                  src="assets/brecioso.png"
+                  class="bg-secondary"
+                  alt="login"
+                  width="240"
+                /> -->
+                <img src="{{logourl}}" alt="login" width="200" />
+              </div>
+              <!-- <h4 class="card-title my-4">會議室管理系統</h4> -->
+              <p class="card-text">歡迎使用帆宣工地管理系統。</p>
+              <p class="card-text">
+                您可以使用系統查看或建立工地。
+                管理工地人才、表單、照片、進度、會議等資料。
+              </p>
+              <p>
+                無論在工地或辦公室, 手機或平板, 都可以隨時隨地查看工地資料。
+              </p>
+              <hr>
+              <p class="text-center">
+                <qrcode [qrdata]="currentSiteUrl" [width]="80" [errorCorrectionLevel]="'M'" title="登入網址 QR Code"></qrcode>
+              </p>
+            </div>
+            <div class="col-lg-6 d-flex flex-column align-items-center">
+              <h4 class="card-title text-center my-4">帆宣工地管理系統</h4>
+              <form class="my-4 w-100">
+                <div class="form-group mb-2">
+                  <label for="username">帳號</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="username"
+                    name="username"
+                    [(ngModel)]="username"
+                    placeholder="Enter username"
+                  />
+                </div>
+                <div class="form-group mb-2">
+                  <label for="password">密碼</label>
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="password"
+                    name="password"
+                    [(ngModel)]="password"
+                    placeholder="Enter password"
+                  />
+                </div>
+                <div class="text-center my-4">
+                  <button
+                    type="submit"
+                    class="btn btn-primary btn-block w-100"
+                    [disabled]="isLoading"
+                    (click)="submit()"
+                  >
+                    @if (isLoading) {
+                    <span
+                      class="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    } 登入
+                  </button>
+                </div>
+                <hr />
+                <div class="text-center my-4">
+                  <!-- 按下SSO按鈕, redirect to SSO頁面 -->
+                  @if (adSso) {
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-block w-100"
+                    [disabled]="isLoading"
+                    (click)="sso()"
+                  >
+                    按這裡使用 SSO 帳號登入
+                  </button>
+                  }
+                  <!-- gmail sso -->
+                  @if (googleSso) {
+                  <a
+                    href="{{ googleSsoUrl }}"
+                    class="btn btn-primary btn-block w-100 mt-4"
+                    role="button"
+                    >使用Google帳號登入</a
+                  >
+                  }
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    <!-- </div> -->
+  </div>
+</div>
+
+<div class="position-absolute bottom-0 end-0">
+  {{ buildVersion }}
+</div>

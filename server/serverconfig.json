@@ -1,0 +1,5 @@
+{
+    "mongodb": "mongodb://server.emicro.tech:27017/csis2",
+    "httpPort": 3000,
+    "httpsPort": 443
+}

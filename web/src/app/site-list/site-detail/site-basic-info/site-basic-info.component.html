@@ -1,0 +1,309 @@
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 class="card-title m-0 fw-bold">
+        <i class="bi bi-info-circle me-2 text-primary"></i>基本資訊
+      </h5>
+      <div>
+        @if (!isEditMode) {
+          <button class="btn btn-outline-primary" (click)="toggleEditMode()">
+            <i class="bi bi-pencil-square me-1"></i>編輯
+          </button>
+        } @else {
+          <button class="btn btn-outline-secondary me-2" (click)="cancelEdit()">
+            <i class="bi bi-x-circle me-1"></i>取消
+          </button>
+          <button class="btn btn-primary" (click)="saveChanges()">
+            <i class="bi bi-check-circle me-1"></i>儲存
+          </button>
+        }
+      </div>
+    </div>
+    
+    <div class="row g-4">
+      <!-- 左側欄位 - 大畫面 col-md-6, 小畫面 col-12 -->
+      <div class="col-12 col-md-6 order-2 order-md-1">
+        <!-- 專案資訊 -->
+        <div class="info-group mb-3">
+          <label class="info-label">專案編號</label>
+          @if (!isEditMode) {
+            <div class="info-value">{{site()?.projectNo || '尚未設定'}}</div>
+          } @else {
+            <input type="text" class="form-control" id="projectNo" [(ngModel)]="editForm.projectNo" name="projectNo" required aria-label="專案編號">
+          }
+        </div>
+        
+        <div class="info-group mb-3">
+          <label class="info-label">專案名稱</label>
+          @if (!isEditMode) {
+            <div class="info-value">{{site()?.projectName || '尚未設定'}}</div>
+          } @else {
+            <input type="text" class="form-control" id="projectName" [(ngModel)]="editForm.projectName" name="projectName" required aria-label="專案名稱">
+          }
+        </div>
+        
+        <!-- 工期 -->
+        <div class="info-group mb-3">
+          <label class="info-label">開始日期</label>
+          @if (!isEditMode) {
+            <div class="info-value">{{site()?.startDate || '尚未設定'}}</div>
+          } @else {
+            <input type="date" class="form-control" id="startDate" [(ngModel)]="editForm.startDate" name="startDate" required aria-label="開始日期">
+          }
+        </div>
+        
+        <div class="info-group mb-3">
+          <label class="info-label">結束日期</label>
+          @if (!isEditMode) {
+            <div class="info-value">{{site()?.endDate || '尚未設定'}}</div>
+          } @else {
+            <input type="date" class="form-control" id="endDate" [(ngModel)]="editForm.endDate" name="endDate" required aria-label="結束日期">
+          }
+        </div>
+        
+        <!-- 地點 -->
+        <div class="info-group mb-3">
+          <label class="info-label">縣市</label>
+          @if (!isEditMode) {
+            <div class="info-value">{{site()?.county || '尚未設定'}}</div>
+          } @else {
+            <input type="text" class="form-control" id="county" [(ngModel)]="editForm.county" name="county" required aria-label="縣市">
+          }
+        </div>
+        
+        <div class="info-group mb-3">
+          <label class="info-label">鄉鎮市區</label>
+          @if (!isEditMode) {
+            <div class="info-value">{{site()?.town || '尚未設定'}}</div>
+          } @else {
+            <input type="text" class="form-control" id="town" [(ngModel)]="editForm.town" name="town" required aria-label="鄉鎮市區">
+          }
+        </div>
+      </div>
+      
+      <!-- 右側圖片 - 大畫面 col-md-6, 小畫面 col-12 -->
+      <div class="col-12 col-md-6 order-1 order-md-2">
+        <!-- 工地圖片 -->
+        <div class="info-group mb-3">
+          <label class="info-label">工地圖片</label>
+          @if (!isEditMode) {
+            <div class="info-value">
+              @if (site()?.image) {
+                <img [src]="site()?.image" alt="工地圖片" class="site-preview-image w-100">
+              } @else {
+                <div class="text-muted">尚未設定工地圖片</div>
+              }
+            </div>
+          } @else {
+            <div class="image-upload-container">
+              <div class="image-preview mb-2" 
+                   [ngClass]="{'has-image': editForm.image || editForm.imageFile}"
+                   (dragover)="onImageDragOver($event)" 
+                   (dragleave)="onImageDragLeave($event)" 
+                   (drop)="onImageDrop($event)">
+                @if (editForm.image || editForm.imagePreview) {
+                  <img [src]="editForm.imagePreview || editForm.image" alt="工地圖片預覽" class="site-preview-image">
+                } @else {
+                  <div class="image-placeholder d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-building fs-2"></i>
+                    <span class="mt-2">請上傳工地圖片</span>
+                    <span class="mt-1 text-muted small">點擊選擇或拖放檔案至此</span>
+                  </div>
+                }
+              </div>
+              <div class="d-flex gap-2 align-items-center">
+                <label class="btn btn-outline-primary mb-0" for="imageFile">
+                  <i class="bi bi-upload me-1"></i>選擇檔案
+                </label>
+                <input type="file" class="d-none" id="imageFile" 
+                       accept=".jpg,.jpeg,.png" 
+                       (change)="onImageSelected($event)"
+                       #imageFileInput>
+                @if (editForm.image || editForm.imageFile) {
+                  <button type="button" class="btn btn-outline-danger" (click)="removeImage()">
+                    <i class="bi bi-trash me-1"></i>刪除
+                  </button>
+                }
+                <small class="text-muted ms-2">支援 JPG/PNG，建議尺寸 400x300px</small>
+              </div>
+            </div>
+          }
+        </div>
+        
+        <!-- 表單Logo - 在小畫面隱藏 -->
+        <div class="info-group mb-3 d-none d-md-block">
+          <label class="info-label">表單 Logo</label>
+          @if (!isEditMode) {
+            <div class="info-value">
+              @if (site()?.formLogo) {
+                <img [src]="site()?.formLogo" alt="表單Logo" class="site-logo">
+              } @else {
+                <div class="text-muted">尚未設定 Logo</div>
+              }
+            </div>
+          } @else {
+            <div class="logo-upload-container">
+              <div class="logo-preview mb-2" 
+                   [ngClass]="{'has-logo': editForm.formLogo || editForm.logoFile}"
+                   (dragover)="onDragOver($event)" 
+                   (dragleave)="onDragLeave($event)" 
+                   (drop)="onDrop($event)">
+                @if (editForm.formLogo || editForm.logoPreview) {
+                  <img [src]="editForm.logoPreview || editForm.formLogo" alt="Logo 預覽" class="site-logo">
+                } @else {
+                  <div class="logo-placeholder d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-image fs-2"></i>
+                    <span class="mt-2">請上傳 Logo</span>
+                    <span class="mt-1 text-muted small">點擊選擇或拖放檔案至此</span>
+                  </div>
+                }
+              </div>
+              <div class="d-flex gap-2 align-items-center">
+                <label class="btn btn-outline-primary mb-0" for="logoFile">
+                  <i class="bi bi-upload me-1"></i>選擇檔案
+                </label>
+                <input type="file" class="d-none" id="logoFile" 
+                       accept=".jpg,.jpeg,.png" 
+                       (change)="onLogoSelected($event)"
+                       #logoFileInput>
+                @if (editForm.formLogo || editForm.logoFile) {
+                  <button type="button" class="btn btn-outline-danger" (click)="removeLogo()">
+                    <i class="bi bi-trash me-1"></i>刪除
+                  </button>
+                }
+                <small class="text-muted ms-2">支援 JPG/PNG，最大尺寸 200x200px</small>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+      
+      <!-- 廠區 - 全寬顯示 -->
+      <div class="col-12 order-3">
+        <div class="info-group mb-4">
+          <label class="info-label">廠區</label>
+          @if (!isEditMode) {
+            <div class="info-value">
+              @if (site()?.factories?.length) {
+                @for (factory of site()?.factories; track factory) {
+                  <div class="factory-card mb-2 p-3 border rounded bg-light">
+                    <div class="fw-medium">{{factory.name}}</div>
+                    <div class="mt-2">
+                      @for (area of factory.areas; track area) {
+                        <span class="badge bg-info-subtle text-info me-1 mb-1 px-3 py-2">{{area}}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              } @else {
+                <div class="text-muted">尚未設定廠區</div>
+              }
+            </div>
+          } @else {
+            <div class="edit-factories">
+              @for (factory of editForm.factories; track $index) {
+                <div class="factory-card mb-3 p-3 border rounded bg-light">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <input type="text" class="form-control" [(ngModel)]="factory.name" [name]="'factoryName'+$index" placeholder="廠區名稱" [attr.aria-label]="'廠區名稱 ' + ($index + 1)">
+                    <button type="button" class="btn btn-outline-danger" (click)="removeFactory($index)" title="移除廠區">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                  <div class="areas-container ms-3 mt-2">
+                    @for (area of factory.areas; track area; let areaIndex = $index) {
+                      <div class="d-flex align-items-center gap-2 mb-2">
+                        <input type="text" class="form-control" [(ngModel)]="factory.areas[areaIndex]" [name]="'area'+$index+'-'+areaIndex" placeholder="區域名稱" [attr.aria-label]="'廠區 ' + factory.name + ' 的區域 ' + (areaIndex + 1)">
+                        <button type="button" class="btn btn-outline-danger" (click)="removeArea($index, areaIndex)" title="移除區域">
+                          <i class="bi bi-dash-circle"></i>
+                        </button>
+                      </div>
+                    }
+                    <button type="button" class="btn btn-outline-primary mt-1" (click)="addArea($index)" title="新增區域">
+                      <i class="bi bi-plus-circle me-1"></i>新增區域
+                    </button>
+                  </div>
+                </div>
+              }
+              <button type="button" class="btn btn-outline-primary" (click)="addFactory()" title="新增廠區">
+                <i class="bi bi-plus-circle me-1"></i>新增廠區
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+      
+      <!-- 作業類型 - 全寬顯示 -->
+      <div class="col-12 order-4">
+        <div class="info-group mb-4">
+          <label class="info-label">作業類型</label>
+          @if (!isEditMode) {
+            <div class="info-value">
+              @if (site()?.constructionTypes?.length) {
+                @for (type of site()?.constructionTypes; track type) {
+                  <span class="badge bg-secondary me-1 mb-1 px-3 py-2">{{type}}</span>
+                }
+              } @else {
+                <div class="text-muted">尚未設定作業類型</div>
+              }
+            </div>
+          } @else {
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              @for (type of editForm.constructionTypes; track type; let typeIndex = $index) {
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <input type="text" class="form-control" [(ngModel)]="editForm.constructionTypes[typeIndex]" [name]="'type'+typeIndex" placeholder="作業類型" [attr.aria-label]="'作業類型 ' + (typeIndex + 1)">
+                  <button type="button" class="btn btn-outline-danger" (click)="removeConstructionType(typeIndex)" title="移除作業類型">
+                    <i class="bi bi-dash-circle"></i>
+                  </button>
+                </div>
+              }
+            </div>
+            <button type="button" class="btn btn-outline-primary" (click)="addConstructionType()" title="新增作業類型">
+              <i class="bi bi-plus-circle me-1"></i>新增作業類型
+            </button>
+          }
+        </div>
+      </div>
+      
+      <!-- 照片資訊 -->
+      @if (!isEditMode) {
+        <div class="col-md-6 order-5">
+          <div class="info-group mb-3">
+            <label class="info-label">照片張數</label>
+            <div class="info-value">{{photoStats().count}}</div>
+          </div>
+        </div>
+        
+        <div class="col-md-6 order-5">
+          <div class="info-group mb-3">
+            <label class="info-label">照片容量</label>
+            <div class="info-value">
+              <div class="d-flex align-items-center">
+                <div class="me-2">
+                  {{photoStats().size}}MB / 1000MB (使用 {{calculatePhotoUsage()}}%)
+                </div>
+                <div class="progress flex-grow-1" style="height: 8px;">
+                  <div class="progress-bar" 
+                       [ngClass]="getProgressBarClass()"
+                       role="progressbar" 
+                       [style.width]="calculatePhotoUsage() + '%'"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+      
+      <!-- 備註 -->
+      <div class="col-12 order-5">
+        <div class="info-group mb-3">
+          <label class="info-label">備註</label>
+          @if (!isEditMode) {
+            <div class="info-value">{{site()?.remark || '無'}}</div>
+          } @else {
+            <textarea class="form-control" id="remark" [(ngModel)]="editForm.remark" name="remark" rows="3" aria-label="備註"></textarea>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,21 @@
+<!-- 發送空白表單 modal -->
+<div
+  class="modal fade"
+  id="newBlankFormModal"
+  tabindex="-1"
+  aria-labelledby="newBlankFormModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newBlankFormModalLabel">發送空白表單</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- 列出所有空白表單 -->
+        <app-blank-form-list (onSendBlankForm)="SendBlankForm($event)"></app-blank-form-list>
+      </div>
+    </div>
+  </div>
+</div>

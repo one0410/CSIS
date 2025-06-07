@@ -1,0 +1,192 @@
+<div class="weather-detail-container">
+  <div class="back-button" (click)="location.back()">
+    <i class="bi bi-arrow-left"></i> 返回
+  </div>
+
+  <!-- 載入中狀態 -->
+  @if (loading) {
+  <div class="loading-container">
+    <div class="spinner"></div>
+    <p>正在載入天氣資料...</p>
+  </div>
+  }
+
+  <!-- 錯誤狀態 -->
+  @if (error) {
+  <div class="error-container">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <p>{{ error }}</p>
+  </div>
+  }
+
+  <!-- 天氣資料 -->
+  @if (weatherData && !loading && !error) {
+  <div class="weather-header w-100">
+    <h1>{{ site?.county }} 天氣資訊</h1>
+    <p>{{ weatherData.location.localtime | slice : 0 : 10 }}</p>
+  </div>
+
+  <!-- 當前天氣 -->
+  <div class="current-weather w-100">
+    <div class="current-weather-main">
+      <img
+        [src]="weatherData.current.condition.icon"
+        [alt]="getConditionText(weatherData.current.condition.text)"
+        [title]="getConditionText(weatherData.current.condition.text)"
+        aria-label="天氣圖示"
+      />
+      <div class="temp-condition">
+        <h2>{{ weatherData.current.temp_c }}°C</h2>
+        <p>{{ getConditionText(weatherData.current.condition.text) }}</p>
+      </div>
+    </div>
+
+    <div class="weather-details-grid">
+      <div class="weather-detail-item">
+        <i class="bi bi-thermometer-half"></i>
+        <span>體感溫度</span>
+        <strong>{{ weatherData.current.feelslike_c }}°C</strong>
+      </div>
+
+      <div class="weather-detail-item">
+        <i class="bi bi-droplet-fill"></i>
+        <span>濕度</span>
+        <strong>{{ weatherData.current.humidity }}%</strong>
+      </div>
+
+      <div class="weather-detail-item">
+        <i class="bi bi-wind"></i>
+        <span>風速</span>
+        <strong>{{ weatherData.current.wind_kph }} km/h</strong>
+      </div>
+
+      <div class="weather-detail-item">
+        <i class="bi bi-compass"></i>
+        <span>風向</span>
+        <strong>{{ weatherData.current.wind_dir }}</strong>
+      </div>
+
+      <div class="weather-detail-item">
+        <i class="bi bi-cloud-fill"></i>
+        <span>雲量</span>
+        <strong>{{ weatherData.current.cloud }}%</strong>
+      </div>
+
+      <div class="weather-detail-item">
+        <i class="bi bi-eye-fill"></i>
+        <span>能見度</span>
+        <strong>{{ weatherData.current.vis_km }} km</strong>
+      </div>
+
+      <div class="weather-detail-item">
+        <i class="bi bi-sun"></i>
+        <span>紫外線指數</span>
+        <strong>{{ weatherData.current.uv }}</strong>
+      </div>
+
+      <div class="weather-detail-item">
+        <i class="bi bi-water"></i>
+        <span>降水量</span>
+        <strong>{{ weatherData.current.precip_mm }} mm</strong>
+      </div>
+
+      @if (weatherData.current.air_quality) {
+      <div class="weather-detail-item">
+        <i class="bi bi-airplane"></i>
+        <span>空氣品質</span>
+        <strong>{{ weatherData.current.air_quality["us-epa-index"] }}</strong>
+      </div>
+
+      <div class="weather-detail-item">
+        <i class="bi bi-droplet-fill"></i>
+        <span>PM10</span>
+        <strong>{{ weatherData.current.air_quality.pm10 }} μg/m³</strong>
+      </div>
+
+      <div class="weather-detail-item">
+        <i class="bi bi-droplet-fill"></i>
+        <span>PM2.5</span>
+        <strong>{{ weatherData.current.air_quality.pm2_5 }} μg/m³</strong>
+      </div>
+
+      <div class="weather-detail-item">
+        <i class="bi bi-droplet-fill"></i>
+        <span>CO2</span>
+        <strong>{{ weatherData.current.air_quality.co }} μg/m³</strong>
+      </div>
+
+      }
+    </div>
+  </div>
+
+  <!-- 3天預報 -->
+  @if (weatherData.forecast) {
+  <div class="forecast-section w-100">
+    <h2>未來三天預報</h2>
+    <div class="forecast-days">
+      @for (day of weatherData.forecast.forecastday; track day.date) {
+      <div class="forecast-day-card">
+        <div class="forecast-day-header">
+          <h3>{{ day.date | slice : 5 : 10 }}</h3>
+          <img
+            [src]="day.day.condition.icon"
+            [alt]="getConditionText(day.day.condition.text)"
+            [title]="getConditionText(day.day.condition.text)"
+            aria-label="天氣預報圖示"
+          />
+        </div>
+
+        <div class="forecast-day-body">
+          <div class="forecast-temp">
+            <span class="min-temp" title="最低溫度"
+              >{{ day.day.mintemp_c }}°C</span
+            >
+            <span class="max-temp" title="最高溫度"
+              >{{ day.day.maxtemp_c }}°C</span
+            >
+          </div>
+          <p>{{ getConditionText(day.day.condition.text) }}</p>
+          <div class="forecast-extra">
+            <div title="降雨機率">
+              <i class="bi bi-droplet"></i>
+              <span>{{ day.day.daily_chance_of_rain }}%</span>
+            </div>
+            <div title="日出時間">
+              <i class="bi bi-sunrise"></i>
+              <span>{{ day.astro.sunrise }}</span>
+            </div>
+            <div title="日落時間">
+              <i class="bi bi-sunset"></i>
+              <span>{{ day.astro.sunset }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- 一天的每小時預報 (只顯示今天的) -->
+  @if (weatherData.forecast.forecastday[0].hour.length > 0) {
+  <div class="hourly-forecast-section w-100">
+    <h2>今日每小時預報</h2>
+    <div class="hourly-forecast-container">
+      @for (hour of weatherData.forecast.forecastday[0].hour; track hour.time) {
+      <div class="hourly-forecast-item">
+        <span>{{ hour.time | slice : 11 : 16 }}</span>
+        <img
+          [src]="hour.condition.icon"
+          [alt]="getConditionText(hour.condition.text)"
+          [title]="getConditionText(hour.condition.text)"
+          aria-label="每小時天氣圖示"
+        />
+        <span class="hour-temp" title="預報溫度">{{ hour.temp_c }}°C</span>
+        <div class="hour-rain-chance" [style.height.%]="hour.chance_of_rain">
+          <span title="降雨機率">{{ hour.chance_of_rain }}%</span>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  } } }
+</div>

@@ -1,0 +1,15 @@
+<p>site-blank-form works!</p>
+
+<button class="btn btn-primary" (click)="showBlankFormDialog()">發送空白表單</button>
+
+<!-- ag-gird 已發送空白表單 -->
+<ag-grid-angular
+  style="width: 100%; height: 500px;"
+  class="ag-theme-quartz"
+  [gridOptions]="gridOptions"
+  (gridReady)="onGridReady($event)"
+></ag-grid-angular>
+
+<!-- 發送空白表單 modal -->
+<app-new-blank-form-modal #newBlankFormModal (onSendBlankForm)="onSendBlankForm($event)"></app-new-blank-form-modal>
+

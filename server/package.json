@@ -1,0 +1,49 @@
+{
+    "name": "csisserver",
+    "module": "index.ts",
+    "type": "module",
+    "scripts": {
+        "start": "bun run index.ts",
+        "watch": "bun --watch run index.ts",
+        "debug": "bun --inspect index.ts",
+        "build": "bun build index.ts --compile --target=bun-windows-x64 --outfile csisserver",
+        "buildLinux": "bun build index.ts --compile --target=bun-linux-x64-modern --outfile csisserver",
+        "pkgbuild": "pkg -t node18-win-x64 index.ts -o csisserver",
+        "pkgbuildLinux": "pkg -t node18-linux-x64 index.ts -o csiserver"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@types/express": "^5.0.0",
+        "@types/express-ws": "^3.0.5",
+        "@types/jsonwebtoken": "^9.0.9",
+        "@types/multer": "^1.4.12",
+        "@types/node": "^22.13.14",
+        "@types/uuid": "^10.0.0",
+        "@types/ws": "^8.5.13"
+    },
+    "peerDependencies": {
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "axios": "^1.8.4",
+        "bson": "^6.10.1",
+        "check-disk-space": "^3.4.0",
+        "dayjs": "^1.11.13",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
+        "express-ws": "^5.0.2",
+        "form-data": "^4.0.1",
+        "jimp": "^1.6.0",
+        "jsonwebtoken": "^9.0.2",
+        "jszip": "^3.10.1",
+        "mongoose": "^8.8.4",
+        "multer": "1.4.3",
+        "pdf-lib": "^1.17.1",
+        "sharp": "^0.33.5",
+        "uuid": "^11.1.0",
+        "winston": "^3.17.0",
+        "winston-daily-rotate-file": "^5.0.0",
+        "xlsx": "^0.18.5"
+    },
+    "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

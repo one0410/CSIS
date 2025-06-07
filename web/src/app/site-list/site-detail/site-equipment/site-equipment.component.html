@@ -1,0 +1,92 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+      機具管理
+      @if (disqualifiedCount() > 0) {
+        <span class="ms-2 badge bg-danger fs-6">不合格 {{ disqualifiedCount() }} 項</span>
+      }
+    </h2>
+    <button class="btn btn-primary" (click)="toggleAddForm()">
+      新增設備
+    </button>
+  </div>
+
+  @if (isLoading()) {
+  <div class="d-flex justify-content-center my-5">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">讀取中...</span>
+    </div>
+  </div>
+  } @else if (equipmentList().length === 0) {
+  <div class="alert alert-info">
+    目前沒有設備記錄。請點擊「新增設備」按鈕來添加新設備。
+  </div>
+  } @else {
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th>承攬公司</th>
+          <th>設備名稱</th>
+          <th>型號</th>
+          <th>序號</th>
+          <th>檢查日期</th>
+          <th>照片</th>
+          <th>狀態</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (equipment of equipmentList(); track equipment._id) {
+        <tr class="cursor-pointer" (click)="navigateToDetail(equipment._id!)">
+          <td>{{ equipment.company }}</td>
+          <td>{{ equipment.name }}</td>
+          <td>{{ equipment.model || "-" }}</td>
+          <td>{{ equipment.serialNumber || "-" }}</td>
+          <td>
+            @if (equipment.inspectionDate) {
+            {{ equipment.inspectionDate | date:'yyyy-MM-dd' }}
+            @if (equipment.isQualified === undefined) {
+              <span class="badge bg-secondary">未檢查</span>
+            } @else if (equipment.isQualified) {
+              <span class="badge bg-success">合格</span>
+            } @else {
+              <span class="badge bg-danger">不合格</span>
+            }
+            } @else {
+            -
+            }
+          </td>
+          <td>
+            @if (equipment.photos && equipment.photos.length > 0) {
+            <span class="badge bg-info">{{ equipment.photos.length }} 張</span>
+            } @else {
+            <span>-</span>
+            }
+          </td>
+          <td>
+            @if (equipment.status === 'available') {
+            <span class="badge bg-success">可用</span>
+            } @else if (equipment.status === 'inUse') {
+            <span class="badge bg-primary">使用中</span>
+            } @else if (equipment.status === 'maintenance') {
+            <span class="badge bg-warning">維修中</span>
+            } @else if (equipment.status === 'retired') {
+            <span class="badge bg-danger">已報廢</span>
+            }
+          </td>
+          <td>
+            <button
+              class="btn btn-sm btn-danger"
+              (click)="deleteEquipment(equipment, $event)"
+            >
+              刪除
+            </button>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+</div>

@@ -1,0 +1,1894 @@
+<div class="container-fluid bg-light min-vh-100 p-3">
+  <div class="card form-card shadow-sm">
+    <div class="card-body p-4">
+      <!-- 表單頭部 -->
+      <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
+        <div>
+          <!-- @if (site()?.formLogo) {
+          <img
+            [src]="site()?.formLogo"
+            alt="公司Logo"
+            class="img-fluid"
+            style="max-width: 100px; max-height: 100px"
+          />
+          } -->
+          <img
+            src="assets/miclogo.jpg"
+            alt="公司Logo"
+            class="img-fluid"
+            style="max-width: 100px; max-height: 100px"
+          />
+        </div>
+        <div class="form-title text-center fw-bold p-2 flex-grow-1 mx-3">
+          <h3 class="mb-0">工具箱會議及巡檢紀錄</h3>
+        </div>
+        <div style="width: 100px"></div>
+      </div>
+
+      <!-- 說明文字 -->
+      <div class="mb-3 p-2 bg-light border rounded">
+        <p class="mb-0 small">
+          工具箱會議及巡工事前安全衛生講題進行各知識討論(如最近發生的事故、作業場所的特殊危害、設備的安全操作、新的工作程序及人員相關的作業安全)，並請簽名。
+        </p>
+      </div>
+
+      <form #meetingForm="ngForm" class="mb-3">
+        <!-- 會議資訊表格 -->
+        <table class="table table-bordered border-dark mb-0">
+          <tbody>
+            <!-- 第一行：會議日期、會議地點 -->
+            <tr class="bg-light">
+              <td
+                style="width: 30%"
+                colspan="2"
+                class="text-center fw-normal py-2 px-2"
+              >
+                <div class="d-flex">
+                  <span class="fw-bold me-2"
+                    >會議日期<span class="text-danger">*</span>：</span
+                  >
+                  <input
+                    type="date"
+                    class="border-0 p-0 flex-grow-1"
+                    name="meetingDate"
+                    [(ngModel)]="meetingData.applyDate"
+                    aria-label="會議日期"
+                    required
+                  />
+                </div>
+              </td>
+              <td
+                style="width: 35%"
+                colspan="2"
+                class="text-center fw-normal py-2 px-2"
+              >
+                <div class="d-flex">
+                  <span class="fw-bold me-2">會議時間：</span>
+                  <input
+                    type="time"
+                    class="border-0 p-0 flex-grow-1"
+                    name="meetingTime"
+                    [(ngModel)]="meetingData.meetingTime"
+                    aria-label="會議時間"
+                    required
+                  />
+                </div>
+              </td>
+
+              <td
+                style="width: 35%"
+                colspan="2"
+                class="text-center fw-normal py-2 px-2"
+              >
+                <div class="d-flex">
+                  <span class="fw-bold me-2">會議地點：</span>
+                  <input
+                    type="text"
+                    class="border-0 p-0 flex-grow-1"
+                    name="meetingLocation"
+                    [(ngModel)]="meetingData.meetingLocation"
+                    placeholder="請輸入會議地點"
+                    aria-label="會議地點"
+                    required
+                  />
+                </div>
+              </td>
+            </tr>
+
+            <!-- 表頭行：主持人、共同作業廠商、主承攬商、再承攬商 -->
+            <tr class="bg-light">
+              <td style="width: 15%" class="text-center fw-bold py-2 px-2">
+                主持人
+              </td>
+              <td style="width: 15%" class="text-center fw-bold py-2 px-2">
+                共同作業廠商
+              </td>
+              <td style="width: 17.5%" class="text-center fw-bold py-2 px-2">
+                主承攬商
+              </td>
+              <td style="width: 17.5%" class="text-center fw-bold py-2 px-2">
+                再承攬商(1)
+              </td>
+              <td style="width: 17.5%" class="text-center fw-bold py-2 px-2">
+                再承攬商(2)
+              </td>
+              <td style="width: 17.5%" class="text-center fw-bold py-2 px-2">
+                再承攬商(3)
+              </td>
+            </tr>
+
+            <!-- 廠商名稱行 -->
+            <tr>
+              <td class="py-2 px-2" rowspan="2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0 text-center"
+                  name="hostCompany"
+                  [(ngModel)]="meetingData.hostPerson"
+                  placeholder="主持人"
+                  aria-label="主持人"
+                />
+              </td>
+              <td class="text-center fw-normal bg-light py-2 px-2">廠商名稱</td>
+              <td class="py-2 px-2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0 text-center"
+                  name="contractorCompany0"
+                  [(ngModel)]="meetingData.contractors[0].company"
+                  placeholder="主承攬商"
+                  aria-label="主承攬商名稱"
+                />
+              </td>
+              <td class="py-2 px-2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0 text-center"
+                  name="contractorCompany1"
+                  [(ngModel)]="meetingData.contractors[1].company"
+                  placeholder="再承攬商1"
+                  aria-label="再承攬商1名稱"
+                />
+              </td>
+              <td class="py-2 px-2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0 text-center"
+                  name="contractorCompany2"
+                  [(ngModel)]="meetingData.contractors[2].company"
+                  placeholder="再承攬商2"
+                  aria-label="再承攬商2名稱"
+                />
+              </td>
+              <td class="py-2 px-2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0 text-center"
+                  name="contractorCompany3"
+                  [(ngModel)]="meetingData.contractors[3].company"
+                  placeholder="再承攬商3"
+                  aria-label="再承攬商3名稱"
+                />
+              </td>
+            </tr>
+
+            <!-- 與會人員行 -->
+            <tr>
+              <td class="text-center fw-normal bg-light py-2 px-2">與會人員</td>
+              <td class="py-2 px-2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0 text-center"
+                  name="contractorName0"
+                  [(ngModel)]="meetingData.contractors[0].name"
+                  placeholder="主承攬商人員"
+                  aria-label="主承攬商人員"
+                />
+              </td>
+              <td class="py-2 px-2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0 text-center"
+                  name="contractorName1"
+                  [(ngModel)]="meetingData.contractors[1].name"
+                  placeholder="再承攬商1人員"
+                  aria-label="再承攬商1人員"
+                />
+              </td>
+              <td class="py-2 px-2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0 text-center"
+                  name="contractorName2"
+                  [(ngModel)]="meetingData.contractors[2].name"
+                  placeholder="再承攬商2人員"
+                  aria-label="再承攬商2人員"
+                />
+              </td>
+              <td class="py-2 px-2">
+                <input
+                  type="text"
+                  class="form-control border-0 bg-transparent p-0 text-center"
+                  name="contractorName3"
+                  [(ngModel)]="meetingData.contractors[3].name"
+                  placeholder="再承攬商3人員"
+                  aria-label="再承攬商3人員"
+                />
+              </td>
+            </tr>
+
+            <!-- 本日工作項目 -->
+            <tr>
+              <td
+                class="text-center fw-bold bg-light py-2 px-2 align-middle"
+                style="writing-mode: vertical-lr; text-orientation: upright"
+              >
+                本日工作項目
+              </td>
+              <td colspan="5" class="py-2 px-2">
+                <textarea
+                  class="form-control border-0 bg-transparent p-0 flex-grow-1"
+                  name="workItem0"
+                  [(ngModel)]="meetingData.workItems[0].description"
+                  rows="4"
+                  placeholder="請輸入本日工作項目"
+                  aria-label="本日工作項目"
+                  required
+                ></textarea>
+              </td>
+            </tr>
+
+            <!-- 本日工作地點 -->
+            <tr>
+              <td
+                class="text-center fw-bold bg-light py-2 px-2 align-middle"
+                style="writing-mode: vertical-lr; text-orientation: upright"
+              >
+                本日工作地點
+              </td>
+              <td colspan="5" class="py-2 px-2">
+                <div class="d-flex align-items-center">
+                  <textarea
+                    class="form-control border-0 bg-transparent p-0 flex-grow-1"
+                    name="workItem1"
+                    [(ngModel)]="meetingData.workItems[1].description"
+                    rows="4"
+                    placeholder="請輸入本日工作地點"
+                    aria-label="本日工作地點"
+                    required
+                  ></textarea>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- 危害識別說明 -->
+        <div class="mt-4 mb-2">
+          <p class="mb-1 fw-bold">
+            *本日作業區域/如作業現場可能潛在危害(請逐一確認，有請「V」，無請「X」；無該危害)
+          </p>
+        </div>
+
+        <!-- 危害識別表格 -->
+        <div class="border border-dark">
+          <!-- 物理性危害 -->
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-bold">物理性危害</span>
+            </div>
+            <div style="width: 85%" class="py-2 px-2">
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="noise"
+                    name="noise"
+                    [(ngModel)]="meetingData.hazards.physical.noise"
+                  />
+                  <label class="form-check-label" for="noise">噪音</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="vibration"
+                    name="vibration"
+                    [(ngModel)]="meetingData.hazards.physical.vibration"
+                  />
+                  <label class="form-check-label" for="vibration">振動</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="highTemp"
+                    name="highTemp"
+                    [(ngModel)]="meetingData.hazards.physical.highTemp"
+                  />
+                  <label class="form-check-label" for="highTemp"
+                    >異常高溫</label
+                  >
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="lowTemp"
+                    name="lowTemp"
+                    [(ngModel)]="meetingData.hazards.physical.lowTemp"
+                  />
+                  <label class="form-check-label" for="lowTemp">異常低溫</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="fallObject"
+                    name="fallObject"
+                    [(ngModel)]="meetingData.hazards.physical.fallObject"
+                  />
+                  <label class="form-check-label" for="fallObject"
+                    >物體飛落</label
+                  >
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="electric"
+                    name="electric"
+                    [(ngModel)]="meetingData.hazards.physical.electric"
+                  />
+                  <label class="form-check-label" for="electric">感電</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="radiation"
+                    name="radiation"
+                    [(ngModel)]="meetingData.hazards.physical.radiation"
+                  />
+                  <label class="form-check-label" for="radiation"
+                    >游離輻射</label
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 化學性危害 -->
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-bold">化學性危害</span>
+            </div>
+            <div style="width: 85%" class="py-2 px-2">
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="chemicalBurn"
+                    name="chemicalBurn"
+                    [(ngModel)]="meetingData.hazards.chemical.burn"
+                  />
+                  <label class="form-check-label" for="chemicalBurn"
+                    >化學性燒燙傷</label
+                  >
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="chemicalInhalation"
+                    name="chemicalInhalation"
+                    [(ngModel)]="meetingData.hazards.chemical.inhalation"
+                  />
+                  <label class="form-check-label" for="chemicalInhalation"
+                    >化學物吸入</label
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 火災危害 -->
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-bold">火災危害</span>
+            </div>
+            <div style="width: 85%" class="py-2 px-2">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="fireHazard"
+                  name="fireHazard"
+                  [(ngModel)]="meetingData.hazards.fire.fire"
+                />
+                <label class="form-check-label" for="fireHazard">火災</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 其他危害 -->
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-bold">其他危害</span>
+            </div>
+            <div style="width: 85%" class="py-2 px-2">
+              <div class="d-flex flex-wrap gap-3 align-items-center">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="biological"
+                    name="biological"
+                    [(ngModel)]="meetingData.hazards.other.biological"
+                  />
+                  <label class="form-check-label" for="biological"
+                    >生物性危害</label
+                  >
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="outdoorHighTemp"
+                    name="outdoorHighTemp"
+                    [(ngModel)]="meetingData.hazards.other.outdoorHighTemp"
+                  />
+                  <label class="form-check-label" for="outdoorHighTemp"
+                    >戶外高溫</label
+                  >
+                </div>
+                <div class="form-check d-flex align-items-center">
+                  <input
+                    class="form-check-input me-2"
+                    type="checkbox"
+                    id="otherHazard"
+                    name="otherHazard"
+                    [(ngModel)]="meetingData.hazards.other.other"
+                  />
+                  <label class="form-check-label me-2" for="otherHazard"
+                    >其他：</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control border-bottom border-0 bg-transparent"
+                    style="width: 200px"
+                    name="otherContent"
+                    [(ngModel)]="meetingData.hazards.other.otherContent"
+                    placeholder="其他危害"
+                    aria-label="其他危害"
+                    [disabled]="!meetingData.hazards.other.other"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 化學品區域 -->
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-bold"
+                >作業區域或包含以下化學品及其附屬設備管線</span
+              >
+            </div>
+            <div style="width: 85%" class="py-2 px-2">
+              <div class="d-flex align-items-center gap-3">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    id="noChemicals"
+                    name="chemicalArea"
+                    [value]="true"
+                    [(ngModel)]="meetingData.hazards.chemicalArea.hasChemicals"
+                  />
+                  <label class="form-check-label" for="noChemicals">無</label>
+                </div>
+                <div class="form-check d-flex align-items-center">
+                  <input
+                    class="form-check-input me-2"
+                    type="radio"
+                    id="hasChemicals"
+                    name="chemicalArea"
+                    [value]="false"
+                    [(ngModel)]="meetingData.hazards.chemicalArea.hasChemicals"
+                  />
+                  <label class="form-check-label me-2" for="hasChemicals"
+                    >化學品名稱：</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control border-bottom border-0 bg-transparent"
+                    style="width: 300px"
+                    name="chemicalNames"
+                    [(ngModel)]="meetingData.hazards.chemicalArea.chemicalNames"
+                    placeholder="化學品名稱"
+                    aria-label="化學品名稱"
+                    [disabled]="meetingData.hazards.chemicalArea.hasChemicals"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 氣體區域 -->
+          <div class="d-flex">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-bold"
+                >作業區域或包含以下氣體及其附屬設備管線</span
+              >
+            </div>
+            <div style="width: 85%" class="py-2 px-2">
+              <div class="d-flex align-items-center gap-3">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    id="noGas"
+                    name="gasArea"
+                    [value]="true"
+                    [(ngModel)]="meetingData.hazards.gasArea.hasGas"
+                  />
+                  <label class="form-check-label" for="noGas">無</label>
+                </div>
+                <div class="form-check d-flex align-items-center">
+                  <input
+                    class="form-check-input me-2"
+                    type="radio"
+                    id="hasGas"
+                    name="gasArea"
+                    [value]="false"
+                    [(ngModel)]="meetingData.hazards.gasArea.hasGas"
+                  />
+                  <label class="form-check-label me-2" for="hasGas"
+                    >氣體名稱：</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control border-bottom border-0 bg-transparent"
+                    style="width: 300px"
+                    name="gasNames"
+                    [(ngModel)]="meetingData.hazards.gasArea.gasNames"
+                    placeholder="氣體名稱"
+                    aria-label="氣體名稱"
+                    [disabled]="meetingData.hazards.gasArea.hasGas"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 安全衛生措施說明 -->
+        <div class="mt-4 mb-2">
+          <p class="mb-1 fw-bold">
+            *本日應採取之安全衛生措施（請逐一確認，有請「V」，無請「X」；個人防護具需功能正常方可使用）
+          </p>
+        </div>
+
+        <!-- 安全衛生措施表格 -->
+        <table class="table table-bordered border-dark mb-0">
+          <tbody>
+            <!-- 表頭行 -->
+            <tr class="bg-light">
+              <td
+                rowspan="13"
+                class="text-center align-middle fw-bold"
+                style="
+                  width: 5%;
+                  writing-mode: vertical-lr;
+                  text-orientation: upright;
+                "
+              >
+                依作業性質穿戴之安全防護具及措施
+              </td>
+            </tr>
+            <!-- 01. 頭部防護 -->
+            <tr>
+              <td class="bg-light fw-normal" style="width: 20%">
+                01. 頭部防護：
+              </td>
+              <td style="width: 75%">
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="workSiteHead"
+                      name="workSiteHead"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection.head
+                      "
+                    />
+                    <label class="form-check-label" for="workSiteHead"
+                      >工地用</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="electricianHead"
+                      name="electricianHead"
+                    />
+                    <label class="form-check-label" for="electricianHead"
+                      >電工用</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="labHead"
+                      name="labHead"
+                    />
+                    <label class="form-check-label" for="labHead">實驗室</label>
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 02. 眼部防護 -->
+            <tr>
+              <td class="bg-light fw-normal">02. 眼部防護：</td>
+              <td>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="sparkEyes"
+                      name="sparkEyes"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection.eyes
+                      "
+                    />
+                    <label class="form-check-label" for="sparkEyes"
+                      >防火花飛濺能傷害的安全眼鏡</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="laserEyes"
+                      name="laserEyes"
+                    />
+                    <label class="form-check-label" for="laserEyes"
+                      >防雷射射針能傷害的安全眼鏡</label
+                    >
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 03. 呼吸防護 -->
+            <tr>
+              <td class="bg-light fw-normal">03. 呼吸防護：</td>
+              <td>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="dustMask"
+                      name="dustMask"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection.breath
+                      "
+                    />
+                    <label class="form-check-label" for="dustMask">防塵</label>
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="toxicMask"
+                      name="toxicMask"
+                    />
+                    <label class="form-check-label" for="toxicMask">濾毒</label>
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="scba"
+                      name="scba"
+                    />
+                    <label class="form-check-label" for="scba">SCBA</label>
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="papr"
+                      name="papr"
+                    />
+                    <label class="form-check-label" for="papr">PAPR</label>
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="airlineMask"
+                      name="airlineMask"
+                    />
+                    <label class="form-check-label" for="airlineMask"
+                      >輸氣管面罩</label
+                    >
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 04. 手部防護 -->
+            <tr>
+              <td class="bg-light fw-normal">04. 手部防護：</td>
+              <td>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="cutResistantGloves"
+                      name="cutResistantGloves"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection.hand
+                      "
+                    />
+                    <label class="form-check-label" for="cutResistantGloves"
+                      >耐切割</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="heatResistantGloves"
+                      name="heatResistantGloves"
+                    />
+                    <label class="form-check-label" for="heatResistantGloves"
+                      >耐熱</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="coldResistantGloves"
+                      name="coldResistantGloves"
+                    />
+                    <label class="form-check-label" for="coldResistantGloves"
+                      >耐寒</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="electricianGloves"
+                      name="electricianGloves"
+                    />
+                    <label class="form-check-label" for="electricianGloves"
+                      >電工用</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="chemicalGloves"
+                      name="chemicalGloves"
+                    />
+                    <label class="form-check-label" for="chemicalGloves"
+                      >防化學</label
+                    >
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 05. 足部防護 -->
+            <tr>
+              <td class="bg-light fw-normal">05. 足部防護：</td>
+              <td>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="safetyShoes"
+                      name="safetyShoes"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection.foot
+                      "
+                    />
+                    <label class="form-check-label" for="safetyShoes"
+                      >一般安全鞋</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="chemicalShoes"
+                      name="chemicalShoes"
+                    />
+                    <label class="form-check-label" for="chemicalShoes"
+                      >防化學安全鞋</label
+                    >
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 06. 身體防護 -->
+            <tr>
+              <td class="bg-light fw-normal">06. 身體防護：</td>
+              <td>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="wearableBelt"
+                      name="wearableBelt"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection.body
+                      "
+                    />
+                    <label class="form-check-label" for="wearableBelt"
+                      >穿著式安全帶</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="backpackBelt"
+                      name="backpackBelt"
+                    />
+                    <label class="form-check-label" for="backpackBelt"
+                      >背負式安全帶</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="fullBodyProtection"
+                      name="fullBodyProtection"
+                    />
+                    <label class="form-check-label" for="fullBodyProtection"
+                      >全身式安全防護衣</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="chemicalProtection"
+                      name="chemicalProtection"
+                    />
+                    <label class="form-check-label" for="chemicalProtection"
+                      >化學防護衣</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="reflectiveVest"
+                      name="reflectiveVest"
+                    />
+                    <label class="form-check-label" for="reflectiveVest"
+                      >反光背心</label
+                    >
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 07. 聽覺防護 -->
+            <tr>
+              <td class="bg-light fw-normal">07. 聽覺防護：</td>
+              <td>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="earPlugs"
+                      name="earPlugs"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection.hearing
+                      "
+                    />
+                    <label class="form-check-label" for="earPlugs">耳塞</label>
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="earMuffs"
+                      name="earMuffs"
+                    />
+                    <label class="form-check-label" for="earMuffs">耳罩</label>
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 08. 墜落防護 -->
+            <tr>
+              <td class="bg-light fw-normal">08. 墜落防護：</td>
+              <td>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="safetyNet"
+                      name="safetyNet"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection.fall
+                      "
+                    />
+                    <label class="form-check-label" for="safetyNet"
+                      >安全網</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="mobileLadder"
+                      name="mobileLadder"
+                    />
+                    <label class="form-check-label" for="mobileLadder"
+                      >移動梯</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="scaffold"
+                      name="scaffold"
+                    />
+                    <label class="form-check-label" for="scaffold"
+                      >施工架</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="highWorkVehicle"
+                      name="highWorkVehicle"
+                    />
+                    <label class="form-check-label" for="highWorkVehicle"
+                      >高空工作車</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="safetyLine"
+                      name="safetyLine"
+                    />
+                    <label class="form-check-label" for="safetyLine"
+                      >安全母索</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="autoFallProtection"
+                      name="autoFallProtection"
+                    />
+                    <label class="form-check-label" for="autoFallProtection"
+                      >自動防墜器</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="safetyRope"
+                      name="safetyRope"
+                    />
+                    <label class="form-check-label" for="safetyRope"
+                      >安全繩</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="eagleFrame"
+                      name="eagleFrame"
+                    />
+                    <label class="form-check-label" for="eagleFrame"
+                      >鷹架</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="fixedLadder"
+                      name="fixedLadder"
+                    />
+                    <label class="form-check-label" for="fixedLadder"
+                      >固定梯</label
+                    >
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 09. 電氣預防 -->
+            <tr>
+              <td class="bg-light fw-normal">09. 電氣預防：</td>
+              <td>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="leakageBreaker"
+                      name="leakageBreaker"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection
+                          .electric
+                      "
+                    />
+                    <label class="form-check-label" for="leakageBreaker"
+                      >漏電斷路器</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="autoElectricPreventer"
+                      name="autoElectricPreventer"
+                    />
+                    <label class="form-check-label" for="autoElectricPreventer"
+                      >交流電焊機自動電擊防止裝置</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="grounder"
+                      name="grounder"
+                    />
+                    <label class="form-check-label" for="grounder"
+                      >接地器</label
+                    >
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 10. 火災預防 -->
+            <tr>
+              <td class="bg-light fw-normal">10. 火災預防：</td>
+              <td>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="fireExtinguisher"
+                      name="fireExtinguisher"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection.fire
+                      "
+                    />
+                    <label class="form-check-label" for="fireExtinguisher"
+                      >滅火器</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="fireBlanket"
+                      name="fireBlanket"
+                    />
+                    <label class="form-check-label" for="fireBlanket"
+                      >防火毯</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="fireHydrant"
+                      name="fireHydrant"
+                    />
+                    <label class="form-check-label" for="fireHydrant"
+                      >滅火栓防火裝置</label
+                    >
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 11. 氣體預防 -->
+            <tr>
+              <td class="bg-light fw-normal">11. 氣體預防：</td>
+              <td>
+                <div class="d-flex flex-wrap gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="ventilation"
+                      name="ventilation"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection.gas
+                      "
+                    />
+                    <label class="form-check-label" for="ventilation"
+                      >通風設備</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="lifeDetector"
+                      name="lifeDetector"
+                    />
+                    <label class="form-check-label" for="lifeDetector"
+                      >生命偵測裝置</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="gasDetector"
+                      name="gasDetector"
+                    />
+                    <label class="form-check-label" for="gasDetector"
+                      >氣體偵測器</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="hoist"
+                      name="hoist"
+                    />
+                    <label class="form-check-label" for="hoist">吊掛設備</label>
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="disasterEquipment"
+                      name="disasterEquipment"
+                    />
+                    <label class="form-check-label" for="disasterEquipment"
+                      >搶災設備</label
+                    >
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- 12. 其他預防 -->
+            <tr>
+              <td class="bg-light fw-normal">12. 其他預防：</td>
+              <td>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="form-check d-flex align-items-center">
+                    <input
+                      class="form-check-input me-2"
+                      type="checkbox"
+                      id="otherPrevention"
+                      name="otherPrevention"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection.other
+                      "
+                    />
+                    <label class="form-check-label me-2" for="otherPrevention"
+                      >其他</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control border-bottom border-0 bg-transparent"
+                      style="width: 400px"
+                      name="otherPreventionContent"
+                      [(ngModel)]="
+                        meetingData.safetyPrecautions.personalProtection
+                          .otherContent
+                      "
+                      placeholder="其他防護措施"
+                      aria-label="其他防護措施"
+                      [disabled]="
+                        !meetingData.safetyPrecautions.personalProtection.other
+                      "
+                    />
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- 健康危害告知表說明 -->
+        <div class="mt-4 mb-2">
+          <p class="mb-1 fw-bold">
+            *健康危害告知(依勞工健康保護規則規定，有下列疾病人員，不得從事相對應的作業)
+          </p>
+        </div>
+
+        <!-- 健康危害告知表 -->
+        <div class="border border-dark">
+          <!-- 表頭 -->
+          <div class="d-flex border-bottom border-dark bg-light">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2"
+            >
+              <span class="fw-bold">作業名稱</span>
+            </div>
+            <div
+              style="width: 85%"
+              class="d-flex align-items-center justify-content-center py-2 px-2"
+            >
+              <span class="fw-bold">考量不適合從事作業之疾病</span>
+            </div>
+          </div>
+
+          <!-- 各項危害 -->
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-normal">噪音作業</span>
+            </div>
+            <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
+              <span>心血管疾病、聽力異常。</span>
+            </div>
+          </div>
+
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-normal">振動作業</span>
+            </div>
+            <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
+              <span>周邊神經系統疾病、周邊循環系統疾病。</span>
+            </div>
+          </div>
+
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-normal">游離輻射作業</span>
+            </div>
+            <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
+              <span>血液疾病、內分泌系統疾病、神經系統異常、眼睛疾病。</span>
+            </div>
+          </div>
+
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-normal">非游離輻射作業</span>
+            </div>
+            <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
+              <span>內分泌系統疾病、神經系統異常。</span>
+            </div>
+          </div>
+
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-normal">高架作業</span>
+            </div>
+            <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
+              <span
+                >癲癇、精神或神經系統疾病、高血壓、心血管疾病、貧血、平衡機能失常、呼吸系統疾病、肢體障礙。</span
+              >
+            </div>
+          </div>
+
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-normal">缺氧作業</span>
+            </div>
+            <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
+              <span>心血管疾病、慢性阻塞性肺疾病、慢性氣喘、無意識。</span>
+            </div>
+          </div>
+
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-normal">正己烷作業</span>
+            </div>
+            <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
+              <span>周邊神經系統疾病、接觸性皮膚疾病等。</span>
+            </div>
+          </div>
+
+          <div class="d-flex">
+            <div
+              style="width: 15%"
+              class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light"
+            >
+              <span class="fw-normal">重體力勞動作業</span>
+            </div>
+            <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
+              <span
+                >呼吸系統疾病、高血壓、心血管疾病、貧血、肝病、腎臟疾病、精神或神經系統疾病、無意識狀態糖尿病、接觸性皮膚疾病、骨骼肌肉。</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- 出席人員簽名說明 -->
+        <div class="mt-4 mb-2">
+          <p class="mb-1 fw-bold">
+            *出席人員簽名(簽名時，本人已了解下列事項)：
+          </p>
+          <ol class="ps-3">
+            <li>
+              已了解今日作業環境及作業內容的危害並願意使用防護具及遵守各項防範措施。
+            </li>
+            <li>
+              已了解健康危害告知內容，本人如有上述疾病時，不會從事該項作業。
+            </li>
+          </ol>
+        </div>
+
+        <!-- 出席人員簽名表 -->
+        <div class="border border-dark">
+          <!-- 表頭 -->
+          <div class="d-flex border-bottom border-dark bg-light">
+            <div
+              style="width: 4%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2"
+            >
+              <span class="fw-bold">No</span>
+            </div>
+            <div
+              style="width: 24%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2"
+            >
+              <span class="fw-bold">主承攬商</span>
+            </div>
+            <div
+              style="width: 24%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2"
+            >
+              <span class="fw-bold">再承攬商(1)</span>
+            </div>
+            <div
+              style="width: 24%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2"
+            >
+              <span class="fw-bold">再承攬商(2)</span>
+            </div>
+            <div
+              style="width: 24%"
+              class="d-flex align-items-center justify-content-center py-2 px-2"
+            >
+              <span class="fw-bold">再承攬商(3)</span>
+            </div>
+          </div>
+
+          <!-- 簽名行 -->
+          @for (i of [0,1,2,3,4,5,6,7,8,9]; track i) {
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 4%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2"
+            >
+              <span class="fw-bold">{{ formatNo(i) }}</span>
+            </div>
+            <!-- 主承攬商 -->
+            <div
+              style="width: 24%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-1 px-1"
+            >
+              <div
+                class="border signature-area w-100 text-center"
+                [class.cursor-pointer]="!isSignatureSlotSigned(meetingData.healthWarnings.attendeeMainContractorSignatures[i])"
+                [class.signed-slot]="isSignatureSlotSigned(meetingData.healthWarnings.attendeeMainContractorSignatures[i])"
+                (click)="!isSignatureSlotSigned(meetingData.healthWarnings.attendeeMainContractorSignatures[i]) && showWorkerVerificationModal(0)"
+                [title]="isSignatureSlotSigned(meetingData.healthWarnings.attendeeMainContractorSignatures[i]) ? getSignatureTooltip(meetingData.healthWarnings.attendeeMainContractorSignatures[i]) : ''"
+                style="height: 40px"
+              >
+                @if (getSignatureImage(meetingData.healthWarnings.attendeeMainContractorSignatures[i])) {
+                <img
+                  [src]="getSignatureImage(meetingData.healthWarnings.attendeeMainContractorSignatures[i])"
+                  alt="主承攬商簽名"
+                  class="signature-image"
+                  style="max-height: 38px"
+                />
+                } @else {
+                <div class="signature-placeholder small text-muted">
+                  工人簽名
+                </div>
+                }
+              </div>
+            </div>
+            <!-- 再承攬商(1) -->
+            <div
+              style="width: 24%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-1 px-1"
+            >
+              <div
+                class="border signature-area w-100 text-center"
+                [class.cursor-pointer]="!isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor1Signatures[i])"
+                [class.signed-slot]="isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor1Signatures[i])"
+                (click)="!isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor1Signatures[i]) && showWorkerVerificationModal(1)"
+                [title]="isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor1Signatures[i]) ? getSignatureTooltip(meetingData.healthWarnings.attendeeSubcontractor1Signatures[i]) : ''"
+                style="height: 40px"
+              >
+                @if (getSignatureImage(meetingData.healthWarnings.attendeeSubcontractor1Signatures[i])) {
+                <img
+                  [src]="getSignatureImage(meetingData.healthWarnings.attendeeSubcontractor1Signatures[i])"
+                  alt="再承攬商簽名"
+                  class="signature-image"
+                  style="max-height: 38px"
+                />
+                } @else {
+                <div class="signature-placeholder small text-muted">
+                  工人簽名
+                </div>
+                }
+              </div>
+            </div>
+            <!-- 再承攬商(2) -->
+            <div
+              style="width: 24%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-1 px-1"
+            >
+              <div
+                class="border signature-area w-100 text-center"
+                [class.cursor-pointer]="!isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor2Signatures[i])"
+                [class.signed-slot]="isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor2Signatures[i])"
+                (click)="!isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor2Signatures[i]) && showWorkerVerificationModal(2)"
+                [title]="isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor2Signatures[i]) ? getSignatureTooltip(meetingData.healthWarnings.attendeeSubcontractor2Signatures[i]) : ''"
+                style="height: 40px"
+              >
+                @if (getSignatureImage(meetingData.healthWarnings.attendeeSubcontractor2Signatures[i])) {
+                <img
+                  [src]="getSignatureImage(meetingData.healthWarnings.attendeeSubcontractor2Signatures[i])"
+                  alt="再承攬商簽名"
+                  class="signature-image"
+                  style="max-height: 38px"
+                />
+                } @else {
+                <div class="signature-placeholder small text-muted">
+                  工人簽名
+                </div>
+                }
+              </div>
+            </div>
+            <!-- 再承攬商(3) -->
+            <div
+              style="width: 24%"
+              class="d-flex align-items-center justify-content-center py-1 px-1"
+            >
+              <div
+                class="border signature-area w-100 text-center"
+                [class.cursor-pointer]="!isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor3Signatures[i])"
+                [class.signed-slot]="isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor3Signatures[i])"
+                (click)="!isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor3Signatures[i]) && showWorkerVerificationModal(3)"
+                [title]="isSignatureSlotSigned(meetingData.healthWarnings.attendeeSubcontractor3Signatures[i]) ? getSignatureTooltip(meetingData.healthWarnings.attendeeSubcontractor3Signatures[i]) : ''"
+                style="height: 40px"
+              >
+                @if (getSignatureImage(meetingData.healthWarnings.attendeeSubcontractor3Signatures[i])) {
+                <img
+                  [src]="getSignatureImage(meetingData.healthWarnings.attendeeSubcontractor3Signatures[i])"
+                  alt="再承攬商簽名"
+                  class="signature-image"
+                  style="max-height: 38px"
+                />
+                } @else {
+                <div class="signature-placeholder small text-muted">
+                  工人簽名
+                </div>
+                }
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- 作業現場巡檢紀錄說明 -->
+        <div class="mt-4 mb-2">
+          <p class="mb-1 fw-bold">
+            *作業現場巡檢紀錄(確認檢查項目均符規定後方可作業)
+          </p>
+        </div>
+
+        <!-- 作業現場巡檢紀錄表 -->
+        <div class="border border-dark">
+          <!-- 表頭 -->
+          <div class="d-flex border-bottom border-dark bg-light">
+            <div
+              style="width: 5%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2"
+            >
+              <span class="fw-bold">序號</span>
+            </div>
+            <div
+              style="width: 65%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2"
+            >
+              <span class="fw-bold">檢查項目</span>
+            </div>
+            <div
+              style="width: 15%"
+              class="d-flex flex-column align-items-center justify-content-center border-end border-dark py-2 px-2"
+            >
+              <span class="fw-bold mb-1">主承攬商監工人員巡檢欄</span>
+              <div class="d-flex w-100">
+                <div
+                  style="width: 50%"
+                  class="text-center border-end border-dark py-1"
+                >
+                  <small class="fw-bold">施工前</small>
+                </div>
+                <div style="width: 50%" class="text-center py-1">
+                  <small class="fw-bold">施工中</small>
+                </div>
+              </div>
+            </div>
+            <div
+              style="width: 15%"
+              class="d-flex flex-column align-items-center justify-content-center py-2 px-2"
+            >
+              <span class="fw-bold mb-1">監工單位</span>
+              <div class="d-flex w-100">
+                <div
+                  style="width: 50%"
+                  class="text-center border-end border-dark py-1"
+                >
+                  <small class="fw-bold">收工前</small>
+                </div>
+                <div style="width: 50%" class="text-center py-1">
+                  <small class="fw-bold">巡檢欄</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 檢查項目行 -->
+          @for (item of meetingData.fieldCheckItems; track $index) {
+          <div class="d-flex border-bottom border-dark">
+            <div
+              style="width: 5%"
+              class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2"
+            >
+              <span class="fw-normal">{{ item.id }}</span>
+            </div>
+            <div
+              style="width: 65%"
+              class="d-flex align-items-center border-end border-dark py-2 px-2"
+            >
+              <span class="small">{{ item.content }}</span>
+            </div>
+            <div style="width: 15%" class="d-flex border-end border-dark">
+              <div
+                style="width: 50%"
+                class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2"
+              >
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [id]="'checkBeforeStart' + $index"
+                  name="checkBeforeStart{{ $index }}"
+                  [(ngModel)]="item.checkBeforeStart"
+                  title="施工前檢查"
+                  aria-label="施工前檢查"
+                />
+              </div>
+              <div
+                style="width: 50%"
+                class="d-flex align-items-center justify-content-center py-2 px-2"
+              >
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [id]="'checkDuring' + $index"
+                  name="checkDuring{{ $index }}"
+                  [(ngModel)]="item.checkDuring"
+                  title="施工中檢查"
+                  aria-label="施工中檢查"
+                />
+              </div>
+            </div>
+            <div style="width: 15%" class="d-flex">
+              <div
+                style="width: 50%"
+                class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2"
+              >
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [id]="'checkBeforeEnd' + $index"
+                  name="checkBeforeEnd{{ $index }}"
+                  [(ngModel)]="item.checkBeforeEnd"
+                  title="收工前檢查"
+                  aria-label="收工前檢查"
+                />
+              </div>
+              <div
+                style="width: 50%"
+                class="d-flex align-items-center justify-content-center py-2 px-2"
+              >
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [id]="'checkAfter' + $index"
+                  name="checkAfter{{ $index }}"
+                  [(ngModel)]="item.checkAfter"
+                  title="巡檢欄檢查"
+                  aria-label="巡檢欄檢查"
+                />
+              </div>
+            </div>
+          </div>
+          }
+
+          <!-- 備註及簽名區 -->
+          <div class="d-flex">
+            <div style="width: 70%" class="border-end border-dark">
+              <div class="d-flex border-bottom border-dark">
+                <div class="py-2 px-2">
+                  <div class="d-flex gap-3">
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="noRemarks"
+                        name="noRemarks"
+                        title="無其他及緊急情形"
+                        aria-label="無其他及緊急情形"
+                      />
+                      <label class="form-check-label" for="noRemarks"
+                        >NA (無其他及緊急情形)</label
+                      >
+                    </div>
+                    <div class="form-check">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="hasRemarks"
+                        name="hasRemarks"
+                        title="異常及緊急情形說明"
+                        aria-label="異常及緊急情形說明"
+                      />
+                      <label class="form-check-label" for="hasRemarks"
+                        >異常及緊急情形說明</label
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="py-2 px-2">
+                <div class="mb-1 fw-bold">巡檢紀錄</div>
+                <textarea
+                  class="form-control border-0 bg-transparent p-0"
+                  name="remarks"
+                  [(ngModel)]="meetingData.remarks"
+                  rows="3"
+                  placeholder="請輸入巡檢紀錄"
+                  aria-label="巡檢紀錄"
+                ></textarea>
+              </div>
+            </div>
+            <div style="width: 30%" class="d-flex">
+              <div
+                style="width: 50%"
+                class="d-flex flex-column align-items-center justify-content-center border-end border-dark py-2 px-2"
+              >
+                <div class="mb-2 fw-bold small">巡檢人員簽名</div>
+                <div
+                  class="border signature-area w-100 text-center"
+                  (click)="openSignatureDialog(SignatureType.Leader)"
+                  style="height: 80px; cursor: pointer"
+                >
+                  @if (leaderSignature) {
+                  <img
+                    [src]="leaderSignature"
+                    alt="工安負責人簽名"
+                    class="signature-image"
+                    style="max-height: 78px"
+                  />
+                  } @else {
+                  <div
+                    class="signature-placeholder small text-muted d-flex align-items-center justify-content-center h-100"
+                  >
+                    點擊簽名
+                  </div>
+                  }
+                </div>
+              </div>
+              <div
+                style="width: 50%"
+                class="d-flex flex-column align-items-center justify-content-center py-2 px-2"
+              >
+                <div class="mb-2 fw-bold small">監工單位</div>
+                <div
+                  class="border signature-area w-100 text-center"
+                  (click)="openSignatureDialog(SignatureType.SiteManager)"
+                  style="height: 80px; cursor: pointer"
+                >
+                  @if (siteManagerSignature) {
+                  <img
+                    [src]="siteManagerSignature"
+                    alt="監工單位簽名"
+                    class="signature-image"
+                    style="max-height: 78px"
+                  />
+                  } @else {
+                  <div
+                    class="signature-placeholder small text-muted d-flex align-items-center justify-content-center h-100"
+                  >
+                    點擊簽名
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 備註說明 -->
+        <div class="text-end mt-2 mb-3">
+          <small class="text-muted"
+            >※主承攬商監工人員施工前/中/收工前各項巡檢一次，監工單位(監工人)施工天至少巡檢一次。</small
+          >
+        </div>
+
+        <!-- 表單編號 -->
+        <div class="text-end mb-3">
+          <small class="text-muted">EE-4411-15A</small>
+        </div>
+
+        <!-- 按鈕區域 -->
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3">
+          <div>
+            <button
+              type="button"
+              class="btn btn-info px-4"
+              (click)="showWorkerVerificationModal(0)"
+            >
+              <i class="bi bi-person-plus me-1"></i>工人簽名
+            </button>
+          </div>
+          <div class="d-flex gap-3">
+            <button
+              type="button"
+              class="btn btn-outline-secondary px-4"
+              (click)="cancel()"
+            >
+              <i class="bi bi-x-circle me-1"></i>取消
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary px-4"
+              (click)="saveMeeting()"
+            >
+              <i class="bi bi-save me-1"></i>保存
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 工人身份驗證 Modal -->
+<div
+  class="modal fade"
+  id="workerVerificationModal"
+  tabindex="-1"
+  aria-labelledby="workerVerificationModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="workerVerificationModalLabel">
+          工人身份驗證
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="關閉"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="verificationId" class="form-label"
+            >請輸入身份證號碼或手機號碼</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            id="verificationId"
+            [(ngModel)]="verificationIdOrPhone"
+            placeholder="身份證號碼或手機號碼"
+          />
+        </div>
+        @if (verificationError) {
+        <div class="alert alert-danger">{{ verificationError }}</div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+        >
+          取消
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="verifyWorker()"
+        >
+          驗證
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

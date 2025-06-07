@@ -1,0 +1,111 @@
+<div
+  id="menuDiv"
+  class="bg-white h-100"
+  style="width: 250px; min-width: 250px"
+>
+  <div class="p-3">
+    <!-- 右上角關閉按鈕 -->
+    <button
+      class="btn btn-sm btn-outline-secondary float-end d-lg-none"
+      (click)="closeMenu()"
+      title="關閉選單"
+    >
+      <i class="bi bi-x"></i>
+    </button>
+    <!-- 選單標題 -->
+    <h5>選單</h5>
+
+    <!-- 可收合的選單項目 -->
+    <div class="accordion accordion-flush" id="mainMenu">
+
+      <!-- 我的工地 -->
+      <div class="accordion-item border-0">
+        <button class="accordion-button p-2" type="button" data-bs-target="#site-collapse">
+          <i class="bi bi-building me-2"></i>我的工地({{currentSite()?.projectName}})
+        </button>
+        <div id="site-collapse" class="accordion-collapse collapse show">
+          <div class="accordion-body p-0">
+            <div class="d-flex flex-column ps-4">
+              <!-- 工地詳情選單 -->
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'overview']" routerLinkActive="active">工地總覽</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'dashboard']" routerLinkActive="active">Dashboard</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'schedule']" routerLinkActive="active">進度表</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'photos']" routerLinkActive="active">相片</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'hazardNotice']" routerLinkActive="active">危害告知</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'training']" routerLinkActive="active">教育訓練</a>
+              <a class="nav-link py-2 d-flex justify-content-between align-items-center" [routerLink]="['/site', siteId, 'equipment']" routerLinkActive="active">
+                <span>機具管理</span>
+                @if (disqualifiedEquipmentCount() > 0) {
+                  <span class="badge bg-danger">{{ disqualifiedEquipmentCount() }}</span>
+                }
+              </a>
+              <a class="nav-link py-2 d-flex justify-content-between align-items-center" [routerLink]="['/site', siteId, 'forms']" routerLinkActive="active">
+                <span>工地表單</span>
+                @if (pendingFormsCount() > 0) {
+                  <span class="badge bg-warning text-dark">{{ pendingFormsCount() }}</span>
+                }
+              </a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'blankForms']" routerLinkActive="active">空白表單</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'userList']" routerLinkActive="active">使用者</a>
+              <a class="nav-link py-2 d-flex justify-content-between align-items-center" [routerLink]="['/site', siteId, 'workerList']" routerLinkActive="active">
+                <span>人才列表</span>
+                @if (workersWithoutHazardNoticeCount() > 0) {
+                  <span class="badge bg-danger">{{ workersWithoutHazardNoticeCount() }}</span>
+                }
+              </a>
+              <a
+                href="#"
+                class="nav-link py-2"
+                [routerLinkActive]="['active']"
+                >日報表</a
+              >
+              <a
+                href="#"
+                class="nav-link py-2"
+                [routerLinkActive]="['active']"
+                >月報表</a
+              >
+              <a
+                href="#"
+                class="nav-link py-2"
+                [routerLinkActive]="['active']"
+                >年報表</a
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 報表查詢 -->
+      <!-- <div class="accordion-item border-0">
+        <button class="accordion-button p-2" type="button" data-bs-target="#report-collapse">
+          <i class="bi bi-file-earmark-text me-2"></i>報表查詢
+        </button>
+        <div id="report-collapse" class="accordion-collapse collapse show">
+          <div class="accordion-body p-0">
+            <div class="d-flex flex-column ps-4">
+              <a
+                href="#"
+                class="nav-link py-2"
+                [routerLinkActive]="['active']"
+                >日報表</a
+              >
+              <a
+                href="#"
+                class="nav-link py-2"
+                [routerLinkActive]="['active']"
+                >月報表</a
+              >
+              <a
+                href="#"
+                class="nav-link py-2"
+                [routerLinkActive]="['active']"
+                >年報表</a
+              >
+            </div>
+          </div>
+        </div>
+      </div> -->
+    </div>
+  </div>
+</div>

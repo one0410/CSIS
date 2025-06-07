@@ -1,0 +1,180 @@
+<!-- 登出按鈕，固定在右上角 -->
+<button class="btn btn-outline-danger position-fixed" style="top: 15px; right: 15px; z-index: 1000;" title="登出系統" (click)="logout()">
+  <i class="bi bi-box-arrow-right me-1"></i>登出
+</button>
+
+<div class="container py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2 class="text-center">選擇工地</h2>
+      <p class="text-center text-muted">請選擇您要進入的工地</p>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-8 mx-auto">
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="bi bi-search"></i>
+        </span>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="搜尋工地名稱、編號或地點..."
+          [(ngModel)]="searchTerm"
+        />
+        <div class="btn-group">
+          <button type="button" class="btn btn-outline-secondary" (click)="setViewMode('card')" [class.active]="viewMode === 'card'" title="卡片檢視">
+            <i class="bi bi-grid-3x3-gap"></i>
+          </button>
+          <button type="button" class="btn btn-outline-secondary" (click)="setViewMode('list')" [class.active]="viewMode === 'list'" title="列表檢視">
+            <i class="bi bi-list"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <div class="d-flex justify-content-center my-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">載入中...</span>
+      </div>
+    </div>
+  } @else if (filteredSites.length === 0) {
+    <div class="alert alert-info text-center my-5">
+      <i class="bi bi-info-circle me-2"></i>
+      @if (searchTerm) {
+        找不到符合 "{{searchTerm}}" 的工地
+      } @else {
+        您目前沒有可訪問的工地
+      }
+    </div>
+  } @else {
+    <!-- 卡片視圖 -->
+    @if (viewMode === 'card') {
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        @for (site of filteredSites; track site._id) {
+          <div class="col">
+            <div 
+              class="card h-100 shadow-sm position-relative" 
+              [class.border-danger]="isExpired(site.endDate)"
+              style="cursor: pointer;" 
+              (click)="selectSite(site)"
+            >
+              @if (isExpired(site.endDate)) {
+                <div
+                  class="position-absolute fs-1 text-nowrap text-danger px-5 py-2 border border-4 border-danger"
+                  style="
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) rotate(-15deg);
+                    z-index: 10;
+                  "
+                >
+                  已過期
+                </div>
+                <div 
+                  class="position-absolute w-100 h-100 top-0 start-0" 
+                  style="background-color: rgba(200, 200, 200, 0.5); z-index: 5;"
+                ></div>
+              }
+              <div class="site-image overflow-hidden" style="height: 160px">
+                <img
+                  class="card-img-top object-fit-cover w-100 h-100"
+                  src="{{ site.image || '/assets/site.jpg' }}"
+                  alt="{{site.projectName}}"
+                />
+              </div>
+              <div class="card-body">
+                <h5 class="card-title">{{site.projectName}}</h5>
+                <p class="card-text text-muted small mb-2">專案編號：{{site.projectNo}}</p>
+                <p class="card-text text-muted small mb-2">
+                  <i class="bi bi-geo-alt me-1"></i> {{site.county}} {{site.town}}
+                </p>
+                <p class="card-text text-muted small">
+                  <i class="bi bi-calendar-event me-1"></i> {{site.startDate}} ~ {{site.endDate}}
+                </p>
+              </div>
+              <div class="card-footer bg-transparent">
+                <div class="factories small">
+                  @for (factory of site.factories; track factory.name) {
+                    <span class="fw-medium me-1">{{factory.name}}:</span>
+                    @for (area of factory.areas; track area) {
+                      <span class="badge bg-info-subtle text-info me-1">{{area}}</span>
+                    }
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+    
+    <!-- 列表視圖 -->
+    @if (viewMode === 'list') {
+      <div class="table-responsive">
+        <table class="table table-hover border">
+          <thead class="bg-light">
+            <tr>
+              <th style="width: 100px">圖片</th>
+              <th>專案資訊</th>
+              <th>工期</th>
+              <th>地點</th>
+              <th>廠區資訊</th>
+              <th style="width: 80px">狀態</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (site of filteredSites; track site._id) {
+              <tr 
+                [class.table-danger]="isExpired(site.endDate)"
+                style="cursor: pointer; vertical-align: middle;"
+                (click)="selectSite(site)"
+              >
+                <td class="p-2">
+                  <div class="position-relative" style="width: 80px; height: 60px;">
+                    <img
+                      class="object-fit-cover w-100 h-100 rounded"
+                      src="/assets/site.jpg"
+                      alt="{{site.projectName}}"
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div class="mb-1 fw-bold">{{site.projectName}}</div>
+                  <div class="text-muted small">專案編號：{{site.projectNo}}</div>
+                </td>
+                <td>
+                  <div class="small">開始：{{site.startDate}}</div>
+                  <div class="small">結束：{{site.endDate}}</div>
+                </td>
+                <td>{{site.county}} {{site.town}}</td>
+                <td>
+                  <div class="factories">
+                    @for (factory of site.factories; track factory.name) {
+                      <div class="factory-item small mb-1">
+                        <span class="fw-medium">{{factory.name}}：</span>
+                        @for (area of factory.areas; track area) {
+                          <span class="badge bg-info-subtle text-info me-1">{{area}}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                </td>
+                <td>
+                  @if (isExpired(site.endDate)) {
+                    <span class="badge bg-danger px-2 py-1">已過期</span>
+                  } @else {
+                    <span class="badge bg-success px-2 py-1">進行中</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

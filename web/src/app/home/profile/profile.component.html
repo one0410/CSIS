@@ -1,0 +1,142 @@
+<div class="profile-container">
+  <div class="profile-header">
+    <h1>個人資料</h1>
+    <p class="subtitle">管理您的個人資訊</p>
+  </div>
+
+  <!-- 載入中提示 -->
+  @if (isLoading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <span>資料載入中...</span>
+    </div>
+  } @else if (!user) {
+    <div class="error-container">
+      <p>無法載入個人資料，請重新登入後再試。</p>
+    </div>
+  } @else {
+    <div class="profile-card">
+      <!-- 大頭貼區域 -->
+      <div class="profile-section avatar-section">
+        <h2>個人頭像</h2>
+        <div class="avatar-container">
+          <div class="avatar-preview">
+            @if (user.avatar) {
+              <img [src]="user.avatar" alt="個人頭像" class="avatar-image" />
+            } @else {
+              <div class="avatar-placeholder">
+                <i class="avatar-icon"></i>
+                <span>{{ user.name?.charAt(0) || 'U' }}</span>
+              </div>
+            }
+          </div>
+          <div class="avatar-actions">
+            <input 
+              type="file" 
+              id="avatarInput" 
+              accept="image/*" 
+              (change)="onAvatarChange($event)" 
+              style="display: none;"
+            />
+            <button class="btn-upload" (click)="selectAvatar()">
+              <i class="upload-icon"></i>
+              選擇頭像
+            </button>
+            @if (user.avatar) {
+              <button class="btn-remove" (click)="removeAvatar()">
+                <i class="remove-icon"></i>
+                移除頭像
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h2>基本資訊</h2>
+        
+        <div class="form-group">
+          <label for="account">帳號</label>
+          <div class="input-container">
+            <i class="user-icon"></i>
+            <input type="text" id="account" [(ngModel)]="user.account" readonly />
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="employeeId">員工編號</label>
+          <div class="input-container">
+            <i class="id-icon"></i>
+            <input type="text" id="employeeId" [(ngModel)]="user.employeeId" />
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="name">姓名</label>
+          <div class="input-container">
+            <i class="name-icon"></i>
+            <input type="text" id="name" [(ngModel)]="user.name" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">電子郵件</label>
+            <div class="input-container">
+              <i class="email-icon"></i>
+              <input type="email" id="email" [(ngModel)]="user.email" />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="cell">電話號碼</label>
+            <div class="input-container">
+              <i class="phone-icon"></i>
+              <input type="tel" id="cell" [(ngModel)]="user.cell" />
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="department">部門</label>
+          <div class="input-container">
+            <i class="department-icon"></i>
+            <input type="text" id="department" [(ngModel)]="user.department" />
+          </div>
+        </div>
+      </div>
+      
+      <div class="profile-section">
+        <h2>安全設定</h2>
+        
+        <div class="form-group">
+          <label for="password">密碼</label>
+          <div class="input-container">
+            <i class="password-icon"></i>
+            <input type="password" id="password" [(ngModel)]="user.password" />
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="confirmPassword">確認密碼</label>
+          <div class="input-container">
+            <i class="confirm-password-icon"></i>
+            <input type="password" id="confirmPassword" [(ngModel)]="password2" />
+          </div>
+        </div>
+      </div>
+      
+      <div class="profile-actions">
+        <button class="btn-save" [disabled]="isLoading" (click)="save()">
+          @if (isLoading) {
+            <span>儲存中...</span>
+          } @else {
+            <span>儲存變更</span>
+          }
+        </button>
+        <button class="btn-cancel" [disabled]="isLoading" (click)="cancel()">取消</button>
+      </div>
+    </div>
+  }
+</div>
+

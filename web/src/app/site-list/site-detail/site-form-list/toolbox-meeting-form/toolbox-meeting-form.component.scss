@@ -1,0 +1,77 @@
+.signature-area {
+  height: 100px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &.cursor-pointer {
+    cursor: pointer;
+    
+    &:hover {
+      background-color: #f8f9fa;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    &:active {
+      background-color: #e9ecef;
+    }
+  }
+  
+  &.signed-slot {
+    cursor: default;
+    background-color: #f8f9fa;
+    
+    &:hover {
+      background-color: #e9ecef;
+      box-shadow: 0 0 5px rgba(40, 167, 69, 0.2);
+    }
+  }
+}
+
+.signature-placeholder {
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  
+  &::before {
+    content: "✏️ ";
+    margin-right: 5px;
+  }
+}
+
+.signature-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+// 表格樣式
+.form-control, .form-select {
+  &.ng-invalid.ng-touched {
+    border-color: #dc3545;
+    
+    &:focus {
+      box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+  }
+}
+
+// 打印樣式
+@media print {
+  .btn, button {
+    display: none !important;
+  }
+  
+  .card {
+    border: 1px solid #dee2e6 !important;
+    margin-bottom: 1rem !important;
+    break-inside: avoid;
+  }
+  
+  .signature-area {
+    border: 1px solid #dee2e6 !important;
+  }
+} 

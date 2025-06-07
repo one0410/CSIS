@@ -1,0 +1,8 @@
+.area-item:hover {
+  // hover時, 後方出現 x 圖示浮在右邊
+  &::after {
+    content: 'x';
+    float: right;
+    color: red;
+  }
+}

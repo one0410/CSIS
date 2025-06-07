@@ -1,0 +1,322 @@
+<div class="container-fluid bg-light min-vh-100 p-3">
+  <div class="form-card card shadow-lg">
+    <div class="print-content p-4">
+      <!-- 表頭 -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="logo-section">
+          <img
+            src="assets/miclogo.jpg"
+            alt="MIC Logo"
+            class="img-fluid"
+            style="max-width: 100px; max-height: 100px"
+          />
+        </div>
+        <div class="form-title text-center fw-bold p-2 flex-grow-1 mx-3">
+          <h5 class="m-0 fw-bold">帆宣系統科技南科分公司</h5>
+          <h6 class="m-0 fw-bold fst-italic">Marketech International Corp.</h6>
+          <h5 class="m-1 fw-bold">工安巡迴檢查表</h5>
+        </div>
+        <div style="width: 100px"></div>
+      </div>
+
+      <!-- 基本資訊表格 -->
+      <table class="table mb-3">
+        <tbody>
+          <tr>
+            <td class="bg-light fw-normal" style="width: 12%">檢查種類：<span class="text-danger">*</span></td>
+            <td colspan="5" class="py-2 px-2">
+              <div class="d-flex gap-4">
+                @for (type of checkTypes; track $index) {
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="checkType"
+                    [id]="'checkType' + $index"
+                    [value]="type"
+                    [(ngModel)]="checklistData.checkType"
+                    (change)="onCheckTypeChange()"
+                    [title]="'選擇檢查種類' + type"
+                    [attr.aria-label]="'選擇檢查種類' + type"
+                  />
+                  <label class="form-check-label" [for]="'checkType' + $index">
+                    {{ type }}
+                  </label>
+                </div>
+                }
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="bg-light fw-normal" style="width: 12%">巡檢日期：<span class="text-danger">*</span></td>
+            <td style="width: 21%" class="py-2 px-2">
+              <input
+                type="date"
+                class="form-control border-0 bg-transparent p-0"
+                [(ngModel)]="checklistData.inspectionDate"
+                title="選擇巡檢日期"
+                aria-label="巡檢日期"
+                required
+              />
+            </td>
+            <td class="bg-light fw-normal" style="width: 12%">專案編號：<span class="text-danger">*</span></td>
+            <td style="width: 22%" class="py-2 px-2">
+              <input
+                type="text"
+                class="form-control border-0 p-0"
+                [(ngModel)]="checklistData.projectNo"
+                title="專案編號"
+                aria-label="專案編號"
+                required
+              />
+            </td>
+            <td class="bg-light fw-normal" style="width: 12%">廠區地點：</td>
+            <td style="width: 22%" class="py-2 px-2">
+              <input
+                type="text"
+                class="form-control border-0 bg-transparent p-0"
+                [value]="(site()?.county || '') + (site()?.town || '')"
+                title="處區地點"
+                aria-label="處區地點"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td class="bg-light fw-normal">巡檢單位：<span class="text-danger">*</span></td>
+            <td class="py-2 px-2">
+              <input
+                type="text"
+                class="form-control border-0 bg-transparent p-0"
+                [(ngModel)]="checklistData.inspectionUnit"
+                placeholder="請輸入巡檢單位"
+                title="輸入巡檢單位"
+                aria-label="巡檢單位"
+                required
+              />
+            </td>
+            <td class="bg-light fw-normal">巡檢人員：<span class="text-danger">*</span></td>
+            <td class="py-2 px-2">
+              <input
+                type="text"
+                class="form-control border-0 bg-transparent p-0"
+                [(ngModel)]="checklistData.inspector"
+                placeholder="請輸入巡檢人員"
+                title="輸入巡檢人員"
+                aria-label="巡檢人員"
+                required
+              />
+            </td>
+            <td class="bg-light fw-normal">巡檢對象：<span class="text-danger">*</span></td>
+            <td class="py-2 px-2">
+              <input
+                type="text"
+                class="form-control border-0 bg-transparent p-0"
+                [(ngModel)]="checklistData.inspectee"
+                placeholder="請輸入巡檢對象"
+                title="輸入巡檢對象"
+                aria-label="巡檢對象"
+                required
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- 檢查項目表格 -->
+      <div class="checklist-section">
+        <table class="table table-bordered border-dark m-0">
+          <thead>
+            <tr class="bg-light">
+              <th style="width: 8%" class="text-center fw-bold py-2">項目</th>
+              <th style="width: 8%" class="text-center fw-bold py-2">代碼</th>
+              <th style="width: 50%" class="text-center fw-bold py-2">
+                檢查項目
+              </th>
+              <th style="width: 24%" class="text-center fw-bold py-2">
+                <div>檢查結果</div>
+                <div class="d-flex justify-content-around small mt-1">
+                  <span
+                    class="cursor-pointer text-decoration-underline"
+                    (click)="selectAllForColumn('正常')"
+                    title="點擊選擇所有項目為正常"
+                    >正常</span
+                  >
+                  <span
+                    class="cursor-pointer text-decoration-underline"
+                    (click)="selectAllForColumn('異常')"
+                    title="點擊選擇所有項目為異常"
+                    >異常</span
+                  >
+                  <span
+                    class="cursor-pointer text-decoration-underline"
+                    (click)="selectAllForColumn('不適用')"
+                    title="點擊選擇所有項目為不適用"
+                    >不適用</span
+                  >
+                </div>
+              </th>
+              <th style="width: 10%" class="text-center fw-bold py-2">備註</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of getAllCheckItems(); track item.code; let i = $index) {
+            <tr>
+              @if (isFirstInGroup(i)) {
+                <td 
+                  [attr.rowspan]="getGroupRowspan(i)"
+                  class="align-middle text-center bg-light fw-bold"
+                  style="writing-mode: vertical-lr; text-orientation: upright"
+                >
+                  {{ getGroupName(i) }}
+                </td>
+              }
+              <td class="text-center align-middle">
+                {{ item.code }}
+              </td>
+              <td class="align-middle">
+                {{ item.description }}
+              </td>
+              <td class="text-center">
+                <div class="d-flex justify-content-around">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    [(ngModel)]="checklistData.items[item.code]"
+                    [name]="'item_' + item.code"
+                    [id]="'normal_' + item.code"
+                    value="正常"
+                    [title]="'選擇' + item.code + '狀態為正常'"
+                    [attr.aria-label]="'選擇' + item.code + '狀態為正常'"
+                  />
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    [(ngModel)]="checklistData.items[item.code]"
+                    [name]="'item_' + item.code"
+                    [id]="'abnormal_' + item.code"
+                    value="異常"
+                    [title]="'選擇' + item.code + '狀態為異常'"
+                    [attr.aria-label]="'選擇' + item.code + '狀態為異常'"
+                  />
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    [(ngModel)]="checklistData.items[item.code]"
+                    [name]="'item_' + item.code"
+                    [id]="'na_' + item.code"
+                    value="不適用"
+                    [title]="'選擇' + item.code + '為不適用'"
+                    [attr.aria-label]="'選擇' + item.code + '為不適用'"
+                  />
+                </div>
+              </td>
+              <td>
+                @if (checklistData.items[item.code] === '異常') {
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  [(ngModel)]="checklistData.itemRemarks[item.code]"
+                  [name]="'remark_' + item.code"
+                  placeholder="請輸入備註"
+                  [title]="'輸入' + item.code + '的備註'"
+                  [attr.aria-label]="'輸入' + item.code + '的備註'"
+                />
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 總備註 -->
+      <div class="">
+        <table class="table m-0">
+          <tbody>
+            <tr>
+              <td class="bg-light fw-normal" style="width: 15%">備註：</td>
+              <td class="py-2 px-2">
+                <div class="p-2">
+                  <div class="mb-2">1.巡檢人員請於適合的欄位打"√"；未從事該項作業或未使用該項機具者於"不適用"之欄位打"√"，備註欄中記錄缺失單位、人員及是否立即改善。</div>
+                  <div class="mb-2">2.工安巡檢稽核到缺失時，須告知責任單位缺失，開立「工安缺失紀錄表」要求改善並於巡檢表上簽名確認。</div>
+                  <div>3.實施巡檢單位留存。</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 簽名區域 -->
+      <div class="row">
+        <div class="col-6">
+          <table class="table m-0">
+            <tbody>
+              <tr>
+                <td class="bg-light fw-normal text-center" style="width: 30%">
+                  缺失責任單位
+                </td>
+                <td class="py-2 px-2">
+                  <div
+                    class="signature-area d-flex align-items-center justify-content-center position-relative border-0 bg-transparent"
+                    (click)="openSignatureDialog('faultyUnit')"
+                    title="點擊進行簽名"
+                  >
+                    @if (faultyUnitSignature) {
+                    <img
+                      [src]="faultyUnitSignature"
+                      alt="缺失責任單位簽名"
+                      class="signature-image"
+                    />
+                    } @else {
+                    <div class="signature-placeholder">點擊簽名</div>
+                    }
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="col-6">
+          <table class="table m-0">
+            <tbody>
+              <tr>
+                <td class="bg-light fw-normal text-center" style="width: 30%">
+                  MIC監工單位
+                </td>
+                <td class="py-2 px-2">
+                  <div
+                    class="signature-area d-flex align-items-center justify-content-center position-relative border-0 bg-transparent"
+                    (click)="openSignatureDialog('micSupervisor')"
+                    title="點擊進行簽名"
+                  >
+                    @if (micSupervisorSignature) {
+                    <img
+                      [src]="micSupervisorSignature"
+                      alt="MIC監工單位簽名"
+                      class="signature-image"
+                    />
+                    } @else {
+                    <div class="signature-placeholder">點擊簽名</div>
+                    }
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 按鈕區域 - 僅在螢幕顯示 -->
+      <div class="d-flex justify-content-end gap-2 mt-4 print-hide">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">
+          取消
+        </button>
+        <button type="button" class="btn btn-primary" (click)="saveChecklist()">
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

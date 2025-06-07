@@ -1,0 +1,314 @@
+<div class="container mt-4">
+  <!-- 頁面標題和錯誤訊息 -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-person-circle me-2"></i>
+      @if (userId) {
+        編輯使用者資料
+      } @else {
+        新增使用者
+      }
+    </h2>
+    @if (loading) {
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">載入中...</span>
+      </div>
+    }
+    <small class="text-muted bg-warning-subtle px-2 py-1 rounded">
+      <i class="bi bi-info-circle me-1"></i>
+      黃色底色為必填欄位
+    </small>
+  </div>
+
+  @if (errorMessage) {
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ errorMessage }}
+      <button type="button" class="btn-close" aria-label="關閉" title="關閉" (click)="errorMessage = null"></button>
+    </div>
+  }
+
+  <form>
+    <!-- 基本資料卡片 -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>基本資料</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- 姓名 -->
+          <div class="col-md-6 mb-3">
+            <label for="name" class="form-label fw-semibold">姓名 <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person"></i></span>
+              <input
+                name="name"
+                type="text"
+                class="form-control"
+                id="name"
+                [(ngModel)]="user.name"
+                required
+                [class.is-invalid]="user.name === ''"
+              />
+            </div>
+          </div>
+          
+          <!-- 身分證 -->
+          <div class="col-md-6 mb-3">
+            <label for="idno" class="form-label fw-semibold">身分證</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
+              <input
+                name="idno"
+                type="text"
+                class="form-control"
+                id="idno"
+                [(ngModel)]="user.idno"
+              />
+            </div>
+          </div>
+          
+          <!-- 員工編號 -->
+          <div class="col-md-6 mb-3">
+            <label for="employeeId" class="form-label fw-semibold">員工編號</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+              <input
+                name="employeeId"
+                type="text"
+                class="form-control"
+                id="employeeId"
+                [(ngModel)]="user.employeeId"
+              />
+            </div>
+          </div>
+          
+          <!-- 部門 -->
+          <div class="col-md-6 mb-3">
+            <label for="department" class="form-label fw-semibold">部門</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-building"></i></span>
+              <input
+                name="department"
+                type="text"
+                class="form-control"
+                id="department"
+                [(ngModel)]="user.department"
+              />
+            </div>
+          </div>
+          
+          <!-- 性別 -->
+          <div class="col-md-6 mb-3">
+            <label for="gender" class="form-label fw-semibold">性別</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-gender-ambiguous"></i></span>
+              <select
+                class="form-select"
+                id="gender"
+                name="gender"
+                [(ngModel)]="user.gender"
+              >
+                <option value="">請選擇</option>
+                <option value="男">男</option>
+                <option value="女">女</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- 生日 -->
+          <div class="col-md-6 mb-3">
+            <label for="birthday" class="form-label fw-semibold">生日</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
+              <input
+                name="birthday"
+                type="date"
+                class="form-control"
+                id="birthday"
+                [(ngModel)]="user.birthday"
+              />
+            </div>
+          </div>
+          
+          <!-- 血型 -->
+          <div class="col-md-6 mb-3">
+            <label for="bloodType" class="form-label fw-semibold">血型</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-droplet"></i></span>
+              <select
+                class="form-select"
+                id="bloodType"
+                name="bloodType"
+                [(ngModel)]="user.bloodType"
+              >
+                <option value="">請選擇</option>
+                <option value="A">A型</option>
+                <option value="B">B型</option>
+                <option value="O">O型</option>
+                <option value="AB">AB型</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- 手機 -->
+          <div class="col-md-6 mb-3">
+            <label for="cell" class="form-label fw-semibold">手機</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-phone"></i></span>
+              <input
+                name="cell"
+                type="text"
+                class="form-control"
+                id="cell"
+                [(ngModel)]="user.cell"
+                #cellInput="ngModel"
+                pattern="^09\d{8}$"
+                [class.is-invalid]="cellInput.invalid && (cellInput.dirty || cellInput.touched)"
+              />
+            </div>
+            @if (cellInput.invalid && (cellInput.dirty || cellInput.touched)) {
+              <div class="invalid-feedback d-block">
+                @if (cellInput.errors?.['pattern']) {
+                  手機號碼必須為「09」開頭且為10位數字
+                }
+              </div>
+            }
+          </div>
+          
+          <!-- 電子郵件 -->
+          <div class="col-md-6 mb-3">
+            <label for="email" class="form-label fw-semibold">電子郵件</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+              <input
+                name="email"
+                type="email"
+                class="form-control"
+                id="email"
+                [(ngModel)]="user.email"
+                #emailInput="ngModel"
+                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                [class.is-invalid]="emailInput.invalid && (emailInput.dirty || emailInput.touched)"
+              />
+            </div>
+            @if (emailInput.invalid && (emailInput.dirty || emailInput.touched)) {
+              <div class="invalid-feedback d-block">
+                @if (emailInput.errors?.['pattern']) {
+                  請輸入有效的電子郵件格式
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 帳號資訊卡片 -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>帳號資訊</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- 角色 -->
+          <div class="col-md-6 mb-3">
+            <label for="role" class="form-label fw-semibold">角色 <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+              <select
+                class="form-select"
+                id="role"
+                name="role"
+                [(ngModel)]="user.role"
+                required
+              >
+                <option value="admin">系統管理員</option>
+                <!-- <option value="manager">管理員</option> -->
+                <option value="secretary">專案秘書</option>
+                <option value="user">一般使用者</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- 帳號 -->
+          <div class="col-md-6 mb-3">
+            <label for="account" class="form-label fw-semibold">帳號 <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-at"></i></span>
+              <input
+                name="account"
+                type="text"
+                class="form-control"
+                id="account"
+                [(ngModel)]="user.account"
+                required
+                [class.is-invalid]="user.account === ''"
+              />
+            </div>
+          </div>
+          
+          <!-- 密碼 -->
+          <div class="col-md-6 mb-3">
+            <label for="password" class="form-label fw-semibold">密碼 <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-key"></i></span>
+              <input
+                name="password"
+                type="password"
+                class="form-control"
+                id="password"
+                [(ngModel)]="user.password"
+                required
+              />
+            </div>
+            <div class="form-text text-muted">
+              @if (userId) {
+                若不修改密碼，請保留原密碼不變
+              } @else {
+                請輸入新密碼
+              }
+            </div>
+          </div>
+          
+          <!-- 啟用狀態 -->
+          <div class="col-md-6 mb-3">
+            <label for="enabled" class="form-label fw-semibold">狀態</label>
+            <div class="form-check form-switch">
+              <input 
+                class="form-check-input" 
+                type="checkbox" 
+                role="switch" 
+                id="enabled" 
+                name="enabled"
+                [(ngModel)]="user.enabled"
+              >
+              <label class="form-check-label" for="enabled">啟用帳號</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 按鈕區域 -->
+    <div class="d-flex gap-2 mb-4">
+      <button class="btn btn-primary" (click)="saveUser()" [disabled]="saving">
+        <i class="bi bi-save me-2"></i>
+        @if (saving) {
+          <span
+            class="spinner-border spinner-border-sm"
+            role="status"
+            aria-hidden="true"
+          ></span>
+          儲存中...
+        } @else {
+          儲存
+        }
+      </button>
+      <button class="btn btn-outline-secondary" type="button" (click)="navigateToList()">
+        <i class="bi bi-arrow-left me-2"></i>返回
+      </button>
+    </div>
+  </form>
+</div>

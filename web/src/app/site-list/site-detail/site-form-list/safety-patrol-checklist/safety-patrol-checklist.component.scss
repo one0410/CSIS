@@ -1,0 +1,218 @@
+/* === 紙本表單基礎樣式 === */
+
+/* 容器樣式 - 使用 Bootstrap 的 bg-light, min-vh-100, p-3 等 */
+:host .container-fluid {
+  font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+}
+
+/* 表單卡片樣式 */
+:host .form-card {
+  border: 2px solid #000 !important;
+  border-radius: 0 !important;
+  max-width: 210mm;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* 實際表單內容容器 - 螢幕顯示時無特殊樣式 */
+:host .print-content {
+  /* 螢幕上無特殊樣式，僅作為容器 */
+}
+
+/* 表單標題樣式 */
+:host .form-title {
+  font-size: 18px !important;
+  letter-spacing: 3px;
+  font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+}
+
+/* === 可點擊樣式 === */
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.cursor-pointer:hover {
+  background-color: #f8f9fa !important;
+  border-radius: 3px;
+  padding: 2px 4px;
+}
+
+/* === 輸入框樣式 === */
+input.form-control, 
+textarea.form-control,
+select.form-select {
+  border: 1px solid #ced4da;
+  &:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+}
+
+/* === 簽名區域樣式 === */
+.signature-area {
+  height: 100px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+  
+  &:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active {
+    background-color: #e9ecef;
+  }
+  
+  .signature-placeholder {
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 0.875rem;
+    
+    &:before {
+      content: '✏️';
+      margin-right: 5px;
+      font-size: 1rem;
+    }
+  }
+  
+  .signature-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+}
+
+/* === 表格樣式 === */
+:host .table {
+  font-size: 12px;
+}
+
+:host .table th,
+:host .table td {
+  padding: 8px 6px;
+  vertical-align: top;
+  line-height: 1.3;
+}
+
+:host .table th {
+  background-color: #f0f0f0 !important;
+  font-size: 14px;
+}
+
+:host .form-check-input {
+  transform: scale(1.2);
+  border: 1px solid #000;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+:host .form-check-label {
+  font-size: 11px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+
+/* === 列印樣式 === */
+@media print {
+  /* 根本解決方案：設定頁面邊距 */
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  /* 隱藏非列印內容 */
+  body > *:not(app-root),
+  app-root > *:not(app-site-detail),
+  app-site-detail > *:not(.container-fluid),
+  :host .print-hide {
+    display: none !important;
+  }
+
+  /* 重設容器樣式 */
+  html, body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  :host .container-fluid,
+  :host .form-card,
+  :host .print-content {
+    all: unset !important;
+    visibility: visible !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  :host .print-content * {
+    visibility: visible !important;
+  }
+
+  /* 移除螢幕用邊框與陰影 */
+  :host .form-card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* 表頭Logo和標題 */
+  :host .logo-section img {
+    max-width: 80px !important;
+  }
+
+  :host .text-center h5,
+  :host .text-center h6 {
+    font-size: 14px !important;
+    line-height: 1.2 !important;
+    margin: 0.1rem 0 !important;
+  }
+  
+  /* 表格樣式 */
+  :host .table {
+    width: 100% !important;
+    font-size: 11px !important;
+    border-collapse: collapse !important;
+    margin-bottom: 0.5rem !important;
+    page-break-inside: auto !important;
+  }
+
+  :host .table th,
+  :host .table td {
+    padding: 3px 5px !important;
+    vertical-align: middle !important;
+    line-height: 1.2 !important;
+    page-break-inside: avoid !important;
+  }
+
+  :host .table-bordered,
+  :host .table-bordered th,
+  :host .table-bordered td {
+    border: 1px solid black !important;
+  }
+
+  /* 輸入框和選項按鈕 */
+  :host .form-control {
+    font-size: 11px !important;
+    padding: 1px 3px !important;
+  }
+  
+  :host .form-check-input {
+    transform: scale(1.1) !important;
+  }
+  
+  /* 避免元素跨頁 */
+  :host .signature-area,
+  :host .row {
+    page-break-inside: avoid !important;
+  }
+
+  /* 移除不必要的底線 */
+  .text-decoration-underline {
+    text-decoration: none !important;
+  }
+} 

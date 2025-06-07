@@ -1,0 +1,105 @@
+<div class="container mt-4">
+  <h2 class="mb-4">新增工地</h2>
+
+  <form #siteForm="ngForm" (ngSubmit)="onSubmit()">
+    <div class="mb-3">
+      <label for="projectNo" class="form-label" title="出現 * 符號, 表示必填">專案編號</label>
+      <span class="text-danger ms-1" title="出現 * 符號, 表示必填">*</span>
+      <input
+        type="text"
+          class="form-control"
+          id="projectNo"
+          name="projectNo"
+          [(ngModel)]="site.projectNo"
+          required
+        />
+      </div>
+
+    <div class="mb-3">
+      <label for="projectName" class="form-label" title="出現 * 符號, 表示必填">工地名稱</label>
+      <span class="text-danger ms-1" title="出現 * 符號, 表示必填">*</span>
+      <input
+        type="text"
+        class="form-control"
+        id="projectName"
+        name="projectName"
+        [(ngModel)]="site.projectName"
+        required
+      />
+    </div>
+
+
+
+    <div class="mb-3">
+      <label for="startDate" class="form-label" title="出現 * 符號, 表示必填">工期開始</label>
+      <span class="text-danger ms-1" title="出現 * 符號, 表示必填">*</span>
+      <input
+        type="date"
+        class="form-control"
+        id="startDate"
+        name="startDate"
+        [(ngModel)]="site.startDate"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="endDate" class="form-label" title="出現 * 符號, 表示必填">工期結束</label>
+      <span class="text-danger ms-1" title="出現 * 符號, 表示必填">*</span>
+      <input
+        type="date"
+        class="form-control"
+        id="endDate"
+        name="endDate"
+        [(ngModel)]="site.endDate"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="factories" class="form-label"
+        >新增廠區
+        <button class="btn btn-primary" (click)="addFactory()">+</button>
+      </label>
+      @for (factory of site.factories; track factory.name; let i = $index) {
+      <div class="row">
+        <div class="col-md-4">
+          <label for="factories" class="form-label">廠區名稱</label>
+          <input
+            type="text"
+            class="form-control"
+            id="factories"
+            name="factories"
+            [(ngModel)]="factory.name"
+          />
+        </div>
+        <div class="col-md-8">
+          <label for="areas" class="form-label">作業區域</label>
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            @for (area of factory.areas; track area; let j = $index) {
+            <span
+              class="badge bg-secondary area-item"
+              style="cursor: pointer"
+              (click)="removeArea(factory, j)"
+              >{{ area }}</span
+            >
+            }
+            <input
+              type="text"
+              class="form-control w-auto"
+              id="areas"
+              name="areas"
+              (keydown.enter)="addArea($event, factory)"
+            />
+            <button class="btn btn-danger" (click)="removeFactory(i)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">儲存</button>
+    </div>
+  </form>
+</div>

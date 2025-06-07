@@ -1,0 +1,330 @@
+<div
+  class="card"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+  title="可拖放圖片檔案到此區域上傳"
+>
+  <div class="card-body">
+    <h5 class="card-title">工地相片 (共{{ photoCount() }}張)</h5>
+
+    <!-- 拖放提示區域 -->
+    <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+      <i class="fas fa-info-circle me-2"></i>
+      <strong>小提示：</strong> 您可以直接將圖片檔案拖放到此區域快速上傳，或點擊下方「上傳照片」按鈕選擇檔案。
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="關閉"></button>
+    </div>
+
+    <!-- 上傳與搜尋區域 -->
+    <div class="row g-3 align-items-end">
+      <!-- 上傳按鈕 -->
+      <div class="col-md-2">
+        <label 
+          for="fileUpload" 
+          class="btn btn-primary w-100"
+          title="點擊選擇檔案或直接拖放圖片到此區域上傳"
+          data-bs-toggle="tooltip"
+          data-bs-placement="top"
+        >
+          <i class="fas fa-upload me-1"></i> 上傳照片
+          <input
+            type="file"
+            id="fileUpload"
+            accept="image/*"
+            multiple
+            hidden
+            (change)="onFileSelected($event)"
+          />
+        </label>
+      </div>
+
+      <!-- 日期範圍搜尋 -->
+      <div class="col-md-3">
+        <label class="form-label">起始日期</label>
+        <input
+          type="date"
+          class="form-control"
+          [(ngModel)]="searchStartDate"
+          title="起始日期"
+        />
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">結束日期</label>
+        <input
+          type="date"
+          class="form-control"
+          [(ngModel)]="searchEndDate"
+          title="結束日期"
+        />
+      </div>
+
+      <!-- 分類搜尋 -->
+      <div class="col-md-2">
+        <label class="form-label">分類</label>
+        <select
+          class="form-select"
+          [(ngModel)]="searchCategory"
+          title="照片分類搜尋"
+        >
+          <option value="">所有分類</option>
+          @for (category of photoCategories(); track category) {
+          <option [value]="category">{{ category }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- 搜尋按鈕 -->
+      <div class="col-md-2">
+        <button
+          class="btn btn-outline-primary w-100"
+          (click)="searchPhotos()"
+          title="搜尋照片"
+        >
+          <i class="fas fa-search me-1"></i> 搜尋
+        </button>
+      </div>
+    </div>
+
+    <!-- 上傳進度 -->
+    @if (uploadingFiles()) {
+    <div class="mt-3">
+      <div class="progress mb-2">
+        <div
+          class="progress-bar"
+          role="progressbar"
+          [style.width.%]="uploadProgress()"
+          [attr.aria-valuenow]="uploadProgress()"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          {{ uploadProgress() }}%
+        </div>
+      </div>
+      <p class="text-muted small">正在上傳照片，請勿關閉視窗...</p>
+    </div>
+    }
+
+    <!-- 搜尋提示 -->
+    @if (isSearchActive()) {
+    <div
+      class="mt-3 alert alert-info d-flex align-items-center justify-content-between"
+    >
+      <div class="d-flex align-items-center">
+        <i class="fas fa-filter me-2"></i>
+        <div>
+          搜尋條件： @if (searchStartDate) {
+          <span class="badge bg-secondary me-2"
+            >起始：{{ searchStartDate | date : "yyyy-MM-dd" }}</span
+          >
+          } @if (searchEndDate) {
+          <span class="badge bg-secondary me-2"
+            >結束：{{ searchEndDate | date : "yyyy-MM-dd" }}</span
+          >
+          } @if (searchCategory) {
+          <span class="badge bg-secondary me-2"
+            >分類：{{ searchCategory }}</span
+          >
+          }
+        </div>
+      </div>
+      <button
+        class="btn btn-sm btn-outline-secondary"
+        (click)="clearSearch()"
+        title="清除搜尋條件"
+      >
+        <i class="fas fa-times me-1"></i> 清除
+      </button>
+    </div>
+    }
+
+    <!-- 按日期分組的相片區域 -->
+    <div class="gallery-container">
+      @if (photoGroups().length > 0) { @for (group of photoGroups(); track
+      group.date) {
+      <div class="image-group">
+        <h2 class="date-header h4">{{ group.displayDate }}</h2>
+        <div class="image-grid d-grid gap-3">
+          @for (image of group.photos; track image.id) {
+          <div class="image-item" (click)="openPhotoDetail(image)">
+            <img
+              [src]="image.url"
+              [alt]="image.title || '工地照片'"
+              [title]="image.title || '工地照片'"
+              loading="lazy"
+              (load)="onPhotoLoad($event)"
+            />
+            <div class="image-overlay">
+              <button
+                class="btn btn-sm btn-danger"
+                (click)="deletePhoto(image); $event.stopPropagation()"
+                aria-label="刪除照片"
+              >
+                刪除
+              </button>
+            </div>
+            <div class="m-0 p-2">
+              @if (image.metadata && image.metadata.category) {
+              <span class="badge bg-primary me-1">{{
+                image.metadata.category
+              }}</span>
+              }
+              <span>{{ image.title }}</span>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+      } } @else {
+      <div class="empty-state text-center p-5">
+        <p class="mb-0">尚未上傳任何照片</p>
+      </div>
+      } @if (isLoading()) {
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <p>載入中...</p>
+      </div>
+      }
+    </div>
+
+    <!-- 載入中提示 -->
+    @if (isLoading()) {
+    <div class="text-center mt-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">載入中...</span>
+      </div>
+    </div>
+    }
+  </div>
+</div>
+
+<!-- 照片詳細資料模態對話框 -->
+@if (selectedPhoto()) {
+<div class="photo-modal" (click)="closePhotoDetail($event)">
+  <!-- 背景遮罩 -->
+  <div class="modal-backdrop fade show"></div>
+
+  <!-- 模態內容 -->
+  <div
+    class="modal fade show"
+    tabindex="-1"
+    style="display: block; z-index: 1060"
+  >
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ selectedPhoto()?.title }}</h5>
+          <button
+            type="button"
+            class="btn-close"
+            (click)="closePhotoDetail()"
+            aria-label="關閉"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-7">
+              <img
+                [src]="selectedPhoto()?.url"
+                [alt]="selectedPhoto()?.title || '照片'"
+                [title]="selectedPhoto()?.title || '照片'"
+                class="img-fluid mb-3"
+              />
+            </div>
+            <div class="col-md-5">
+              <div class="card">
+                <div class="card-body">
+                  <h6 class="card-subtitle mb-2 text-muted">詳細資料</h6>
+
+                  <div class="mb-3">
+                    <label class="form-label">日期</label>
+                    <p>{{ selectedPhoto()?.date | date : "yyyy-MM-dd" }}</p>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label" for="photoCategory">分類</label>
+                    <div class="input-group">
+                      <input
+                        id="photoCategory"
+                        class="form-control"
+                        list="photoCategoryOptions"
+                        [(ngModel)]="selectedPhoto()!.metadata.category"
+                        (change)="updatePhotoCategory()"
+                        placeholder="選擇或輸入分類"
+                        title="照片分類"
+                      />
+                      <datalist id="photoCategoryOptions">
+                        <option value=""></option>
+                        @for (category of photoCategories(); track category) {
+                        <option [value]="category">{{ category }}</option>
+                        }
+                      </datalist>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label" for="photoTitle">標題</label>
+                    <input
+                      id="photoTitle"
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="selectedPhoto()!.title"
+                      (blur)="updatePhotoTitle()"
+                      placeholder="輸入照片標題"
+                      title="照片標題"
+                    />
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label" for="photoLocation">地點</label>
+                    <input
+                      id="photoLocation"
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="selectedPhoto()!.metadata.location"
+                      (blur)="updatePhotoLocation()"
+                      placeholder="輸入照片拍攝地點"
+                      title="照片拍攝地點"
+                    />
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label" for="photoDescription"
+                      >描述</label
+                    >
+                    <textarea
+                      id="photoDescription"
+                      class="form-control"
+                      rows="3"
+                      [(ngModel)]="selectedPhoto()!.metadata.description"
+                      (blur)="updatePhotoDescription()"
+                      placeholder="輸入照片描述"
+                      title="照片描述"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="closePhotoDetail()"
+          >
+            關閉
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="savePhotoChanges()"
+          >
+            儲存變更
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}

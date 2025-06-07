@@ -1,0 +1,38 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Bun 伺服器開發指南
+
+## 基本架構
+- 使用 Bun 作為執行環境
+- API 路由放在 server/routes 目錄
+- 資料庫模型放在 server/models 目錄
+- 業務邏輯放在 server/services 目錄
+
+## API 設計
+- 遵循 RESTful API 設計原則
+- 使用 JSON 格式進行資料傳輸
+- 統一的錯誤處理與回應格式
+
+
+## 資料庫操作
+- 使用非同步操作處理資料庫操作
+- 實作資料驗證邏輯
+- 使用事務確保資料一致性
+- 適當地處理資料庫連接
+- 提供前端統一的 /api/mongodb API 入口, 並提供 POST/GET/PUT/PATCH/DELETE 方法來讓前端程式透過API來操作資料庫
+
+## 安全性
+- 實作請求驗證
+- 使用環境變數儲存敏感資訊
+- 避免 SQL 注入和 XSS 攻擊
+- 實作適當的 CORS 策略
+
+## 日誌與錯誤處理
+- 記錄所有 API 請求與回應
+- 實作全域錯誤處理中間件
+- 使用結構化日誌格式
+- 區分開發環境和生產環境的日誌級別
+

@@ -1,0 +1,436 @@
+<div class="container-fluid bg-light min-vh-100 p-3 training-form">
+  <div class="card form-card shadow-sm">
+    <div class="card-body p-4">
+      <!-- 實際表單內容容器 -->
+      <div class="print-content">
+        <!-- 頁面標題 -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+              <h2 class="mb-0">
+                <i class="bi bi-person-badge me-2"></i>教育訓練表單
+              </h2>
+              <div class="d-flex gap-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 教育訓練表單 -->
+        <div class="card shadow-sm training-form-card">
+          <div class="card-header bg-primary text-white text-center">
+            <h4 class="mb-0">教育訓練簽到表</h4>
+          </div>
+
+          <div class="card-body">
+            <!-- 基本資訊 -->
+            <div class="row mb-2">
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <label class="form-label mb-0 me-2" style="min-width: 100px;">主承商:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="formData.contractorName"
+                    [readonly]="isViewMode && !isWorkerSigningMode"
+                    placeholder="請輸入主承商"
+                    aria-label="主承商"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <label class="form-label mb-0 me-2" style="min-width: 100px;">課程名稱:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="formData.courseName"
+                    [readonly]="isViewMode && !isWorkerSigningMode"
+                    placeholder="請輸入課程名稱"
+                    aria-label="課程名稱"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="row mb-2">
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <label class="form-label mb-0 me-2" style="min-width: 100px;">報名聯絡人:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="formData.contactPerson"
+                    [readonly]="isViewMode && !isWorkerSigningMode"
+                    placeholder="請輸入報名聯絡人姓名"
+                    aria-label="報名聯絡人"
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <label class="form-label mb-0 me-2" style="min-width: 100px;">電話號碼:</label>
+                  <input
+                    type="tel"
+                    class="form-control"
+                    [(ngModel)]="formData.contactPhone"
+                    [readonly]="isViewMode && !isWorkerSigningMode"
+                    placeholder="請輸入電話號碼"
+                    aria-label="電話號碼"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="row mb-2">
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <label class="form-label mb-0 me-2" style="min-width: 100px;">上課日期:</label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    [(ngModel)]="formData.trainingDate"
+                    [readonly]="isViewMode && !isWorkerSigningMode"
+                    aria-label="上課日期"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <label class="form-label mb-0 me-2" style="min-width: 100px;">時間:</label>
+                  <input
+                    type="time"
+                    class="form-control"
+                    [(ngModel)]="formData.trainingTime"
+                    [readonly]="isViewMode && !isWorkerSigningMode"
+                    aria-label="時間"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <label class="form-label mb-0 me-2" style="min-width: 100px;">講師簽名:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="formData.instructor"
+                    [readonly]="isViewMode && !isWorkerSigningMode"
+                    placeholder="請輸入講師姓名"
+                    aria-label="講師簽名"
+                  />
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                  <label class="form-label mb-0 me-2" style="min-width: 100px;">上課人數:</label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    [(ngModel)]="formData.attendanceCount"
+                    [readonly]="true"
+                    placeholder="自動計算"
+                    aria-label="上課人數"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 參與者簽到表 -->
+            <div class="mt-4">
+              <div
+                class="d-flex justify-content-between align-items-center mb-3"
+              >
+                <h5>參與者簽到</h5>
+              </div>
+
+              <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                  <thead class="table-light">
+                    <tr class="text-center">
+                      <th style="width: 3%">No</th>
+                      <th style="width: 14%">次承攬商</th>
+                      <th style="width: 14%">姓名</th>
+                      <th style="width: 14%">簽到</th>
+                      <th style="width: 5%">成績</th>
+                      <th style="width: 3%">No</th>
+                      <th style="width: 14%">次承攬商</th>
+                      <th style="width: 14%">姓名</th>
+                      <th style="width: 14%">簽到</th>
+                      <th style="width: 5%">成績</th>
+                    </tr>
+                  </thead>
+                                      <tbody>
+                      @for (rowIndex of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]; track rowIndex) {
+                      <tr>
+                        <!-- 左邊欄位 (1-20) -->
+                        <td class="text-center">{{ rowIndex + 1 }}</td>
+                        <td>
+                          <input
+                            type="text"
+                            class="form-control form-control-sm border-0"
+                            [(ngModel)]="getParticipant(rowIndex).contractorName"
+                            [readonly]="isViewMode && !isWorkerSigningMode"
+                            aria-label="次承攬商"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            class="form-control form-control-sm border-0"
+                            [(ngModel)]="getParticipant(rowIndex).name"
+                            [readonly]="isViewMode && !isWorkerSigningMode"
+                            aria-label="姓名"
+                          />
+                        </td>
+                        <td class="text-center">
+                          @if (getParticipant(rowIndex).signatureData) {
+                          <img
+                            [src]="getParticipant(rowIndex).signatureData"
+                            style="max-width: 80px; max-height: 40px"
+                            class="img-fluid"
+                            alt="簽名"
+                          />
+                          }
+                        </td>
+                        <td class="text-center">
+                          <input
+                            type="number"
+                            class="form-control form-control-sm border-0 text-center"
+                            [(ngModel)]="getParticipant(rowIndex).score"
+                            [readonly]="isViewMode && !isWorkerSigningMode"
+                            min="0"
+                            max="100"
+                            aria-label="成績"
+                          />
+                        </td>
+
+                        <!-- 右邊欄位 (21-40) -->
+                        <td class="text-center">{{ rowIndex + 21 }}</td>
+                        <td>
+                          <input
+                            type="text"
+                            class="form-control form-control-sm border-0"
+                            [(ngModel)]="getParticipant(rowIndex + 20).contractorName"
+                            [readonly]="isViewMode && !isWorkerSigningMode"
+                            aria-label="次承攬商"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            class="form-control form-control-sm border-0"
+                            [(ngModel)]="getParticipant(rowIndex + 20).name"
+                            [readonly]="isViewMode && !isWorkerSigningMode"
+                            aria-label="姓名"
+                          />
+                        </td>
+                        <td class="text-center">
+                          @if (getParticipant(rowIndex + 20).signatureData) {
+                          <img
+                            [src]="getParticipant(rowIndex + 20).signatureData"
+                            style="max-width: 80px; max-height: 40px"
+                            class="img-fluid"
+                            alt="簽名"
+                          />
+                          }
+                        </td>
+                        <td class="text-center">
+                          <input
+                            type="number"
+                            class="form-control form-control-sm border-0 text-center"
+                            [(ngModel)]="getParticipant(rowIndex + 20).score"
+                            [readonly]="isViewMode && !isWorkerSigningMode"
+                            min="0"
+                            max="100"
+                            aria-label="成績"
+                          />
+                        </td>
+                      </tr>
+                      }
+                    </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 備註 -->
+            <div class="mt-3">
+              <label class="form-label">備註:</label>
+              <textarea
+                class="form-control"
+                rows="3"
+                [(ngModel)]="formData.remarks"
+                [readonly]="isViewMode && !isWorkerSigningMode"
+                placeholder="請輸入備註內容..."
+                aria-label="備註"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部按鈕區域 - 只在登入狀態或非工人簽名模式下顯示 -->
+        @if (isLoggedIn && !isWorkerSigningMode) {
+        <div class="d-flex justify-content-between mt-4 pt-3">
+          <div>
+            <button
+              type="button"
+              (click)="showWorkerVerificationModal()"
+              class="btn btn-secondary btn-sm"
+              aria-label="新增簽名"
+            >
+              <i class="bi bi-plus-circle me-1"></i>新增簽名
+            </button>
+          </div>
+          <div>
+            <button
+              class="btn btn-outline-secondary btn-sm me-2"
+              (click)="cancel()"
+            >
+              <i class="bi bi-x-circle me-1"></i>取消
+            </button>
+            <button class="btn btn-primary btn-sm me-2" (click)="saveForm()">
+              <i class="bi bi-save me-1"></i>儲存
+            </button>
+            @if (formId) {
+            <button class="btn btn-info btn-sm" (click)="showQrCodeModal()">
+              <i class="bi bi-qr-code me-1"></i>顯示 QR Code
+            </button>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- 工人簽名專用按鈕 -->
+        @if (isWorkerSigningMode) {
+        <div class="text-center mt-4 pt-3">
+          <button
+            type="button"
+            (click)="showWorkerVerificationModal()"
+            class="btn btn-primary btn-lg px-4 py-3"
+            aria-label="我要簽名"
+          >
+            <i class="bi bi-pen me-2"></i>我要簽名
+          </button>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- 工人身份驗證 Modal -->
+  <div
+    class="modal fade"
+    id="workerVerificationModal"
+    tabindex="-1"
+    aria-labelledby="workerVerificationModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="workerVerificationModalLabel">
+            工人身份驗證
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="關閉"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="verificationId" class="form-label"
+              >請輸入身份證號碼或手機號碼</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="verificationId"
+              [(ngModel)]="verificationIdOrPhone"
+              placeholder="身份證號碼或手機號碼"
+            />
+          </div>
+          @if (verificationError) {
+          <div class="alert alert-danger">{{ verificationError }}</div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="verifyWorker()"
+          >
+            驗證
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Code Modal -->
+  <div
+    class="modal fade"
+    id="qrCodeModal"
+    tabindex="-1"
+    aria-labelledby="qrCodeModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="qrCodeModalLabel">
+            教育訓練表單 QR Code
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="關閉"
+          ></button>
+        </div>
+        <div class="modal-body text-center">
+          <p class="mb-3">掃描此 QR Code 可直接在手機上開啟表單進行簽名</p>
+          @if (formQrCodeUrl) {
+          <div
+            class="qrcode-container mx-auto mb-3"
+            style="width: 250px; height: 250px"
+          >
+            <qrcode
+              [qrdata]="formQrCodeUrl"
+              [width]="250"
+              [errorCorrectionLevel]="'M'"
+            ></qrcode>
+          </div>
+          } @else {
+          <div class="text-center">
+            <p class="text-muted">QR Code 載入中...</p>
+          </div>
+          }
+          <small class="text-muted d-block mb-3">{{ formQrCodeUrl }}</small>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            關閉
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
