@@ -237,13 +237,13 @@
         </div>
 
         <div class="col-md-4">
-          <label for="supplierIndustrialSafetyNumber" class="form-label">承攬商工安證號</label>
+          <label for="supplierIndustrialSafetyNumber" class="form-label">供應商工安認證編號</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-patch-check"></i></span>
             <input type="text" class="form-control" id="supplierIndustrialSafetyNumber"
               name="supplierIndustrialSafetyNumber"
               [(ngModel)]="worker.supplierIndustrialSafetyNumber"
-              aria-label="承攬商工安證號" title="請輸入承攬商工安證號">
+              aria-label="供應商工安認證編號" title="請輸入供應商工安認證編號">
           </div>
         </div>
       </div>
@@ -382,7 +382,7 @@
       </button>
     </div>
     <div class="card-body">
-      @if (worker.accidentInsurances.length === 0) {
+      @if (!worker.accidentInsurances || worker.accidentInsurances.length === 0) {
         <div class="alert alert-info">
           <i class="bi bi-info-circle me-2"></i>尚未新增任何意外險資料
         </div>
@@ -442,14 +442,37 @@
                 </div>
               </div>
             </div>
-            <div class="mb-3">
-              <label [for]="'insuranceCompany' + i" class="form-label">保險公司</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-building"></i></span>
-                <input type="text" class="form-control" [id]="'insuranceCompany' + i"
-                  [name]="'insuranceCompany' + i"
-                  [(ngModel)]="insurance.companyName"
-                  [attr.aria-label]="'保險公司 #' + (i + 1)" [attr.title]="'請輸入保險 #' + (i + 1) + ' 的保險公司名稱'">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label [for]="'insuranceCompany' + i" class="form-label">保險公司</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-building"></i></span>
+                  <input type="text" class="form-control" [id]="'insuranceCompany' + i"
+                    [name]="'insuranceCompany' + i"
+                    [(ngModel)]="insurance.companyName"
+                    [attr.aria-label]="'保險公司 #' + (i + 1)" [attr.title]="'請輸入保險 #' + (i + 1) + ' 的保險公司名稱'">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label [for]="'insurancePicture' + i" class="form-label">意外險證明</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-file-image"></i></span>
+                  <input type="file" accept="image/*" class="form-control" [id]="'insurancePicture' + i"
+                    [name]="'insurancePicture' + i"
+                    (change)="handleAccidentInsuranceUpload($event, i)"
+                    [attr.aria-label]="'意外險證明 #' + (i + 1)" [attr.title]="'請上傳意外險 #' + (i + 1) + ' 的證明圖片'">
+                </div>
+                @if (insurance.picture) {
+                  <div class="mt-2">
+                    <img [src]="insurance.picture" class="img-thumbnail" style="max-height: 150px;"
+                      [alt]="'意外險 #' + (i + 1) + ' 證明'"
+                      [title]="'意外險 #' + (i + 1) + ' 證明'">
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-2"
+                      (click)="removeImage('accidentInsurancePicture', undefined, undefined, i)" aria-label="移除意外險證明">
+                      <i class="bi bi-x-circle"></i> 移除
+                    </button>
+                  </div>
+                }
               </div>
             </div>
           </div>
@@ -468,7 +491,7 @@
       </button>
     </div>
     <div class="card-body">
-      @if (worker.certifications.length === 0) {
+      @if (!worker.certifications || worker.certifications.length === 0) {
         <div class="alert alert-info">
           <i class="bi bi-info-circle me-2"></i>尚未新增任何證照資料
         </div>
@@ -492,7 +515,7 @@
                   [name]="'certType' + i"
                   [(ngModel)]="cert.type"
                   [attr.aria-label]="'證照類型 #' + (i + 1)" [attr.title]="'請選擇證照 #' + (i + 1) + ' 的類型'">
-                  @for (type of getCertificationTypes(); track type) {
+                  @for (type of getCertificationTypes(); track type.value) {
                     <option [value]="type.value">{{ type.label }}</option>
                   }
                 </select>
@@ -624,8 +647,11 @@
 
   <!-- 體檢報告卡片 -->
   <div class="card shadow-sm mb-4">
-    <div class="card-header bg-light">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
       <h5 class="mb-0"><i class="bi bi-clipboard-pulse me-2"></i>體檢報告</h5>
+      <small class="text-muted">
+        <i class="bi bi-info-circle me-1"></i>可上傳多張體檢報告
+      </small>
     </div>
     <div class="card-body">
       <div class="mb-3">
@@ -637,17 +663,37 @@
             (change)="handleMedicalExamUpload($event)"
             aria-label="體檢報告上傳" title="請上傳體檢報告圖片">
         </div>
-        @if (worker.medicalExamPicture) {
-          <div class="mt-2">
-            <img [src]="worker.medicalExamPicture" class="img-thumbnail" style="max-height: 200px;"
-              alt="體檢報告圖片" title="體檢報告圖片">
-            <button type="button" class="btn btn-sm btn-outline-danger ms-2"
-              (click)="removeImage('medicalExamPicture')" aria-label="移除體檢報告圖片">
-              <i class="bi bi-x-circle"></i> 移除
-            </button>
-          </div>
-        }
       </div>
+      
+      <!-- 顯示已上傳的體檢報告 -->
+      @if (worker.medicalExamPictures && worker.medicalExamPictures.length > 0) {
+        <div class="row">
+          @for (examPicture of worker.medicalExamPictures; track examPicture; let i = $index) {
+            <div class="col-md-6 col-lg-4 mb-3">
+              <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center py-2">
+                  <small class="text-muted mb-0">體檢報告 #{{ i + 1 }}</small>
+                  <button type="button" class="btn btn-sm btn-outline-danger"
+                    (click)="removeImage('medicalExamPictures', undefined, i)" 
+                    aria-label="移除體檢報告圖片">
+                    <i class="bi bi-x-circle"></i>
+                  </button>
+                </div>
+                <div class="card-body p-2">
+                  <img [src]="examPicture" class="img-fluid rounded" style="max-height: 150px; width: 100%; object-fit: cover;"
+                    [alt]="'體檢報告 #' + (i + 1)" [title]="'體檢報告 #' + (i + 1)">
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-cloud-upload fs-1"></i>
+          <p class="mb-0">尚未上傳體檢報告</p>
+          <small>請點擊上方的選擇檔案按鈕上傳</small>
+        </div>
+      }
     </div>
   </div>
 

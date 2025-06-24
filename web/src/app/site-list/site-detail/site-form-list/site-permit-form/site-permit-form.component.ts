@@ -18,8 +18,9 @@ interface SitePermitForm extends SiteForm {
   workArea: string;
   workStartTime: string;
   workEndTime: string;
-  supervisor: string;
-  supervisorPhone: string;
+  supervisor: string; // 監工單位
+  supervisorContact: string; // 監工姓名
+  supervisorPhone: string; // 監工電話
   projectNo: string;
   projectName: string;
   selectedCategories: string[];
@@ -68,6 +69,7 @@ export class SitePermitFormComponent implements OnInit {
     workStartTime: '',
     workEndTime: '',
     supervisor: '',
+    supervisorContact: '',
     supervisorPhone: '',
     projectNo: '',
     projectName: '',

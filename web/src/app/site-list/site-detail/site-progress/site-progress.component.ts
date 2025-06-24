@@ -354,6 +354,8 @@ export class SiteProgressComponent
           this.changeGanttViewMode('Month');
         } else if (this.ganttViewMode === 'Month') {
           this.changeGanttViewMode('Week');
+        } else if (this.ganttViewMode === 'Year') {
+          this.changeGanttViewMode('Quarter');
         }
       } catch (error) {
         console.error('甘特圖放大失敗', error);
@@ -370,6 +372,8 @@ export class SiteProgressComponent
           this.changeGanttViewMode('Month');
         } else if (this.ganttViewMode === 'Month') {
           this.changeGanttViewMode('Quarter');
+        } else if (this.ganttViewMode === 'Quarter') {
+          this.changeGanttViewMode('Year');
         }
       } catch (error) {
         console.error('甘特圖縮小失敗', error);
@@ -1202,7 +1206,31 @@ export class SiteProgressComponent
       // 設定預設值
       if (!this.newTask.progress) this.newTask.progress = 0;
 
-      // 如果有設定進度，建立進度歷史記錄
+      // 檢查 WBS 是否已存在
+      let existingTask: ProjectTask | undefined;
+      if (this.newTask.wbs && this.newTask.wbs.trim()) {
+        existingTask = this.tasks.find(task => 
+          task.wbs && task.wbs.trim() === this.newTask.wbs!.trim()
+        );
+        
+        // 如果找到重複的 WBS，詢問使用者是否要覆蓋
+        if (existingTask) {
+          const confirmMessage = `已存在相同的 WBS「${this.newTask.wbs}」的工程項目：\n「${existingTask.name}」\n\n是否要覆蓋此項目？\n\n點選「確定」會覆蓋現有項目\n點選「取消」可回到編輯畫面修改 WBS`;
+          
+          const userConfirmed = confirm(confirmMessage);
+          
+          if (!userConfirmed) {
+            // 使用者選擇不覆蓋，回到編輯畫面
+            console.log('使用者取消覆蓋，保持在編輯畫面');
+            return; // 直接返回，不關閉 modal，讓使用者可以繼續編修
+          }
+          
+          // 使用者確認覆蓋，繼續執行後續邏輯
+          console.log('使用者確認覆蓋現有項目');
+        }
+      }
+
+      // 準備要儲存的任務資料
       const taskToSave = { ...this.newTask, siteId: this.siteId };
       
       if (this.newTask.progress > 0) {
@@ -1210,16 +1238,36 @@ export class SiteProgressComponent
         const todayProgressRecord: ProgressRecord = {
           date: new Date().toISOString().split('T')[0], // 今天的日期
           progress: this.newTask.progress,
-          note: '建立項目時設定的初始進度'
+          note: existingTask ? '更新項目時設定的進度' : '建立項目時設定的初始進度'
         };
         
-        taskToSave.progressHistory = [todayProgressRecord];
+        if (existingTask && existingTask.progressHistory) {
+          // 如果是更新現有項目，保留原有的進度歷史並加入新記錄
+          taskToSave.progressHistory = [...existingTask.progressHistory, todayProgressRecord];
+        } else {
+          taskToSave.progressHistory = [todayProgressRecord];
+        }
       } else {
-        taskToSave.progressHistory = [];
+        // 如果是更新現有項目且沒有設定新進度，保留原有的進度歷史
+        if (existingTask && existingTask.progressHistory) {
+          taskToSave.progressHistory = existingTask.progressHistory;
+        } else {
+          taskToSave.progressHistory = [];
+        }
       }
 
-      // 直接呼叫資料庫 API 新增任務
-      await this.mongodbService.post('task', taskToSave);
+      if (existingTask && existingTask._id) {
+        // WBS 已存在，更新現有項目
+        taskToSave._id = existingTask._id;
+        taskToSave.id = existingTask.id; // 保持原有的 id
+        
+        await this.mongodbService.put('task', existingTask._id, taskToSave);
+        console.log('已更新現有工程項目 (WBS: ' + this.newTask.wbs + ')');
+      } else {
+        // WBS 不存在或為空，新增項目
+        await this.mongodbService.post('task', taskToSave);
+        console.log('已新增工程項目');
+      }
 
       // 重新載入任務資料
       this.tasks = await this.loadTasks();
@@ -1242,11 +1290,11 @@ export class SiteProgressComponent
       // 關閉Modal
       this.closeModal('task');
       
-      console.log('新任務已成功新增並刷新畫面');
+      console.log('任務處理完成並刷新畫面');
       
     } catch (error) {
-      console.error('新增任務失敗', error);
-      alert('新增任務時發生錯誤');
+      console.error('處理任務失敗', error);
+      alert('處理任務時發生錯誤');
     }
   }
 
@@ -1361,6 +1409,68 @@ export class SiteProgressComponent
     reader.readAsText(file);
   }
 
+  // 驗證CSV檔案標題是否正確
+  private validateCsvHeader(headerLine: string): boolean {
+    // 期望的標題欄位（忽略大小寫和空白）
+    const expectedHeaders = [
+      'wbs',
+      '工程項目',
+      '開始日期',
+      '結束日期', 
+      '進度',
+      '相依項目'
+    ];
+
+    // 解析標題行
+    const actualHeaders = headerLine.split(',').map(h => h.trim().toLowerCase());
+    
+    // 檢查欄位數量
+    if (actualHeaders.length < 4) {
+      console.log('標題欄位數量不足，至少需要4個欄位');
+      return false;
+    }
+
+    // 檢查關鍵欄位是否存在（允許不同的表達方式）
+    const hasValidWbs = actualHeaders[0] ? (
+      actualHeaders[0].includes('wbs') || 
+      actualHeaders[0].includes('編號') ||
+      actualHeaders[0].includes('項目編號')
+    ) : false;
+
+    const hasValidName = actualHeaders[1] ? (
+      actualHeaders[1].includes('工程項目') ||
+      actualHeaders[1].includes('項目名稱') ||
+      actualHeaders[1].includes('工作項目') ||
+      actualHeaders[1].includes('任務') ||
+      actualHeaders[1].includes('name') ||
+      actualHeaders[1].includes('task')
+    ) : false;
+
+    const hasValidStart = actualHeaders[2] ? (
+      actualHeaders[2].includes('開始') ||
+      actualHeaders[2].includes('start') ||
+      actualHeaders[2].includes('開工')
+    ) : false;
+
+    const hasValidEnd = actualHeaders[3] ? (
+      actualHeaders[3].includes('結束') ||
+      actualHeaders[3].includes('end') ||
+      actualHeaders[3].includes('完工') ||
+      actualHeaders[3].includes('截止')
+    ) : false;
+
+    console.log('標題驗證結果:', {
+      headers: actualHeaders,
+      hasValidWbs,
+      hasValidName, 
+      hasValidStart,
+      hasValidEnd
+    });
+
+    // 至少要有名稱、開始日期、結束日期這三個必要欄位
+    return hasValidName && hasValidStart && hasValidEnd;
+  }
+
   // 解析匯入文件
   parseImportFile(content: string) {
     // 清空預覽
@@ -1371,6 +1481,12 @@ export class SiteProgressComponent
     const lines = content.split('\n');
     if (lines.length <= 1) {
       alert('檔案內容為空或只有標題行');
+      return;
+    }
+
+    // 檢查檔案格式是否正確（檢查第一行標題）
+    if (!this.validateCsvHeader(lines[0])) {
+      alert('檔案格式不正確！\n\n正確的欄位順序應為：\nWBS, 工程項目, 開始日期 (YYYY-MM-DD), 結束日期 (YYYY-MM-DD), 進度 (數字), 相依項目 (任務ID, 以逗號分隔)\n\n例如：A1,地基工程,2024-01-01,2024-01-15,30,');
       return;
     }
 

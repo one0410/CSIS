@@ -37,11 +37,11 @@
           <button type="button" class="btn btn-outline-secondary" (click)="ganttGoToday()" title="移至今日">
             <i class="bi bi-calendar-event"></i>
           </button>
-          <button type="button" class="btn btn-outline-secondary" (click)="ganttZoomOut()" title="縮小">
-            <i class="bi bi-zoom-out"></i>
-          </button>
-          <button type="button" class="btn btn-outline-secondary" (click)="ganttZoomIn()" title="放大">
+          <button type="button" class="btn btn-outline-secondary" [disabled]="ganttViewMode === 'Week'" (click)="ganttZoomIn()" title="放大">
             <i class="bi bi-zoom-in"></i>
+          </button>
+          <button type="button" class="btn btn-outline-secondary" [disabled]="ganttViewMode === 'Year'" (click)="ganttZoomOut()" title="縮小">
+            <i class="bi bi-zoom-out"></i>
           </button>
           <button type="button" class="btn btn-outline-secondary" [class.active]="ganttViewMode === 'Week'" (click)="changeGanttViewMode('Week')">週</button>
           <button type="button" class="btn btn-outline-secondary" [class.active]="ganttViewMode === 'Month'" (click)="changeGanttViewMode('Month')">月</button>
@@ -113,8 +113,9 @@
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <p class="small">請上傳CSV或XLSX檔案，欄位順序應為：<strong>WBS, 工程項目, 開始日期 (YYYY-MM-DD), 結束日期 (YYYY-MM-DD), 進度 (數字), 相依項目 (任務ID, 以逗號分隔)</strong></p>
-          <p class="text-muted small">例如：A1,地基工程,2024-01-01,2024-01-15,30,</p>
+          <p class="small">請上傳CSV或XLSX檔案，<strong>第一行必須為正確的欄位標題</strong>，欄位順序應為：<strong>WBS, 工程項目, 開始日期 (YYYY-MM-DD), 結束日期 (YYYY-MM-DD), 進度 (數字), 相依項目 (任務ID, 以逗號分隔)</strong></p>
+          <p class="text-muted small">範例標題行：WBS,工程項目,開始日期,結束日期,進度,相依項目</p>
+          <p class="text-muted small">範例資料行：A1,地基工程,2024-01-01,2024-01-15,30,</p>
         </div>
 
         <div class="mb-3">

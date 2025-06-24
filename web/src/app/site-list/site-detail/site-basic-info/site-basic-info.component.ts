@@ -7,6 +7,8 @@ import { ToastService } from '../../../services/toast.service';
 import { PhotoService, PhotoStats } from '../../../services/photo.service';
 import { ActivatedRoute } from '@angular/router';
 import { CurrentSiteService } from '../../../services/current-site.service';
+import { AreaService } from '../../../services/area.service';
+import { AuthService } from '../../../services/auth.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -19,9 +21,14 @@ import { Subscription } from 'rxjs';
 export class SiteBasicInfoComponent implements OnInit, OnDestroy {
   // 使用 computed 創建本地計算屬性，讓模板使用更簡潔
   site = computed(() => this.currentSiteService.currentSite());
+  currentUser = computed(() => this.authService.user());
   
   // 動態照片統計資料
   photoStats = signal<PhotoStats>({ count: 0, size: 0 });
+  
+  // 縣市和鄉鎮市區相關
+  counties = signal<string[]>([]);
+  townships = signal<string[]>([]);
   
   // 訂閱管理
   private photoStatsSubscription?: Subscription;
@@ -42,10 +49,15 @@ export class SiteBasicInfoComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private photoService: PhotoService,
     private route: ActivatedRoute,
-    private currentSiteService: CurrentSiteService
+    private currentSiteService: CurrentSiteService,
+    private areaService: AreaService,
+    private authService: AuthService
   ) {}
 
   async ngOnInit() {
+    // 初始化縣市清單
+    this.counties.set(this.areaService.getCountyNames());
+    
     // 从父路由获取工地ID
     const parent = this.route.parent;
     if (parent) {
@@ -115,6 +127,12 @@ export class SiteBasicInfoComponent implements OnInit, OnDestroy {
         imageFile: null,
         imagePreview: '',
       };
+      
+      // 如果有縣市，載入對應的鄉鎮市區
+      if (currentSite.county) {
+        this.loadTownshipsByCounty(currentSite.county);
+      }
+      
       // 保存原始資料用於取消操作
       this.originalForm = JSON.parse(JSON.stringify(this.editForm));
     }
@@ -404,5 +422,43 @@ export class SiteBasicInfoComponent implements OnInit, OnDestroy {
 
   removeConstructionType(index: number) {
     this.editForm.constructionTypes.splice(index, 1);
+  }
+
+  // 縣市和鄉鎮市區相關方法
+  onCountyChange(selectedCounty: string) {
+    // 更新表單的縣市
+    this.editForm.county = selectedCounty;
+    
+    // 清空鄉鎮市區選項
+    this.editForm.town = '';
+    
+    // 載入對應的鄉鎮市區
+    this.loadTownshipsByCounty(selectedCounty);
+  }
+
+  loadTownshipsByCounty(countyName: string) {
+    if (countyName) {
+      const townshipNames = this.areaService.getTownshipNamesByCounty(countyName);
+      this.townships.set(townshipNames);
+    } else {
+      this.townships.set([]);
+    }
+  }
+
+  onTownshipChange(selectedTownship: string) {
+    this.editForm.town = selectedTownship;
+  }
+
+  // 檢查當前使用者是否有權限編輯基本資訊
+  canEditBasicInfo(): boolean {
+    const user = this.currentUser();
+    const currentSite = this.site();
+    if (!user || !currentSite?._id) return false;
+    
+    // 取得當前使用者在此工地的角色
+    const userSiteRole = user.belongSites?.find(site => site.siteId === currentSite._id)?.role;
+    
+    // 只有專案經理(projectManager)和專案秘書(secretary)可以編輯基本資訊
+    return userSiteRole === 'projectManager' || userSiteRole === 'secretary';
   }
 }

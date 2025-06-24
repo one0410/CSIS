@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MongodbService } from '../../services/mongodb.service';
 import { AuthService } from '../../services/auth.service';
+import { FeedbackService } from '../../services/feedback.service';
 import { Feedback, FeedbackReply } from '../../model/feedback.model';
 import dayjs from 'dayjs';
 
@@ -86,6 +87,7 @@ export class FeedbackComponent implements OnInit {
   constructor(
     private mongodbService: MongodbService,
     private authService: AuthService,
+    private feedbackService: FeedbackService,
     private router: Router
   ) {}
 
@@ -146,6 +148,9 @@ export class FeedbackComponent implements OnInit {
       };
 
       await this.mongodbService.post('feedback', feedback);
+      
+      // 通知 FeedbackService 有新的意見提交
+      await this.feedbackService.onFeedbackSubmitted();
       
       // 重設表單
       this.newFeedback = {

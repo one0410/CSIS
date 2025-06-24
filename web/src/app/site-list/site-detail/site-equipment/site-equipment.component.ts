@@ -83,8 +83,8 @@ export class SiteEquipmentComponent implements OnInit {
           list.filter((item) => item._id !== equipment._id)
         );
         
-        // 更新 CurrentSiteService 中的機具列表
-        await this.currentSiteService.refreshEquipmentList();
+        // 發送 WebSocket 事件並更新機具列表
+        await this.currentSiteService.onEquipmentDeleted(equipment._id!, this.siteId!);
       } else {
         console.error('Failed to delete equipment', await response.text());
       }

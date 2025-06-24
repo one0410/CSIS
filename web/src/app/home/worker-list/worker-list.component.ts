@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import {
   Component,
   OnDestroy,
@@ -19,9 +20,11 @@ import { MongodbService } from '../../services/mongodb.service';
 import { GridFSService } from '../../services/gridfs.service';
 import JSZip from 'jszip';
 import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 import {
   Certification,
   CertificationType,
+  CertificationTypeManager,
   Worker,
 } from '../../model/worker.model';
 
@@ -36,12 +39,23 @@ interface CertificationWithFlag extends Certification {
 
 @Component({
   selector: 'app-worker-list',
-  imports: [AgGridModule, RouterModule, CommonModule],
+  imports: [AgGridModule, RouterModule, CommonModule, FormsModule],
   templateUrl: './worker-list.component.html',
   styleUrl: './worker-list.component.scss',
 })
 export class WorkerListComponent implements OnDestroy {
   workers: WorkerWithFlag[] = [];
+  filteredWorkers: WorkerWithFlag[] = []; // 過濾後的工人資料
+  
+  // 過濾器相關屬性
+  selectedContractingCompany = ''; // 選中的承攬公司
+  selectedCertificationTypes: string[] = []; // 選中的證照類型（多選）
+  contractingCompanies: string[] = []; // 所有承攬公司清單
+  certificationTypes: { value: string; label: string }[] = []; // 所有證照類型清單
+  isFilterExpanded = false; // 過濾器展開狀態
+  
+  // 匯出相關屬性
+  selectedWorkerIds: Set<string> = new Set(); // 選中的工人ID集合
 
   // 匯入處理相關屬性
   isProcessing = false;
@@ -69,43 +83,104 @@ export class WorkerListComponent implements OnDestroy {
   };
   columnDefs: ColDef[] = [
     {
-      headerName: '照片',
-      field: 'profilePicture',
-      width: 60,
+      headerName: '選取',
+      field: 'selected',
+      width: 40,
+      maxWidth: 70,
       pinned: 'left',
-      suppressAutoSize: true,
+      suppressAutoSize: false,
       sortable: false,
+      cellStyle: {
+        'padding': '0',
+        'margin': '0',
+      },
       cellRenderer: (params: any) => {
         const div = document.createElement('div');
         div.style.display = 'flex';
         div.style.justifyContent = 'center';
         div.style.alignItems = 'center';
         div.style.height = '100%';
+        div.style.cursor = 'pointer';
+        div.style.position = 'relative';
+
+        // 創建容器
+        const container = document.createElement('div');
+        container.style.position = 'relative';
+        container.style.width = '40px';
+        container.style.height = '40px';
+        container.style.borderRadius = '50%';
+        container.style.margin = '0';
 
         if (params.data.profilePicture) {
           // 如果有大頭貼，顯示圖片
           const img = document.createElement('img');
           img.src = params.data.profilePicture;
-          img.style.width = '40px';
-          img.style.height = '40px';
+          img.style.width = '100%';
+          img.style.height = '100%';
           img.style.borderRadius = '50%';
           img.style.objectFit = 'cover';
           img.style.border = '2px solid #ddd';
           img.alt = '大頭貼';
-          img.title = params.data.name + ' 的大頭貼';
-          div.appendChild(img);
+          img.title = '點擊選取/取消選取';
+          container.appendChild(img);
         } else {
           // 如果沒有大頭貼，顯示預設圖示
           const icon = document.createElement('i');
-          icon.className = 'bi bi-person-circle fs-3 text-muted';
-          icon.title = '無大頭貼';
-          div.appendChild(icon);
+          icon.className = 'bi bi-person-circle';
+          icon.style.fontSize = '36px';
+          icon.style.color = '#6c757d';
+          icon.title = '點擊選取/取消選取';
+          icon.style.cursor = 'pointer';
+          container.appendChild(icon);
         }
 
+        // 檢查是否選中
+        const isSelected = this.selectedWorkerIds.has(params.data._id);
+        if (isSelected) {
+          // 在右上角添加綠色勾勾
+          const checkMark = document.createElement('div');
+          checkMark.style.position = 'absolute';
+          checkMark.style.top = '-2px';
+          checkMark.style.right = '-2px';
+          checkMark.style.width = '16px';
+          checkMark.style.height = '16px';
+          checkMark.style.backgroundColor = '#28a745';
+          checkMark.style.borderRadius = '50%';
+          checkMark.style.display = 'flex';
+          checkMark.style.alignItems = 'center';
+          checkMark.style.justifyContent = 'center';
+          checkMark.style.border = '2px solid white';
+          checkMark.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
+          
+          const checkIcon = document.createElement('i');
+          checkIcon.className = 'bi bi-check';
+          checkIcon.style.color = 'white';
+          checkIcon.style.fontSize = '10px';
+          checkIcon.style.fontWeight = 'bold';
+          
+          checkMark.appendChild(checkIcon);
+          container.appendChild(checkMark);
+        }
+        
+        // hover 效果
+        container.addEventListener('mouseenter', () => {
+          container.style.opacity = '0.8';
+          container.style.transform = 'scale(1.05)';
+          container.style.transition = 'all 0.2s ease';
+        });
+        
+        container.addEventListener('mouseleave', () => {
+          container.style.opacity = '1';
+          container.style.transform = 'scale(1)';
+        });
+
+        div.appendChild(container);
         return div;
       },
       onCellClicked: (params) => {
-        this.router.navigate(['/worker', params.data._id]);
+        this.toggleWorkerSelection(params.data._id);
+        // 刷新這一行以更新顯示
+        params.api.refreshCells({ rowNodes: [params.node] });
       },
     },
     {
@@ -278,7 +353,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 100,
       valueGetter: (params) => {
         // 顯示幾張證照
-        return params.data.certifications.length;
+        return params.data.certifications?.length || 0;
       },
     },
     { headerName: '審核人員', field: 'reviewStaff', flex: 1, minWidth: 100 },
@@ -290,7 +365,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: CertificationWithFlag) => cert.type === CertificationType.A
         );
 
@@ -322,7 +397,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: CertificationWithFlag) => cert.type === CertificationType.BOSH
         );
 
@@ -353,7 +428,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: CertificationWithFlag) => cert.type === CertificationType.AOS
         );
 
@@ -384,7 +459,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: CertificationWithFlag) => cert.type === CertificationType.AOH
         );
 
@@ -415,7 +490,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.FR
         );
 
@@ -446,7 +521,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.O2
         );
 
@@ -477,7 +552,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.OS
         );
 
@@ -508,7 +583,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.SA
         );
 
@@ -534,13 +609,13 @@ export class WorkerListComponent implements OnDestroy {
     },
 
     {
-      headerName: '營造作業主管證照(s)',
+      headerName: '營造業職業安全衛生業務主管(s)',
       field: 's',
       flex: 1,
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.S
         );
         if (!cert) return null;
@@ -556,7 +631,7 @@ export class WorkerListComponent implements OnDestroy {
             ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
-          div.title = '營造作業主管證照(s)已過期';
+          div.title = '營造業職業安全衛生業務主管(s)已過期';
         }
 
         div.innerHTML = html;
@@ -564,13 +639,13 @@ export class WorkerListComponent implements OnDestroy {
       },
     },
     {
-      headerName: '作業主管證照(ma)',
+      headerName: '一般業職業安全衛生業務主管(ma)',
       field: 'ma',
       flex: 1,
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.MA
         );
         if (!cert) return null;
@@ -586,7 +661,7 @@ export class WorkerListComponent implements OnDestroy {
             ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
-          div.title = '作業主管證照(ma)已過期';
+          div.title = '一般業職業安全衛生業務主管(ma)已過期';
         }
 
         div.innerHTML = html;
@@ -601,7 +676,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.SC
         );
         if (!cert) return null;
@@ -632,7 +707,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.DW
         );
         if (!cert) return null;
@@ -662,7 +737,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.OW
         );
         if (!cert) return null;
@@ -693,7 +768,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.R
         );
         if (!cert) return null;
@@ -724,7 +799,7 @@ export class WorkerListComponent implements OnDestroy {
 
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.SSA
         );
         if (!cert) return null;
@@ -754,7 +829,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.FS
         );
         if (!cert) return null;
@@ -784,7 +859,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.PE
         );
         if (!cert) return null;
@@ -814,7 +889,7 @@ export class WorkerListComponent implements OnDestroy {
       minWidth: 150,
       cellRenderer: (params: any) => {
         // 顯示起始日期到結束日期
-        const cert = params.data.certifications.find(
+        const cert = params.data.certifications?.find(
           (cert: Certification) => cert.type === CertificationType.RS
         );
         if (!cert) return null;
@@ -847,18 +922,14 @@ export class WorkerListComponent implements OnDestroy {
     defaultColDef: this.defaultColDef,
     columnDefs: this.columnDefs,
     rowHeight: 40,
-    rowData: this.workers,
-    // onCellClicked: (params) => {
-    //   console.log(params);
-    //   // navigate to user detail page
-    //   this.router.navigate(['/worker', params.data._id]);
-    // },
-    // getRowStyle: (params) => {
-    //   return {
-    //     backgroundColor:
-    //       params.data.gender === '男' ? 'lightblue' : 'lightpink',
-    //   };
-    // },
+    rowData: this.filteredWorkers,
+    getRowClass: (params) => {
+      // 為選中的行添加 CSS 類
+      if (params.data._id && this.selectedWorkerIds.has(params.data._id)) {
+        return 'selected-worker';
+      }
+      return '';
+    },
   };
 
   api: GridApi | undefined;
@@ -906,8 +977,14 @@ export class WorkerListComponent implements OnDestroy {
       this.checkWorkerValidity(worker);
     }
 
+    // 初始化過濾器選項
+    this.initializeFilterOptions();
+
+    // 初始化過濾後的資料
+    this.applyFilters();
+
     if (this.api) {
-      this.api.setGridOption('rowData', this.workers);
+      this.api.setGridOption('rowData', this.filteredWorkers);
     }
   }
 
@@ -919,7 +996,7 @@ export class WorkerListComponent implements OnDestroy {
     workerIsValid.set(true);
 
     // 檢查意外險是否過期
-    if (worker.accidentInsurances.length > 0) {
+    if (worker.accidentInsurances && worker.accidentInsurances.length > 0) {
       const allInsurancesValid = worker.accidentInsurances.every(
         (insurance: any) => {
           return dayjs().isBefore(dayjs(insurance.end));
@@ -932,7 +1009,7 @@ export class WorkerListComponent implements OnDestroy {
     }
 
     // 檢查證照是否過期
-    if (worker.certifications.length > 0) {
+    if (worker.certifications && worker.certifications.length > 0) {
       // 設置每張證照的有效性
       worker.certifications.forEach((cert: CertificationWithFlag) => {
         cert.isValid = dayjs().isBefore(dayjs(cert.withdraw));
@@ -1009,7 +1086,7 @@ export class WorkerListComponent implements OnDestroy {
       reviewStaff: '張三',
       idno: 'A' + Math.floor(Math.random() * 10000000000),
       no: null,
-      medicalExamPicture: '',
+      medicalExamPictures: [],
       isValid: signal(true),
     };
 
@@ -1046,10 +1123,657 @@ export class WorkerListComponent implements OnDestroy {
 
   onGridReady(params: GridReadyEvent) {
     this.api = params.api;
-    if (this.workers && this.workers.length > 0) {
-      this.api.setGridOption('rowData', this.workers);
+    if (this.filteredWorkers && this.filteredWorkers.length > 0) {
+      this.api.setGridOption('rowData', this.filteredWorkers);
     }
   }
+
+  // 初始化過濾器選項
+  initializeFilterOptions() {
+    // 收集所有承攬公司
+    const companies = new Set<string>();
+    this.workers.forEach(worker => {
+      if (worker.contractingCompanyName) {
+        companies.add(worker.contractingCompanyName);
+      }
+    });
+    this.contractingCompanies = Array.from(companies).sort();
+
+    // 收集所有證照類型
+    const certTypes = new Set<CertificationType>();
+    this.workers.forEach(worker => {
+      if (worker.certifications) {
+        worker.certifications.forEach(cert => {
+          certTypes.add(cert.type);
+        });
+      }
+    });
+
+    // 使用 CertificationTypeManager 來獲取證照類型的名稱
+    this.certificationTypes = Array.from(certTypes).map(type => ({
+      value: type,
+      label: CertificationTypeManager.getName(type)
+    })).sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  // 應用過濾器
+  applyFilters() {
+    this.filteredWorkers = this.workers.filter(worker => {
+      // 承攬公司過濾
+      if (this.selectedContractingCompany && 
+          worker.contractingCompanyName !== this.selectedContractingCompany) {
+        return false;
+      }
+
+      // 證照類型過濾（OR 條件）
+      if (this.selectedCertificationTypes.length > 0) {
+        if (!worker.certifications || worker.certifications.length === 0) {
+          return false;
+        }
+        // 檢查工人是否擁有任一選中的證照類型
+        const hasAnyCertType = worker.certifications.some(cert => 
+          this.selectedCertificationTypes.includes(cert.type)
+        );
+        if (!hasAnyCertType) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    // 更新 ag-grid 資料
+    if (this.api) {
+      this.api.setGridOption('rowData', this.filteredWorkers);
+    }
+  }
+
+  // 清除所有過濾器
+  clearFilters() {
+    this.selectedContractingCompany = '';
+    this.selectedCertificationTypes = [];
+    this.applyFilters();
+  }
+
+  // 承攬公司變更事件
+  onContractingCompanyChange() {
+    this.applyFilters();
+  }
+
+  // 證照類型變更事件（checkbox）
+  onCertificationTypeChange(certType: string, isChecked: boolean) {
+    if (isChecked) {
+      if (!this.selectedCertificationTypes.includes(certType)) {
+        this.selectedCertificationTypes.push(certType);
+      }
+    } else {
+      const index = this.selectedCertificationTypes.indexOf(certType);
+      if (index > -1) {
+        this.selectedCertificationTypes.splice(index, 1);
+      }
+    }
+    this.applyFilters();
+  }
+
+  // 檢查證照類型是否被選中
+  isCertificationTypeSelected(certType: string): boolean {
+    return this.selectedCertificationTypes.includes(certType);
+  }
+
+  // 切換過濾器展開狀態
+  toggleFilterExpansion() {
+    this.isFilterExpanded = !this.isFilterExpanded;
+  }
+
+  // 獲取過濾器狀態摘要
+  getFilterSummary(): string {
+    const summaryParts: string[] = [];
+    
+    if (this.selectedContractingCompany) {
+      summaryParts.push(`承攬公司: ${this.selectedContractingCompany}`);
+    }
+    
+    if (this.selectedCertificationTypes.length > 0) {
+      summaryParts.push(`證照: ${this.selectedCertificationTypes.length} 項`);
+    }
+    
+    return summaryParts.length > 0 ? summaryParts.join(' | ') : '無篩選條件';
+  }
+
+  // 切換工人選中狀態
+  toggleWorkerSelection(workerId: string) {
+    if (this.selectedWorkerIds.has(workerId)) {
+      this.selectedWorkerIds.delete(workerId);
+    } else {
+      this.selectedWorkerIds.add(workerId);
+    }
+    
+    // 觸發行樣式的重新渲染
+    if (this.api) {
+      this.api.redrawRows();
+    }
+  }
+
+  // 檢查是否有選中的工人
+  hasSelectedWorkers(): boolean {
+    return this.selectedWorkerIds.size > 0;
+  }
+
+  // 清除所有選中狀態
+  clearSelection() {
+    this.selectedWorkerIds.clear();
+    // 刷新整個表格以更新顯示
+    if (this.api) {
+      // 刷新儲存格內容（移除綠色勾勾）
+      this.api.refreshCells();
+      // 重新計算行樣式（移除行背景色）
+      this.api.redrawRows();
+    }
+  }
+
+  // 獲取選中的工人數據
+  getSelectedWorkers(): WorkerWithFlag[] {
+    return this.filteredWorkers.filter(worker => 
+      worker._id && this.selectedWorkerIds.has(worker._id)
+    );
+  }
+
+  // 匯出選中的工人資料為 Excel（基本版）
+
+
+  // 匯出帶浮水印的 Excel（簡潔版）
+  async exportSelectedWorkersWithWatermark() {
+    if (!this.hasSelectedWorkers()) {
+      return;
+    }
+
+    const selectedWorkers = this.getSelectedWorkers();
+    
+    try {
+      // 創建新的工作簿
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('工人資料');
+
+      // 按照圖片順序設定標題行和顏色
+      const headerConfigs = [
+        // 基本資料欄位 - 藍綠色
+        { title: '編號', color: '5B9BD5' },
+        { title: '姓名', color: '5B9BD5' },
+        { title: '性別', color: '5B9BD5' },
+        { title: '生日', color: '5B9BD5' },
+        { title: '年齡', color: '5B9BD5' },
+        { title: '血型', color: '5B9BD5' },
+        { title: '電話', color: '5B9BD5' },
+        { title: '聯絡人', color: '5B9BD5' },
+        { title: '緊急聯絡電話', color: '5B9BD5' },
+        { title: '聯絡地址', color: '5B9BD5' },
+        { title: '承攬公司', color: '5B9BD5' },
+        { title: '次承攬公司', color: '5B9BD5' },
+        { title: '身分證字號', color: '5B9BD5' },
+        
+        // 安全訓練相關 - 紅色
+        { title: '供應商工安認證編號', color: 'C55A5A' },
+        { title: '一般安全衛生教育訓練發證日期', color: 'C55A5A' },
+        { title: '一般安全衛生教育訓練應回訓日期', color: 'C55A5A' },
+        { title: '勞保申請日期', color: 'C55A5A' },
+        { title: '勞工團體入會日期', color: 'C55A5A' },
+        { title: '6小時期效狀況', color: 'C55A5A' },
+        
+        // 意外險相關 - 紫色
+        { title: '意外險開始日期', color: '7030A0' },
+        { title: '意外險結束日期', color: '7030A0' },
+        { title: '意外險保額', color: '7030A0' },
+        { title: '意外險簽約日期', color: '7030A0' },
+        { title: '意外險公司', color: '7030A0' },
+        
+        // 審核相關 - 橘色
+        { title: '審核人員', color: 'D99694' },
+        { title: '證照數量', color: 'D99694' },
+        
+        // 證照欄位 - 按圖片中的順序和顏色
+        { title: '高空作業車操作人員\r\n發證日期\r\n(A)', color: '92D050' },
+        { title: '高空作業車操作人員\r\n回訓日期', color: '92D050' },
+        
+        { title: '乙級職業安全管理員\r\n發證日期\r\n(BOSH)', color: '00B050' },
+        { title: '乙級職業安全管理員\r\n回訓日期(期效3年)', color: '00B050' },
+        
+        { title: '甲級職業安全管理師\r\n發證日期\r\n(AOS)', color: '00B0F0' },
+        { title: '甲級職業安全管理師\r\n回訓日期(期效3年)', color: '00B0F0' },
+        
+        { title: '甲級職業衛生管理師\r\n發證日期\r\n(AOH)', color: '0070C0' },
+        { title: '甲級職業衛生管理師\r\n回訓日期(期效3年)', color: '0070C0' },
+        
+        { title: '急救人員\r\n發證日期\r\n(FR)', color: '002060' },
+        { title: '急救人員\r\n回訓日期(期效3年)', color: '002060' },
+        
+        { title: '缺氧(侷限)作業主管證照\r\n發證日期\r\n(O2)', color: 'FFFF00' },
+        { title: '缺氧(侷限)作業主管證照\r\n回訓日期(期效3年)', color: 'FFFF00' },
+        
+        { title: '有機溶劑作業主管證照\r\n發證日期\r\n(OS)', color: '92D050' },
+        { title: '有機溶劑作業主管證照\r\n回訓日期(期效3年)', color: '92D050' },
+        
+        { title: '施工架組配作業主管\r\n發證日期\r\n(SA)', color: 'C0C0C0' },
+        { title: '施工架組配作業主管\r\n回訓日期(期效3年)', color: 'C0C0C0' },
+        
+        { title: '營造業職業安全衛生業務主管\r\n發證日期\r\n(S)', color: '305496' },
+        { title: '營造業職業安全衛生業務主管\r\n回訓日期(期效2年)', color: '305496' },
+        
+        { title: '職業安全衛生業務主管證照名稱', color: 'FFFF00' },
+        { title: '職業安全衛生業務主管\r\n發證日期', color: 'FFFF00' },
+        { title: '職業安全衛生業務主管\r\n證照回訓日期(期效2年)', color: 'FFFF00' },
+        
+        // 其他證照繼續按順序...
+        { title: '特定化學物質作業主管\r\n發證日期\r\n(SC)', color: 'A9D18E' },
+        { title: '特定化學物質作業主管\r\n回訓日期(期效3年)', color: 'A9D18E' },
+        
+        { title: '粉塵作業主管\r\n發證日期\r\n(DW)', color: 'B4C6E7' },
+        { title: '粉塵作業主管\r\n回訓日期(期效3年)', color: 'B4C6E7' },
+        
+        { title: '氧乙炔熔接裝置作業人員\r\n發證日期\r\n(OW)', color: 'D9E1F2' },
+        { title: '氧乙炔熔接裝置作業人員\r\n回訓日期(期效3年)', color: 'D9E1F2' },
+        
+        { title: '屋頂作業主管\r\n發證日期\r\n(R)', color: 'E2EFDA' },
+        { title: '屋頂作業主管\r\n回訓日期(期效3年)', color: 'E2EFDA' },
+        
+        { title: '鋼構組配作業主管\r\n發證日期\r\n(SSA)', color: 'FFF2CC' },
+        { title: '鋼構組配作業主管\r\n回訓日期(期效3年)', color: 'FFF2CC' },
+        
+        { title: '模板支撐作業主管\r\n發證日期\r\n(FS)', color: 'FCE4D6' },
+        { title: '模板支撐作業主管\r\n回訓日期(期效3年)', color: 'FCE4D6' },
+        
+        { title: '露天開挖作業主管\r\n發證日期\r\n(PE)', color: 'F8CBAD' },
+        { title: '露天開挖作業主管\r\n回訓日期(期效3年)', color: 'F8CBAD' },
+        
+        { title: '擋土支撐作業主管\r\n發證日期\r\n(RS)', color: 'EDEDED' },
+        { title: '擋土支撐作業主管\r\n回訓日期(期效3年)', color: 'EDEDED' }
+      ];
+
+      // 創建標題行
+      const headers = headerConfigs.map(config => config.title);
+      const headerRow = worksheet.addRow(headers);
+      
+      // 設定每個標題的顏色和格式
+      headerRow.eachCell((cell, colNumber) => {
+        const config = headerConfigs[colNumber - 1];
+        cell.font = { bold: true, color: { argb: 'FFFFFF' } };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: config.color }
+        };
+        cell.border = {
+          top: {style:'thin'},
+          left: {style:'thin'},
+          bottom: {style:'thin'},
+          right: {style:'thin'}
+        };
+        cell.alignment = { 
+          wrapText: true, 
+          horizontal: 'center', 
+          vertical: 'middle' 
+        };
+      });
+
+      // 添加數據行
+      selectedWorkers.forEach((worker, index) => {
+        const age = worker.birthday ? dayjs().diff(worker.birthday, 'years') : '';
+        
+        // 取得最新的意外險資料
+        const latestAccidentInsurance = worker.accidentInsurances && worker.accidentInsurances.length > 0
+          ? worker.accidentInsurances[worker.accidentInsurances.length - 1]
+          : null;
+
+        // 按照新的欄位順序組織數據
+        const getCertData = (certType: CertificationType) => {
+          const cert = worker.certifications?.find(c => c.type === certType);
+          return {
+            issue: cert?.issue ? dayjs(cert.issue).format('YYYY-MM-DD') : '',
+            withdraw: cert?.withdraw ? dayjs(cert.withdraw).format('YYYY-MM-DD') : ''
+          };
+        };
+        
+        // 獲取特殊的職業安全衛生業務主管證照名稱
+        const getSpecialCertName = () => {
+          const generalCert = worker.certifications?.find(c => c.type === CertificationType.MA);
+          const constructionCert = worker.certifications?.find(c => c.type === CertificationType.S);
+          
+          if (generalCert) return generalCert.name || '一般業職業安全衛生業務主管';
+          if (constructionCert) return constructionCert.name || '營造業職業安全衛生業務主管';
+          return '';
+        };
+        
+        const getSpecialCertIssue = () => {
+          const generalCert = worker.certifications?.find(c => c.type === CertificationType.MA);
+          const constructionCert = worker.certifications?.find(c => c.type === CertificationType.S);
+          
+          if (generalCert && generalCert.issue) return dayjs(generalCert.issue).format('YYYY-MM-DD');
+          if (constructionCert && constructionCert.issue) return dayjs(constructionCert.issue).format('YYYY-MM-DD');
+          return '';
+        };
+        
+        const getSpecialCertWithdraw = () => {
+          const generalCert = worker.certifications?.find(c => c.type === CertificationType.MA);
+          const constructionCert = worker.certifications?.find(c => c.type === CertificationType.S);
+          
+          if (generalCert && generalCert.withdraw) return dayjs(generalCert.withdraw).format('YYYY-MM-DD');
+          if (constructionCert && constructionCert.withdraw) return dayjs(constructionCert.withdraw).format('YYYY-MM-DD');
+          return '';
+        };
+
+        // 按照headerConfigs的順序組織資料
+        const rowData = [
+          // 基本資料
+          worker.no || (index + 1), // 編號
+          worker.name || '',
+          worker.gender || '',
+          worker.birthday || '',
+          age || '',
+          worker.bloodType || '',
+          worker.tel || '',
+          worker.liaison || '',
+          worker.emergencyTel || '',
+          worker.address || '',
+          worker.contractingCompanyName || '',
+          worker.viceContractingCompanyName || '',
+          worker.idno || '',
+          
+          // 安全訓練相關
+          worker.supplierIndustrialSafetyNumber || '',
+          worker.generalSafetyTrainingDate || '',
+          worker.generalSafetyTrainingDueDate || '',
+          worker.laborInsuranceApplyDate || '',
+          worker.laborAssociationDate || '',
+          worker.sixHourTrainingDate || '',
+          
+          // 意外險相關
+          latestAccidentInsurance?.start || '',
+          latestAccidentInsurance?.end || '',
+          latestAccidentInsurance?.amount || '',
+          latestAccidentInsurance?.signDate || '',
+          latestAccidentInsurance?.companyName || '',
+          
+          // 審核相關
+          worker.reviewStaff || '',
+          worker.certifications?.length || 0,
+          
+          // 證照欄位 - 按照圖片順序
+          getCertData(CertificationType.A).issue,    // 高空作業車發證日期
+          getCertData(CertificationType.A).withdraw, // 高空作業車回訓日期
+          
+          getCertData(CertificationType.BOSH).issue,    // 乙級職業安全管理員發證日期
+          getCertData(CertificationType.BOSH).withdraw, // 乙級職業安全管理員回訓日期
+          
+          getCertData(CertificationType.AOS).issue,    // 甲級職業安全管理師發證日期
+          getCertData(CertificationType.AOS).withdraw, // 甲級職業安全管理師回訓日期
+          
+          getCertData(CertificationType.AOH).issue,    // 甲級職業衛生管理師發證日期
+          getCertData(CertificationType.AOH).withdraw, // 甲級職業衛生管理師回訓日期
+          
+          getCertData(CertificationType.FR).issue,    // 急救人員發證日期
+          getCertData(CertificationType.FR).withdraw, // 急救人員回訓日期
+          
+          getCertData(CertificationType.O2).issue,    // 缺氧作業主管發證日期
+          getCertData(CertificationType.O2).withdraw, // 缺氧作業主管回訓日期
+          
+          getCertData(CertificationType.OS).issue,    // 有機溶劑作業主管發證日期
+          getCertData(CertificationType.OS).withdraw, // 有機溶劑作業主管回訓日期
+          
+          getCertData(CertificationType.SA).issue,    // 施工架組配作業主管發證日期
+          getCertData(CertificationType.SA).withdraw, // 施工架組配作業主管回訓日期
+          
+          getCertData(CertificationType.S).issue,    // 營造業職業安全衛生業務主管發證日期
+          getCertData(CertificationType.S).withdraw, // 營造業職業安全衛生業務主管回訓日期
+          
+          // 特殊的職業安全衛生業務主管3欄位
+          getSpecialCertName(),     // 證照名稱
+          getSpecialCertIssue(),    // 發證日期
+          getSpecialCertWithdraw(), // 回訓日期
+          
+          // 其他證照繼續
+          getCertData(CertificationType.SC).issue,    // 特定化學物質作業主管發證日期
+          getCertData(CertificationType.SC).withdraw, // 特定化學物質作業主管回訓日期
+          
+          getCertData(CertificationType.DW).issue,    // 粉塵作業主管發證日期
+          getCertData(CertificationType.DW).withdraw, // 粉塵作業主管回訓日期
+          
+          getCertData(CertificationType.OW).issue,    // 氧乙炔熔接裝置作業人員發證日期
+          getCertData(CertificationType.OW).withdraw, // 氧乙炔熔接裝置作業人員回訓日期
+          
+          getCertData(CertificationType.R).issue,    // 屋頂作業主管發證日期
+          getCertData(CertificationType.R).withdraw, // 屋頂作業主管回訓日期
+          
+          getCertData(CertificationType.SSA).issue,    // 鋼構組配作業主管發證日期
+          getCertData(CertificationType.SSA).withdraw, // 鋼構組配作業主管回訓日期
+          
+          getCertData(CertificationType.FS).issue,    // 模板支撐作業主管發證日期
+          getCertData(CertificationType.FS).withdraw, // 模板支撐作業主管回訓日期
+          
+          getCertData(CertificationType.PE).issue,    // 露天開挖作業主管發證日期
+          getCertData(CertificationType.PE).withdraw, // 露天開挖作業主管回訓日期
+          
+          getCertData(CertificationType.RS).issue,    // 擋土支撐作業主管發證日期
+          getCertData(CertificationType.RS).withdraw  // 擋土支撐作業主管回訓日期
+        ];
+        const dataRow = worksheet.addRow(rowData);
+
+        // 為數據行添加邊框
+        dataRow.eachCell((cell) => {
+          cell.border = {
+            top: {style:'thin'},
+            left: {style:'thin'},
+            bottom: {style:'thin'},
+            right: {style:'thin'}
+          };
+        });
+      });
+
+      // 設定列寬 - 按照新的欄位順序
+      const columnWidths = [
+        // 基本資料欄位
+        8,   // 編號
+        12,  // 姓名
+        8,   // 性別
+        12,  // 生日
+        8,   // 年齡
+        8,   // 血型
+        15,  // 電話
+        12,  // 聯絡人
+        15,  // 緊急聯絡電話
+        25,  // 聯絡地址
+        15,  // 承攬公司
+        15,  // 次承攬公司
+        15,  // 身分證字號
+        
+        // 安全訓練相關
+        20,  // 供應商工安認證編號
+        25,  // 一般安全衛生教育訓練發證日期
+        25,  // 一般安全衛生教育訓練應回訓日期
+        15,  // 勞保申請日期
+        15,  // 勞工團體入會日期
+        15,  // 6小時期效狀況
+        
+        // 意外險相關
+        15,  // 意外險開始日期
+        15,  // 意外險結束日期
+        12,  // 意外險保額
+        15,  // 意外險簽約日期
+        15,  // 意外險公司
+        
+        // 審核相關
+        12,  // 審核人員
+        10,  // 證照數量
+        
+        // 證照欄位 - 每個證照都有發證日期和回訓日期兩欄
+        20, 20,  // 高空作業車操作人員
+        20, 20,  // 乙級職業安全管理員
+        20, 20,  // 甲級職業安全管理師
+        20, 20,  // 甲級職業衛生管理師
+        20, 20,  // 急救人員
+        20, 20,  // 缺氧作業主管
+        20, 20,  // 有機溶劑作業主管
+        20, 20,  // 施工架組配作業主管
+        20, 20,  // 營造業職業安全衛生業務主管
+        25, 20, 20,  // 職業安全衛生業務主管（3欄位：名稱、發證、回訓）
+        20, 20,  // 特定化學物質作業主管
+        20, 20,  // 粉塵作業主管
+        20, 20,  // 氧乙炔熔接裝置作業人員
+        20, 20,  // 屋頂作業主管
+        20, 20,  // 鋼構組配作業主管
+        20, 20,  // 模板支撐作業主管
+        20, 20,  // 露天開挖作業主管
+        20, 20   // 擋土支撐作業主管
+      ];
+
+      worksheet.columns = columnWidths.map(width => ({ width }));
+
+      // 添加浮水印效果
+      await this.addAdvancedWatermark(worksheet, selectedWorkers.length);
+      
+      // 設定工作表保護（可選）
+      await worksheet.protect('', {
+        selectLockedCells: true,
+        selectUnlockedCells: true,
+        formatCells: false,
+        formatColumns: false,
+        formatRows: false,
+        insertRows: false,
+        insertColumns: false,
+        deleteRows: false,
+        deleteColumns: false
+      });
+
+      // 匯出檔案
+      const currentDate = dayjs().format('YYYY-MM-DD');
+      const fileName = `工人資料_${currentDate}.xlsx`;
+      
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      });
+      
+      // 創建下載鏈接
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      
+      // 清理
+      window.URL.revokeObjectURL(url);
+      
+      // 匯出完成
+      
+    } catch (error) {
+      console.error('匯出Excel時發生錯誤:', error);
+      alert('匯出失敗，請檢查控制台錯誤訊息');
+    }
+  }
+
+  // 高級背景浮水印方法
+  private async addAdvancedWatermark(worksheet: ExcelJS.Worksheet, rowCount: number) {
+    const currentDate = dayjs().format('YYYY-MM-DD HH:mm');
+    const userName = localStorage.getItem('username') || '管理員';
+    
+    try {
+      // 創建浮水印圖片 (使用 Canvas 生成背景圖)
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        // 設定 canvas 大小 (足夠覆蓋整個工作表)
+        canvas.width = 1200;
+        canvas.height = 800;
+        
+        // 設定背景透明
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 設定文字樣式
+        ctx.font = 'bold 28px Arial';
+        ctx.fillStyle = 'rgba(128, 128, 128, 0.08)'; // 非常淺的灰色，幾乎透明
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // 在整個背景上重複繪製浮水印
+        const watermarkText1 = '帆宣工安系統';
+        const watermarkText2 = `${userName}`;
+        const watermarkText3 = currentDate.split(' ')[0]; // 只顯示日期部分
+        
+        // 計算間距
+        const spacingX = 300;
+        const spacingY = 200;
+        
+        for (let x = 150; x < canvas.width; x += spacingX) {
+          for (let y = 100; y < canvas.height; y += spacingY) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(-Math.PI / 6); // 旋轉 -30 度
+            
+            // 繪製多行浮水印文字
+            ctx.fillText(watermarkText1, 0, -20);
+            ctx.fillText(watermarkText2, 0, 10);
+            ctx.fillText(watermarkText3, 0, 40);
+            
+            ctx.restore();
+          }
+        }
+        
+        // 將 canvas 轉換為 base64
+        const imageData = canvas.toDataURL('image/png');
+        const base64Data = imageData.split(',')[1];
+        
+        // 添加圖片到工作簿
+        const workbook = worksheet.workbook;
+        const imageId = workbook.addImage({
+          base64: base64Data,
+          extension: 'png',
+        });
+        
+        // 設定為背景圖片
+        worksheet.addBackgroundImage(imageId);
+        
+        console.log('成功添加背景浮水印');
+      }
+    } catch (error) {
+      console.warn('添加背景浮水印失敗，使用備用方案:', error);
+      
+      // 備用方案：在頁首和頁尾添加信息
+      try {
+                 // 在第一行添加匯出信息
+         const headerRow = worksheet.insertRow(1, []);
+         const headerCell = headerRow.getCell(1);
+         headerCell.value = `匯出時間: ${currentDate} | 匯出者: ${userName} | CSIS 系統`;
+         headerCell.font = {
+           size: 10,
+           color: { argb: '808080' },
+           italic: true
+         };
+         headerCell.alignment = { horizontal: 'center' };
+         
+         // 合併第一行的儲存格（擴展到所有欄位）
+         // 總共有27個基本欄位 + 41個證照欄位 = 68欄
+         worksheet.mergeCells(1, 1, 1, 68);
+        
+        // 在頁尾添加保護信息
+        const footerRow = worksheet.addRow([]);
+        const footerCell = footerRow.getCell(1);
+        footerCell.value = `⚠️ 機密資料 | 共 ${rowCount} 筆 | 請勿外流 | ${currentDate}`;
+        footerCell.font = {
+          size: 9,
+          color: { argb: 'FF6B6B' },
+          bold: true
+        };
+        footerCell.alignment = { horizontal: 'center' };
+        
+                 // 合併頁尾儲存格（擴展到所有欄位）
+         worksheet.mergeCells(footerRow.number, 1, footerRow.number, 68);
+        
+      } catch (backupError) {
+        console.error('備用浮水印方案也失敗:', backupError);
+      }
+    }
+  }
+
+
 
   // 處理檔案選擇
   onFileSelected(event: Event) {
@@ -1390,7 +2114,8 @@ export class WorkerListComponent implements OnDestroy {
                 ]
               : ['未發現相關圖片檔案']),
             '圖片檔名格式：{身份證號}_{姓名}_{代碼}.jpg/jpeg/png',
-            '支援的圖片代碼：IDF(身份證正面)、IDR(身份證反面)、P(大頭照)、L/G(勞保證明)、6F(六小時證明正面)、6R(六小時證明反面)、H(體檢報告)',
+            '支援的圖片代碼：IDF(身份證正面)、IDR(身份證反面)、P(大頭照)、L(勞保證明)、6F(六小時證明正面)、6R(六小時證明反面)、H/H1/H2/H3(體檢報告)、G1/G2/G3(意外險證明)、證照圖片({證照代碼}F/{證照代碼}R)',
+            '證照代碼範例：AF/AR(高空作業車操作人員)、BOSHF/BOSHR(乙級職業安全管理員)、AOHF/AOHR(甲級職業衛生管理師)等',
             '點擊「匯入並刷新」開始匯入資料和上傳圖片',
           ],
         };
@@ -1491,46 +2216,97 @@ export class WorkerListComponent implements OnDestroy {
       }
     }
 
-    // 證照對照表
-    const certificationMap: { [key: string]: { code: string; name: string } } =
-      {
-        a: { code: 'a', name: '高空作業車操作人員' },
-        bosh: { code: 'bosh', name: '乙級職業安全管理員' },
-        aos: { code: 'aos', name: '甲級職業安全管理員' },
-        aoh: { code: 'aoh', name: '甲級職業衛生管理師' },
-        fr: { code: 'fr', name: '急救人員' },
-        o2: { code: 'o2', name: '缺氧(侷限)作業主管證照' },
-        os: { code: 'os', name: '有機溶劑作業主管證照' },
-        sa: { code: 'sa', name: '施工架組配作業主管證照' },
-        s: { code: 's', name: '營造作業主管證照' },
-        ma: { code: 'ma', name: '作業主管證照' },
-        sc: { code: 'sc', name: '特定化學物質作業主管' },
-        dw: { code: 'dw', name: '粉塵作業主管' },
-        ow: { code: 'ow', name: '氧乙炔熔接裝置作業人員' },
-        r: { code: 'r', name: '屋頂作業主管' },
-        ssa: { code: 'ssa', name: '鋼構組配作業主管' },
-        fs: { code: 'fs', name: '模板支撐作業主管' },
-        pe: { code: 'pe', name: '露天開挖作業主管' },
-        rs: { code: 'rs', name: '擋土支撐作業主管' },
-      };
-
     // 處理證照資訊
     const certifications: Certification[] = [];
-
-    // 檢查並添加證照
-    Object.keys(certificationMap).forEach((code) => {
-      const certValue = getFieldValue([certificationMap[code].name, code]);
-      if (certValue) {
-        // 如果有證照的值，則添加到certifications陣列
-        certifications.push({
-          type: code as CertificationType,
-          name: certificationMap[code].name,
-          issue: '', // Excel中可能沒有這些欄位，先設為空
-          withdraw: '',
-          frontPicture: '',
-          backPicture: '',
-        });
-      }
+    const certificationMap = CertificationTypeManager.getCertificationMap();
+    
+    // 取得所有證照類型資訊
+    const allCertTypes = CertificationTypeManager.getAllCertificationInfo();
+    
+    // 遍歷每種證照類型
+    allCertTypes.forEach(certInfo => {
+      const certType = CertificationTypeManager.getTypeByCode(certInfo.code);
+      if (!certType) return;
+      
+             // 通用方法：搜尋包含該證照名稱的欄位
+       let issueDate = '';
+       let withdrawDate = '';
+       let hasCertification = false;
+       let actualCertName = certInfo.name; // 預設使用標準名稱
+      
+             // 遍歷所有 Excel 欄位，尋找包含證照名稱的欄位
+       Object.keys(row).forEach(fieldName => {
+         const fieldValue = row[fieldName];
+         
+         // 檢查欄位名稱是否包含證照名稱
+         const containsCertName = fieldName.includes(certInfo.name) || 
+                                 fieldName.includes(certInfo.fullLabel) ||
+                                 fieldName.includes(`(${certInfo.code})`) ||
+                                 fieldName.includes(`(${certInfo.code.toUpperCase()})`);
+         
+         // 特別處理「職業安全衛生業務主管證照」的3欄位格式
+         const isSpecialCertName = fieldName.includes('職業安全衛生業務主管證照名稱') || 
+                                  fieldName.includes('職業安全衛生業務主管') && fieldName.includes('證照名稱');
+         
+         if ((containsCertName && fieldValue) || isSpecialCertName) {
+           
+                       // 如果是證照名稱欄位，檢查其值是否對應到某個證照類型
+            if (isSpecialCertName && fieldValue) {
+              // 根據證照名稱欄位的值來判斷是哪種證照類型
+              const certNameValue = fieldValue.toString().trim();
+              
+              // 檢查證照名稱值是否匹配當前證照類型
+              if (certNameValue.includes(certInfo.name) || 
+                  certNameValue.includes(certInfo.fullLabel) ||
+                  certNameValue.includes(certInfo.code)) {
+                hasCertification = true;
+                actualCertName = certNameValue; // 使用Excel中的實際證照名稱
+              }
+           } else if (containsCertName) {
+             hasCertification = true;
+           }
+           
+           // 檢查是否為發證日期欄位
+           const isIssueField = fieldName.includes('發證日期') || 
+                                fieldName.includes('發證') ||
+                                fieldName.includes('核發日期');
+           
+           // 檢查是否為回訓日期欄位
+           const isWithdrawField = fieldName.includes('回訓日期') || 
+                                  fieldName.includes('有效期') ||
+                                  fieldName.includes('證照回訓日期');
+           
+           if (isIssueField && !issueDate) {
+             issueDate = this.formatDate(fieldValue);
+           }
+           
+           if (isWithdrawField && !withdrawDate) {
+             withdrawDate = this.formatDate(fieldValue);
+           }
+           
+           // 如果欄位既不是發證也不是回訓，但有值，可能就是發證日期
+           if (!isIssueField && !isWithdrawField && !isSpecialCertName && !issueDate) {
+             const formattedDate = this.formatDate(fieldValue);
+             if (formattedDate) {
+               issueDate = formattedDate;
+             }
+           }
+         }
+       });
+      
+             // 如果找到相關證照資訊，則添加到證照陣列
+       if (hasCertification || issueDate || withdrawDate) {
+         certifications.push({
+           type: certType,
+           name: actualCertName, // 使用實際的證照名稱
+           issue: issueDate,
+           withdraw: withdrawDate,
+           frontPicture: '',
+           backPicture: '',
+         });
+         
+         console.log(`發現證照：${actualCertName} - 發證日期: ${issueDate}, 回訓日期: ${withdrawDate}`);
+       }
     });
 
     return {
@@ -1593,7 +2369,7 @@ export class WorkerListComponent implements OnDestroy {
       reviewStaff: getFieldValue(['審核人員', '審核者', '審核人']) as string,
       idno: getFieldValue(['身分證', '身份證號碼']) as string,
       no: null,
-      medicalExamPicture: '',
+      medicalExamPictures: [],
     };
   }
 
@@ -1877,8 +2653,14 @@ export class WorkerListComponent implements OnDestroy {
         this.checkWorkerValidity(worker);
       }
 
+      // 重新初始化過濾器選項
+      this.initializeFilterOptions();
+      
+      // 重新應用過濾器
+      this.applyFilters();
+
       if (this.api) {
-        this.api.setGridOption('rowData', this.workers);
+        this.api.setGridOption('rowData', this.filteredWorkers);
       }
 
       this.processStatus = `匯入完成（新增: ${newCount}, 更新: ${updateCount}${
@@ -1934,9 +2716,10 @@ export class WorkerListComponent implements OnDestroy {
       P: { field: 'profilePicture', name: '大頭照' },
       '6F': { field: 'sixHourTrainingFrontPicture', name: '6小時證明正面' },
       '6R': { field: 'sixHourTrainingBackPicture', name: '6小時證明反面' },
-      G: { field: 'laborInsurancePicture', name: '勞保證明' },
-      H: { field: 'medicalExamPicture', name: '體檢報告' },
     };
+
+    // 建立證照類型對照表
+    const certificationMap = CertificationTypeManager.getCertificationMap();
 
     try {
       // 尋找以身份證號開頭的資料夾
@@ -1986,50 +2769,259 @@ export class WorkerListComponent implements OnDestroy {
           continue;
         }
 
-        // 檢查代碼是否有效
+        // 檢查是否為一般圖片代碼
         const imageInfo = imageCodeMap[code.toUpperCase()];
-        if (!imageInfo) {
-          console.warn(`未知的圖片代碼：${code}，檔案：${fileName}`);
-          continue;
-        }
+        let isCertificationImage = false;
+        let certType: CertificationType | null = null;
+        let isfront = false;
+        let isMedicalExamImage = false;
+        let isAccidentInsuranceImage = false;
 
-        // 更新進度回調
-        progressCallback(imageInfo.name);
+        if (!imageInfo) {
+          // 檢查是否為體檢報告圖片代碼 (格式: H 或 H+數字)
+          const upperCode = code.toUpperCase();
+          if (upperCode === 'H' || /^H\d+$/.test(upperCode)) {
+            isMedicalExamImage = true;
+          } else if (/^G\d+$/.test(upperCode)) {
+            // 檢查是否為意外險圖片代碼 (格式: G+數字)
+            isAccidentInsuranceImage = true;
+          } else if (upperCode.endsWith('F') || upperCode.endsWith('R')) {
+            // 檢查是否為證照圖片代碼 (格式: {type}F 或 {type}R)
+            const certCode = upperCode.slice(0, -1); // 移除最後的F或R
+            isfront = upperCode.endsWith('F');
+            
+            // 檢查是否為有效的證照類型
+            certType = CertificationTypeManager.getTypeByCode(certCode) || null;
+            if (certType) {
+              isCertificationImage = true;
+            }
+          }
+
+          if (!isCertificationImage && !isMedicalExamImage && !isAccidentInsuranceImage) {
+            console.warn(`未知的圖片代碼：${code}，檔案：${fileName}`);
+            continue;
+          }
+        }
 
         try {
           // 讀取圖片檔案
-          const fileData = await zipContent.files[filePath].async(
-            'arraybuffer'
-          );
+          const fileData = await zipContent.files[filePath].async('arraybuffer');
           const blob = new Blob([fileData], { type: 'image/jpeg' });
 
-          // 檢查是否為大頭貼（使用 base64）
-          if (imageInfo.field === 'profilePicture') {
-            // 大頭貼使用 base64 存儲，需要 resize
-            const base64String = await this.convertBlobToBase64(
-              blob,
-              imageInfo.field
-            );
-            (worker as any)[imageInfo.field] = base64String;
-            uploadedCount++;
-            console.log(
-              `成功載入工人 ${worker.name} 的大頭貼：${code} -> ${imageInfo.field}`
-            );
-          } else {
-            // 其他圖片直接上傳原始檔案到 GridFS
-            const file = new File([blob], fileName, { type: blob.type });
+          if (isMedicalExamImage) {
+            // 處理體檢報告圖片
+            const imageName = `體檢報告${code === 'H' ? '' : '-' + code.substring(1)}`;
+            
+            // 更新進度回調
+            progressCallback(imageName);
 
-            // 準備元數據
+            // 初始化 medicalExamPictures 陣列（如果不存在）
+            if (!worker.medicalExamPictures) {
+              worker.medicalExamPictures = [];
+            }
+
+            // 查詢舊的體檢報告圖片
+            const oldFiles = await this.gridFSService.getFiles({
+              workerId: worker._id,
+              imageType: 'medicalExam',
+              originalFileName: fileName,
+            });
+            if (oldFiles.files.length > 0) {
+              // 刪除舊的體檢報告圖片
+              for (const oldFile of oldFiles.files) {
+                await this.gridFSService.deleteFile(oldFile.filename);
+              }
+            }
+
+            // 上傳圖片到 GridFS
+            const file = new File([blob], fileName, { type: blob.type });
             const metadata = {
               workerId: worker._id || '',
               workerName: worker.name,
               workerIdno: worker.idno,
-              imageType: imageInfo.field,
+              imageType: 'medicalExam',
+              medicalExamIndex: code === 'H' ? 0 : parseInt(code.substring(1)) || 0,
               originalFileName: fileName,
               uploadSource: 'zipImport',
             };
 
-            // 在上傳新圖片前，先檢查並刪除該工人對應類型的舊圖片
+            // 上傳新的體檢報告圖片
+            const result = await this.gridFSService.uploadFile(file, metadata);
+            const imageUrl = `/api/gridfs/${result.filename}`;
+
+            // 將 GridFS URL 加入到 medicalExamPictures 陣列
+            worker.medicalExamPictures.push(imageUrl);
+
+            uploadedCount++;
+            console.log(
+              `成功上傳工人 ${worker.name} 的體檢報告圖片：${code} -> ${imageName}, URL: ${imageUrl}`
+            );
+
+          } else if (isCertificationImage && certType) {
+            // 處理證照圖片
+            const certName = CertificationTypeManager.getName(certType);
+            const imageName = `${certName}-${isfront ? '正面' : '反面'}`;
+            
+            // 更新進度回調
+            progressCallback(imageName);
+
+            // 確保 certifications 陣列存在
+            if (!worker.certifications) {
+              worker.certifications = [];
+            }
+
+            // 檢查工人是否已有該證照
+            let certification = worker.certifications.find(cert => cert.type === certType);
+            
+            if (!certification) {
+              // 新增證照
+              certification = {
+                type: certType,
+                name: certName,
+                issue: '',
+                withdraw: '',
+                frontPicture: '',
+                backPicture: ''
+              };
+              worker.certifications.push(certification);
+              console.log(`為工人 ${worker.name} 新增證照：${certName}`);
+            }
+
+            // 上傳圖片到 GridFS
+            const file = new File([blob], fileName, { type: blob.type });
+            const metadata = {
+              workerId: worker._id || '',
+              workerName: worker.name,
+              workerIdno: worker.idno,
+              imageType: isfront ? 'certificationFront' : 'certificationBack',
+              certificationType: certType,
+              originalFileName: fileName,
+              uploadSource: 'zipImport',
+            };
+
+            // 刪除舊的證照圖片（如果存在）
+            const oldImageUrl = isfront ? certification.frontPicture : certification.backPicture;
+            if (oldImageUrl && oldImageUrl.startsWith('/api/gridfs/')) {
+              const oldFilename = oldImageUrl.replace('/api/gridfs/', '');
+              try {
+                await this.gridFSService.deleteFile(oldFilename);
+                console.log(`已刪除工人 ${worker.name} 的舊證照圖片: ${oldFilename}`);
+              } catch (error) {
+                console.warn(`刪除舊證照圖片失敗，繼續上傳新圖片: ${error}`);
+              }
+            }
+
+            // 上傳新的證照圖片
+            const result = await this.gridFSService.uploadFile(file, metadata);
+            const imageUrl = `/api/gridfs/${result.filename}`;
+
+            // 將 GridFS URL 指派給對應的證照欄位
+            if (isfront) {
+              certification.frontPicture = imageUrl;
+            } else {
+              certification.backPicture = imageUrl;
+            }
+
+            uploadedCount++;
+            console.log(
+              `成功上傳工人 ${worker.name} 的證照圖片：${code} -> ${imageName}, URL: ${imageUrl}`
+            );
+
+          } else if (isAccidentInsuranceImage) {
+            // 處理意外險圖片
+            const accidentIndex = parseInt(code.substring(1)) - 1; // G1=索引0, G2=索引1, G3=索引2
+            const imageName = `意外險證明-${accidentIndex + 1}`;
+            
+            // 更新進度回調
+            progressCallback(imageName);
+
+            // 初始化 accidentInsurances 陣列（如果不存在）
+            if (!worker.accidentInsurances) {
+              worker.accidentInsurances = [];
+            }
+
+            // 檢查是否已有對應索引的意外險資料，如果沒有則新增
+            while (worker.accidentInsurances.length <= accidentIndex) {
+              worker.accidentInsurances.push({
+                start: '',
+                end: '',
+                amount: '',
+                signDate: '',
+                companyName: ''
+              });
+              console.log(`為工人 ${worker.name} 新增意外險資料 #${worker.accidentInsurances.length}`);
+            }
+
+            // 上傳圖片到 GridFS
+            const file = new File([blob], fileName, { type: blob.type });
+            const metadata = {
+              workerId: worker._id || '',
+              workerName: worker.name,
+              workerIdno: worker.idno,
+              imageType: 'accidentInsurance',
+              accidentInsuranceIndex: accidentIndex,
+              originalFileName: fileName,
+              uploadSource: 'zipImport',
+            };
+
+            // 查詢舊的意外險圖片
+            const oldFiles = await this.gridFSService.getFiles({
+              workerId: worker._id,
+              imageType: 'accidentInsurance',
+              originalFileName: fileName,
+            });
+            if (oldFiles.files.length > 0) {
+              // 刪除舊的意外險圖片
+              for (const oldFile of oldFiles.files) {
+                await this.gridFSService.deleteFile(oldFile.filename);
+              }
+            }
+
+            // 上傳新的意外險圖片
+            const result = await this.gridFSService.uploadFile(file, metadata);
+            const imageUrl = `/api/gridfs/${result.filename}`;
+
+            // 將 GridFS URL 加入到意外險資料中（這裡需要擴展 accidentInsurances 結構來包含圖片欄位）
+            // 由於目前的 accidentInsurances 結構沒有圖片欄位，我們需要擴展它
+            (worker.accidentInsurances[accidentIndex] as any).picture = imageUrl;
+
+            uploadedCount++;
+            console.log(
+              `成功上傳工人 ${worker.name} 的意外險圖片：${code} -> ${imageName}, URL: ${imageUrl}`
+            );
+
+          } else if (imageInfo) {
+            // 處理一般圖片
+            // 更新進度回調
+            progressCallback(imageInfo.name);
+
+            // 檢查是否為大頭貼（使用 base64）
+            if (imageInfo.field === 'profilePicture') {
+              // 大頭貼使用 base64 存儲，需要 resize
+              const base64String = await this.convertBlobToBase64(
+                blob,
+                imageInfo.field
+              );
+              (worker as any)[imageInfo.field] = base64String;
+              uploadedCount++;
+              console.log(
+                `成功載入工人 ${worker.name} 的大頭貼：${code} -> ${imageInfo.field}`
+              );
+            } else {
+              // 其他圖片直接上傳原始檔案到 GridFS
+              const file = new File([blob], fileName, { type: blob.type });
+
+              // 準備元數據
+              const metadata = {
+                workerId: worker._id || '',
+                workerName: worker.name,
+                workerIdno: worker.idno,
+                imageType: imageInfo.field,
+                originalFileName: fileName,
+                uploadSource: 'zipImport',
+              };
+
+              // 在上傳新圖片前，先檢查並刪除該工人對應類型的舊圖片
               // 先找出 server 有沒有舊照片
               const oldFiles = await this.gridFSService.getFiles({
                 workerId: worker._id,
@@ -2042,17 +3034,18 @@ export class WorkerListComponent implements OnDestroy {
                 }
               }
 
-            // 上傳新的圖片檔案到 GridFS
-            const result = await this.gridFSService.uploadFile(file, metadata);
-            const imageUrl = `/api/gridfs/${result.filename}`;
+              // 上傳新的圖片檔案到 GridFS
+              const result = await this.gridFSService.uploadFile(file, metadata);
+              const imageUrl = `/api/gridfs/${result.filename}`;
 
-            // 將 GridFS URL 指派給對應的欄位
-            (worker as any)[imageInfo.field] = imageUrl;
-            uploadedCount++;
+              // 將 GridFS URL 指派給對應的欄位
+              (worker as any)[imageInfo.field] = imageUrl;
+              uploadedCount++;
 
-            console.log(
-              `成功上傳工人 ${worker.name} 的圖片到 GridFS：${code} -> ${imageInfo.field}, URL: ${imageUrl}`
-            );
+              console.log(
+                `成功上傳工人 ${worker.name} 的圖片到 GridFS：${code} -> ${imageInfo.field}, URL: ${imageUrl}`
+              );
+            }
           }
         } catch (error) {
           console.error(`載入圖片檔案 ${fileName} 時發生錯誤:`, error);
@@ -2087,8 +3080,6 @@ export class WorkerListComponent implements OnDestroy {
       P: 'profilePicture', // 大頭照
       '6F': 'sixHourTrainingFrontPicture', // 6小時證明正面
       '6R': 'sixHourTrainingBackPicture', // 6小時證明反面
-      G: 'laborInsurancePicture', // 勞保證明（與L相同）
-      H: 'medicalExamPicture', // 體檢報告
     };
 
     try {
@@ -2142,7 +3133,11 @@ export class WorkerListComponent implements OnDestroy {
 
         // 檢查代碼是否有效
         const fieldName = imageCodeMap[code.toUpperCase()];
-        if (!fieldName) {
+        const upperCode = code.toUpperCase();
+        const isMedicalExamImage = upperCode === 'H' || /^H\d+$/.test(upperCode);
+        const isAccidentInsuranceImage = /^G\d+$/.test(upperCode);
+        
+        if (!fieldName && !isMedicalExamImage && !isAccidentInsuranceImage) {
           console.warn(`未知的圖片代碼：${code}，檔案：${fileName}`);
           continue;
         }
@@ -2154,58 +3149,136 @@ export class WorkerListComponent implements OnDestroy {
           );
           const blob = new Blob([fileData], { type: 'image/jpeg' });
 
-          // 檢查是否為大頭貼（使用 base64）
-          if (fieldName === 'profilePicture') {
-            // 大頭貼使用 base64 存儲，需要 resize
-            const base64String = await this.convertBlobToBase64(
-              blob,
-              fieldName
-            );
-            (worker as any)[fieldName] = base64String;
-            uploadedCount++;
-            console.log(
-              `成功載入工人 ${worker.name} 的大頭貼：${code} -> ${fieldName}`
-            );
-          } else {
-            // 其他圖片直接上傳原始檔案到 GridFS
-            const file = new File([blob], fileName, { type: blob.type });
+          if (isMedicalExamImage) {
+            // 處理體檢報告圖片
+            // 初始化 medicalExamPictures 陣列（如果不存在）
+            if (!worker.medicalExamPictures) {
+              worker.medicalExamPictures = [];
+            }
 
-            // 準備元數據
+            // 上傳圖片到 GridFS
+            const file = new File([blob], fileName, { type: blob.type });
             const metadata = {
               workerId: worker._id || '',
               workerName: worker.name,
               workerIdno: worker.idno,
-              imageType: fieldName,
+              imageType: 'medicalExam',
+              medicalExamIndex: code === 'H' ? 0 : parseInt(code.substring(1)) || 0,
               originalFileName: fileName,
               uploadSource: 'zipImport',
             };
 
-            // 在上傳新圖片前，先檢查並刪除該工人對應類型的舊圖片
-            if ((worker as any)[fieldName]) {
-              const oldImageUrl = (worker as any)[fieldName];
-              // 如果舊圖片是 GridFS URL，則刪除舊檔案
-              if (oldImageUrl && oldImageUrl.startsWith('/api/gridfs/')) {
-                const oldFilename = oldImageUrl.replace('/api/gridfs/', '');
-                try {
-                  await this.gridFSService.deleteFile(oldFilename);
-                  console.log(`已刪除工人 ${worker.name} 的舊圖片: ${oldFilename}`);
-                } catch (error) {
-                  console.warn(`刪除舊圖片失敗，繼續上傳新圖片: ${error}`);
-                }
-              }
-            }
-
-            // 上傳新的圖片檔案到 GridFS
+            // 上傳新的體檢報告圖片
             const result = await this.gridFSService.uploadFile(file, metadata);
             const imageUrl = `/api/gridfs/${result.filename}`;
 
-            // 將 GridFS URL 指派給對應的欄位
-            (worker as any)[fieldName] = imageUrl;
-            uploadedCount++;
+            // 將 GridFS URL 加入到 medicalExamPictures 陣列
+            worker.medicalExamPictures.push(imageUrl);
 
+            uploadedCount++;
             console.log(
-              `成功上傳工人 ${worker.name} 的圖片到 GridFS：${code} -> ${fieldName}, URL: ${imageUrl}`
+              `成功上傳工人 ${worker.name} 的體檢報告圖片：${code}, URL: ${imageUrl}`
             );
+
+          } else if (isAccidentInsuranceImage) {
+            // 處理意外險圖片
+            const accidentIndex = parseInt(code.substring(1)) - 1; // G1=索引0, G2=索引1, G3=索引2
+
+            // 初始化 accidentInsurances 陣列（如果不存在）
+            if (!worker.accidentInsurances) {
+              worker.accidentInsurances = [];
+            }
+
+            // 檢查是否已有對應索引的意外險資料，如果沒有則新增
+            while (worker.accidentInsurances.length <= accidentIndex) {
+              worker.accidentInsurances.push({
+                start: '',
+                end: '',
+                amount: '',
+                signDate: '',
+                companyName: ''
+              });
+              console.log(`為工人 ${worker.name} 新增意外險資料 #${worker.accidentInsurances.length}`);
+            }
+
+            // 上傳圖片到 GridFS
+            const file = new File([blob], fileName, { type: blob.type });
+            const metadata = {
+              workerId: worker._id || '',
+              workerName: worker.name,
+              workerIdno: worker.idno,
+              imageType: 'accidentInsurance',
+              accidentInsuranceIndex: accidentIndex,
+              originalFileName: fileName,
+              uploadSource: 'zipImport',
+            };
+
+            // 上傳新的意外險圖片
+            const result = await this.gridFSService.uploadFile(file, metadata);
+            const imageUrl = `/api/gridfs/${result.filename}`;
+
+            // 將 GridFS URL 加入到意外險資料中
+            (worker.accidentInsurances[accidentIndex] as any).picture = imageUrl;
+
+            uploadedCount++;
+            console.log(
+              `成功上傳工人 ${worker.name} 的意外險圖片：${code}, URL: ${imageUrl}`
+            );
+
+          } else if (fieldName) {
+            // 檢查是否為大頭貼（使用 base64）
+            if (fieldName === 'profilePicture') {
+              // 大頭貼使用 base64 存儲，需要 resize
+              const base64String = await this.convertBlobToBase64(
+                blob,
+                fieldName
+              );
+              (worker as any)[fieldName] = base64String;
+              uploadedCount++;
+              console.log(
+                `成功載入工人 ${worker.name} 的大頭貼：${code} -> ${fieldName}`
+              );
+            } else {
+              // 其他圖片直接上傳原始檔案到 GridFS
+              const file = new File([blob], fileName, { type: blob.type });
+
+              // 準備元數據
+              const metadata = {
+                workerId: worker._id || '',
+                workerName: worker.name,
+                workerIdno: worker.idno,
+                imageType: fieldName,
+                originalFileName: fileName,
+                uploadSource: 'zipImport',
+              };
+
+              // 在上傳新圖片前，先檢查並刪除該工人對應類型的舊圖片
+              if ((worker as any)[fieldName]) {
+                const oldImageUrl = (worker as any)[fieldName];
+                // 如果舊圖片是 GridFS URL，則刪除舊檔案
+                if (oldImageUrl && oldImageUrl.startsWith('/api/gridfs/')) {
+                  const oldFilename = oldImageUrl.replace('/api/gridfs/', '');
+                  try {
+                    await this.gridFSService.deleteFile(oldFilename);
+                    console.log(`已刪除工人 ${worker.name} 的舊圖片: ${oldFilename}`);
+                  } catch (error) {
+                    console.warn(`刪除舊圖片失敗，繼續上傳新圖片: ${error}`);
+                  }
+                }
+              }
+
+              // 上傳新的圖片檔案到 GridFS
+              const result = await this.gridFSService.uploadFile(file, metadata);
+              const imageUrl = `/api/gridfs/${result.filename}`;
+
+              // 將 GridFS URL 指派給對應的欄位
+              (worker as any)[fieldName] = imageUrl;
+              uploadedCount++;
+
+              console.log(
+                `成功上傳工人 ${worker.name} 的圖片到 GridFS：${code} -> ${fieldName}, URL: ${imageUrl}`
+              );
+            }
           }
         } catch (error) {
           console.error(`載入圖片檔案 ${fileName} 時發生錯誤:`, error);
@@ -2279,4 +3352,6 @@ export class WorkerListComponent implements OnDestroy {
       reader.readAsDataURL(blob);
     });
   }
+
+
 }

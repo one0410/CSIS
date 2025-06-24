@@ -93,7 +93,11 @@ export class SiteWorkerListComponent implements OnInit {
       const siteWorkers = await this.mongodbService.get('worker', { belongSites: { $elemMatch: { siteId: this.siteId } } });
       
       if (siteWorkers && siteWorkers.length > 0) {
-        this.siteWorkers = siteWorkers;
+        // 過濾掉訪客，只保留工作人員
+        this.siteWorkers = siteWorkers.filter((worker: Worker) => {
+          const siteInfo = worker.belongSites?.find(site => site.siteId === this.siteId);
+          return siteInfo && !siteInfo.isVisitor; // 排除訪客
+        });
         this.filterWorkers();
         this.extractCompanies();
       } else {
@@ -252,8 +256,8 @@ export class SiteWorkerListComponent implements OnInit {
     try {
       this.isLoading = true;
       
-      // 創建工地工作人員關聯
-      worker.belongSites = [...(worker.belongSites || []), { siteId: this.siteId, assignDate: new Date() }];
+      // 創建工地工作人員關聯，明確設定為非訪客
+      worker.belongSites = [...(worker.belongSites || []), { siteId: this.siteId, assignDate: new Date(), isVisitor: false }];
       await this.mongodbService.patch('worker', worker._id, { belongSites: worker.belongSites });
             
       // 重新載入工作人員清單
@@ -411,10 +415,10 @@ export class SiteWorkerListComponent implements OnInit {
     try {
       this.isLoading = true;
       
-      // 批次添加工作人員
+      // 批次添加工作人員，明確設定為非訪客
       for (const worker of selectedWorkers) {
         if (worker._id) {
-          worker.belongSites = [...(worker.belongSites || []), { siteId: this.siteId, assignDate: new Date() }];
+          worker.belongSites = [...(worker.belongSites || []), { siteId: this.siteId, assignDate: new Date(), isVisitor: false }];
           await this.mongodbService.patch('worker', worker._id, { belongSites: worker.belongSites });
         }
       }

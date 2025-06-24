@@ -2,7 +2,7 @@
 
 @import "../node_modules/bootstrap/dist/css/bootstrap.css";
 
-// @import "../node_modules/@fortawesome/fontawesome-free/css/all.css";
+@import "../node_modules/@fortawesome/fontawesome-free/css/all.css";
 @import "../node_modules/bootstrap-icons/font/bootstrap-icons.css";
 
 // ag-grid
@@ -14,5 +14,5 @@
 
 // required input and focus
 input:required:not([readonly]), input:focus:required:not([readonly]), textarea:required:not([readonly]), textarea:focus:required:not([readonly]) {
-  background-color: #ffffdd !important;
+  background-color: #fff3cd !important;
 }

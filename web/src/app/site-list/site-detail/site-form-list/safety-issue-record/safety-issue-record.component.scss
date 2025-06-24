@@ -51,6 +51,35 @@ textarea {
   min-height: 100px;
 }
 
+// 照片卡片樣式
+.photo-card {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    .photo-delete-btn {
+      opacity: 1 !important;
+    }
+  }
+  
+  .photo-delete-btn {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    i {
+      font-size: 12px;
+    }
+  }
+}
+
 // 簽核區
 .signature-area {
   height: 100px;

@@ -1,6 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, effect, OnDestroy } from '@angular/core';
 import { Site } from '../site-list/site-list.component';
 import { MongodbService } from './mongodb.service';
+import { SocketService } from './socket.service';
+import { AuthService } from './auth.service';
 import { Signal, computed, signal } from '@angular/core';
 import { Equipment } from '../model/equipment.model';
 import { SiteForm } from '../model/siteForm.model';
@@ -16,7 +18,7 @@ dayjs.extend(isSameOrAfter);
 @Injectable({
   providedIn: 'root'
 })
-export class CurrentSiteService {
+export class CurrentSiteService implements OnDestroy {
   private currentSiteSignal = signal<Site | null>(null);
   private loadedSiteId: string | null = null;
   private equipmentListSignal = signal<Equipment[]>([]);
@@ -183,9 +185,25 @@ export class CurrentSiteService {
     return pendingCount;
   });
 
+  private socketService = inject(SocketService);
+  private authService = inject(AuthService);
+  private _isWebSocketActive = signal<boolean>(false);
+  
   constructor(private mongodbService: MongodbService) {
     // 檢查sessionStorage中是否有保存的工地ID
     this.loadSavedSite();
+    
+    // 監聽使用者變化，自動設定 WebSocket 監聽器
+    effect(() => {
+      const user = this.authService.user();
+      if (user && this._isWebSocketActive()) {
+        this.setupWebSocketListeners();
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.disconnectWebSocket();
   }
 
   /**
@@ -257,6 +275,7 @@ export class CurrentSiteService {
 
   /**
    * 載入指定工地的表單列表
+   * 只載入相關日期範圍內的表單以提升效能
    */
   async loadFormsList(siteId: string) {
     if (!siteId) {
@@ -265,11 +284,58 @@ export class CurrentSiteService {
     }
 
     try {
-      const forms = await this.mongodbService.get('siteForm', {
-        siteId: siteId,
+      const today = dayjs();
+      const startDate = today.subtract(7, 'day').format('YYYY-MM-DD');
+      const endDate = today.add(7, 'day').format('YYYY-MM-DD');
+      const todayStr = today.format('YYYY-MM-DD');
+
+      // 分別載入不同類型的表單以優化查詢
+      const [permits, todayForms, hazardNotices] = await Promise.all([
+        // 載入可能包含今天的工地許可單（過去7天到未來7天）
+        this.mongodbService.get('siteForm', {
+          siteId: siteId,
+          formType: 'sitePermit',
+          $or: [
+            {
+              workStartTime: { $lte: endDate },
+              workEndTime: { $gte: startDate }
+            },
+            {
+              applyDate: { $gte: startDate, $lte: endDate }
+            }
+          ]
+        }),
+        
+        // 載入今天的其他表單類型
+        this.mongodbService.get('siteForm', {
+          siteId: siteId,
+          formType: { $in: ['toolboxMeeting', 'environmentChecklist', 'specialWorkChecklist'] },
+          $or: [
+            { meetingDate: { $gte: todayStr, $lte: todayStr } },
+            { checkDate: { $gte: todayStr, $lte: todayStr } },
+            { applyDate: { $gte: todayStr, $lte: todayStr } }
+          ]
+        }),
+        
+        // 載入危害告知表單（用於計算工人簽署狀況，最近30天）
+        this.mongodbService.get('siteForm', {
+          siteId: siteId,
+          formType: 'hazardNotice',
+          applyDate: { $gte: today.subtract(30, 'day').format('YYYY-MM-DD') }
+        })
+      ]);
+
+      // 合併所有表單
+      const allForms = [...(permits || []), ...(todayForms || []), ...(hazardNotices || [])];
+      
+      console.log('載入表單列表成功 (優化後):', {
+        permits: permits?.length || 0,
+        todayForms: todayForms?.length || 0,
+        hazardNotices: hazardNotices?.length || 0,
+        total: allForms.length
       });
-      console.log('載入表單列表成功:', forms);
-      this.formsListSignal.set(forms || []);
+      
+      this.formsListSignal.set(allForms);
     } catch (error) {
       console.error('載入表單列表時發生錯誤', error);
       this.formsListSignal.set([]);
@@ -277,7 +343,7 @@ export class CurrentSiteService {
   }
 
   /**
-   * 載入指定工地的工人列表
+   * 載入指定工地的工人列表（排除訪客）
    */
   async loadWorkersList(siteId: string) {
     if (!siteId) {
@@ -289,8 +355,15 @@ export class CurrentSiteService {
       const workers = await this.mongodbService.get('worker', {
         belongSites: { $elemMatch: { siteId: siteId } }
       });
-      console.log('載入工人列表成功:', workers);
-      this.workersListSignal.set(workers || []);
+      
+      // 過濾掉訪客，只保留工作人員
+      const filteredWorkers = (workers || []).filter((worker: Worker) => {
+        const siteInfo = worker.belongSites?.find(site => site.siteId === siteId);
+        return siteInfo && !siteInfo.isVisitor; // 排除訪客
+      });
+      
+      console.log('載入工人列表成功:', filteredWorkers);
+      this.workersListSignal.set(filteredWorkers);
     } catch (error) {
       console.error('載入工人列表時發生錯誤', error);
       this.workersListSignal.set([]);
@@ -400,5 +473,148 @@ export class CurrentSiteService {
     if (savedSiteId) {
       await this.setCurrentSiteById(savedSiteId);
     }
+  }
+
+  /**
+   * 啟用 WebSocket 監聽 (由 FeedbackService 或其他服務調用)
+   */
+  enableWebSocketListening() {
+    this._isWebSocketActive.set(true);
+    const user = this.authService.user();
+    if (user) {
+      this.setupWebSocketListeners();
+    }
+  }
+
+  /**
+   * 設定 WebSocket 事件監聽器
+   */
+  private setupWebSocketListeners(): void {
+    // 監聽機具更新事件
+    this.socketService.onEquipmentUpdate((data) => {
+      console.log('收到機具更新事件:', data);
+      this.refreshEquipmentList();
+    });
+
+    // 監聽表單更新事件
+    this.socketService.onFormUpdate((data) => {
+      console.log('收到表單更新事件:', data);
+      this.refreshFormsList();
+    });
+
+    // 監聽工人更新事件
+    this.socketService.onWorkerUpdate((data) => {
+      console.log('收到工人更新事件:', data);
+      this.refreshWorkersList();
+    });
+  }
+
+  /**
+   * 斷開 WebSocket 連接
+   */
+  private disconnectWebSocket(): void {
+    if (this._isWebSocketActive()) {
+      this.socketService.offEquipmentUpdate();
+      this.socketService.offFormUpdate();
+      this.socketService.offWorkerUpdate();
+      this._isWebSocketActive.set(false);
+    }
+  }
+
+  /**
+   * 機具相關事件發送方法
+   */
+  async onEquipmentCreated(equipmentId: string, siteId: string): Promise<void> {
+    console.log('CurrentSiteService: 機具已創建，發送 WebSocket 事件');
+    if (this._isWebSocketActive()) {
+      this.socketService.emitEquipmentCreated(equipmentId, siteId);
+    }
+    await this.refreshEquipmentList();
+  }
+
+  async onEquipmentUpdated(equipmentId: string, siteId: string): Promise<void> {
+    console.log('CurrentSiteService: 機具已更新，發送 WebSocket 事件');
+    if (this._isWebSocketActive()) {
+      this.socketService.emitEquipmentUpdated(equipmentId, siteId);
+    }
+    await this.refreshEquipmentList();
+  }
+
+  async onEquipmentDeleted(equipmentId: string, siteId: string): Promise<void> {
+    console.log('CurrentSiteService: 機具已刪除，發送 WebSocket 事件');
+    if (this._isWebSocketActive()) {
+      this.socketService.emitEquipmentDeleted(equipmentId, siteId);
+    }
+    await this.refreshEquipmentList();
+  }
+
+  /**
+   * 表單相關事件發送方法
+   */
+  async onFormCreated(formId: string, formType: string, siteId: string): Promise<void> {
+    console.log('CurrentSiteService: 表單已創建，發送 WebSocket 事件');
+    if (this._isWebSocketActive()) {
+      this.socketService.emitFormCreated(formId, formType, siteId);
+    }
+    await this.refreshFormsList();
+  }
+
+  async onFormUpdated(formId: string, formType: string, siteId: string): Promise<void> {
+    console.log('CurrentSiteService: 表單已更新，發送 WebSocket 事件');
+    if (this._isWebSocketActive()) {
+      this.socketService.emitFormUpdated(formId, formType, siteId);
+    }
+    await this.refreshFormsList();
+  }
+
+  async onFormDeleted(formId: string, formType: string, siteId: string): Promise<void> {
+    console.log('CurrentSiteService: 表單已刪除，發送 WebSocket 事件');
+    if (this._isWebSocketActive()) {
+      this.socketService.emitFormDeleted(formId, formType, siteId);
+    }
+    await this.refreshFormsList();
+  }
+
+  /**
+   * 工人相關事件發送方法
+   */
+  async onWorkerCreated(workerId: string, siteId: string): Promise<void> {
+    console.log('CurrentSiteService: 工人已創建，發送 WebSocket 事件');
+    if (this._isWebSocketActive()) {
+      this.socketService.emitWorkerCreated(workerId, siteId);
+    }
+    await this.refreshWorkersList();
+  }
+
+  async onWorkerUpdated(workerId: string, siteId: string): Promise<void> {
+    console.log('CurrentSiteService: 工人已更新，發送 WebSocket 事件');
+    if (this._isWebSocketActive()) {
+      this.socketService.emitWorkerUpdated(workerId, siteId);
+    }
+    await this.refreshWorkersList();
+  }
+
+  async onWorkerDeleted(workerId: string, siteId: string): Promise<void> {
+    console.log('CurrentSiteService: 工人已刪除，發送 WebSocket 事件');
+    if (this._isWebSocketActive()) {
+      this.socketService.emitWorkerDeleted(workerId, siteId);
+    }
+    await this.refreshWorkersList();
+  }
+
+  async onWorkerAddedToSite(workerId: string, siteId: string): Promise<void> {
+    console.log('CurrentSiteService: 工人已加入工地，發送 WebSocket 事件');
+    if (this._isWebSocketActive()) {
+      this.socketService.emitWorkerAddedToSite(workerId, siteId);
+    }
+    await this.refreshWorkersList();
+  }
+
+  async onWorkerRemovedFromSite(workerId: string, siteId: string): Promise<void> {
+    console.log('CurrentSiteService: 工人已移出工地，發送 WebSocket 事件');
+    if (this._isWebSocketActive()) {
+      this.socketService.emitWorkerRemovedFromSite(workerId, siteId);
+    }
+    await this.refreshWorkersList();
   }
 }

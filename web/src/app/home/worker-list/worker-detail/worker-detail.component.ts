@@ -1,11 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs';
 import { MongodbService } from '../../../services/mongodb.service';
 import { GridFSService } from '../../../services/gridfs.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Worker, CertificationType } from '../../../model/worker.model';
+import { Worker, CertificationType, CertificationTypeManager } from '../../../model/worker.model';
+import { CurrentSiteService } from '../../../services/current-site.service';
 
 
 @Component({
@@ -47,13 +48,15 @@ export class WorkerDetailComponent implements OnInit {
     generalSafetyTrainingDate: '',
     generalSafetyTrainingDueDate: '',
     no: null,
-    medicalExamPicture: '',
+    medicalExamPictures: [],
   };
 
   age: string = '';
   workerId: string | null = null;
   isSaving = false;
   showSaveSuccess = false;
+
+  private currentSiteService = inject(CurrentSiteService);
 
   constructor(
     private mongodbService: MongodbService,
@@ -89,6 +92,9 @@ export class WorkerDetailComponent implements OnInit {
   }
 
   addAccidentInsurance() {
+    if (!this.worker.accidentInsurances) {
+      this.worker.accidentInsurances = [];
+    }
     this.worker.accidentInsurances.push({
       start: '',
       end: '',
@@ -99,6 +105,9 @@ export class WorkerDetailComponent implements OnInit {
   }
 
   addCertification() {
+    if (!this.worker.certifications) {
+      this.worker.certifications = [];
+    }
     this.worker.certifications.push({
       type: CertificationType.A, // 預設為一般安全衛生教育訓練
       name: '',
@@ -110,11 +119,15 @@ export class WorkerDetailComponent implements OnInit {
   }
 
   removeAccidentInsurance(index: number) {
-    this.worker.accidentInsurances.splice(index, 1);
+    if (this.worker.accidentInsurances) {
+      this.worker.accidentInsurances.splice(index, 1);
+    }
   }
 
   removeCertification(index: number) {
-    this.worker.certifications.splice(index, 1);
+    if (this.worker.certifications) {
+      this.worker.certifications.splice(index, 1);
+    }
   }
 
   calculateAge() {
@@ -142,23 +155,30 @@ export class WorkerDetailComponent implements OnInit {
     }
 
     try {
+      // 確保 certifications 陣列存在
+      if (!this.worker.certifications) {
+        this.worker.certifications = [];
+      }
+
       // 準備元數據
       const metadata = {
         workerId: this.workerId,
         workerName: this.worker.name,
         imageType: imageType === 'front' ? 'certificationFront' : 'certificationBack',
         certificationIndex: certIndex,
-        certificationName: this.worker.certifications[certIndex].name
+        certificationName: this.worker.certifications[certIndex]?.name || ''
       };
       
       // 直接上傳原始檔案到 GridFS
       const result = await this.gridFSService.uploadFile(file, metadata);
       const imageUrl = `/api/gridfs/${result.filename}`;
       
-      if (imageType === 'front') {
-        this.worker.certifications[certIndex].frontPicture = imageUrl;
-      } else {
-        this.worker.certifications[certIndex].backPicture = imageUrl;
+      if (this.worker.certifications[certIndex]) {
+        if (imageType === 'front') {
+          this.worker.certifications[certIndex].frontPicture = imageUrl;
+        } else {
+          this.worker.certifications[certIndex].backPicture = imageUrl;
+        }
       }
     } catch (error) {
       console.error('處理圖片時發生錯誤:', error);
@@ -339,19 +359,61 @@ export class WorkerDetailComponent implements OnInit {
     }
 
     try {
+      // 初始化陣列（如果還沒有的話）
+      if (!this.worker.medicalExamPictures) {
+        this.worker.medicalExamPictures = [];
+      }
+
       // 準備元數據
       const metadata = {
         workerId: this.workerId,
         workerName: this.worker.name,
-        imageType: 'medicalExam'
+        imageType: 'medicalExam',
+        medicalExamIndex: this.worker.medicalExamPictures.length
       };
       
       // 直接上傳原始檔案到 GridFS
       const result = await this.gridFSService.uploadFile(file, metadata);
-      this.worker.medicalExamPicture = `/api/gridfs/${result.filename}`;
+      this.worker.medicalExamPictures.push(`/api/gridfs/${result.filename}`);
     } catch (error) {
       console.error('處理體檢報告圖片時發生錯誤:', error);
       alert('處理體檢報告圖片時發生錯誤');
+    }
+  }
+
+  // 處理意外險證明上傳
+  async handleAccidentInsuranceUpload(event: Event, insuranceIndex: number) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) {
+      alert('請上傳圖片檔案');
+      return;
+    }
+
+    try {
+      // 準備元數據
+      const metadata = {
+        workerId: this.workerId,
+        workerName: this.worker.name,
+        imageType: 'accidentInsurance',
+        accidentInsuranceIndex: insuranceIndex
+      };
+      
+      // 確保 accidentInsurances 陣列存在
+      if (!this.worker.accidentInsurances) {
+        this.worker.accidentInsurances = [];
+      }
+
+      // 直接上傳原始檔案到 GridFS
+      const result = await this.gridFSService.uploadFile(file, metadata);
+      if (this.worker.accidentInsurances[insuranceIndex]) {
+        this.worker.accidentInsurances[insuranceIndex].picture = `/api/gridfs/${result.filename}`;
+      }
+    } catch (error) {
+      console.error('處理意外險證明圖片時發生錯誤:', error);
+      alert('處理意外險證明圖片時發生錯誤');
     }
   }
 
@@ -421,9 +483,17 @@ export class WorkerDetailComponent implements OnInit {
           if (this.workerId) {
             result = await this.mongodbService.put('worker', this.workerId, this.worker);
             console.log('更新結果:', result);
+            
+            // 發送工人更新事件
+            this.currentSiteService.onWorkerUpdated(this.workerId, '');
           } else {
             result = await this.mongodbService.post('worker', this.worker);
             console.log('新增結果:', result);
+            
+            // 發送工人創建事件
+            if (result.insertedId) {
+              this.currentSiteService.onWorkerCreated(result.insertedId, '');
+            }
           }
           
           this.showSaveSuccess = true;
@@ -465,34 +535,15 @@ export class WorkerDetailComponent implements OnInit {
 
   // 取得證照類型選項
   getCertificationTypes() {
-    return [
-      { value: CertificationType.A, label: '一般安全衛生教育訓練(a)' },
-      { value: CertificationType.BOSH, label: '營造業職業安全衛生業務主管(bosh)' },
-      { value: CertificationType.AOS, label: '有機溶劑作業主管(aos)' },
-      { value: CertificationType.AOH, label: '缺氧作業主管(aoh)' },
-      { value: CertificationType.FR, label: '施工架組配作業主管(fr)' },
-      { value: CertificationType.O2, label: '高壓氣體操作人員(o2)' },
-      { value: CertificationType.OS, label: '有機溶劑作業人員(os)' },
-      { value: CertificationType.SA, label: '施工架作業人員(sa)' },
-      { value: CertificationType.S, label: '特定化學物質作業人員(s)' },
-      { value: CertificationType.MA, label: '屋頂作業主管(ma)' },
-      { value: CertificationType.SC, label: '密閉空間作業主管(sc)' },
-      { value: CertificationType.DW, label: '吊掛作業人員(dw)' },
-      { value: CertificationType.OW, label: '高空工作車作業人員(ow)' },
-      { value: CertificationType.R, label: '起重機操作人員(r)' },
-      { value: CertificationType.SSA, label: '安全衛生管理人員(ssa)' },
-      { value: CertificationType.FS, label: '防火管理人員(fs)' },
-      { value: CertificationType.PE, label: '露天開挖作業主管(pe)' },
-      { value: CertificationType.RS, label: '擋土支撐作業主管(rs)' }
-    ];
+    return CertificationTypeManager.getAllCertificationOptions();
   }
 
   // 移除圖片（處理 GridFS 檔案刪除）
-  async removeImage(fieldName: string, certIndex?: number) {
+  async removeImage(fieldName: string, certIndex?: number, medicalExamIndex?: number, accidentInsuranceIndex?: number) {
     try {
       let imageUrl = '';
       
-      if (certIndex !== undefined) {
+      if (certIndex !== undefined && this.worker.certifications && this.worker.certifications[certIndex]) {
         // 證照圖片
         if (fieldName === 'frontPicture') {
           imageUrl = this.worker.certifications[certIndex].frontPicture;
@@ -501,6 +552,14 @@ export class WorkerDetailComponent implements OnInit {
           imageUrl = this.worker.certifications[certIndex].backPicture;
           this.worker.certifications[certIndex].backPicture = '';
         }
+      } else if (medicalExamIndex !== undefined && fieldName === 'medicalExamPictures') {
+        // 體檢報告圖片
+        imageUrl = this.worker.medicalExamPictures[medicalExamIndex];
+        this.worker.medicalExamPictures.splice(medicalExamIndex, 1);
+      } else if (accidentInsuranceIndex !== undefined && fieldName === 'accidentInsurancePicture' && this.worker.accidentInsurances && this.worker.accidentInsurances[accidentInsuranceIndex]) {
+        // 意外險圖片
+        imageUrl = this.worker.accidentInsurances[accidentInsuranceIndex].picture || '';
+        this.worker.accidentInsurances[accidentInsuranceIndex].picture = '';
       } else {
         // 工人圖片
         imageUrl = (this.worker as any)[fieldName];
@@ -523,7 +582,6 @@ export class WorkerDetailComponent implements OnInit {
 
   // 根據證照類型代碼獲取中文名稱
   getCertificationTypeName(typeCode: CertificationType): string {
-    const type = this.getCertificationTypes().find(t => t.value === typeCode);
-    return type ? type.label : '未知證照類型';
+    return CertificationTypeManager.getFullLabel(typeCode);
   }
 }

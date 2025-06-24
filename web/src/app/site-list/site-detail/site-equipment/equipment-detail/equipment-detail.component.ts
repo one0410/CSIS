@@ -6,6 +6,7 @@ import { Equipment, EquipmentPhoto } from '../../../../model/equipment.model';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { GridFSService } from '../../../../services/gridfs.service';
 import { CurrentSiteService } from '../../../../services/current-site.service';
+import { PhotoService } from '../../../../services/photo.service';
 
 @Component({
   selector: 'app-equipment-detail',
@@ -33,7 +34,8 @@ export class EquipmentDetailComponent implements OnInit {
     private router: Router,
     private mongodbService: MongodbService,
     private gridFSService: GridFSService,
-    private currentSiteService: CurrentSiteService
+    private currentSiteService: CurrentSiteService,
+    private photoService: PhotoService
   ) {}
 
   ngOnInit() {
@@ -127,8 +129,8 @@ export class EquipmentDetailComponent implements OnInit {
           this.isNewEquipment.set(false);
           this.equipmentId = result.insertedId;
           
-          // 更新 CurrentSiteService 中的機具列表
-          await this.currentSiteService.refreshEquipmentList();
+          // 發送 WebSocket 事件並更新機具列表
+          await this.currentSiteService.onEquipmentCreated(result.insertedId, this.siteId!);
           
           // 跳轉到編輯模式的URL
           this.router.navigate(['/site', this.siteId, 'equipment', result.insertedId], { replaceUrl: true });
@@ -150,8 +152,8 @@ export class EquipmentDetailComponent implements OnInit {
           this.isEditing.set(false);
           this.editedEquipment = null;
           
-          // 更新 CurrentSiteService 中的機具列表
-          await this.currentSiteService.refreshEquipmentList();
+          // 發送 WebSocket 事件並更新機具列表
+          await this.currentSiteService.onEquipmentUpdated(this.equipmentId, this.siteId!);
         } else {
           console.error('更新設備資訊失敗');
         }
@@ -174,19 +176,23 @@ export class EquipmentDetailComponent implements OnInit {
     this.isUploading.set(true);
 
     try {
-      // 使用GridFSService上傳圖片
-      const metadata = {
-        equipmentId: this.equipmentId,
-        caption: this.photoCaption,
-        type: 'equipment-photo',
-        category: '機具管理',
-        siteId: this.siteId!,
-      };
-      
-      const uploadResult = await this.gridFSService.uploadFile(
-        this.selectedFile,
-        metadata
-      );
+      const currentSite = await this.currentSiteService.currentSite();
+      if (!currentSite) {
+        throw new Error('找不到工地資訊');
+      }
+
+      // 使用 PhotoService 的新方法上傳帶有"機具管理"系統標籤的照片
+      const uploadResult = await new Promise<any>((resolve, reject) => {
+        this.photoService.uploadPhotoWithSystemTag(
+          this.selectedFile!,
+          '機具管理',
+          this.siteId!,
+          currentSite.projectNo
+        ).subscribe({
+          next: (result) => resolve(result),
+          error: (error) => reject(error)
+        });
+      });
       
       if (!uploadResult || !uploadResult.filename) {
         throw new Error('上傳照片失敗');
@@ -219,11 +225,15 @@ export class EquipmentDetailComponent implements OnInit {
       if (result) {
         this.equipment.set(updatedEquipment);
         this.resetPhotoForm();
+        
+        // 通知照片服務統計更新
+        this.photoService.notifyPhotoStatsUpdated(this.siteId!);
       } else {
         console.error('更新設備照片資訊失敗');
       }
     } catch (error) {
       console.error('上傳照片時發生錯誤:', error);
+      alert('上傳照片失敗，請稍後重試');
     } finally {
       this.isUploading.set(false);
     }

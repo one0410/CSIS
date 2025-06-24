@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MongodbService } from '../../services/mongodb.service';
 import { AuthService } from '../../services/auth.service';
+import { FeedbackService } from '../../services/feedback.service';
 import { Feedback, FeedbackReply } from '../../model/feedback.model';
 import dayjs from 'dayjs';
 
@@ -104,6 +105,7 @@ export class FeedbackAdminComponent implements OnInit {
   constructor(
     private mongodbService: MongodbService,
     private authService: AuthService,
+    private feedbackService: FeedbackService,
     private router: Router
   ) {}
 
@@ -203,6 +205,10 @@ export class FeedbackAdminComponent implements OnInit {
         status, 
         updatedAt: new Date() 
       });
+      
+      // 通知 FeedbackService 狀態已更新
+      await this.feedbackService.onFeedbackStatusUpdated(feedbackId, status);
+      
       await this.loadFeedbacks();
       
       // 如果當前選中的是被更新的反饋，重新設置為更新後的對象
@@ -237,6 +243,9 @@ export class FeedbackAdminComponent implements OnInit {
       await this.mongodbService.deleteMany('feedbackReply', { feedbackId });
       // 再刪除反饋
       await this.mongodbService.delete('feedback', feedbackId);
+      
+      // 通知 FeedbackService 反饋已刪除
+      await this.feedbackService.onFeedbackDeleted(feedbackId);
       
       await this.loadFeedbacks();
       this.selectedFeedback.set(null);

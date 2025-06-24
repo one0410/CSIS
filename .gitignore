@@ -1,7 +1,7 @@
 .DS_Store
 server/meeting
-server/csiserver.exe
-server/csiserver
+server/*.exe
+server/csisserver
 *.lockb
 yarn.lock
 server/logs/

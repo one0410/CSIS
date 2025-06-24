@@ -106,8 +106,19 @@ app.use((err: any, req: any, res: any, next: any) => {
 });
 
 // 啟動伺服器
-app.listen(port, () => {
-  logger.info(`=================server is running on port ${port}====================`);
-  logger.info(`認證 API 可在 /api/auth 路徑訪問`);
-});
+const server = app.get('server');
+if (server) {
+  // 使用 Socket.IO 的 HTTP 伺服器
+  server.listen(port, () => {
+    logger.info(`=================server is running on port ${port}====================`);
+    logger.info(`認證 API 可在 /api/auth 路徑訪問`);
+    logger.info(`Socket.IO 可在 ws://localhost:${port} 連接`);
+  });
+} else {
+  // 備用方案：直接使用 Express app
+  app.listen(port, () => {
+    logger.info(`=================server is running on port ${port}====================`);
+    logger.info(`認證 API 可在 /api/auth 路徑訪問`);
+  });
+}
 

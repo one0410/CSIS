@@ -161,7 +161,7 @@ export class ProfileComponent {
             this.user.avatar = resizedBase64;
             
             // 顯示處理完成訊息
-            this.toastService.show(`頭像已更新 (${Math.round(width)}x${Math.round(height)})`);
+            this.toastService.show(`請記得按下儲存鈕，才會更新頭像 (${Math.round(width)}x${Math.round(height)})`);
           }
         };
         

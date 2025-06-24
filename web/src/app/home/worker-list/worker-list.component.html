@@ -1,7 +1,134 @@
 <div class="d-flex flex-column w-100 h-100">
+  <!-- 頂部按鈕列 -->
   <div class="d-flex justify-content-end m-2 gap-2">
+    <div class="btn-group" role="group">
+      <button 
+        class="btn btn-success" 
+        [disabled]="!hasSelectedWorkers()"
+        [title]="hasSelectedWorkers() ? '匯出選中的 ' + selectedWorkerIds.size + ' 筆工人資料（含背景浮水印）' : '請選取人員之後才能匯出'"
+        (click)="exportSelectedWorkersWithWatermark()">
+        <i class="bi bi-file-earmark-excel me-1"></i>
+        匯出 Excel
+        @if (hasSelectedWorkers()) {
+          <span class="badge bg-light text-dark ms-1">{{selectedWorkerIds.size}}</span>
+        }
+      </button>
+    </div>
+         <button 
+       type="button"
+       class="btn btn-outline-secondary btn-sm" 
+       [disabled]="!hasSelectedWorkers()"
+       (click)="clearSelection()"
+       title="清除所有選取"
+       aria-label="清除所有選取的人員">
+       <i class="bi bi-check2-square me-1"></i>
+       清除選取
+     </button>
     <button class="btn btn-primary" [routerLink]="['/worker', 'new']">新增人才</button>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importWorkerModal">匯入人才</button>
+  </div>
+
+    <!-- 過濾器區域 -->
+  <div class="mx-2 mb-3 filter-container">
+    <!-- 過濾器控制列 -->
+    <div class="filter-header d-flex align-items-center justify-content-between p-2 bg-light border rounded-top" 
+         [class.rounded-bottom]="!isFilterExpanded">
+      <div class="d-flex align-items-center gap-3">
+        <button 
+          type="button" 
+          class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
+          (click)="toggleFilterExpansion()"
+          [attr.aria-expanded]="isFilterExpanded"
+          aria-controls="filterContent">
+          <i class="bi" [class.bi-search]="!isFilterExpanded" [class.bi-funnel]="isFilterExpanded"></i>
+          <span>{{isFilterExpanded ? '收起篩選' : '展開篩選'}}</span>
+          <i class="bi transition-rotate" 
+             [class.bi-chevron-down]="!isFilterExpanded" 
+             [class.bi-chevron-up]="isFilterExpanded"></i>
+        </button>
+        
+        <div class="filter-summary text-muted small">
+          {{getFilterSummary()}}
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        @if (!isFilterExpanded && (selectedContractingCompany || selectedCertificationTypes.length > 0)) {
+          <button 
+            type="button" 
+            class="btn btn-outline-secondary btn-sm" 
+            (click)="clearFilters()"
+            title="清除所有過濾條件">
+            <i class="bi bi-x-circle"></i>
+          </button>
+        }
+        
+        <div class="text-muted small">
+          顯示 {{filteredWorkers.length}} / {{workers.length}} 筆
+        </div>
+      </div>
+    </div>
+
+    <!-- 過濾器內容區域 (手風琴) -->
+    <div class="filter-content" 
+         [class.expanded]="isFilterExpanded"
+         id="filterContent">
+      <div class="filter-body p-3 bg-white border border-top-0 rounded-bottom">
+        <!-- 第一行：承攬公司選擇和操作按鈕 -->
+        <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+          <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <label for="contractingCompanySelect" class="form-label mb-0 fw-bold text-nowrap">承攬公司：</label>
+            <select 
+              id="contractingCompanySelect"
+              class="form-select form-select-sm" 
+              style="min-width: 120px;"
+              [(ngModel)]="selectedContractingCompany" 
+              (change)="onContractingCompanyChange()">
+              <option value="">全部</option>
+              @for (company of contractingCompanies; track company) {
+                <option [value]="company">{{company}}</option>
+              }
+            </select>
+          </div>
+
+          <button 
+            type="button" 
+            class="btn btn-outline-secondary btn-sm flex-shrink-0" 
+            (click)="clearFilters()"
+            title="清除所有過濾條件">
+            <i class="bi bi-x-circle me-1"></i>清除
+          </button>
+        </div>
+
+        <!-- 第二行：證照類型多選區域 -->
+        <div class="cert-filter-section">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <label class="form-label mb-0 fw-bold text-nowrap">證照類型：</label>
+            @if (selectedCertificationTypes.length > 0) {
+              <span class="badge bg-primary">已選 {{selectedCertificationTypes.length}} 項</span>
+            }
+          </div>
+          <div class="cert-checkbox-grid">
+            @for (certType of certificationTypes; track certType.value) {
+              <div class="form-check cert-checkbox-item">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  [id]="'cert-' + certType.value"
+                  [checked]="isCertificationTypeSelected(certType.value)"
+                  (change)="onCertificationTypeChange(certType.value, $any($event.target).checked)">
+                <label 
+                  class="form-check-label text-truncate" 
+                  [for]="'cert-' + certType.value"
+                  [title]="certType.label">
+                  {{certType.label}}
+                </label>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ag-grid -->
@@ -31,16 +158,19 @@
                    (drop)="onDrop($event)">
                 請上傳 人員.zip 檔案, 或將檔案拖放至此
               </div>
-              <input type="file" class="form-control" id="fileUpload" accept=".zip" (change)="onFileSelected($event)"/>
+              <input type="file" class="form-control" id="fileUpload" accept=".zip" title="選擇ZIP檔案" (change)="onFileSelected($event)"/>
               <div class="mt-2 text-muted small">
                 <p>
-                  <i class="bi bi-info-circle"></i> 
-                  ZIP檔案中應包含「人員入場資料」目錄，其中有「人員入場清單.xlsx」檔案。
-                  <a href="assets/人員入場資料.zip" download="人員入場資料.zip" class="link-primary">下載範例檔案</a>
+                  <strong>注意事項：</strong>
                 </p>
-                <p>
-                  <strong>資料格式要求：</strong> Excel檔案必須包含「承攬公司」欄位，以及其他相關人員資訊。
-                </p>
+                <ul>
+                  <li>
+                    ZIP檔案中應包含「人員入場資料」目錄，其中有「人員入場清單.xlsx」檔案。
+                    <a href="assets/人員入場資料.zip" download="人員入場資料.zip" class="link-primary">下載範例檔案</a>
+                  </li>
+                  <li>Excel檔案必須包含「承攬公司」欄位，以及其他相關人員資訊。</li>
+                  <li>以身份證號及承攬公司為唯一識別，相同者會覆蓋現有資料。</li>
+                </ul>
               </div>
             </div>
           }

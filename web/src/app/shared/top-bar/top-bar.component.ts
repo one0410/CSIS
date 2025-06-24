@@ -4,7 +4,7 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 
 import { CurrentSiteService } from '../../services/current-site.service';
 import { filter, Subscription } from 'rxjs';
-import { MongodbService } from '../../services/mongodb.service';
+import { FeedbackService } from '../../services/feedback.service';
 
 @Component({
   selector: 'app-top-bar',
@@ -19,26 +19,19 @@ export class TopBarComponent implements OnInit, OnDestroy {
   currentSite = computed(() => this.currentSiteService.currentSite());
   greeting: string = '';
   private routerSubscription: Subscription | undefined;
-  pendingFeedbackCount = signal(0);
   
-  // 注入路由器和當前工地服務
+  // 注入路由器和相關服務
   private router = inject(Router);
   private currentSiteService = inject(CurrentSiteService);
-  private mongodbService = inject(MongodbService);
+  private feedbackService = inject(FeedbackService);
+  
+  // 使用 FeedbackService 的 pendingFeedbackCount
+  pendingFeedbackCount = computed(() => this.feedbackService.pendingFeedbackCount());
   
   constructor(private authService: AuthService) {
     this.setGreeting();
-    effect(() => {
-      const user = this.currentUser();
-      console.log('TopBar effect 觸發, 使用者:', user);
-      if (user && (user.role === 'admin' || user.role === 'manager')) {
-        console.log('使用者是管理員或經理，開始載入意見數量');
-        this.loadPendingFeedbackCount();
-      } else {
-        console.log('使用者不是管理員或經理，或尚未登入，將數量設為 0');
-        this.pendingFeedbackCount.set(0);
-      }
-    });
+    // FeedbackService 現在會自動根據使用者狀態連接/斷開 WebSocket
+    // 不需要在這裡手動處理
   }
   
   ngOnInit() {
@@ -57,6 +50,29 @@ export class TopBarComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.closeAllDropdowns();
       });
+
+    // 監聽點擊事件，點擊外部時關閉下拉選單
+    this.setupOutsideClickListener();
+  }
+
+  private setupOutsideClickListener() {
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      
+      // 檢查是否點擊在下拉選單或按鈕內部
+      const systemDropdown = document.getElementById('systemDropdown');
+      const systemMenu = document.getElementById('systemMenu');
+      const profileMenu = document.getElementById('profileMenu');
+      
+      const isSystemDropdownClick = systemDropdown?.contains(target);
+      const isSystemMenuClick = systemMenu?.contains(target);
+      const isProfileClick = target?.closest('[data-profile-menu]') || profileMenu?.contains(target);
+      
+      // 如果點擊不在任何下拉選單區域內，則關閉所有下拉選單
+      if (!isSystemDropdownClick && !isSystemMenuClick && !isProfileClick) {
+        this.closeAllDropdowns();
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -64,6 +80,7 @@ export class TopBarComponent implements OnInit, OnDestroy {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
     }
+    // FeedbackService 會自動清理 WebSocket 連接
   }
 
   setGreeting() {
@@ -112,36 +129,61 @@ export class TopBarComponent implements OnInit, OnDestroy {
   }
 
   toggleProfileMenu() {
-    document.getElementById('profileMenu')?.classList.toggle('show');
+    // 先關閉系統管理選單
+    this.closeSystemMenu();
+    // 切換個人資料選單
+    const profileMenu = document.getElementById('profileMenu');
+    if (profileMenu) {
+      profileMenu.classList.toggle('show');
+      // 更新 aria-expanded 屬性
+      const isShown = profileMenu.classList.contains('show');
+      profileMenu.setAttribute('aria-expanded', isShown.toString());
+    }
   }
 
   toggleSystemMenu() {
-    document.getElementById('systemMenu')?.classList.toggle('show');
+    // 先關閉個人資料選單
+    this.closeProfileMenu();
+    // 切換系統管理選單
+    const systemMenu = document.getElementById('systemMenu');
+    const systemButton = document.getElementById('systemDropdown');
+    
+    if (systemMenu && systemButton) {
+      systemMenu.classList.toggle('show');
+      // 更新 aria-expanded 屬性
+      const isShown = systemMenu.classList.contains('show');
+      systemButton.setAttribute('aria-expanded', isShown.toString());
+      
+      console.log('系統管理選單狀態:', isShown ? '打開' : '關閉');
+    }
+  }
+
+  private closeSystemMenu() {
+    const systemMenu = document.getElementById('systemMenu');
+    const systemButton = document.getElementById('systemDropdown');
+    if (systemMenu && systemButton) {
+      systemMenu.classList.remove('show');
+      systemButton.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  private closeProfileMenu() {
+    const profileMenu = document.getElementById('profileMenu');
+    if (profileMenu) {
+      profileMenu.classList.remove('show');
+      profileMenu.setAttribute('aria-expanded', 'false');
+    }
   }
 
   closeAllDropdowns() {
-    // 關閉系統管理下拉選單
-    document.getElementById('systemMenu')?.classList.remove('show');
-    // 關閉個人資料下拉選單
-    document.getElementById('profileMenu')?.classList.remove('show');
+    console.log('關閉所有下拉選單');
+    this.closeSystemMenu();
+    this.closeProfileMenu();
   }
 
   logout() {
     this.authService.logout();
   }
 
-  async loadPendingFeedbackCount() {
-    try {
-      console.log('開始載入待處理意見數量...');
-      const query = { status: { $in: ['open', 'in-progress'] } };
-      console.log('查詢條件:', query);
-      const count = await this.mongodbService.count('feedback', query);
-      console.log('取得的數量:', count);
-      this.pendingFeedbackCount.set(count);
-      console.log('pendingFeedbackCount 已設為:', count);
-    } catch (error) {
-      console.error('讀取待處理意見數量時發生錯誤:', error);
-      this.pendingFeedbackCount.set(0);
-    }
-  }
+
 }

@@ -173,13 +173,30 @@ export class GridFSService {
     try {
       const url = `${this.apiBaseUrl}/api/gridfs/${filename}/info`;
       
+      console.log('正在獲取檔案資訊:', { filename, url });
+      
       const response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error('取得檔案資訊失敗');
+        const errorText = await response.text();
+        console.error('API 回應錯誤:', { 
+          status: response.status, 
+          statusText: response.statusText,
+          responseText: errorText 
+        });
+        throw new Error(`取得檔案資訊失敗: ${response.status} ${response.statusText}`);
       }
       
-      return await response.json();
+      const contentType = response.headers.get('Content-Type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error('API 回應非 JSON 格式:', { contentType, responseText });
+        throw new Error('伺服器回應格式錯誤，預期為 JSON 但收到 HTML 或其他格式');
+      }
+      
+      const result = await response.json();
+      console.log('成功獲取檔案資訊:', result);
+      return result;
     } catch (error) {
       console.error('取得檔案資訊失敗:', error);
       throw error;

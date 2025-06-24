@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { Photo, PhotoGroup } from '../site-list/site-detail/site-photos/site-photos.component';
+import { Photo, PhotoGroup, PhotoTag } from '../site-list/site-detail/site-photos/site-photos.component';
 import { Observable, from, of, Subject } from 'rxjs';
 import dayjs from 'dayjs';
 
@@ -26,6 +26,22 @@ export class PhotoService {
   private photoCache: { [projectNo: string]: Photo[] } = {};
   // 假設的照片大小資料 (單位: MB)
   private photoSizes: { [photoId: number]: number } = {};
+
+  // 系統標籤定義
+  public readonly systemTags: PhotoTag[] = [
+    {
+      title: '機具管理',
+      color: '#ffffff',
+      background: '#28a745',
+      isSystemTag: true
+    },
+    {
+      title: '工地缺失',
+      color: '#ffffff', 
+      background: '#dc3545',
+      isSystemTag: true
+    }
+  ];
 
   constructor() {
     // 初始化範例照片大小資料
@@ -198,10 +214,36 @@ export class PhotoService {
         return response.json();
       })
       .catch(error => {
-        console.error('上傳照片時發生錯誤:', error);
+        console.error('照片上傳失敗:', error);
         throw error;
       })
     );
+  }
+
+  // 上傳帶有系統標籤的照片
+  uploadPhotoWithSystemTag(file: File, systemTagTitle: string, siteId: string, projectNo: string): Observable<any> {
+    // 找到對應的系統標籤
+    const systemTag = this.systemTags.find(tag => tag.title === systemTagTitle);
+    if (!systemTag) {
+      return from(Promise.reject(new Error('找不到指定的系統標籤')));
+    }
+
+    console.log('正在上傳帶有系統標籤的照片:', {
+      systemTagTitle,
+      systemTag,
+      siteId,
+      projectNo
+    });
+
+    // 準備包含系統標籤的元數據
+    const metadata = {
+      projectNo: projectNo,
+      siteId: siteId,
+      tags: JSON.stringify([systemTag]), // 轉換為 JSON 字串以便傳輸
+      category: systemTagTitle // 向後兼容
+    };
+
+    return this.uploadPhoto(file, metadata);
   }
 
   // 從MongoDB GridFS中刪除照片

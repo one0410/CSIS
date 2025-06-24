@@ -1,0 +1,227 @@
+<div class="container-fluid h-100">
+  <div class="row h-100">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">
+          <i class="bi bi-people me-2"></i>
+          訪客列表
+        </h4>
+        <button
+          class="btn btn-primary"
+          (click)="showAddVisitorForm()"
+          [disabled]="loading()"
+        >
+          <i class="bi bi-plus-circle me-1"></i>
+          新增訪客
+        </button>
+      </div>
+
+      <!-- 載入中指示器 -->
+      @if (loading()) {
+      <div class="text-center py-4">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">載入中...</span>
+        </div>
+      </div>
+      }
+
+      <!-- 新增訪客表單 -->
+      @if (showAddForm()) {
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">新增訪客</h5>
+        </div>
+        <div class="card-body">
+          <form (ngSubmit)="saveVisitor()">
+            <div class="row">
+              <!-- 姓名 (必填) -->
+              <div class="col-md-4 mb-3">
+                <label class="form-label" for="visitorName">
+                  姓名 <span class="text-danger">*</span>
+                </label>
+                <input
+                  id="visitorName"
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="newVisitor.name"
+                  name="name"
+                  placeholder="請輸入姓名"
+                  required
+                />
+              </div>
+
+              <!-- 身份證號 -->
+              <div class="col-md-4 mb-3">
+                <label class="form-label" for="visitorIdno">身份證號</label>
+                <input
+                  id="visitorIdno"
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="newVisitor.idno"
+                  name="idno"
+                  placeholder="請輸入身份證號"
+                />
+              </div>
+
+              <!-- 手機 -->
+              <div class="col-md-4 mb-3">
+                <label class="form-label" for="visitorTel">手機</label>
+                <input
+                  id="visitorTel"
+                  type="tel"
+                  class="form-control"
+                  [(ngModel)]="newVisitor.tel"
+                  name="tel"
+                  placeholder="請輸入手機號碼"
+                />
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button
+                type="submit"
+                class="btn btn-success"
+                [disabled]="loading() || !newVisitor.name?.trim()"
+              >
+                <i class="bi bi-check-circle me-1"></i>
+                儲存
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="hideAddVisitorForm()"
+              >
+                <i class="bi bi-x-circle me-1"></i>
+                取消
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      }
+
+      <!-- 訪客列表 -->
+      @if (!loading()) { @if (visitors().length === 0) {
+      <div class="text-center py-5">
+        <i class="bi bi-people fs-1 text-muted"></i>
+        <p class="text-muted mt-2">目前沒有訪客資料</p>
+      </div>
+      } @else {
+      <div class="card">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0" style="table-layout: fixed;">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" style="width: 20%;">姓名</th>
+                  <th scope="col" style="width: 18%;">身份證號</th>
+                  <th scope="col" style="width: 15%;">手機</th>
+                  <th scope="col" style="width: 18%;">進入日期</th>
+                  <th scope="col" style="width: 12%;" class="text-center">危害告知</th>
+                  <th scope="col" style="width: 17%;" class="text-center">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (visitor of visitors(); track visitor._id) {
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <i
+                        class="bi bi-person-circle fs-4 me-2 text-secondary"
+                      ></i>
+                      <span>{{ visitor.name }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    @if (editingVisitorId() === visitor._id) {
+                      <input
+                        type="text"
+                        class="form-control form-control-sm"
+                        [(ngModel)]="editingVisitor().idno"
+                        name="edit-idno"
+                        placeholder="身份證號"
+                      />
+                    } @else {
+                      {{ visitor.idno || "-" }}
+                    }
+                  </td>
+                  <td>
+                    @if (editingVisitorId() === visitor._id) {
+                      <input
+                        type="tel"
+                        class="form-control form-control-sm"
+                        [(ngModel)]="editingVisitor().tel"
+                        name="edit-tel"
+                        placeholder="手機號碼"
+                      />
+                    } @else {
+                      {{ visitor.tel || "-" }}
+                    }
+                  </td>
+                  <td>
+                    @if (visitor.belongSites && visitor.belongSites[0]) {
+                    {{
+                      visitor.belongSites[0].assignDate
+                        | date : "yyyy/MM/dd HH:mm"
+                    }}
+                    } @else { - }
+                  </td>
+                  <td class="text-center">
+                    @if (hasHazardNotice(visitor)) {
+                      <i class="bi bi-check-circle-fill text-success fs-5" title="已完成危害告知"></i>
+                    } @else {
+                      <i class="bi bi-x-circle-fill text-danger fs-5" title="尚未完成危害告知"></i>
+                    }
+                  </td>
+                  <td class="text-center">
+                    @if (editingVisitorId() === visitor._id) {
+                      <div class="btn-group" role="group">
+                        <button
+                          class="btn btn-sm btn-success"
+                          (click)="saveEditVisitor(visitor)"
+                          [disabled]="loading()"
+                          title="儲存"
+                        >
+                          <i class="bi bi-check"></i>
+                        </button>
+                        <button
+                          class="btn btn-sm btn-secondary"
+                          (click)="cancelEditVisitor()"
+                          [disabled]="loading()"
+                          title="取消"
+                        >
+                          <i class="bi bi-x"></i>
+                        </button>
+                      </div>
+                    } @else {
+                      <div class="btn-group" role="group">
+                        <button
+                          class="btn btn-sm btn-outline-primary"
+                          (click)="startEditVisitor(visitor)"
+                          [disabled]="loading() || editingVisitorId() !== null"
+                          title="編輯"
+                        >
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                        <button
+                          class="btn btn-sm btn-outline-danger"
+                          (click)="deleteVisitor(visitor)"
+                          [disabled]="loading() || editingVisitorId() !== null"
+                          title="刪除訪客"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    }
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      } }
+    </div>
+  </div>
+</div>

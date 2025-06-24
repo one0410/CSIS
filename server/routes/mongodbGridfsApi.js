@@ -102,10 +102,25 @@ app.post('/api/gridfs/upload', upload.single('file'), async (req, res) => {
         };
 
         if (req.body) {
+            // 處理特殊欄位，特別是標籤資料
+            const processedBody = { ...req.body };
+            
+            // 如果有 tags 欄位且為字串，嘗試解析為 JSON
+            if (processedBody.tags && typeof processedBody.tags === 'string') {
+                try {
+                    processedBody.tags = JSON.parse(processedBody.tags);
+                    logger.info('成功解析標籤資料:', processedBody.tags);
+                } catch (error) {
+                    logger.warn('標籤資料解析失敗，保持原始值:', processedBody.tags);
+                }
+            }
+            
             metadata = {
                 ...metadata,
-                ...req.body
+                ...processedBody
             };
+            
+            logger.info('處理後的元數據:', metadata);
         }
 
         // 打開上傳流
@@ -242,6 +257,42 @@ app.patch('/api/gridfs/:filename', async (req, res) => {
         
     } catch (error) {
         logger.error('更新檔案元數據錯誤', { error: error.message, stack: error.stack });
+        handleGridFSError(error, res);
+    }
+});
+
+// 新增：取得檔案詳細資訊
+app.get('/api/gridfs/:filename/info', async (req, res) => {
+    try {
+        const filename = req.params.filename;
+        
+        logger.info('嘗試獲取檔案資訊', { filename });
+        
+        // 確認文件是否存在
+        const filesCollection = db.collection('fs.files');
+        const file = await filesCollection.findOne({ filename: filename });
+        
+        if (!file) {
+            logger.error('獲取檔案資訊失敗: 文件不存在', { filename });
+            return res.status(404).json({
+                success: false,
+                message: '文件不存在'
+            });
+        }
+        
+        logger.info('獲取檔案資訊成功', { filename, fileId: file._id });
+        res.json({
+            success: true,
+            _id: file._id,
+            filename: file.filename,
+            contentType: file.contentType,
+            length: file.length,
+            uploadDate: file.uploadDate,
+            metadata: file.metadata || {}
+        });
+        
+    } catch (error) {
+        logger.error('獲取檔案資訊錯誤', { error: error.message, stack: error.stack });
         handleGridFSError(error, res);
     }
 });

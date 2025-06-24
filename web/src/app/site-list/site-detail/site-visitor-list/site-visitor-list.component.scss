@@ -1,0 +1,36 @@
+// 表格樣式
+.table {
+  th, td {
+    vertical-align: middle;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  // 確保編輯模式的輸入框不會破壞表格對齊
+  .form-control-sm {
+    height: 1.8rem;
+    font-size: 0.875rem;
+  }
+}
+
+// 按鈕群組樣式
+.btn-group {
+  white-space: nowrap;
+}
+
+// 危害告知圖示樣式
+.bi-check-circle-fill, .bi-x-circle-fill {
+  font-size: 1.2rem;
+}
+
+// 響應式設計
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .btn-sm {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.75rem;
+  }
+}

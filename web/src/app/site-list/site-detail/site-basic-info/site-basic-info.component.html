@@ -5,11 +5,11 @@
         <i class="bi bi-info-circle me-2 text-primary"></i>基本資訊
       </h5>
       <div>
-        @if (!isEditMode) {
+        @if (!isEditMode && canEditBasicInfo()) {
           <button class="btn btn-outline-primary" (click)="toggleEditMode()">
             <i class="bi bi-pencil-square me-1"></i>編輯
           </button>
-        } @else {
+        } @else if (isEditMode) {
           <button class="btn btn-outline-secondary me-2" (click)="cancelEdit()">
             <i class="bi bi-x-circle me-1"></i>取消
           </button>
@@ -67,7 +67,12 @@
           @if (!isEditMode) {
             <div class="info-value">{{site()?.county || '尚未設定'}}</div>
           } @else {
-            <input type="text" class="form-control" id="county" [(ngModel)]="editForm.county" name="county" required aria-label="縣市">
+            <select class="form-select" id="county" [(ngModel)]="editForm.county" name="county" (change)="onCountyChange(editForm.county)" required aria-label="縣市">
+              <option value="">請選擇縣市</option>
+              @for (county of counties(); track county) {
+                <option [value]="county">{{county}}</option>
+              }
+            </select>
           }
         </div>
         
@@ -76,7 +81,12 @@
           @if (!isEditMode) {
             <div class="info-value">{{site()?.town || '尚未設定'}}</div>
           } @else {
-            <input type="text" class="form-control" id="town" [(ngModel)]="editForm.town" name="town" required aria-label="鄉鎮市區">
+            <select class="form-select" id="town" [(ngModel)]="editForm.town" name="town" (change)="onTownshipChange(editForm.town)" required aria-label="鄉鎮市區" [disabled]="!editForm.county">
+              <option value="">請選擇鄉鎮市區</option>
+              @for (township of townships(); track township) {
+                <option [value]="township">{{township}}</option>
+              }
+            </select>
           }
         </div>
       </div>

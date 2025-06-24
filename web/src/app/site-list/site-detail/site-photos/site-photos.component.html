@@ -17,10 +17,57 @@
 
     <!-- 上傳與搜尋區域 -->
     <div class="row g-3 align-items-end">
-      <!-- 上傳按鈕 -->
-      <div class="col-md-2">
+      <!-- 上傳按鈕與照相按鈕 -->
+      <div class="col-md-3">
+        @if (isMobileDevice()) {
+        <!-- 移動設備：顯示上傳和拍照按鈕 -->
+        <div class="row g-2">
+          <!-- 上傳照片按鈕 -->
+          <div class="col-6">
+            <label 
+              for="fileUpload" 
+              class="btn btn-primary w-100"
+              title="點擊選擇檔案或直接拖放圖片到此區域上傳"
+              data-bs-toggle="tooltip"
+              data-bs-placement="top"
+            >
+              <i class="fas fa-upload me-1"></i> 上傳照片
+              <input
+                type="file"
+                id="fileUpload"
+                accept="image/*"
+                multiple
+                hidden
+                (change)="onFileSelected($event)"
+              />
+            </label>
+          </div>
+          
+          <!-- 照相按鈕 -->
+          <div class="col-6">
+            <label 
+              for="cameraCapture" 
+              class="btn btn-success w-100"
+              title="使用手機相機拍照上傳"
+              data-bs-toggle="tooltip"
+              data-bs-placement="top"
+            >
+              <i class="fas fa-camera me-1"></i> 拍照
+              <input
+                type="file"
+                id="cameraCapture"
+                accept="image/*"
+                capture="camera"
+                hidden
+                (change)="onCameraCapture($event)"
+              />
+            </label>
+          </div>
+        </div>
+        } @else {
+        <!-- 桌面設備：只顯示上傳按鈕 -->
         <label 
-          for="fileUpload" 
+          for="fileUploadDesktop" 
           class="btn btn-primary w-100"
           title="點擊選擇檔案或直接拖放圖片到此區域上傳"
           data-bs-toggle="tooltip"
@@ -29,13 +76,14 @@
           <i class="fas fa-upload me-1"></i> 上傳照片
           <input
             type="file"
-            id="fileUpload"
+            id="fileUploadDesktop"
             accept="image/*"
             multiple
             hidden
             (change)="onFileSelected($event)"
           />
         </label>
+        }
       </div>
 
       <!-- 日期範圍搜尋 -->
@@ -61,13 +109,13 @@
 
       <!-- 分類搜尋 -->
       <div class="col-md-2">
-        <label class="form-label">分類</label>
+        <label class="form-label">標籤</label>
         <select
           class="form-select"
           [(ngModel)]="searchCategory"
-          title="照片分類搜尋"
+          title="照片標籤搜尋"
         >
-          <option value="">所有分類</option>
+          <option value="">所有標籤</option>
           @for (category of photoCategories(); track category) {
           <option [value]="category">{{ category }}</option>
           }
@@ -75,13 +123,15 @@
       </div>
 
       <!-- 搜尋按鈕 -->
-      <div class="col-md-2">
+      <div class="col-md-1">
         <button
           class="btn btn-outline-primary w-100"
           (click)="searchPhotos()"
           title="搜尋照片"
         >
-          <i class="fas fa-search me-1"></i> 搜尋
+          <i class="fas fa-search me-1"></i>
+          <span class="d-none d-md-inline">搜尋</span>
+          <span class="d-md-none">搜尋照片</span>
         </button>
       </div>
     </div>
@@ -123,7 +173,7 @@
           >
           } @if (searchCategory) {
           <span class="badge bg-secondary me-2"
-            >分類：{{ searchCategory }}</span
+            >標籤：{{ searchCategory }}</span
           >
           }
         </div>
@@ -164,10 +214,14 @@
               </button>
             </div>
             <div class="m-0 p-2">
-              @if (image.metadata && image.metadata.category) {
-              <span class="badge bg-primary me-1">{{
-                image.metadata.category
-              }}</span>
+              @if (image.metadata && image.metadata.tags && image.metadata.tags.length > 0) {
+                @for (tag of image.metadata.tags; track $index) {
+                <span 
+                  class="badge me-1"
+                  [style.color]="tag.color"
+                  [style.background-color]="tag.background"
+                >{{ tag.title }}</span>
+                }
               }
               <span>{{ image.title }}</span>
             </div>
@@ -242,24 +296,77 @@
                   </div>
 
                   <div class="mb-3">
-                    <label class="form-label" for="photoCategory">分類</label>
-                    <div class="input-group">
-                      <input
-                        id="photoCategory"
-                        class="form-control"
-                        list="photoCategoryOptions"
-                        [(ngModel)]="selectedPhoto()!.metadata.category"
-                        (change)="updatePhotoCategory()"
-                        placeholder="選擇或輸入分類"
-                        title="照片分類"
-                      />
-                      <datalist id="photoCategoryOptions">
-                        <option value=""></option>
-                        @for (category of photoCategories(); track category) {
-                        <option [value]="category">{{ category }}</option>
+                    <label class="form-label">標籤</label>
+                    
+                    <!-- 現有標籤顯示 -->
+                    <div class="mb-2">
+                      @if (selectedPhoto()?.metadata?.tags && selectedPhoto()!.metadata.tags!.length > 0) {
+                        @for (tag of selectedPhoto()!.metadata.tags!; track $index) {
+                        <span 
+                          class="badge me-1 mb-1 position-relative"
+                          [style.color]="tag.color"
+                          [style.background-color]="tag.background"
+                        >
+                          {{ tag.title }}
+                          @if (!tag.isSystemTag) {
+                          <button
+                            type="button"
+                            class="btn-close btn-close-white ms-1"
+                            style="font-size: 0.6em;"
+                            (click)="removeTagFromPhoto($index)"
+                            aria-label="移除標籤"
+                          ></button>
+                          }
+                        </span>
                         }
-                      </datalist>
+                      } @else {
+                        <p class="text-muted small">尚未添加標籤</p>
+                      }
                     </div>
+
+                    <!-- 可用標籤選擇（僅顯示自定義標籤） -->
+                    <div class="mb-2">
+                      <label class="form-label small">選擇自定義標籤</label>
+                      <div class="d-flex flex-wrap gap-1">
+                        @for (tag of getUserDefinedTags(); track tag.title) {
+                          @if (selectedPhoto() && !hasTag(selectedPhoto()!, tag.title)) {
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            [style.color]="tag.color"
+                            [style.border-color]="tag.background"
+                            (click)="addTagToPhoto(tag)"
+                          >
+                            + {{ tag.title }}
+                          </button>
+                          }
+                        }
+                      </div>
+                      @if (getUserDefinedTags().length === 0) {
+                        <p class="text-muted small mb-0">尚無自定義標籤，請使用下方功能新增</p>
+                      }
+                    </div>
+                    
+                    <!-- 系統標籤說明 -->
+                    <div class="alert alert-info p-2 mb-2">
+                      <small>
+                        <i class="fas fa-info-circle me-1"></i>
+                        系統標籤（如「機具管理」、「工地缺失」）會在相應功能中自動添加，無法手動貼上。
+                      </small>
+                    </div>
+
+                    <!-- 新增自定義標籤按鈕 -->
+                    @if (canManageTags()) {
+                    <div class="text-center">
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary btn-sm"
+                        (click)="openNewTagModal()"
+                      >
+                        <i class="fas fa-plus me-1"></i> 新增自定義標籤
+                      </button>
+                    </div>
+                    }
                   </div>
 
                   <div class="mb-3">
@@ -268,7 +375,8 @@
                       id="photoTitle"
                       type="text"
                       class="form-control"
-                      [(ngModel)]="selectedPhoto()!.title"
+                      [ngModel]="selectedPhoto()?.title || ''"
+                      (ngModelChange)="selectedPhoto() && (selectedPhoto()!.title = $event)"
                       (blur)="updatePhotoTitle()"
                       placeholder="輸入照片標題"
                       title="照片標題"
@@ -281,7 +389,8 @@
                       id="photoLocation"
                       type="text"
                       class="form-control"
-                      [(ngModel)]="selectedPhoto()!.metadata.location"
+                      [ngModel]="selectedPhoto()?.metadata?.location || ''"
+                      (ngModelChange)="selectedPhoto()?.metadata && (selectedPhoto()!.metadata.location = $event)"
                       (blur)="updatePhotoLocation()"
                       placeholder="輸入照片拍攝地點"
                       title="照片拍攝地點"
@@ -296,7 +405,8 @@
                       id="photoDescription"
                       class="form-control"
                       rows="3"
-                      [(ngModel)]="selectedPhoto()!.metadata.description"
+                      [ngModel]="selectedPhoto()?.metadata?.description || ''"
+                      (ngModelChange)="selectedPhoto()?.metadata && (selectedPhoto()!.metadata.description = $event)"
                       (blur)="updatePhotoDescription()"
                       placeholder="輸入照片描述"
                       title="照片描述"
@@ -327,4 +437,111 @@
     </div>
   </div>
 </div>
+
+<!-- 新增標籤對話框 -->
+@if (showNewTagModal()) {
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-tag me-2"></i>新增自定義標籤
+        </h5>
+        <button type="button" class="btn-close" title="關閉" aria-label="關閉" (click)="closeNewTagModal()"></button>
+      </div>
+      <div class="modal-body">
+        <!-- 標籤名稱 -->
+        <div class="mb-3">
+          <label class="form-label">標籤名稱</label>
+          <input
+            type="text"
+            class="form-control"
+            placeholder="請輸入標籤名稱"
+            [(ngModel)]="newTagTitle"
+          />
+        </div>
+
+        <!-- 預設顏色選擇 -->
+        <div class="mb-3">
+          <label class="form-label">選擇顏色</label>
+          <div class="row g-2">
+            @for (preset of presetColors; track preset.name) {
+            <div class="col-6 col-md-4">
+              <button
+                type="button"
+                class="btn w-100 p-2 border rounded"
+                [class.border-primary]="newTagBackground === preset.background && newTagColor === preset.color"
+                [class.border-3]="newTagBackground === preset.background && newTagColor === preset.color"
+                [title]="'選擇' + preset.name"
+                (click)="selectPresetColor(preset)"
+              >
+                <span 
+                  class="badge w-100"
+                  [style.color]="preset.color"
+                  [style.background-color]="preset.background"
+                >
+                  {{ preset.name }}
+                </span>
+              </button>
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- 自定義顏色 -->
+        <div class="mb-3">
+          <label class="form-label">自定義顏色</label>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small">文字顏色</label>
+              <input
+                type="color"
+                class="form-control form-control-color"
+                title="文字顏色"
+                [(ngModel)]="newTagColor"
+              />
+            </div>
+            <div class="col-6">
+              <label class="form-label small">背景顏色</label>
+              <input
+                type="color"
+                class="form-control form-control-color"
+                title="背景顏色"
+                [(ngModel)]="newTagBackground"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- 預覽 -->
+        <div class="mb-3">
+          <label class="form-label">預覽效果</label>
+          <div class="p-3 bg-light rounded text-center">
+            <span 
+              class="badge fs-6 p-2"
+              [style.color]="newTagColor"
+              [style.background-color]="newTagBackground"
+            >
+              {{ newTagTitle || '標籤預覽' }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeNewTagModal()">
+          取消
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="createNewTag()"
+          [disabled]="!newTagTitle.trim()"
+        >
+          <i class="fas fa-plus me-1"></i> 新增標籤
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}
 }

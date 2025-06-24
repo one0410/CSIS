@@ -416,6 +416,11 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
         this.formData.updatedAt = new Date();
         this.formData.updatedBy = this.authService.user()?.name || '';
         await this.mongodbService.patch('siteForm', this.formId, this.formData);
+        
+        // 發送表單更新事件
+        if (this.siteId && this.formId) {
+          this.currentSiteService.onFormUpdated(this.formId, this.formData.formType, this.siteId);
+        }
       } else {
         this.formData.createdAt = new Date();
         this.formData.createdBy = this.authService.user()?.name || '';
@@ -424,6 +429,12 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
           this.formData
         );
         this.formId = response.insertedId;
+        
+        // 發送表單創建事件
+        if (this.siteId && this.formId) {
+          this.currentSiteService.onFormCreated(this.formId, this.formData.formType, this.siteId);
+        }
+        
         // 新增表單成功後，生成 QR Code URL
         this.generateFormQrCodeUrl();
       }

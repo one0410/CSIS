@@ -7,6 +7,9 @@ import { SignatureDialogService } from '../../../../shared/signature-dialog.serv
 import { CurrentSiteService } from '../../../../services/current-site.service';
 import { SiteForm } from '../../../../model/siteForm.model';
 import { AuthService } from '../../../../services/auth.service';
+import { GridFSService } from '../../../../services/gridfs.service';
+import { PhotoService } from '../../../../services/photo.service';
+import { signal } from '@angular/core';
 
 interface IssueRecord extends SiteForm {
   formType: 'safetyIssueRecord';
@@ -28,6 +31,7 @@ interface IssueRecord extends SiteForm {
   supervisorSignature: string; // 監工簽名
   workerSignature: string; // 作業人員簽名
   status: string; // 狀態
+  issuePhotos?: string[]; // 新增：工安缺失照片列表，存儲照片檔名
 }
 
 enum SignatureType {
@@ -114,7 +118,13 @@ export class SafetyIssueRecordComponent implements OnInit {
     status: 'draft',
     createdAt: new Date(),
     createdBy: '',
+    issuePhotos: [], // 初始化照片數組
   };
+
+  // 新增：照片相關屬性
+  uploadedPhotos = signal<{filename: string, url: string, title: string}[]>([]);
+  isUploadingPhoto = signal<boolean>(false);
+  uploadProgress = signal<number>(0);
 
   constructor(
     private router: Router,
@@ -122,7 +132,9 @@ export class SafetyIssueRecordComponent implements OnInit {
     private mongodbService: MongodbService,
     private signatureDialog: SignatureDialogService,
     private currentSiteService: CurrentSiteService,
-    private authService: AuthService
+    private authService: AuthService,
+    private gridFSService: GridFSService,
+    private photoService: PhotoService
   ) { }
 
   ngOnInit(): void {
@@ -210,6 +222,9 @@ export class SafetyIssueRecordComponent implements OnInit {
         // 更新簽名顯示
         this.supervisorSignature = data.supervisorSignature || '';
         this.workerSignature = data.workerSignature || '';
+        
+        // 載入相關照片
+        await this.loadIssuePhotos();
       }
     } catch (error) {
       console.error('加載缺失記錄數據失敗', error);
@@ -284,6 +299,134 @@ export class SafetyIssueRecordComponent implements OnInit {
     } else {
       // 如果已存在，從數組中移除
       this.issueRecord.remedyMeasures.splice(index, 1);
+    }
+  }
+
+  // 新增：照片上傳相關方法
+  onPhotoSelected(event: any): void {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      this.handlePhotoFiles(files);
+    }
+    // 清空input以允許重複選擇同一檔案
+    event.target.value = '';
+  }
+
+  async handlePhotoFiles(files: FileList): Promise<void> {
+    this.isUploadingPhoto.set(true);
+    this.uploadProgress.set(0);
+    
+    const totalFiles = files.length;
+    let uploadedCount = 0;
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.type.startsWith('image/')) {
+        try {
+          await this.uploadPhoto(file);
+          uploadedCount++;
+          this.uploadProgress.set(Math.round((uploadedCount / totalFiles) * 100));
+        } catch (error) {
+          console.error('上傳照片時發生錯誤:', error);
+        }
+      }
+    }
+    
+    this.isUploadingPhoto.set(false);
+    this.uploadProgress.set(0);
+  }
+
+  async uploadPhoto(file: File): Promise<void> {
+    const currentSite = this.site();
+    if (!currentSite) return;
+    
+    try {
+      // 使用 PhotoService 的新方法上傳帶有系統標籤的照片
+      const result = await new Promise<any>((resolve, reject) => {
+        this.photoService.uploadPhotoWithSystemTag(
+          file, 
+          '工地缺失', 
+          currentSite._id!, 
+          currentSite.projectNo
+        ).subscribe({
+          next: (result) => resolve(result),
+          error: (error) => reject(error)
+        });
+      });
+      
+      if (result && result.filename) {
+        // 更新本地照片列表
+        const photoData = {
+          filename: result.filename,
+          url: `/api/gridfs/${result.filename}`,
+          title: `工安缺失照片 - ${file.name}`
+        };
+        
+        const currentPhotos = this.uploadedPhotos();
+        this.uploadedPhotos.set([...currentPhotos, photoData]);
+        
+        // 更新 issueRecord 的照片列表
+        if (!this.issueRecord.issuePhotos) {
+          this.issueRecord.issuePhotos = [];
+        }
+        this.issueRecord.issuePhotos.push(result.filename);
+        
+        // 通知照片服務統計更新
+        this.photoService.notifyPhotoStatsUpdated(currentSite._id!);
+      }
+    } catch (error) {
+      console.error('照片上傳失敗:', error);
+      alert('照片上傳失敗，請稍後重試');
+    }
+  }
+
+  deletePhoto(index: number): void {
+    const photos = this.uploadedPhotos();
+    const photoToDelete = photos[index];
+    
+    if (confirm('確定要刪除這張照片嗎？')) {
+      this.deletePhotoByFilename(photoToDelete.filename, index);
+    }
+  }
+
+  async deletePhotoByFilename(filename: string, index: number): Promise<void> {
+    try {
+      // 使用 GridFSService 刪除檔案
+      await this.gridFSService.deleteFile(filename);
+      
+      // 更新本地照片列表
+      const currentPhotos = this.uploadedPhotos();
+      currentPhotos.splice(index, 1);
+      this.uploadedPhotos.set([...currentPhotos]);
+      
+      // 更新 issueRecord 的照片列表
+      if (this.issueRecord.issuePhotos) {
+        const photoIndex = this.issueRecord.issuePhotos.indexOf(filename);
+        if (photoIndex > -1) {
+          this.issueRecord.issuePhotos.splice(photoIndex, 1);
+        }
+      }
+      
+      // 通知照片服務統計更新
+      const currentSite = this.site();
+      if (currentSite && currentSite._id) {
+        this.photoService.notifyPhotoStatsUpdated(currentSite._id);
+      }
+    } catch (error) {
+      console.error('刪除照片失敗:', error);
+      alert('刪除照片失敗，請稍後重試');
+    }
+  }
+
+  // 當載入已存在的記錄時，載入相關照片
+  async loadIssuePhotos(): Promise<void> {
+    if (this.issueRecord.issuePhotos && this.issueRecord.issuePhotos.length > 0) {
+      const photoData = this.issueRecord.issuePhotos.map(filename => ({
+        filename,
+        url: `/api/gridfs/${filename}`,
+        title: `工安缺失照片 - ${filename}`
+      }));
+      this.uploadedPhotos.set(photoData);
     }
   }
 

@@ -1,3 +1,5 @@
+@use 'sass:color';
+
 // 全局變量
 $primary-color: #3f51b5;
 $secondary-color: #f5f5f5;
@@ -217,7 +219,7 @@ $border-radius: 8px;
     color: white;
     
     &:hover:not(:disabled) {
-      background-color: darken($primary-color, 10%);
+      background-color: color.scale($primary-color, $lightness: -10%);
     }
   }
   
@@ -227,7 +229,7 @@ $border-radius: 8px;
     border: 1px solid $border-color;
     
     &:hover:not(:disabled) {
-      background-color: darken(white, 5%);
+      background-color: color.scale(white, $lightness: -5%);
     }
   }
 }
@@ -289,7 +291,7 @@ $border-radius: 8px;
       .avatar-placeholder {
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, $primary-color, lighten($primary-color, 20%));
+        background: linear-gradient(135deg, $primary-color, color.scale($primary-color, $lightness: 20%));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -358,7 +360,7 @@ $border-radius: 8px;
         color: white;
         
         &:hover {
-          background-color: darken($primary-color, 10%);
+          background-color: color.scale($primary-color, $lightness: -10%);
         }
       }
       
@@ -367,7 +369,7 @@ $border-radius: 8px;
         color: white;
         
         &:hover {
-          background-color: darken($error-color, 10%);
+          background-color: color.scale($error-color, $lightness: -10%);
         }
       }
     }

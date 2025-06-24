@@ -4,9 +4,25 @@
     <h2 class="mb-0">
       <i class="bi bi-person-badge me-2"></i>教育訓練管理
     </h2>
-    <button class="btn btn-primary" (click)="createNewTraining()">
-      <i class="bi bi-plus-circle me-2"></i>新增教育訓練
-    </button>
+    <div class="d-flex align-items-center gap-3">
+      <!-- 顯示作廢表單開關 - 只有專案經理和專案秘書可以看到 -->
+      @if (canShowRevokedFormsSwitch()) {
+      <div class="form-check form-switch" title="只有專案經理及專案秘書才看得到">
+        <input 
+          class="form-check-input" 
+          type="checkbox" 
+          id="showRevokedForms"
+          [checked]="showRevokedForms()"
+          (change)="toggleShowRevokedForms()">
+        <label class="form-check-label" for="showRevokedForms">
+          顯示作廢表單
+        </label>
+      </div>
+      }
+      <button class="btn btn-primary" (click)="createNewTraining()">
+        <i class="bi bi-plus-circle me-2"></i>新增教育訓練
+      </button>
+    </div>
   </div>
 
   <!-- 教育訓練列表 -->
@@ -64,13 +80,30 @@
                   >
                     <i class="bi bi-pencil"></i>
                   </button>
-                  } @if (training.status !== 'revoked') {
+                  } 
+                  @if (training.status !== 'revoked') {
                   <button
                     class="btn btn-sm btn-outline-danger"
                     title="作廢"
                     (click)="revokeTraining(training._id!)"
                   >
                     <i class="bi bi-trash"></i>
+                  </button>
+                  }
+                  @if (training.status === 'revoked') {
+                  <button
+                    class="btn btn-sm btn-outline-success"
+                    title="回復狀態"
+                    (click)="restoreTraining(training._id!)"
+                  >
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    title="永久刪除"
+                    (click)="deleteTraining(training._id!)"
+                  >
+                    <i class="bi bi-x-circle"></i>
                   </button>
                   }
                 </div>

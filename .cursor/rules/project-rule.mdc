@@ -24,7 +24,7 @@ alwaysApply: true
 - GET /api/mongodb/:collection 回傳時, 會加入 X-Pagination 表頭, 包含 {"count":19,"limit":500,"skip":0} 這樣的格式, 表示查詢總筆數, 此次查詢 limit 數, 此次查詢 skip 數。
 
 ## 前端 WEB 開發規範 for Angular
-- 使用 Angular 19
+- 使用 Angular 20
 - 使用 bootstrap 5
 - 使用 @if 新語法替代 *ngIf
 - 避免使用 rxjs
