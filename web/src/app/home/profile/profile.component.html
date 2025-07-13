@@ -27,9 +27,54 @@
               <div class="avatar-placeholder">
                 <i class="avatar-icon"></i>
                 <span>{{ user.name?.charAt(0) || 'U' }}</span>
-              </div>
-            }
-          </div>
+                  </div>
+  }
+</div>
+
+<!-- 相機拍照模態視窗 -->
+@if (isCameraOpen) {
+  <div class="camera-modal" (click)="closeCamera()">
+    <div class="camera-container" (click)="$event.stopPropagation()">
+      <div class="camera-header">
+        <h3>相機自拍</h3>
+        <button class="btn-close" (click)="closeCamera()" title="關閉相機">
+          <i class="close-icon"></i>
+        </button>
+      </div>
+      
+      <div class="camera-preview">
+        @if (!photoTaken) {
+          <video #videoElement autoplay playsinline class="video-preview"></video>
+        } @else {
+          <canvas #canvasElement class="photo-preview"></canvas>
+        }
+      </div>
+      
+      <div class="camera-controls">
+        @if (!photoTaken) {
+          <button class="btn-capture" (click)="takePhoto()">
+            <i class="capture-icon"></i>
+            拍照
+          </button>
+          <button class="btn-switch-camera" (click)="switchCamera()">
+            <i class="switch-icon"></i>
+            切換鏡頭
+          </button>
+        } @else {
+          <button class="btn-retake" (click)="retakePhoto()">
+            <i class="retake-icon"></i>
+            重新拍照
+          </button>
+          <button class="btn-confirm" (click)="confirmPhoto()">
+            <i class="confirm-icon"></i>
+            使用此照片
+          </button>
+        }
+        <button class="btn-cancel-camera" (click)="closeCamera()">取消</button>
+      </div>
+    </div>
+  </div>
+}
           <div class="avatar-actions">
             <input 
               type="file" 
@@ -40,7 +85,11 @@
             />
             <button class="btn-upload" (click)="selectAvatar()">
               <i class="upload-icon"></i>
-              選擇頭像
+              選擇圖片
+            </button>
+            <button class="btn-camera" (click)="openCamera()">
+              <i class="camera-icon"></i>
+              相機拍照
             </button>
             @if (user.avatar) {
               <button class="btn-remove" (click)="removeAvatar()">

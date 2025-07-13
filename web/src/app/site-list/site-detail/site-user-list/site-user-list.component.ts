@@ -384,8 +384,8 @@ export class SiteUserListComponent implements OnInit {
     // 取得當前使用者在此工地的角色
     const userSiteRole = user.belongSites?.find(site => site.siteId === this.siteId)?.role;
     
-    // 只有專案經理(projectManager)和專案秘書(secretary)可以編輯
-    return userSiteRole === 'projectManager' || userSiteRole === 'secretary';
+    // 只有專案經理(projectManager)和專案秘書(secretary)和 currentUser 是 admin 可以編輯
+    return userSiteRole === 'projectManager' || userSiteRole === 'secretary' || user.role === 'admin';
   }
 
   // 取得工地權限顯示文字

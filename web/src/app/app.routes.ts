@@ -150,6 +150,10 @@ export const routes: Routes = [
             path: 'equipment', 
             loadComponent: () => import('./site-list/site-detail/site-equipment/site-equipment.component').then(m => m.SiteEquipmentComponent)
           },
+          {
+            path: 'daily-report',
+            loadComponent: () => import('./site-list/site-detail/site-daily-report/site-daily-report.component').then(m => m.SiteDailyReportComponent)
+          },
         ],
       },
 

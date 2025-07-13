@@ -1,0 +1,11 @@
+FROM alpine:latest
+
+# 安裝必要的工具
+RUN apk add --no-cache bash curl
+
+# 複製初始化腳本
+COPY ollama-init.sh /ollama-init.sh
+RUN chmod +x /ollama-init.sh
+
+# 執行初始化腳本
+CMD ["/ollama-init.sh"] 

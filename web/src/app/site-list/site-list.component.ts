@@ -18,44 +18,9 @@ export class SiteListComponent {
   async ngOnInit() {
     this.sites = await this.mongodbService.get('site', {});
 
-    if (this.sites.length === 0) {
-      // insert 3 demo sites
-      for (let i = 0; i < 3; i++) {
-        let s = this.generateRandomSite(i);
-        if (i == 2) {
-          s.endDate = '2024-07-01'; // 第2個工地設定為過期
-        }
-        let result = await this.mongodbService.post('site', s);
-        if (result.insertedId) {
-          s._id = result.insertedId;
-          this.sites.push(s);
-        }
-      }
-    }
   }
 
-  generateRandomSite(index: number): Site {
-    return {
-      projectNo: `P-${index + 1}`,
-      projectName: `Project ${index + 1}`,
-      // base64 圖片
-      image:
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=',
-      formLogo: '',
-      startDate: '2024-01-01',
-      endDate: index > 8 ? '2024-07-01' : '2025-07-01',
-      county: '台北市',
-      town: '中正區',
-      factories: [
-        { name: '廠區1', areas: ['A區', 'B區'] },
-        { name: '廠區2', areas: ['C區', 'D區'] },
-      ],
-      constructionTypes: ['施工', '拆除', '裝修'],
-      // 隨機生成照片數量和容量
-      photoCount: Math.floor(Math.random() * 300) + 50, // 50-350 張照片
-      photoSize: Math.floor(Math.random() * 800) + 100, // 100-900 MB
-    };
-  }
+  
 
   isExpired(endDate: string): boolean {
     const today = new Date();

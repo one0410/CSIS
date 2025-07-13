@@ -1,3 +1,3 @@
 export const environment = {
-    buildVersion: 'dev. 2025-06-25 0055',
+    buildVersion: 'dev. 2025-07-13 1034',
 };

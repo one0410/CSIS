@@ -1,0 +1,5 @@
+{
+    "httpPort": 3000,
+    "httpsPort": 443,
+    "mongodb": "mongodb://mongodb:27017/csis"
+} 

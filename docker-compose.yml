@@ -1,0 +1,124 @@
+services:
+  # MongoDB 服務
+  mongodb:
+    image: mongo:7.0
+    container_name: csis-mongodb
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Taipei
+    volumes:
+      - ${DATA_DIR:-./data}/mongodb:/data/db
+    networks:
+      - csis-network
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Server 服務 (Bun)
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: csis-server:latest
+    container_name: csis-server
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      TZ: Asia/Taipei
+      MONGODB_URI: mongodb://mongodb:27017/csis
+    volumes:
+      - ./config/serverconfig.json:/app/serverconfig.json
+      - ${DATA_DIR:-./data}/logs:/app/logs
+      - ${DATA_DIR:-./data}/uploads:/app/uploads
+      - ${SSL_DIR:-./ssl}:/app/ssl:ro
+    networks:
+      - csis-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Web 服務 (Angular + Nginx)
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    image: csis-web:latest
+    container_name: csis-web
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Taipei
+    networks:
+      - csis-network
+    depends_on:
+      server:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${SSL_DIR:-./ssl}:/etc/nginx/ssl:ro
+      - ./config/nginx-ssl.conf:/etc/nginx/conf.d/ssl.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Ollama 服務 (LLM)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: csis-ollama
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0
+      TZ: Asia/Taipei
+    volumes:
+      - ${DATA_DIR:-./data}/ollama:/root/.ollama
+    networks:
+      - csis-network
+    ports:
+      - "11434:11434"
+    command: serve
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G
+
+  # Ollama 模型初始化服務
+  ollama-init:
+    build:
+      context: ./config
+      dockerfile: Dockerfile.ollama-init
+    container_name: csis-ollama-init
+    environment:
+      TZ: Asia/Taipei
+    networks:
+      - csis-network
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+networks:
+  csis-network:
+    driver: bridge 

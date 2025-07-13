@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "nodejs server Program",
+            "program": "${workspaceFolder}/server/index.ts",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "cwd": "${workspaceFolder}/server"
+        },
+        {
             "name": "ng serve",
             "request": "launch",
             "type": "msedge",
@@ -19,6 +29,7 @@
             "name": "Debug server",
             "program": "${workspaceFolder}/server/index.ts",
             "cwd": "${workspaceFolder}/server",
+            "runtimeArgs": ["--inspect=0.0.0.0:9229"],
             "stopOnEntry": false,
             "watchMode": false
         }

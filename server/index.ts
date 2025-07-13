@@ -44,6 +44,15 @@ app.use(function (req: any, res: any, next: any) {
   next();
 });
 
+// 健康檢查端點
+app.get('/api/health', (req: any, res: any) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    service: 'csis-server'
+  });
+});
+
 // API路由
 // 載入認證路由 - 在這裡添加需要的 body parser
 const authRoutes = require('./routes/auth');

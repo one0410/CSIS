@@ -18,7 +18,7 @@ db.once('open', async () => {
             account: 'admin',
             name: '管理員',
             password: '1234',
-            role: 'IT',
+            role: 'admin',
             createdAt: new Date(),
             enabled: true,
         });
@@ -106,7 +106,10 @@ db.once('open', async () => {
         });
     }
 });
-mongoose.connect(confighelper.get('mongodb'));
+// 優先使用環境變數，如果沒有則使用配置檔案
+const mongoUri = process.env.MONGODB_URI || confighelper.get('mongodb');
+logger.info('Connecting to MongoDB:', mongoUri.replace(/\/\/[^:]*:[^@]*@/, '//***:***@')); // 隱藏密碼
+mongoose.connect(mongoUri);
 
 
 module.exports = db;

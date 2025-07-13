@@ -7,3 +7,9 @@ yarn.lock
 server/logs/
 server/node_modules/
 server/wwwroot/
+
+# Docker 部署相關
+csis-deployment-*.zip
+csis-deployment-*.tar.gz
+.env
+data/

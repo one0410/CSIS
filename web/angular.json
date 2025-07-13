@@ -22,7 +22,7 @@
               "jszip",
               "qrcode"
             ],
-            "outputPath": "../server/wwwroot",
+            "outputPath": "dist/csis/browser",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -129,5 +129,8 @@
     "@schematics/angular:resolver": {
       "typeSeparator": "."
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

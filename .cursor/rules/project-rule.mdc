@@ -5,25 +5,31 @@ alwaysApply: true
 ---
 # 專案架構與開發規範
 
-## 目錄結構
+這是一個工地專案管理系統, 每個系統登入的使用者, 在不同的工地都有各自工地的權限。
+工地管理系統, 每日有例行的表單作業需要進行。
+從工地許可單為源頭, 依據申請施工的工作類別, 延伸所需的管制單及缺失單。
+除表單之外, 也需管理工作人員, 工作人員在執行工作類別的時候，需要具備相關的工作證照。
+另外, 也需要管理工地的進度。
+
+# 目錄結構
 - 伺服器端程式在 server 目錄下
 - WEB專案在 web 目錄下
 - 如果有兩個專案共用程式碼放在 shared 目錄下
 
-## 開發環境
+# 開發環境
 - 伺服器使用 bun 取代 nodejs
 - 套件管理工具使用 yarn 取代 npm
 - WEB 專案使用 Angular 框架
 
-## 伺服器端
+# 伺服器端
 - 儘量使用 bun 內建功能取代其他第三方套件
 - 使用 express 提供 RESTAPI功能
-- 資料庫使用 mongodb 5
+- 資料庫使用 mongodb 7 以上
 - 存取 ssl 時, 一律不檢查憑證合法性
 - 資料存取提供前端統一 /api/mongodb API入口, 例如讀取時使用 GET /api/mongodb/:collection/:filter, 新增時使用 POST /api/mongodb/:collection, 修改時使用 PUT /api/mongodb/:collection/:id, 更新部分資料時使用 PATCH /api/mongodb/:collection/:id, 刪除單筆時使用 DELETE /api/mongodb/:collection/:id, 刪除多筆使用 POST /api/mongodb/:collection/deleteMany
 - GET /api/mongodb/:collection 回傳時, 會加入 X-Pagination 表頭, 包含 {"count":19,"limit":500,"skip":0} 這樣的格式, 表示查詢總筆數, 此次查詢 limit 數, 此次查詢 skip 數。
 
-## 前端 WEB 開發規範 for Angular
+# 前端 WEB 開發規範 for Angular
 - 使用 Angular 20
 - 使用 bootstrap 5
 - 使用 @if 新語法替代 *ngIf
@@ -35,3 +41,34 @@ alwaysApply: true
 - 請善用 bootstrap 的 functional CSS, 可以在 html 中直接加入例如 fs-2, d-flex, p-2, ms-3, h-100, position-fixed 等等, 除非沒有的樣式, 再寫到頁面附屬的 .scss 檔案。
   
 
+# Deployment
+## 匯出階段 (開發機)
+- 在開發機使用 export.sh 或 export.bat 執行下列動作
+  - 檢查 Docker 環境和磁碟空間
+  - 使用 docker compose build 建立所有服務的 Docker images
+  - 使用 docker save 將 images 打包成 .tar 檔案
+  - 複製必要的設定檔案和腳本
+  - 建立包含版本號的部署包 (含時間戳記)
+  - 產生 .tar.gz (Linux) 或 .zip (Windows) 壓縮檔
+  - 自動清理舊版本 (保留最新 3 個版本)
+
+## 傳輸階段
+- 將壓縮檔手動複製到目標伺服器
+- 壓縮檔內容包含：
+  - images/: 所有 Docker 映像檔
+  - config/: docker-compose.yml、環境變數範例、MongoDB 初始化腳本
+  - scripts/: import.sh、import.bat 部署腳本
+  - README.md: 部署說明文件
+
+## 匯入階段 (目標伺服器)
+- 在目的地伺服器, 使用 import.sh 或 import.bat 執行下列動作
+  - 檢查管理員權限和 Docker 環境
+  - 使用 docker load 載入所有 .tar 檔案
+  - 建立必要的資料目錄和設定檔目錄
+    - /var/lib/dialysis (Linux) 或 c:\dialysis (Windows)
+    - SSL 憑證目錄
+  - 設定環境變數 (.env 檔案)
+  - 處理 SSL 憑證 (支援自動生成或手動設定)
+  - 使用 docker compose up -d 啟動所有服務
+  - 執行健康檢查確認服務正常運行
+  - 顯示服務訪問地址和管理指令

@@ -42,10 +42,14 @@ export class SocketService implements OnDestroy {
 
       try {
         // 創建 Socket.IO 連接
-        let url = 'http://' + window.location.hostname + ':3000';
-
+        let url: string;
+        
         if (window.location.port === '4200') {
+          // 開發環境：使用 localhost:3000
           url = 'http://localhost:3000';
+        } else {
+          // 生產環境：使用當前 domain，透過 nginx 反向代理
+          url = window.location.protocol + '//' + window.location.host;
         }
 
         this.socket = io(url, {
