@@ -3,7 +3,6 @@ server/meeting
 server/*.exe
 server/csisserver
 *.lockb
-yarn.lock
 server/logs/
 server/node_modules/
 server/wwwroot/
