@@ -9,7 +9,12 @@ server/node_modules/
 server/wwwroot/
 
 # Docker 部署相關
+deployment/
 csis-deployment-*.zip
 csis-deployment-*.tar.gz
 .env
 data/
+
+# Git 部署相關
+backup-*/
+deployment-*.log
