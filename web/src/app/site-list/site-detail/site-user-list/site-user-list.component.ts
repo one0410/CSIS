@@ -337,6 +337,13 @@ export class SiteUserListComponent implements OnInit {
         });
         
         await this.mongodbService.patch('user', user._id, { belongSites: updatedBelongSites });
+        
+        // 如果被更新的使用者是當前登入的使用者，立即更新 AuthService 中的使用者資訊
+        const currentUser = this.currentUser();
+        if (currentUser && currentUser._id === user._id) {
+          console.log('當前使用者的工地權限已更新，正在同步使用者資訊...');
+          await this.authService.refreshCurrentUser();
+        }
       }
     } catch (error) {
       console.error('更新使用者工地角色時發生錯誤', error);

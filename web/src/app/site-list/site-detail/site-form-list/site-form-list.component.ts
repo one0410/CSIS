@@ -168,6 +168,9 @@ export class SiteFormListComponent implements AfterViewInit {
   }
 
   async ngOnInit(): Promise<void> {
+    // 重新載入當前使用者的完整資訊，確保工地權限是最新的
+    await this.authService.refreshCurrentUser();
+    
     // 從父路由獲取工地ID
     const parent = this.route.parent;
     if (parent) {

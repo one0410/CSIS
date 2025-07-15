@@ -152,4 +152,28 @@ export class AuthService {
       body: JSON.stringify(config),
     });
   }
+
+  // 重新載入當前使用者的完整資訊（用於權限更新後同步最新資料）
+  async refreshCurrentUser(): Promise<void> {
+    const currentUser = this.user();
+    if (!currentUser || !currentUser._id) {
+      console.warn('無法重新載入使用者資訊：目前沒有登入的使用者');
+      return;
+    }
+
+    try {
+      console.log('重新載入使用者資訊:', currentUser._id);
+      const updatedUser = await this.mongodbService.getById('user', currentUser._id);
+      
+      if (updatedUser) {
+        this.userSignal.set(updatedUser);
+        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+        console.log('使用者資訊已更新:', updatedUser);
+      } else {
+        console.warn('無法從資料庫重新載入使用者資訊');
+      }
+    } catch (error) {
+      console.error('重新載入使用者資訊時發生錯誤:', error);
+    }
+  }
 }

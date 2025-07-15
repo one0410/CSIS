@@ -147,6 +147,16 @@
                 class="d-flex justify-content-between align-items-center mb-3"
               >
                 <h5>參與者簽到</h5>
+                @if (isLoggedIn && !isWorkerSigningMode) {
+                <button
+                  type="button"
+                  (click)="showWorkerVerificationModal()"
+                  class="btn btn-secondary btn-sm"
+                  aria-label="新增簽名"
+                >
+                  <i class="bi bi-plus-circle me-1"></i>新增簽名
+                </button>
+                }
               </div>
 
               <div class="table-responsive">
@@ -276,28 +286,27 @@
         <!-- 底部按鈕區域 - 只在登入狀態或非工人簽名模式下顯示 -->
         @if (isLoggedIn && !isWorkerSigningMode) {
         <div class="d-flex justify-content-between mt-4 pt-3">
-          <div>
+          <button
+            type="button"
+            class="btn btn-outline-secondary px-4"
+            (click)="cancel()"
+          >
+            <i class="bi bi-x-circle me-1"></i>取消
+          </button>
+          <div class="d-flex gap-2">
             <button
               type="button"
-              (click)="showWorkerVerificationModal()"
-              class="btn btn-secondary btn-sm"
-              aria-label="新增簽名"
+              class="btn btn-primary px-4"
+              (click)="saveForm()"
             >
-              <i class="bi bi-plus-circle me-1"></i>新增簽名
-            </button>
-          </div>
-          <div>
-            <button
-              class="btn btn-outline-secondary btn-sm me-2"
-              (click)="cancel()"
-            >
-              <i class="bi bi-x-circle me-1"></i>取消
-            </button>
-            <button class="btn btn-primary btn-sm me-2" (click)="saveForm()">
               <i class="bi bi-save me-1"></i>儲存
             </button>
             @if (formId) {
-            <button class="btn btn-info btn-sm" (click)="showQrCodeModal()">
+            <button
+              type="button"
+              class="btn btn-info px-4"
+              (click)="showQrCodeModal()"
+            >
               <i class="bi bi-qr-code me-1"></i>顯示 QR Code
             </button>
             }
