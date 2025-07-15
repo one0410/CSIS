@@ -471,7 +471,7 @@ export class SafetyPatrolChecklistComponent implements OnInit {
       }
 
       if (result) {
-        alert('公安巡迴檢查表保存成功');
+        alert('工安巡迴檢查表保存成功');
         this.router.navigate(['/site', this.siteId, 'forms']);
       }
     } catch (error) {

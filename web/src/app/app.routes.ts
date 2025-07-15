@@ -154,6 +154,14 @@ export const routes: Routes = [
             path: 'daily-report',
             loadComponent: () => import('./site-list/site-detail/site-daily-report/site-daily-report.component').then(m => m.SiteDailyReportComponent)
           },
+          {
+            path: 'weekly-report',
+            loadComponent: () => import('./site-list/site-detail/site-weekly-report/site-weekly-report.component').then(m => m.SiteWeeklyReportComponent)
+          },
+          {
+            path: 'monthly-report',
+            loadComponent: () => import('./site-list/site-detail/site-monthly-report/site-monthly-report.component').then(m => m.SiteMonthlyReportComponent)
+          },
         ],
       },
 

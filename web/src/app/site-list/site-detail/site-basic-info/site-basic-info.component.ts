@@ -458,7 +458,7 @@ export class SiteBasicInfoComponent implements OnInit, OnDestroy {
     // 取得當前使用者在此工地的角色
     const userSiteRole = user.belongSites?.find(site => site.siteId === currentSite._id)?.role;
     
-    // 只有專案經理(projectManager)和專案秘書(secretary)可以編輯基本資訊
-    return userSiteRole === 'projectManager' || userSiteRole === 'secretary' || userSiteRole === 'admin';
+    // 只有專案經理(projectManager)和專案秘書(secretary)可以編輯基本資訊 或 currentUser是管理員
+    return userSiteRole === 'projectManager' || userSiteRole === 'secretary' || this.currentUser()?.role === 'admin';
   }
 }

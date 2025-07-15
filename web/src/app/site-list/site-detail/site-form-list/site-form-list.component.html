@@ -50,14 +50,14 @@
     >新增缺失記錄單</button>
   </span>
   <span 
-    [title]="!canCreateSafetyPatrolChecklist() ? '只有專案經理可以新增公安巡迴檢查表' : ''"
+    [title]="!canCreateSafetyPatrolChecklist() ? '只有專案經理可以新增工安巡迴檢查表' : ''"
     class="d-inline-block"
   >
     <button 
       class="btn btn-primary" 
       (click)="createSafetyPatrolChecklist()"
       [disabled]="!canCreateSafetyPatrolChecklist()"
-    >新增公安巡迴檢查表</button>
+    >新增工安巡迴檢查表</button>
   </span>
   
   <!-- 權限說明燈泡按鈕 -->
@@ -160,7 +160,7 @@
                 <td class="text-center text-muted">－</td>
               </tr>
               <tr class="table-light">
-                <td class="fw-bold">公安巡迴檢查表</td>
+                <td class="fw-bold">工安巡迴檢查表</td>
                 <td class="text-center text-success fs-5">✓</td>
                 <td class="text-center text-muted">－</td>
                 <td class="text-center text-muted">－</td>

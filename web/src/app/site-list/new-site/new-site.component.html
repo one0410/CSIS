@@ -54,52 +54,160 @@
       />
     </div>
 
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="county" class="form-label">縣市</label>
+        <input
+          type="text"
+          class="form-control"
+          id="county"
+          name="county"
+          [(ngModel)]="site.county"
+          placeholder="例如：台北市"
+        />
+      </div>
+      <div class="col-md-6">
+        <label for="town" class="form-label">鄉鎮市區</label>
+        <input
+          type="text"
+          class="form-control"
+          id="town"
+          name="town"
+          [(ngModel)]="site.town"
+          placeholder="例如：大安區"
+        />
+      </div>
+    </div>
+
     <div class="mb-3">
-      <label for="factories" class="form-label"
-        >新增廠區
-        <button class="btn btn-primary" (click)="addFactory()">+</button>
-      </label>
+      <label for="constructionTypes" class="form-label">作業類別</label>
+      <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+        @for (type of site.constructionTypes; track type; let i = $index) {
+        <span
+          class="badge bg-primary"
+          style="cursor: pointer"
+          (click)="removeConstructionType(i)"
+          title="點擊移除"
+          >{{ type }} <i class="bi bi-x"></i></span
+        >
+        }
+      </div>
+      <div class="input-group">
+        <input
+          type="text"
+          class="form-control"
+          id="constructionTypes"
+          name="constructionTypes"
+          placeholder="輸入作業類別並按 Enter"
+          (keydown.enter)="addConstructionType($event)"
+        />
+        <span class="input-group-text">
+          <i class="bi bi-plus"></i>
+        </span>
+      </div>
+      <small class="form-text text-muted">例如：土木工程、機電工程、消防工程等</small>
+    </div>
+
+    <div class="mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <label for="factories" class="form-label mb-0">廠區管理</label>
+        <button type="button" class="btn btn-primary btn-sm" (click)="addFactory()">
+          <i class="bi bi-plus"></i> 新增廠區
+        </button>
+      </div>
+      
       @for (factory of site.factories; track factory.name; let i = $index) {
-      <div class="row">
-        <div class="col-md-4">
-          <label for="factories" class="form-label">廠區名稱</label>
-          <input
-            type="text"
-            class="form-control"
-            id="factories"
-            name="factories"
-            [(ngModel)]="factory.name"
-          />
-        </div>
-        <div class="col-md-8">
-          <label for="areas" class="form-label">作業區域</label>
-          <div class="d-flex flex-wrap gap-2 align-items-center">
-            @for (area of factory.areas; track area; let j = $index) {
-            <span
-              class="badge bg-secondary area-item"
-              style="cursor: pointer"
-              (click)="removeArea(factory, j)"
-              >{{ area }}</span
-            >
-            }
+      <div class="factory-section">
+        <div class="row">
+          <div class="col-md-4">
+            <label for="factoryName{{ i }}" class="form-label">廠區名稱</label>
             <input
               type="text"
-              class="form-control w-auto"
-              id="areas"
-              name="areas"
+              class="form-control"
+              id="factoryName{{ i }}"
+              name="factoryName{{ i }}"
+              [(ngModel)]="factory.name"
+              placeholder="輸入廠區名稱"
+            />
+          </div>
+          <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label for="areas{{ i }}" class="form-label mb-0">作業區域</label>
+              <button type="button" class="btn btn-danger btn-sm" (click)="removeFactory(i)">
+                <i class="bi bi-trash"></i> 移除廠區
+              </button>
+            </div>
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+              @for (area of factory.areas; track area; let j = $index) {
+              <span
+                class="badge bg-secondary area-item"
+                style="cursor: pointer"
+                (click)="removeArea(factory, j)"
+                title="點擊移除"
+                >{{ area }} <i class="bi bi-x"></i></span
+              >
+              }
+            </div>
+            <input
+              type="text"
+              class="form-control"
+              id="areas{{ i }}"
+              name="areas{{ i }}"
+              placeholder="輸入作業區域並按 Enter"
               (keydown.enter)="addArea($event, factory)"
             />
-            <button class="btn btn-danger" (click)="removeFactory(i)">
-              <i class="bi bi-trash"></i>
-            </button>
+            <small class="form-text text-muted">按 Enter 鍵新增作業區域，點擊標籤可移除</small>
           </div>
         </div>
       </div>
       }
+      
+      @if (site.factories.length === 0) {
+      <div class="text-center py-3 text-muted">
+        <i class="bi bi-building"></i>
+        <p class="mb-0">尚未新增任何廠區</p>
+        <small>點擊上方「新增廠區」按鈕開始建立</small>
+      </div>
+      }
     </div>
 
+    <!-- 成功/錯誤訊息 -->
+    @if (submitMessage) {
+    <div 
+      class="alert" 
+      [class.alert-success]="submitMessageType === 'success'"
+      [class.alert-danger]="submitMessageType === 'error'"
+      role="alert">
+      <i 
+        class="bi me-2"
+        [class.bi-check-circle-fill]="submitMessageType === 'success'"
+        [class.bi-exclamation-triangle-fill]="submitMessageType === 'error'">
+      </i>
+      {{ submitMessage }}
+    </div>
+    }
+
     <div class="d-flex gap-2">
-      <button type="submit" class="btn btn-primary">儲存</button>
+      <button 
+        type="submit" 
+        class="btn btn-primary"
+        [disabled]="isSubmitting">
+        @if (isSubmitting) {
+          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+          儲存中...
+        } @else {
+          <i class="bi bi-save me-2"></i>
+          儲存
+        }
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-secondary"
+        [disabled]="isSubmitting"
+        (click)="router.navigate(['/sitelist'])">
+        <i class="bi bi-arrow-left me-2"></i>
+        返回工地列表
+      </button>
     </div>
   </form>
 </div>

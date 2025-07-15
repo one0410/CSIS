@@ -20,8 +20,6 @@ export class SiteListComponent {
 
   }
 
-  
-
   isExpired(endDate: string): boolean {
     const today = new Date();
     const endDateObj = new Date(endDate);

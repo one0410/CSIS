@@ -6,3 +6,32 @@
     color: red;
   }
 }
+
+// 廠區區塊樣式
+.factory-section {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #f8f9fa;
+}
+
+// 作業類別標籤樣式
+.badge {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+// 表單驗證樣式
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+
+// 載入按鈕樣式
+.btn:disabled {
+  cursor: not-allowed;
+}

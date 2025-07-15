@@ -1,0 +1,40 @@
+<div class="container-fluid p-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- 頁面標題 -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3><i class="bi bi-calendar-week me-2"></i>週報表</h3>
+      </div>
+
+      <!-- 開發中提示卡片 -->
+      <div class="card border-warning">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-tools me-2"></i>功能開發中
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="text-center py-5">
+            <i class="bi bi-gear-fill display-1 text-warning mb-3"></i>
+            <h4 class="text-muted">週報表功能正在開發中</h4>
+            <p class="text-muted">此功能將提供工地每週施工進度、人員出勤、設備使用等綜合報表</p>
+            <div class="mt-4">
+              <h6 class="text-muted">預計功能包含：</h6>
+              <ul class="list-unstyled text-start d-inline-block">
+                <li><i class="bi bi-check-circle text-success me-2"></i>每週施工進度統計</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>人員出勤紀錄</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>設備使用狀況</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>安全事件統計</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>天氣狀況記錄</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>週報表匯出功能</li>
+              </ul>
+            </div>
+            <small class="text-muted">
+              工地 ID: {{ siteId() }}
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

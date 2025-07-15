@@ -355,7 +355,7 @@ export class SiteFormListComponent implements AfterViewInit {
         else if (form.formType === 'toolboxMeeting') displayOrder = 1; // 工具箱會議排第二
         else if (form.formType === 'environmentChecklist') displayOrder = 2; // 環安衛自主檢點表排第三
         else if (form.formType === 'specialWorkChecklist') displayOrder = 3; // 特殊作業工安自主檢點表排第四
-        else if (form.formType === 'safetyPatrolChecklist') displayOrder = 4; // 公安巡迴檢查表排第五
+        else if (form.formType === 'safetyPatrolChecklist') displayOrder = 4; // 工安巡迴檢查表排第五
         else if (form.formType === 'training') displayOrder = 5; // 教育訓練排第六
         
         // 工地許可單特殊處理，顯示為跨天事件
@@ -604,7 +604,7 @@ export class SiteFormListComponent implements AfterViewInit {
       case 'specialWorkChecklist':
         return '特殊作業自檢表-' + (form as any).workType;
       case 'safetyPatrolChecklist':
-        return '公安巡迴檢查表';
+        return '工安巡迴檢查表';
       case 'defectRecord':
         return '缺失記錄單';
       case 'safetyIssueRecord':
@@ -724,7 +724,7 @@ export class SiteFormListComponent implements AfterViewInit {
             route = ['/site', this.siteId, 'forms', 'environment-check-list', eventId];
           } else if (title.includes('特殊作業') || title.includes('檢點表')) {
             route = ['/site', this.siteId, 'forms', 'special-work-checklist', eventId];
-          } else if (title.includes('公安巡迴檢查表')) {
+          } else if (title.includes('工安巡迴檢查表')) {
             route = ['/site', this.siteId, 'forms', 'safety-patrol-checklist', eventId];
           } else if (title.includes('缺失記錄') || title.includes('安全缺失')) {
             route = ['/site', this.siteId, 'forms', 'safety-issue-record', eventId];
@@ -927,12 +927,12 @@ export class SiteFormListComponent implements AfterViewInit {
     }
   }
 
-  // 導航到創建公安巡迴檢查表頁面
+  // 導航到創建工安巡迴檢查表頁面
   createSafetyPatrolChecklist(): void {
     if (this.siteId) {
       this.router.navigate(['/site', this.siteId, 'forms', 'create-safety-patrol-checklist']);
     } else {
-      console.error('缺少工地ID，無法導航到公安巡迴檢查表頁面');
+      console.error('缺少工地ID，無法導航到工安巡迴檢查表頁面');
     }
   }
 
@@ -1007,7 +1007,7 @@ export class SiteFormListComponent implements AfterViewInit {
            userSiteRole === 'secretary';
   }
 
-  // 檢查當前使用者是否有權限新增公安巡迴檢查表
+  // 檢查當前使用者是否有權限新增工安巡迴檢查表
   canCreateSafetyPatrolChecklist(): boolean {
     const user = this.currentUser();
     if (!user || !this.siteId) return false;
@@ -1015,7 +1015,7 @@ export class SiteFormListComponent implements AfterViewInit {
     // 取得當前使用者在此工地的角色
     const userSiteRole = user.belongSites?.find(site => site.siteId === this.siteId)?.role;
     
-    // 只有專案經理可以新增公安巡迴檢查表
+    // 只有專案經理可以新增工安巡迴檢查表
     return userSiteRole === 'projectManager';
   }
 

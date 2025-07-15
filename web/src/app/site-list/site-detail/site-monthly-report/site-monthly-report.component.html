@@ -1,0 +1,40 @@
+<div class="container-fluid p-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- 頁面標題 -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3><i class="bi bi-calendar3 me-2"></i>月報表</h3>
+      </div>
+
+      <!-- 開發中提示卡片 -->
+      <div class="card border-info">
+        <div class="card-header bg-info text-white">
+          <h5 class="card-title mb-0">
+            <i class="bi bi-tools me-2"></i>功能開發中
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="text-center py-5">
+            <i class="bi bi-gear-fill display-1 text-info mb-3"></i>
+            <h4 class="text-muted">月報表功能正在開發中</h4>
+            <p class="text-muted">此功能將提供工地每月施工總覽、成本分析、績效評估等深度報表</p>
+            <div class="mt-4">
+              <h6 class="text-muted">預計功能包含：</h6>
+              <ul class="list-unstyled text-start d-inline-block">
+                <li><i class="bi bi-check-circle text-success me-2"></i>月度施工進度統計</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>成本支出分析</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>人員績效評估</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>設備運轉效率</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>安全事故統計</li>
+                <li><i class="bi bi-check-circle text-success me-2"></i>月報表匯出與歸檔</li>
+              </ul>
+            </div>
+            <small class="text-muted">
+              工地 ID: {{ siteId() }}
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 
