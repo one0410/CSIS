@@ -52,8 +52,8 @@ if [ ! -d ".git" ]; then
     error_exit "當前目錄不是 Git 倉庫"
 fi
 
-# 檢查是否有未提交的變更
-if [ -n "$(git status --porcelain)" ]; then
+# 檢查是否有未提交的變更 (忽略檔案權限變更)
+if [ -n "$(git -c core.filemode=false status --porcelain)" ]; then
     log "警告: 發現未提交的變更，將會被覆蓋"
     read -p "是否繼續？ (y/N): " -n 1 -r
     echo
