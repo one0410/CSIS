@@ -936,6 +936,15 @@ export class SiteFormListComponent implements AfterViewInit {
     }
   }
 
+  // 導航到創建教育訓練頁面
+  createTraining(): void {
+    if (this.siteId) {
+      this.router.navigate(['/site', this.siteId, 'training', 'create']);
+    } else {
+      console.error('缺少工地ID，無法導航到教育訓練頁面');
+    }
+  }
+
   // 檢查當前使用者是否有權限新增環安衛自主檢點表
   canCreateEnvironmentCheckList(): boolean {
     const user = this.currentUser();
@@ -944,8 +953,10 @@ export class SiteFormListComponent implements AfterViewInit {
     // 取得當前使用者在此工地的角色
     const userSiteRole = user.belongSites?.find(site => site.siteId === this.siteId)?.role;
     
-    // 只有專案經理、環安主管和環安工程師可以新增環安衛自主檢點表
+    // 專案經理、專案工程師、工地經理、環安主管、環安工程師可以新增環安衛自主檢點表
     return userSiteRole === 'projectManager' || 
+           userSiteRole === 'projectEngineer' || 
+           userSiteRole === 'siteManager' || 
            userSiteRole === 'safetyManager' || 
            userSiteRole === 'safetyEngineer';
   }
@@ -958,11 +969,13 @@ export class SiteFormListComponent implements AfterViewInit {
     // 取得當前使用者在此工地的角色
     const userSiteRole = user.belongSites?.find(site => site.siteId === this.siteId)?.role;
     
-    // 只有專案經理、專案秘書、專案工程師、工地經理可以新增工地許可單
+    // 所有角色都可以新增工地許可單
     return userSiteRole === 'projectManager' || 
            userSiteRole === 'secretary' || 
            userSiteRole === 'projectEngineer' || 
-           userSiteRole === 'siteManager';
+           userSiteRole === 'siteManager' || 
+           userSiteRole === 'safetyManager' || 
+           userSiteRole === 'safetyEngineer';
   }
 
   // 檢查當前使用者是否有權限新增工具箱會議
@@ -973,11 +986,11 @@ export class SiteFormListComponent implements AfterViewInit {
     // 取得當前使用者在此工地的角色
     const userSiteRole = user.belongSites?.find(site => site.siteId === this.siteId)?.role;
     
-    // 只有專案經理、專案秘書、專案工程師、工地經理可以新增工具箱會議
+    // 專案經理、工地經理、環安主管、環安工程師可以新增工具箱會議
     return userSiteRole === 'projectManager' || 
-           userSiteRole === 'secretary' || 
-           userSiteRole === 'projectEngineer' || 
-           userSiteRole === 'siteManager';
+           userSiteRole === 'siteManager' || 
+           userSiteRole === 'safetyManager' || 
+           userSiteRole === 'safetyEngineer';
   }
 
   // 檢查當前使用者是否有權限新增特殊作業自主檢點表
@@ -988,10 +1001,12 @@ export class SiteFormListComponent implements AfterViewInit {
     // 取得當前使用者在此工地的角色
     const userSiteRole = user.belongSites?.find(site => site.siteId === this.siteId)?.role;
     
-    // 只有專案經理、專案秘書、工地經理可以新增特殊作業自主檢點表
+    // 專案經理、專案工程師、工地經理、環安主管、環安工程師可以新增特殊作業自主檢點表
     return userSiteRole === 'projectManager' || 
-           userSiteRole === 'secretary' || 
-           userSiteRole === 'siteManager';
+           userSiteRole === 'projectEngineer' || 
+           userSiteRole === 'siteManager' || 
+           userSiteRole === 'safetyManager' || 
+           userSiteRole === 'safetyEngineer';
   }
 
   // 檢查當前使用者是否有權限新增缺失紀錄單
@@ -1002,9 +1017,12 @@ export class SiteFormListComponent implements AfterViewInit {
     // 取得當前使用者在此工地的角色
     const userSiteRole = user.belongSites?.find(site => site.siteId === this.siteId)?.role;
     
-    // 只有專案經理、專案秘書可以新增缺失紀錄單
+    // 專案經理、專案工程師、工地經理、環安主管、環安工程師可以新增缺失紀錄單
     return userSiteRole === 'projectManager' || 
-           userSiteRole === 'secretary';
+           userSiteRole === 'projectEngineer' || 
+           userSiteRole === 'siteManager' || 
+           userSiteRole === 'safetyManager' || 
+           userSiteRole === 'safetyEngineer';
   }
 
   // 檢查當前使用者是否有權限新增工安巡迴檢查表
@@ -1015,8 +1033,26 @@ export class SiteFormListComponent implements AfterViewInit {
     // 取得當前使用者在此工地的角色
     const userSiteRole = user.belongSites?.find(site => site.siteId === this.siteId)?.role;
     
-    // 只有專案經理可以新增工安巡迴檢查表
-    return userSiteRole === 'projectManager';
+    // 只有環安主管、環安工程師可以新增工安巡迴檢查表
+    return userSiteRole === 'safetyManager' || 
+           userSiteRole === 'safetyEngineer';
+  }
+
+  // 檢查當前使用者是否有權限新增教育訓練
+  canCreateTraining(): boolean {
+    const user = this.currentUser();
+    if (!user || !this.siteId) return false;
+    
+    // 取得當前使用者在此工地的角色
+    const userSiteRole = user.belongSites?.find(site => site.siteId === this.siteId)?.role;
+    
+    // 所有角色都可以新增教育訓練
+    return userSiteRole === 'projectManager' || 
+           userSiteRole === 'secretary' || 
+           userSiteRole === 'projectEngineer' || 
+           userSiteRole === 'siteManager' || 
+           userSiteRole === 'safetyManager' || 
+           userSiteRole === 'safetyEngineer';
   }
 
   // 初始化權限說明 Modal

@@ -38,7 +38,6 @@ export interface TrainingForm extends SiteForm {
   courseName: string; // 課程名稱
   instructor: string; // 講師
   attendanceCount: number;
-  participants: ParticipantSignature[];
   workerSignatures: SignatureData[];
   remarks: string;
   status: 'draft' | 'published' | 'revoked';
@@ -92,7 +91,6 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     instructor: '',
     attendanceCount: 0,
     applyDate: dayjs().format('YYYY-MM-DD'),
-    participants: [],
     workerSignatures: [],
     remarks: '',
     status: 'draft',
@@ -132,7 +130,8 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
   }
 
   private initializeParticipants(): void {
-    this.formData.participants = [];
+    // 初始化工人簽名陣列
+    this.formData.workerSignatures = [];
     this.formData.attendanceCount = 0; // 實際簽到人數
   }
 
@@ -226,17 +225,9 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
         if (!this.formData.remarks) {
           this.formData.remarks = '';
         }
-        // 如果沒有參與者資料或少於40個，初始化為40個
-        if (!this.formData.participants || this.formData.participants.length < 40) {
-          this.initializeParticipants();
-          // 如果有現有資料，保留它們
-          if (form.participants && form.participants.length > 0) {
-            form.participants.forEach((participant: ParticipantSignature, index: number) => {
-              if (index < 40) {
-                this.formData.participants[index] = { ...participant };
-              }
-            });
-          }
+        // 確保 workerSignatures 存在
+        if (!this.formData.workerSignatures) {
+          this.formData.workerSignatures = [];
         }
       }
 
@@ -274,9 +265,18 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
       // 標記已簽名的工人（檢查所有未作廢表單的簽名記錄）
       if (allWorkerSignatures.length > 0) {
         this.projectWorkers.forEach((worker) => {
-          worker.hasSigned = allWorkerSignatures.some(
-            (sig) => sig.idno === worker.idno || sig.tel === worker.tel
-          );
+          // 清理工人的身分證號碼和電話號碼用於比對
+          const workerIdno = worker.idno ? worker.idno.toString().trim().toUpperCase() : '';
+          const workerTel = worker.tel ? worker.tel.toString().trim().replace(/\D/g, '') : '';
+          
+          worker.hasSigned = allWorkerSignatures.some((sig) => {
+            // 清理簽名中的身分證號碼和電話號碼
+            const sigIdno = sig.idno ? sig.idno.toString().trim().toUpperCase() : '';
+            const sigTel = sig.tel ? sig.tel.toString().trim().replace(/\D/g, '') : '';
+            
+            return (workerIdno && sigIdno && workerIdno === sigIdno) ||
+                   (workerTel && sigTel && workerTel === sigTel);
+          });
         });
       }
     } catch (error) {
@@ -295,13 +295,19 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
       return;
     }
 
+    // 清理輸入的身分證號碼或電話號碼
+    const cleanInput = this.verificationIdOrPhone.toString().trim();
+    const cleanInputIdno = cleanInput.toUpperCase(); // 身分證號碼轉大寫
+    const cleanInputTel = cleanInput.replace(/\D/g, ''); // 電話號碼只保留數字
+    
     // 查找工人
-    const worker = this.projectWorkers.find(
-      (w) =>
-        this.verificationIdOrPhone &&
-        (w.idno === this.verificationIdOrPhone ||
-          w.tel === this.verificationIdOrPhone)
-    );
+    const worker = this.projectWorkers.find((w) => {
+      const workerIdno = w.idno ? w.idno.toString().trim().toUpperCase() : '';
+      const workerTel = w.tel ? w.tel.toString().trim().replace(/\D/g, '') : '';
+      
+      return (workerIdno && workerIdno === cleanInputIdno) ||
+             (workerTel && workerTel === cleanInputTel);
+    });
 
     // 檢查工人是否存在
     if (!worker) {
@@ -309,13 +315,17 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    // 檢查工人是否已簽名（在表格中查找）
-    const alreadySigned = this.formData.participants.some(
-      (participant) => 
-        participant.name === worker.name && 
-        participant.signatureData && 
-        participant.signatureData.length > 0
-    );
+    // 檢查工人是否已簽名（在 workerSignatures 中查找）
+    const workerIdno = worker.idno ? worker.idno.toString().trim().toUpperCase() : '';
+    const workerTel = worker.tel ? worker.tel.toString().trim().replace(/\D/g, '') : '';
+    
+    const alreadySigned = this.formData.workerSignatures.some((signature) => {
+      const sigIdno = signature.idno ? signature.idno.toString().trim().toUpperCase() : '';
+      const sigTel = signature.tel ? signature.tel.toString().trim().replace(/\D/g, '') : '';
+      
+      return (workerIdno && sigIdno && workerIdno === sigIdno) ||
+             (workerTel && sigTel && workerTel === sigTel);
+    });
 
     if (alreadySigned) {
       this.verificationError = `此工人 (${worker.name}) 已經簽名過`;
@@ -337,40 +347,39 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     try {
       const signature = await this.signatureDialog.open();
       if (signature && this.currentWorker) {
-        // 找到第一個空的位置填入工人資料
-        const emptyIndex = this.formData.participants.findIndex(
-          (participant) => !participant.name || participant.name.trim() === ''
-        );
-
-        if (emptyIndex !== -1) {
-          // 填入工人資料到表格中
-          this.formData.participants[emptyIndex] = {
-            ...this.formData.participants[emptyIndex],
-            contractorName: this.currentWorker.contractingCompanyName,
-            name: this.currentWorker.name,
-            signatureData: signature,
-            arrivalTime: dayjs().format('HH:mm'),
-            score: 100 // 預設分數
-          };
-
-          // 更新實際簽到人數
-          this.updateAttendanceCount();
-
-          // 標記此工人已簽名
-          const workerIndex = this.projectWorkers.findIndex(
-            (w) => w._id === this.currentWorker!._id
-          );
-          if (workerIndex !== -1) {
-            this.projectWorkers[workerIndex].hasSigned = true;
-          }
-
-          // 保存表單
-          await this.saveForm();
-          
-          console.log('工人簽名已加入表格');
-        } else {
+        // 檢查 workerSignatures 陣列是否已經滿了（40個）
+        if (this.formData.workerSignatures.length >= 40) {
           alert('簽到表已滿，無法再新增簽名');
+          return;
         }
+
+        // 將工人簽名資料加入 workerSignatures 陣列
+        const workerSignature: SignatureData = {
+          name: this.currentWorker.name,
+          idno: this.currentWorker.idno,
+          tel: this.currentWorker.tel,
+          signature: signature,
+          signedAt: new Date(),
+          company: this.currentWorker.contractingCompanyName
+        };
+
+        this.formData.workerSignatures.push(workerSignature);
+
+        // 更新實際簽到人數
+        this.updateAttendanceCount();
+
+        // 標記此工人已簽名
+        const workerIndex = this.projectWorkers.findIndex(
+          (w) => w._id === this.currentWorker!._id
+        );
+        if (workerIndex !== -1) {
+          this.projectWorkers[workerIndex].hasSigned = true;
+        }
+
+        // 保存表單
+        await this.saveForm();
+        
+        console.log('工人簽名已加入 workerSignatures 陣列');
       }
     } catch (error) {
       console.error('簽名對話框操作失敗', error);
@@ -379,25 +388,33 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
 
   // 更新實際簽到人數
   private updateAttendanceCount(): void {
-    this.formData.attendanceCount = this.formData.participants.filter(
-      (participant) => participant.name && participant.name.trim() !== ''
-    ).length;
+    this.formData.attendanceCount = this.formData.workerSignatures.length;
   }
 
-  // 動態取得或創建指定索引的參與者資料
+  // 動態取得或創建指定索引的參與者資料（基於 workerSignatures）
   getParticipant(index: number): ParticipantSignature {
-    // 確保陣列有足夠的元素
-    while (this.formData.participants.length <= index) {
-      this.formData.participants.push({
-        no: this.formData.participants.length + 1,
-        contractorName: '',
-        name: '',
-        signatureData: '',
-        arrivalTime: '',
-        score: 0
-      });
+    // 如果 workerSignatures 陣列中有對應的資料，轉換為 ParticipantSignature 格式
+    if (index < this.formData.workerSignatures.length) {
+      const signature = this.formData.workerSignatures[index];
+      return {
+        no: index + 1,
+        contractorName: signature.company || '',
+        name: signature.name,
+        signatureData: signature.signature,
+        arrivalTime: signature.signedAt ? dayjs(signature.signedAt).format('HH:mm') : '',
+        score: 100 // 預設分數
+      };
     }
-    return this.formData.participants[index];
+    
+    // 如果沒有對應的簽名資料，返回空的參與者資料
+    return {
+      no: index + 1,
+      contractorName: '',
+      name: '',
+      signatureData: '',
+      arrivalTime: '',
+      score: 0
+    };
   }
 
   showWorkerVerificationModal(): void {
@@ -426,10 +443,24 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
   }
 
   async handleSignatureSaved(signatureData: string) {
+    // 這個函數現在主要用於手動簽名（非工人驗證的簽名）
+    // 因為工人簽名現在直接通過 openWorkerSignatureDialog 處理
     if (this.currentParticipantIndex >= 0) {
-      // 更新簽名資料
-      this.formData.participants[this.currentParticipantIndex].signatureData = signatureData;
-      this.formData.participants[this.currentParticipantIndex].arrivalTime = dayjs().format('HH:mm');
+      // 檢查是否已經達到簽名上限
+      if (this.formData.workerSignatures.length >= 40) {
+        alert('簽到表已滿，無法再新增簽名');
+        return;
+      }
+
+      // 創建一個手動簽名記錄（沒有身分證號碼和電話的簽名）
+      const manualSignature: SignatureData = {
+        name: `手動簽名 ${this.formData.workerSignatures.length + 1}`,
+        signature: signatureData,
+        signedAt: new Date(),
+        company: ''
+      };
+
+      this.formData.workerSignatures.push(manualSignature);
       
       // 更新實際簽到人數
       this.updateAttendanceCount();
@@ -438,10 +469,10 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
       if (this.formId) {
         try {
           await this.mongodbService.patch('siteForm', this.formId, {
-            participants: this.formData.participants,
+            workerSignatures: this.formData.workerSignatures,
             attendanceCount: this.formData.attendanceCount
           });
-          console.log('簽名已儲存');
+          console.log('手動簽名已儲存');
         } catch (error) {
           console.error('儲存簽名失敗', error);
         }
@@ -449,13 +480,7 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     }
   }
 
-  addParticipant() {
-    // 移除此方法，因為現在是固定40格
-  }
 
-  removeParticipant(index: number) {
-    // 移除此方法，因為現在是固定40格
-  }
 
   async saveForm(): Promise<void> {
     // 當非工人簽名模式時，才進行欄位驗證

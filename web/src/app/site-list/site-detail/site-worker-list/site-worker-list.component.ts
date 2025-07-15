@@ -133,10 +133,16 @@ export class SiteWorkerListComponent implements OnInit {
         if (form.workerSignatures && form.workerSignatures.length > 0) {
           form.workerSignatures.forEach((signature: any) => {
             if (signature.idno) {
-              signedWorkerIds.add(signature.idno);
+              // 清除可能的空格並轉換為大寫統一比對
+              const cleanIdno = signature.idno.toString().trim().toUpperCase();
+              signedWorkerIds.add(cleanIdno);
             }
             if (signature.tel) {
-              signedWorkerIds.add(signature.tel);
+              // 清除可能的空格和特殊字符
+              const cleanTel = signature.tel.toString().trim().replace(/\D/g, '');
+              if (cleanTel) {
+                signedWorkerIds.add(cleanTel);
+              }
             }
           });
         }
@@ -144,8 +150,15 @@ export class SiteWorkerListComponent implements OnInit {
       
       // 為每個工人設定危害告知狀態
       this.siteWorkers.forEach(worker => {
-                const hasHazardNotice = signedWorkerIds.has(worker.idno) ||                                (worker.tel ? signedWorkerIds.has(worker.tel) : false);
-        this.workerHazardNoticeStatus.set(worker._id!, hasHazardNotice);
+        if (!worker._id) return; // 跳過沒有 ID 的工人
+        
+        // 清理工人的身分證號碼和電話號碼用於比對
+        const workerIdno = worker.idno ? worker.idno.toString().trim().toUpperCase() : '';
+        const workerTel = worker.tel ? worker.tel.toString().trim().replace(/\D/g, '') : '';
+        
+        const hasHazardNotice = Boolean((workerIdno && signedWorkerIds.has(workerIdno)) ||
+                                       (workerTel && signedWorkerIds.has(workerTel)));
+        this.workerHazardNoticeStatus.set(worker._id, hasHazardNotice);
       });
       
     } catch (error) {
@@ -155,7 +168,8 @@ export class SiteWorkerListComponent implements OnInit {
 
   // 檢查工人是否有危害告知
   hasHazardNotice(worker: Worker): boolean {
-    return this.workerHazardNoticeStatus.get(worker._id!) || false;
+    if (!worker._id) return false;
+    return this.workerHazardNoticeStatus.get(worker._id) || false;
   }
 
   // 從教育訓練表單中查詢工人簽名狀態
@@ -166,33 +180,57 @@ export class SiteWorkerListComponent implements OnInit {
       // 清空之前的狀態
       this.workerTrainingStatus.clear();
       
-      // 獲取該工地的所有教育訓練表單
+      // 獲取該工地的所有教育訓練表單（排除已作廢的表單）
       this.trainingForms = await this.mongodbService.get('siteForm', {
         siteId: this.siteId,
-        formType: 'training'
+        formType: 'training',
+        status: { $ne: 'revoked' }
       });
+      
+      console.log('載入的教育訓練表單:', this.trainingForms);
       
       // 收集所有已簽名的工人身份證號碼或電話號碼
       const signedWorkerIds = new Set<string>();
       
       this.trainingForms.forEach((form: any) => {
+        console.log('檢查表單:', form._id, '簽名資料:', form.workerSignatures);
+        
         if (form.workerSignatures && form.workerSignatures.length > 0) {
           form.workerSignatures.forEach((signature: any) => {
+            console.log('處理簽名:', signature);
             if (signature.idno) {
-              signedWorkerIds.add(signature.idno);
+              // 清除可能的空格並轉換為大寫統一比對
+              const cleanIdno = signature.idno.toString().trim().toUpperCase();
+              signedWorkerIds.add(cleanIdno);
+              console.log('添加身分證號碼:', cleanIdno);
             }
             if (signature.tel) {
-              signedWorkerIds.add(signature.tel);
+              // 清除可能的空格和特殊字符
+              const cleanTel = signature.tel.toString().trim().replace(/\D/g, '');
+              if (cleanTel) {
+                signedWorkerIds.add(cleanTel);
+                console.log('添加電話號碼:', cleanTel);
+              }
             }
           });
         }
       });
       
+      console.log('所有已簽名的工人ID:', Array.from(signedWorkerIds));
+      
       // 為每個工人設定教育訓練狀態
       this.siteWorkers.forEach(worker => {
-        const hasTraining = signedWorkerIds.has(worker.idno) ||
-                           (worker.tel ? signedWorkerIds.has(worker.tel) : false);
-        this.workerTrainingStatus.set(worker._id!, hasTraining);
+        if (!worker._id) return; // 跳過沒有 ID 的工人
+        
+        // 清理工人的身分證號碼和電話號碼用於比對
+        const workerIdno = worker.idno ? worker.idno.toString().trim().toUpperCase() : '';
+        const workerTel = worker.tel ? worker.tel.toString().trim().replace(/\D/g, '') : '';
+        
+        const hasTraining = Boolean((workerIdno && signedWorkerIds.has(workerIdno)) ||
+                                   (workerTel && signedWorkerIds.has(workerTel)));
+        
+        console.log(`工人 ${worker.name} (${workerIdno}) 教育訓練狀態:`, hasTraining);
+        this.workerTrainingStatus.set(worker._id, hasTraining);
       });
       
     } catch (error) {
@@ -202,7 +240,8 @@ export class SiteWorkerListComponent implements OnInit {
 
   // 檢查工人是否有教育訓練
   hasTraining(worker: Worker): boolean {
-    return this.workerTrainingStatus.get(worker._id!) || false;
+    if (!worker._id) return false;
+    return this.workerTrainingStatus.get(worker._id) || false;
   }
 
   async loadAllWorkers() {

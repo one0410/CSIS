@@ -117,12 +117,10 @@ export class SiteTrainingComponent implements OnInit {
 
   // 計算有簽到的參與者人數
   getSignedParticipantsCount(training: TrainingForm): number {
-    if (!training.participants) {
+    if (!training.workerSignatures) {
       return 0;
     }
-    return training.participants.filter(
-      participant => participant.signatureData && participant.signatureData.trim() !== ''
-    ).length;
+    return training.workerSignatures.length;
   }
 
   // 回復作廢的教育訓練表單
