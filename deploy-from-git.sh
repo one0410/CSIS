@@ -3,6 +3,11 @@
 # CSIS Git 自動部署腳本 (Linux)
 # 使用方式: ./deploy-from-git.sh [branch_name]
 
+# 自動修正腳本執行權限
+chmod +x "$0" 2>/dev/null || true
+chmod +x export.sh 2>/dev/null || true
+chmod +x import.sh 2>/dev/null || true
+
 set -e  # 遇到錯誤立即退出
 
 echo "========================================"
@@ -75,6 +80,11 @@ log "拉取最新代碼 (分支: $BRANCH)..."
 git fetch origin || error_exit "無法從遠端拉取代碼"
 git reset --hard "origin/$BRANCH" || error_exit "無法重置到最新代碼"
 git clean -fd || error_exit "無法清理工作目錄"
+
+# 重新設定腳本執行權限
+chmod +x deploy-from-git.sh 2>/dev/null || true
+chmod +x export.sh 2>/dev/null || true
+chmod +x import.sh 2>/dev/null || true
 
 log "代碼更新完成"
 

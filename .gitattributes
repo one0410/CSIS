@@ -1,0 +1,41 @@
+# Git 屬性設定檔案
+# 確保 shell 腳本在各平台間保持一致的行尾符和權限
+
+# 設定所有 shell 腳本使用 LF 行尾符
+*.sh text eol=lf
+
+# 特別指定主要的部署腳本
+deploy-from-git.sh text eol=lf
+export.sh text eol=lf
+import.sh text eol=lf
+
+# 設定 batch 檔案使用 CRLF (Windows)
+*.bat text eol=crlf
+
+# 確保 JavaScript/TypeScript 檔案使用 LF
+*.js text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+
+# 確保 HTML/CSS 檔案使用 LF
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+
+# 確保設定檔案使用 LF
+*.yml text eol=lf
+*.yaml text eol=lf
+*.conf text eol=lf
+*.md text eol=lf
+
+# 二進位檔案不做文字處理
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.exe binary
+*.zip binary
+*.tar.gz binary
+*.tar binary 

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# 自動修正腳本執行權限
+chmod +x "$0" 2>/dev/null || true
+
 echo "========================================"
 echo "CSIS Docker Export Script for Linux/macOS"
 echo "========================================"

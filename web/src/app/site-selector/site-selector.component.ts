@@ -42,7 +42,7 @@ export class SiteSelectorComponent {
         for (let i = 0; i < 3; i++) {
           let s = this.generateRandomSite(i);
           if (i == 2) {
-            s.endDate = '2024-07-01'; // 第2個工地設定為過期
+            s.endDate = '2025-07-01'; // 第2個工地設定為過期
           }
           let result = await this.mongodbService.post('site', s);
           if (result.insertedId) {
