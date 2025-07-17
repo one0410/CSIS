@@ -1,7 +1,9 @@
 <div class="container-fluid bg-light min-vh-100 p-3">
   <div class="card form-card shadow-sm">
     <div class="card-body p-4">
-      <!-- 表單頭部 -->
+      <!-- 實際表單內容容器 -->
+      <div class="print-content">
+        <!-- 表單頭部 -->
       <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
         <div>
           <!-- @if (site()?.formLogo) {
@@ -1811,6 +1813,21 @@
           >
             <i class="bi bi-x-circle me-1"></i>取消
           </button>
+          @if (meetingData._id) {
+            <button
+              type="button"
+              class="btn btn-success px-4 me-2"
+              (click)="generateDocx()"
+              [disabled]="isGeneratingPdf"
+            >
+              @if (isGeneratingPdf) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                生成中...
+              } @else {
+                <i class="bi bi-file-earmark-word me-1"></i>下載Word
+              }
+            </button>
+          }
           <button
             type="button"
             class="btn btn-primary px-4"
@@ -1820,6 +1837,7 @@
           </button>
         </div>
       </form>
+      </div>
     </div>
   </div>
 </div>

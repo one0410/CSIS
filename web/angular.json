@@ -22,7 +22,7 @@
               "jszip",
               "qrcode"
             ],
-            "outputPath": "dist/csis/browser",
+            "outputPath": "dist/csis",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],

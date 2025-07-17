@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
 import { CurrentSiteService } from '../../../../services/current-site.service';
+import { DocxTemplateService } from '../../../../services/docx-template.service';
 import dayjs from 'dayjs';
 
 interface ChecklistItem {
@@ -12,6 +13,7 @@ interface ChecklistItem {
 }
 
 interface ChecklistData {
+  _id?: string;
   siteId: string;
   checkDate: string;
   location: string;
@@ -138,12 +140,16 @@ export class EnvironmentCheckListComponent implements OnInit {
     status: 'draft'
   };
 
+  // 文檔生成狀態
+  isGeneratingDocument: boolean = false;
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private mongodbService: MongodbService,
     private signatureDialog: SignatureDialogService,
-    private currentSiteService: CurrentSiteService
+    private currentSiteService: CurrentSiteService,
+    private docxTemplateService: DocxTemplateService
   ) { }
 
   ngOnInit(): void {
@@ -183,7 +189,7 @@ export class EnvironmentCheckListComponent implements OnInit {
   async loadChecklistData(formId: string): Promise<void> {
     try {
       const data = await this.mongodbService.getById('siteForm', formId);
-      if (data && data.formType === 'safetyChecklist') {
+      if (data && data.formType === 'environmentChecklist') {
         this.checklistData = data;
         // 更新簽名顯示
         this.preWorkSupervisorSignature = data.preWorkSupervisorSignature || '';
@@ -245,7 +251,7 @@ export class EnvironmentCheckListComponent implements OnInit {
     try {
       const formData = {
         ...this.checklistData,
-        formType: 'safetyChecklist',
+        formType: 'environmentChecklist',
         updatedAt: new Date()
       };
 
@@ -260,15 +266,42 @@ export class EnvironmentCheckListComponent implements OnInit {
           createdAt: new Date()
         };
         result = await this.mongodbService.post('siteForm', newFormData);
+        
+        // 新建成功後設置 _id 以便後續可以下載Word
+        if (result && result.insertedId) {
+          this.checklistData._id = result.insertedId;
+          this.formId = result.insertedId;
+        }
       }
 
       if (result) {
         alert('檢查表保存成功');
-        this.router.navigate(['/site', this.siteId, 'forms']);
+        // 不導航，讓用戶可以下載Word
+        // this.router.navigate(['/site', this.siteId, 'forms']);
       }
     } catch (error) {
       console.error('保存檢查表失敗', error);
       alert('保存失敗，請稍後重試');
+    }
+  }
+
+  // Word生成方法
+  async generateDocx(): Promise<void> {
+    if (!this.checklistData._id) {
+      alert('無法生成Word：表單ID不存在');
+      return;
+    }
+
+    this.isGeneratingDocument = true;
+    try {
+      await this.docxTemplateService.generateEnvironmentChecklistDocx(this.checklistData._id);
+      
+    } catch (error) {
+      console.error('生成Word失敗:', error);
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      alert(`Word生成失敗: ${errorMessage}`);
+    } finally {
+      this.isGeneratingDocument = false;
     }
   }
 

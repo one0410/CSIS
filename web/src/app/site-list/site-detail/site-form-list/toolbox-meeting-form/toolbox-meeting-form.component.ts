@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
+import { DocxTemplateService } from '../../../../services/docx-template.service';
 import { Site } from '../../../site-list.component';
 import { CurrentSiteService } from '../../../../services/current-site.service';
 import { SiteForm } from '../../../../model/siteForm.model';
@@ -167,6 +168,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
   siteId: string = '';
   site = computed(() => this.currentSiteService.currentSite());
   today = new Date();
+  isGeneratingPdf: boolean = false; // 文檔生成狀態
 
   // 模板驅動表單的數據模型
   meetingData: ToolboxMeetingForm = {
@@ -253,7 +255,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
           name: '',
           company: '',
           signature: '',
-          signedAt: new Date(),
+          signedAt: undefined,
           idno: '',
           tel: ''
         })),
@@ -263,7 +265,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
           name: '',
           company: '',
           signature: '',
-          signedAt: new Date(),
+          signedAt: undefined,
           idno: '',
           tel: ''
         })),
@@ -273,7 +275,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
           name: '',
           company: '',
           signature: '',
-          signedAt: new Date(),
+          signedAt: undefined,
           idno: '',
           tel: ''
         })),
@@ -283,7 +285,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
           name: '',
           company: '',
           signature: '',
-          signedAt: new Date(),
+          signedAt: undefined,
           idno: '',
           tel: ''
         })),
@@ -366,7 +368,8 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     private router: Router,
     private signatureDialog: SignatureDialogService,
     private currentSiteService: CurrentSiteService,
-    private authService: AuthService
+    private authService: AuthService,
+    private docxTemplateService: DocxTemplateService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -506,7 +509,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
               name: '',
               company: '',
               signature: '',
-              signedAt: new Date(),
+              signedAt: undefined,
               idno: '',
               tel: ''
             }));
@@ -516,7 +519,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
               name: '',
               company: '',
               signature: '',
-              signedAt: new Date(),
+              signedAt: undefined,
               idno: '',
               tel: ''
             }));
@@ -526,7 +529,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
               name: '',
               company: '',
               signature: '',
-              signedAt: new Date(),
+              signedAt: undefined,
               idno: '',
               tel: ''
             }));
@@ -536,7 +539,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
               name: '',
               company: '',
               signature: '',
-              signedAt: new Date(),
+              signedAt: undefined,
               idno: '',
               tel: ''
             }));
@@ -965,5 +968,25 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
   cancel(): void {
     // 返回工地詳情頁面
     this.router.navigate(['/site', this.siteId, 'forms']);
+  }
+
+      // Word生成方法
+  async generateDocx(): Promise<void> {
+    if (!this.meetingData._id) {
+      alert('無法生成Word：表單ID不存在');
+      return;
+    }
+
+    this.isGeneratingPdf = true;
+    try {
+      await this.docxTemplateService.generateToolboxMeetingDocx(this.meetingData._id);
+      
+    } catch (error) {
+      console.error('生成Word失敗:', error);
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      alert(`Word生成失敗: ${errorMessage}`);
+    } finally {
+      this.isGeneratingPdf = false;
+    }
   }
 }

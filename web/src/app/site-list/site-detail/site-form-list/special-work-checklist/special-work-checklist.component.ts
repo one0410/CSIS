@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
 import { CurrentSiteService } from '../../../../services/current-site.service';
+import { DocxTemplateService } from '../../../../services/docx-template.service';
 import { SiteForm } from '../../../../model/siteForm.model';
 import dayjs from 'dayjs';
 import { AuthService } from '../../../../services/auth.service';
@@ -339,13 +340,17 @@ export class SpecialWorkChecklistComponent implements OnInit {
     createdBy: '',
   };
 
+  // 文檔生成狀態
+  isGeneratingDocument: boolean = false;
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private mongodbService: MongodbService,
     private signatureDialog: SignatureDialogService,
     private currentSiteService: CurrentSiteService,
-    private authService: AuthService
+    private authService: AuthService,
+    private docxTemplateService: DocxTemplateService
   ) { }
 
   ngOnInit(): void {
@@ -509,11 +514,18 @@ export class SpecialWorkChecklistComponent implements OnInit {
           createdBy: this.authService.user()?.name || '',
         };
         result = await this.mongodbService.post('siteForm', newFormData);
+        
+        // 新建成功後設置 _id 以便後續可以下載Word
+        if (result && result.insertedId) {
+          this.checklistData._id = result.insertedId;
+          this.formId = result.insertedId;
+        }
       }
 
       if (result) {
         alert('特殊作業自主檢點表保存成功');
-        this.router.navigate(['/site', this.siteId, 'forms']);
+        // 不導航，讓用戶可以下載Word
+        // this.router.navigate(['/site', this.siteId, 'forms']);
       }
     } catch (error) {
       console.error('保存檢查表失敗', error);
@@ -539,6 +551,31 @@ export class SpecialWorkChecklistComponent implements OnInit {
     // 遍歷目標項目並設置為選中的值
     for (const item of targetItems) {
       this.checklistData.items[item.code] = value;
+    }
+  }
+
+  // Word生成方法
+  async generateDocx(): Promise<void> {
+    if (!this.checklistData._id) {
+      alert('無法生成Word：表單ID不存在');
+      return;
+    }
+
+    if (!this.checklistData.workType) {
+      alert('無法生成Word：請先選擇作業類型');
+      return;
+    }
+
+    this.isGeneratingDocument = true;
+    try {
+      await this.docxTemplateService.generateSpecialWorkChecklistDocx(this.checklistData._id);
+      
+    } catch (error) {
+      console.error('生成Word失敗:', error);
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      alert(`Word生成失敗: ${errorMessage}`);
+    } finally {
+      this.isGeneratingDocument = false;
     }
   }
 } 

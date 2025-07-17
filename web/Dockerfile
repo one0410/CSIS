@@ -26,7 +26,7 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # 從建構階段複製建構好的檔案
-COPY --from=builder /app/dist/csis/browser/* /usr/share/nginx/html/
+COPY --from=builder /app/dist/csis/* /usr/share/nginx/html/
 
 # 暴露 80 埠號
 EXPOSE 80

@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
+
+import { DocxTemplateService } from '../../../../services/docx-template.service';
 import dayjs from 'dayjs';
 import { SiteForm } from '../../../../model/siteForm.model';
 import { CurrentSiteService } from '../../../../services/current-site.service';
@@ -55,6 +57,7 @@ export class SitePermitFormComponent implements OnInit {
   site = computed(() => this.currentSiteService.currentSite());
   today = new Date();
   isViewMode: boolean = false; // 是否處於查看模式
+  isGeneratingPdf: boolean = false; // PDF生成狀態
 
   // 定義表單模型
   permitData: SitePermitForm = {
@@ -119,7 +122,9 @@ export class SitePermitFormComponent implements OnInit {
     private router: Router,
     private signatureDialog: SignatureDialogService,
     private currentSiteService: CurrentSiteService,
-    private authService: AuthService
+    private authService: AuthService,
+
+    private docxTemplateService: DocxTemplateService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -315,5 +320,27 @@ export class SitePermitFormComponent implements OnInit {
   cancel(): void {
     // 返回工地詳情頁面
     this.router.navigate(['/site', this.siteId, 'forms']);
+  }
+
+
+
+  // DocX模板生成方法
+  async generateDocx(): Promise<void> {
+    if (!this.permitData._id) {
+      alert('無法生成DOCX：表單ID不存在');
+      return;
+    }
+
+    this.isGeneratingPdf = true; // 重用PDF生成狀態
+    try {
+      await this.docxTemplateService.generateWorkPermitDocx(this.permitData._id);
+      
+    } catch (error) {
+      console.error('生成DOCX失敗:', error);
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      alert(`DOCX生成失敗: ${errorMessage}`);
+    } finally {
+      this.isGeneratingPdf = false;
+    }
   }
 }
