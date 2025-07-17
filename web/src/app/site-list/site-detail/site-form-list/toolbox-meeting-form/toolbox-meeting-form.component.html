@@ -1813,10 +1813,21 @@
           >
             <i class="bi bi-x-circle me-1"></i>取消
           </button>
-          @if (meetingData._id) {
+          <button
+            type="button"
+            class="btn btn-primary px-4"
+            (click)="saveMeeting()"
+          >
+            <i class="bi bi-save me-1"></i>儲存
+          </button>
+        </div>
+
+        <!-- Word下載按鈕區域 -->
+        @if (meetingData._id) {
+          <div class="d-flex justify-content-center mt-3 pt-2 border-top">
             <button
               type="button"
-              class="btn btn-success px-4 me-2"
+              class="btn btn-success px-4"
               (click)="generateDocx()"
               [disabled]="isGeneratingPdf"
             >
@@ -1827,15 +1838,8 @@
                 <i class="bi bi-file-earmark-word me-1"></i>下載Word
               }
             </button>
-          }
-          <button
-            type="button"
-            class="btn btn-primary px-4"
-            (click)="saveMeeting()"
-          >
-            <i class="bi bi-save me-1"></i>儲存
-          </button>
-        </div>
+          </div>
+        }
       </form>
       </div>
     </div>

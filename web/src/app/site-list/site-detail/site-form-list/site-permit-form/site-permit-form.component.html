@@ -54,19 +54,6 @@
               <div class="d-flex gap-2">
                 <button
                   type="button"
-                  class="btn btn-success"
-                  (click)="generateDocx()"
-                  [disabled]="isGeneratingPdf"
-                >
-                  @if (isGeneratingPdf) {
-                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    生成中...
-                  } @else {
-                    <i class="bi bi-file-earmark-word me-1"></i>下載Word
-                  }
-                </button>
-                <button
-                  type="button"
                   class="btn btn-secondary"
                   (click)="cancel()"
                 >
@@ -520,6 +507,25 @@
               <i class="bi bi-save me-1"></i>儲存
             </button>
           </div>
+
+          <!-- Word下載按鈕區域 -->
+          @if (permitData._id) {
+            <div class="d-flex justify-content-center mt-3 pt-2 border-top">
+              <button
+                type="button"
+                class="btn btn-success px-4"
+                (click)="generateDocx()"
+                [disabled]="isGeneratingPdf"
+              >
+                @if (isGeneratingPdf) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  生成中...
+                } @else {
+                  <i class="bi bi-file-earmark-word me-1"></i>下載Word
+                }
+              </button>
+            </div>
+          }
         </form>
       </div>
     </div>

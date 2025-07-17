@@ -512,31 +512,33 @@
         >
           <i class="bi bi-x-circle me-1"></i>取消
         </button>
-        <div class="d-flex gap-2">
-          @if (checklistData._id && checklistData.workType) {
-            <button
-              type="button"
-              class="btn btn-success px-4"
-              (click)="generateDocx()"
-              [disabled]="isGeneratingDocument"
-            >
-              @if (isGeneratingDocument) {
-                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                生成中...
-              } @else {
-                <i class="bi bi-file-earmark-word me-1"></i>下載Word
-              }
-            </button>
-          }
+        <button
+          type="button"
+          class="btn btn-primary px-4"
+          (click)="saveChecklist()"
+        >
+          <i class="bi bi-save me-1"></i>儲存
+        </button>
+      </div>
+
+      <!-- Word下載按鈕區域 -->
+      @if (checklistData._id && checklistData.workType) {
+        <div class="d-flex justify-content-center mt-3 pt-2 border-top">
           <button
             type="button"
-            class="btn btn-primary px-4"
-            (click)="saveChecklist()"
+            class="btn btn-success px-4"
+            (click)="generateDocx()"
+            [disabled]="isGeneratingDocument"
           >
-            <i class="bi bi-save me-1"></i>儲存
+            @if (isGeneratingDocument) {
+              <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              生成中...
+            } @else {
+              <i class="bi bi-file-earmark-word me-1"></i>下載Word
+            }
           </button>
         </div>
-      </div>
+      }
     </div>
   </div>
 </div>
