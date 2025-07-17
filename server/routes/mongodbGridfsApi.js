@@ -385,7 +385,15 @@ app.get('/api/gridfs/file/:id', async (req, res) => {
         const bucket = new GridFSBucket(db);
         
         // 檢查檔案是否存在
-        const files = await bucket.find({ _id: new ObjectId(fileId) }).toArray();
+        // 建立查詢條件：如果 fileId 是有效的 ObjectId 格式，則同時搜尋 _id 和 filename；否則只搜尋 filename
+        let query;
+        if (ObjectId.isValid(fileId)) {
+            query = { $or: [{ _id: new ObjectId(fileId) }, { filename: fileId }] };
+        } else {
+            query = { filename: fileId };
+        }
+        
+        const files = await bucket.find(query).toArray();
         if (!files.length) {
             return res.status(404).json({
                 success: false,
@@ -402,7 +410,7 @@ app.get('/api/gridfs/file/:id', async (req, res) => {
         if (thumbnail && file.contentType && file.contentType.startsWith('image/')) {
             // 使用 sharp 產生縮圖
             const sharp = require('sharp');
-            const downloadStream = bucket.openDownloadStream(new ObjectId(fileId));
+            const downloadStream = bucket.openDownloadStream(file._id);
             
             const transformer = sharp()
                 .resize(150, 150, { 
@@ -412,21 +420,21 @@ app.get('/api/gridfs/file/:id', async (req, res) => {
                 .jpeg({ quality: 80 });
             
             downloadStream.on('error', (error) => {
-                logger.error('檔案下載錯誤', { fileId, error: error.message });
+                logger.error('檔案下載錯誤', { fileId: file._id, error: error.message });
                 handleGridFSError(error, res);
             });
             
             transformer.on('error', (error) => {
-                logger.error('縮圖產生錯誤', { fileId, error: error.message });
+                logger.error('縮圖產生錯誤', { fileId: file._id, error: error.message });
                 handleGridFSError(error, res);
             });
             
             downloadStream.pipe(transformer).pipe(res);
         } else {
             // 直接傳送檔案
-            const downloadStream = bucket.openDownloadStream(new ObjectId(fileId));
+            const downloadStream = bucket.openDownloadStream(file._id);
             downloadStream.on('error', (error) => {
-                logger.error('檔案下載錯誤', { fileId, error: error.message });
+                logger.error('檔案下載錯誤', { fileId: file._id, error: error.message });
                 handleGridFSError(error, res);
             });
             downloadStream.pipe(res);

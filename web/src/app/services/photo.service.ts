@@ -298,4 +298,12 @@ export class PhotoService {
       photos: photos
     }));
   }
+
+  getPhotoThumbnailUrl(filename: string): string {
+    let url = `/api/gridfs/file/${filename}?thumbnail=true`;
+    if (window.location.port === '4200') {
+      url = `http://localhost:3000${url}`;
+    }
+    return url;
+  }
 }

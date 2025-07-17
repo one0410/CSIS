@@ -238,7 +238,7 @@
                <div class="col-md-3">
                  <div class="card position-relative photo-card">
                    <img 
-                     [src]="photo.url" 
+                     [src]="photoService.getPhotoThumbnailUrl(photo.filename)" 
                      [alt]="photo.title"
                      [title]="photo.title"
                      class="card-img-top" 
@@ -254,7 +254,16 @@
                      <i class="bi bi-x-lg"></i>
                    </button>
                    <div class="card-body p-2">
-                     <p class="card-text small mb-0">{{ photo.title }}</p>
+                     <select 
+                       class="form-select form-select-sm"
+                       [value]="photo.improvementStatus"
+                       (change)="onImprovementStatusChange($event, i)"
+                       title="選擇改善狀態"
+                     >
+                       @for (option of improvementStatusOptions; track option.value) {
+                         <option [value]="option.value">{{ option.label }}</option>
+                       }
+                     </select>
                    </div>
                  </div>
                </div>
@@ -515,4 +524,31 @@
       </div>
     </div>
   </div>
-</div> 
+</div>
+
+<style>
+  .photo-card:hover .photo-delete-btn {
+    opacity: 1 !important;
+  }
+  
+  .photo-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .photo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+  
+  .photo-delete-btn {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .photo-delete-btn:hover {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+  }
+</style> 

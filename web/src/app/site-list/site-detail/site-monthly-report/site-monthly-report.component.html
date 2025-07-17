@@ -1,37 +1,113 @@
-<div class="container-fluid p-4">
+<div class="container-fluid p-4 date-selector-container">
   <div class="row">
     <div class="col-12">
-      <!-- 頁面標題 -->
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3><i class="bi bi-calendar3 me-2"></i>月報表</h3>
+        <h2><i class="bi bi-calendar3 me-2"></i>工地月報表</h2>
+        <div class="d-flex align-items-center flex-wrap">
+          <!-- 快速選擇按鈕 -->
+          <div class="btn-group me-3" role="group" aria-label="快速選擇月份">
+            <button 
+              type="button" 
+              class="btn btn-outline-secondary btn-sm"
+              (click)="selectMonth('previous')"
+              [class.active]="isMonthSelected('previous')"
+            >
+              上月
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-outline-secondary btn-sm"
+              (click)="selectMonth('current')"
+              [class.active]="isMonthSelected('current')"
+            >
+              本月
+            </button>
+          </div>
+          
+          <!-- 月份選擇器 -->
+          <div class="d-flex align-items-center">
+            <label for="monthSelector" class="me-2 text-nowrap">選擇月份:</label>
+            <div class="input-group" style="width: 280px;">
+              <button 
+                class="btn btn-outline-secondary" 
+                type="button"
+                (click)="previousMonth()"
+                title="前一月"
+              >
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <input 
+                type="month" 
+                id="monthSelector"
+                class="form-control text-center"
+                [(ngModel)]="selectedMonthInput"
+                (change)="onMonthChange()"
+              >
+              <button 
+                class="btn btn-outline-secondary" 
+                type="button"
+                (click)="nextMonth()"
+                title="後一月"
+                [disabled]="isCurrentMonth()"
+              >
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- 月份顯示 -->
+          <div class="ms-3">
+            <small class="text-muted">
+              {{ getMonthDisplayString(selectedMonth()) }}
+            </small>
+          </div>
+        </div>
       </div>
 
-      <!-- 開發中提示卡片 -->
-      <div class="card border-info">
-        <div class="card-header bg-info text-white">
-          <h5 class="card-title mb-0">
-            <i class="bi bi-tools me-2"></i>功能開發中
-          </h5>
+      <!-- Dashboard 樣式區塊 -->
+      <div class="row mb-4">
+        <!-- 本月出工人數統計 -->
+        <div class="col-lg-6 mb-3">
+          <app-monthly-worker-count [selectedMonth]="selectedMonth()"></app-monthly-worker-count>
         </div>
-        <div class="card-body">
-          <div class="text-center py-5">
-            <i class="bi bi-gear-fill display-1 text-info mb-3"></i>
-            <h4 class="text-muted">月報表功能正在開發中</h4>
-            <p class="text-muted">此功能將提供工地每月施工總覽、成本分析、績效評估等深度報表</p>
-            <div class="mt-4">
-              <h6 class="text-muted">預計功能包含：</h6>
-              <ul class="list-unstyled text-start d-inline-block">
-                <li><i class="bi bi-check-circle text-success me-2"></i>月度施工進度統計</li>
-                <li><i class="bi bi-check-circle text-success me-2"></i>成本支出分析</li>
-                <li><i class="bi bi-check-circle text-success me-2"></i>人員績效評估</li>
-                <li><i class="bi bi-check-circle text-success me-2"></i>設備運轉效率</li>
-                <li><i class="bi bi-check-circle text-success me-2"></i>安全事故統計</li>
-                <li><i class="bi bi-check-circle text-success me-2"></i>月報表匯出與歸檔</li>
-              </ul>
+        
+        <!-- 本月缺失累計 -->
+        <div class="col-lg-6 mb-3">
+          <app-monthly-defect-summary [selectedMonth]="selectedMonth()"></app-monthly-defect-summary>
+        </div>
+      </div>
+
+      <!-- 未來擴展區塊 -->
+      <div class="row mb-4">
+        <div class="col-lg-6 mb-3">
+          <div class="card h-100">
+            <div class="card-header">
+              <h6 class="mb-0">
+                <i class="bi bi-graph-up me-2"></i>月度進度統計
+              </h6>
             </div>
-            <small class="text-muted">
-              工地 ID: {{ siteId() }}
-            </small>
+            <div class="card-body">
+              <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                此功能尚未實作，將顯示月度施工進度統計。
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-lg-6 mb-3">
+          <div class="card h-100">
+            <div class="card-header">
+              <h6 class="mb-0">
+                <i class="bi bi-shield-check me-2"></i>月度安全績效
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                此功能尚未實作，將顯示月度安全績效分析。
+              </div>
+            </div>
           </div>
         </div>
       </div>

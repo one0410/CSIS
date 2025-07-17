@@ -1,12 +1,77 @@
-// 週報表組件樣式
-.card {
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+.date-selector-container {
+  .btn-group .btn.active {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+  }
   
-  .card-header {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  .input-group {
+    .btn:disabled {
+      opacity: 0.5;
+    }
+  }
+  
+  input[type="week"] {
+    font-size: 0.9rem;
   }
 }
 
-.display-1 {
-  opacity: 0.8;
+.card {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e3e6f0;
+  
+  .card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    
+    h6 {
+      color: #5a5c69;
+      font-weight: 600;
+    }
+    
+    .text-muted {
+      font-size: 0.8rem;
+    }
+  }
+}
+
+.alert {
+  border: none;
+  
+  &.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+  }
+}
+
+// 響應式設計
+@media (max-width: 768px) {
+  .date-selector-container {
+    .d-flex.align-items-center.flex-wrap {
+      flex-direction: column;
+      align-items: stretch !important;
+      
+      .btn-group {
+        margin-bottom: 1rem;
+        margin-right: 0 !important;
+      }
+      
+      .d-flex.align-items-center {
+        margin-bottom: 1rem;
+        
+        .input-group {
+          width: 100% !important;
+        }
+      }
+      
+      .ms-3 {
+        margin-left: 0 !important;
+        text-align: center;
+      }
+    }
+  }
+  
+  .col-lg-6 {
+    margin-bottom: 1.5rem !important;
+  }
 } 

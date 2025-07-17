@@ -107,19 +107,7 @@
         </div>
         
         <div class="col-lg-6 mb-3">
-          <div class="card h-100">
-            <div class="card-header">
-              <h6 class="mb-0">
-                <i class="bi bi-file-earmark-spreadsheet me-2"></i>當日表單總數及彙整
-              </h6>
-            </div>
-            <div class="card-body">
-              <div class="alert alert-info mb-0">
-                <i class="bi bi-info-circle me-2"></i>
-                此功能尚未實作，將顯示表單統計數據與進度。
-              </div>
-            </div>
-          </div>
+          <app-daily-form-stats [selectedDate]="selectedDate"></app-daily-form-stats>
         </div>
       </div>
     </div>

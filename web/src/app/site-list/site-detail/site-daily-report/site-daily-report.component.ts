@@ -9,12 +9,13 @@ import { AccumulatedWorkPeriodComponent } from './accumulated-work-period/accumu
 import { FanshienWorkerCountComponent } from './fanshien-worker-count/fanshien-worker-count.component';
 import { DailyWorkContentComponent } from './daily-work-content/daily-work-content.component';
 import { DailyPhotoStatsComponent } from './daily-photo-stats/daily-photo-stats.component';
+import { DailyFormStatsComponent } from './daily-form-stats/daily-form-stats.component';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-site-daily-report',
   standalone: true,
-  imports: [CommonModule, FormsModule, ContractorWorkerCountComponent, AccumulatedWorkPeriodComponent, FanshienWorkerCountComponent, DailyWorkContentComponent, DailyPhotoStatsComponent],
+  imports: [CommonModule, FormsModule, ContractorWorkerCountComponent, AccumulatedWorkPeriodComponent, FanshienWorkerCountComponent, DailyWorkContentComponent, DailyPhotoStatsComponent, DailyFormStatsComponent],
   templateUrl: './site-daily-report.component.html',
   styleUrls: ['./site-daily-report.component.scss']
 })

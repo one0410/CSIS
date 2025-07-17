@@ -1,12 +1,7 @@
 import { Component, Input, OnInit, OnChanges, OnDestroy, computed, signal, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MongodbService } from '../../../../services/mongodb.service';
 import { CurrentSiteService } from '../../../../services/current-site.service';
-
-interface ContractorWorkerCount {
-  contractorName: string;
-  workerCount: number;
-}
+import { WorkerCountService, ContractorWorkerCount } from '../../../../services/worker-count.service';
 
 @Component({
   selector: 'app-contractor-worker-count',
@@ -65,7 +60,7 @@ interface ContractorWorkerCount {
 export class ContractorWorkerCountComponent implements OnInit, OnChanges, OnDestroy {
   @Input() selectedDate!: string;
   
-  private mongodbService = inject(MongodbService);
+  private workerCountService = inject(WorkerCountService);
   private currentSiteService = inject(CurrentSiteService);
   
   contractorWorkerCounts = signal<ContractorWorkerCount[]>([]);
@@ -128,62 +123,15 @@ export class ContractorWorkerCountComponent implements OnInit, OnChanges, OnDest
         this.contractorWorkerCounts.set([]);
         return;
       }
-      const siteId = currentSite._id;
       
       // 記錄當前載入的日期
       this.lastLoadedDate = this.selectedDate;
 
-      // 查詢當日工具箱會議簽名記錄
-      const filter = {
-        siteId: siteId,
-        formType: 'toolboxMeeting',
-        applyDate: this.selectedDate
-      };
-
-      const toolboxMeetings = await this.mongodbService.get('siteForm', filter);
-      
-      // 統計各廠商簽名人數
-      const contractorCountMap = new Map<string, Set<string>>();
-      
-      for (const meeting of toolboxMeetings) {
-        // 從 healthWarnings 中取得4個簽名陣列
-        if (meeting.healthWarnings) {
-          const allSignatureArrays = [
-            meeting.healthWarnings.attendeeMainContractorSignatures || [],
-            meeting.healthWarnings.attendeeSubcontractor1Signatures || [],
-            meeting.healthWarnings.attendeeSubcontractor2Signatures || [],
-            meeting.healthWarnings.attendeeSubcontractor3Signatures || []
-          ];
-          
-          for (const signatures of allSignatureArrays) {
-            for (const signature of signatures) {
-              if (signature && signature.name && signature.signature && signature.company) {
-                const companyName = signature.company.trim();
-                
-                if (!contractorCountMap.has(companyName)) {
-                  contractorCountMap.set(companyName, new Set());
-                }
-                
-                // 使用工人姓名作為唯一識別（同一個工人在同一公司只計算一次）
-                contractorCountMap.get(companyName)!.add(signature.name);
-              }
-            }
-          }
-        }
-      }
-
-      // 轉換為陣列格式，過濾掉沒有簽名或公司名稱為空的項目
-      const counts: ContractorWorkerCount[] = Array.from(contractorCountMap.entries())
-        .filter(([contractorName, workerSet]) => 
-          workerSet.size > 0 && 
-          contractorName && 
-          contractorName.trim() !== ''
-        )
-        .map(([contractorName, workerSet]) => ({
-          contractorName,
-          workerCount: workerSet.size
-        }))
-        .sort((a, b) => b.workerCount - a.workerCount);
+      // 使用統一的服務查詢出工人數
+      const counts = await this.workerCountService.getDailyContractorWorkerCount(
+        currentSite._id, 
+        this.selectedDate
+      );
 
       this.contractorWorkerCounts.set(counts);
     } catch (error) {

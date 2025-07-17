@@ -31,7 +31,14 @@ interface IssueRecord extends SiteForm {
   supervisorSignature: string; // 監工簽名
   workerSignature: string; // 作業人員簽名
   status: string; // 狀態
-  issuePhotos?: string[]; // 新增：工安缺失照片列表，存儲照片檔名
+  issuePhotos?: IssuePhoto[]; // 修改：工安缺失照片列表，包含檔名和改善狀態
+}
+
+// 新增：缺失照片介面
+interface IssuePhoto {
+  filename: string;
+  improvementStatus: 'before' | 'after'; // 改善前或改善後
+  title: string;
 }
 
 enum SignatureType {
@@ -118,13 +125,19 @@ export class SafetyIssueRecordComponent implements OnInit {
     status: 'draft',
     createdAt: new Date(),
     createdBy: '',
-    issuePhotos: [], // 初始化照片數組
+    issuePhotos: [], // 初始化為空的IssuePhoto數組
   };
 
   // 新增：照片相關屬性
-  uploadedPhotos = signal<{filename: string, url: string, title: string}[]>([]);
+  uploadedPhotos = signal<{filename: string, url: string, title: string, improvementStatus: 'before' | 'after'}[]>([]);
   isUploadingPhoto = signal<boolean>(false);
   uploadProgress = signal<number>(0);
+
+  // 改善狀態選項
+  improvementStatusOptions = [
+    { value: 'before', label: '改善前' },
+    { value: 'after', label: '改善後' }
+  ];
 
   constructor(
     private router: Router,
@@ -134,7 +147,7 @@ export class SafetyIssueRecordComponent implements OnInit {
     private currentSiteService: CurrentSiteService,
     private authService: AuthService,
     private gridFSService: GridFSService,
-    private photoService: PhotoService
+    public photoService: PhotoService
   ) { }
 
   ngOnInit(): void {
@@ -356,10 +369,11 @@ export class SafetyIssueRecordComponent implements OnInit {
       
       if (result && result.filename) {
         // 更新本地照片列表
-        const photoData = {
+        const photoData: {filename: string, url: string, title: string, improvementStatus: 'before' | 'after'} = {
           filename: result.filename,
           url: `/api/gridfs/${result.filename}`,
-          title: `工安缺失照片 - ${file.name}`
+          title: `工安缺失照片 - ${file.name}`,
+          improvementStatus: 'before' // 上傳時默認為改善前
         };
         
         const currentPhotos = this.uploadedPhotos();
@@ -369,7 +383,7 @@ export class SafetyIssueRecordComponent implements OnInit {
         if (!this.issueRecord.issuePhotos) {
           this.issueRecord.issuePhotos = [];
         }
-        this.issueRecord.issuePhotos.push(result.filename);
+        this.issueRecord.issuePhotos.push({ filename: result.filename, improvementStatus: 'before', title: `工安缺失照片 - ${file.name}` });
         
         // 通知照片服務統計更新
         this.photoService.notifyPhotoStatsUpdated(currentSite._id!);
@@ -401,7 +415,7 @@ export class SafetyIssueRecordComponent implements OnInit {
       
       // 更新 issueRecord 的照片列表
       if (this.issueRecord.issuePhotos) {
-        const photoIndex = this.issueRecord.issuePhotos.indexOf(filename);
+        const photoIndex = this.issueRecord.issuePhotos.findIndex(photo => photo.filename === filename);
         if (photoIndex > -1) {
           this.issueRecord.issuePhotos.splice(photoIndex, 1);
         }
@@ -421,13 +435,36 @@ export class SafetyIssueRecordComponent implements OnInit {
   // 當載入已存在的記錄時，載入相關照片
   async loadIssuePhotos(): Promise<void> {
     if (this.issueRecord.issuePhotos && this.issueRecord.issuePhotos.length > 0) {
-      const photoData = this.issueRecord.issuePhotos.map(filename => ({
-        filename,
-        url: `/api/gridfs/${filename}`,
-        title: `工安缺失照片 - ${filename}`
-      }));
+      const photoData: {filename: string, url: string, title: string, improvementStatus: 'before' | 'after'}[] = 
+        this.issueRecord.issuePhotos.map(photo => ({
+          filename: photo.filename,
+          url: `/api/gridfs/${photo.filename}`,
+          title: photo.title,
+          improvementStatus: photo.improvementStatus as 'before' | 'after'
+        }));
       this.uploadedPhotos.set(photoData);
     }
+  }
+
+  // 更新照片改善狀態
+  updatePhotoImprovementStatus(index: number, status: 'before' | 'after'): void {
+    const photos = this.uploadedPhotos();
+    if (photos[index]) {
+      photos[index].improvementStatus = status;
+      this.uploadedPhotos.set([...photos]);
+      
+      // 同步更新 issueRecord 中的照片狀態
+      if (this.issueRecord.issuePhotos && this.issueRecord.issuePhotos[index]) {
+        this.issueRecord.issuePhotos[index].improvementStatus = status;
+      }
+    }
+  }
+
+  // 處理改善狀態選擇變更
+  onImprovementStatusChange(event: Event, index: number): void {
+    const target = event.target as HTMLSelectElement;
+    const status = target.value as 'before' | 'after';
+    this.updatePhotoImprovementStatus(index, status);
   }
 
   cancel(): void {

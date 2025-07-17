@@ -42,11 +42,27 @@ interface DailyPhoto {
         <h6 class="mb-0">
           <i class="bi bi-camera me-2"></i>當日照片分類統計
         </h6>
-        @if (photos().length > 0) {
-          <small class="text-muted">
-            共 {{ photos().length }} 張照片
-          </small>
-        }
+        <div class="d-flex align-items-center gap-2">
+          @if (photos().length > 0) {
+            <small class="text-muted">
+              共 {{ photos().length }} 張照片
+            </small>
+            <button 
+              type="button" 
+              class="btn btn-sm btn-outline-primary"
+              (click)="downloadAllPhotos()"
+              [disabled]="isDownloading()"
+              title="下載今日所有照片">
+              @if (isDownloading()) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                下載中...
+              } @else {
+                <i class="bi bi-download me-1"></i>
+                下載全部
+              }
+            </button>
+          }
+        </div>
       </div>
       <div class="card-body">
         @if (isLoading()) {
@@ -88,7 +104,7 @@ interface DailyPhoto {
                   (click)="viewPhoto(photo)"
                   [title]="photo.filename + ' - 點擊查看詳情'">
                   <img 
-                    [src]="getPhotoThumbnailUrl(photo._id)" 
+                    [src]="photoService.getPhotoThumbnailUrl(photo._id)" 
                     [alt]="photo.filename"
                     class="photo-thumbnail"
                     loading="lazy"
@@ -256,6 +272,7 @@ export class DailyPhotoStatsComponent implements OnInit, OnChanges, OnDestroy {
   // Signals
   photos = signal<DailyPhoto[]>([]);
   isLoading = signal<boolean>(false);
+  isDownloading = signal<boolean>(false);
   
   // 計算屬性
   photoStats = computed(() => this.calculatePhotoStats());
@@ -269,7 +286,7 @@ export class DailyPhotoStatsComponent implements OnInit, OnChanges, OnDestroy {
 
   constructor(
     private currentSiteService: CurrentSiteService,
-    private photoService: PhotoService,
+    public photoService: PhotoService,
     private gridfsService: GridFSService,
     private mongodbService: MongodbService,
     private router: Router
@@ -359,13 +376,6 @@ export class DailyPhotoStatsComponent implements OnInit, OnChanges, OnDestroy {
       .sort((a, b) => b.count - a.count);
   }
 
-  getPhotoThumbnailUrl(photoId: string): string {
-    let url = `/api/gridfs/file/${photoId}?thumbnail=true`;
-    if (window.location.port === '4200') {
-      url = `http://localhost:3000${url}`;
-    }
-    return url;
-  }
 
   getTotalSize(): string {
     const totalBytes = this.photos().reduce((sum, photo) => sum + (photo.length || 0), 0);
@@ -404,6 +414,88 @@ export class DailyPhotoStatsComponent implements OnInit, OnChanges, OnDestroy {
           endDate: this.selectedDate
         }
       });
+    }
+  }
+
+  async downloadAllPhotos() {
+    if (this.photos().length === 0) return;
+    
+    this.isDownloading.set(true);
+    try {
+      const dateStr = dayjs(this.selectedDate).format('YYYY-MM-DD');
+      const currentSite = this.currentSiteService.currentSite();
+      const siteName = currentSite?.projectName || '工地';
+      
+      // 建立 ZIP 檔案名稱
+      const zipFileName = `${siteName}_${dateStr}_照片.zip`;
+      
+      // 動態導入 JSZip
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+      
+      // 下載所有照片並加入 ZIP
+      let successCount = 0;
+      for (const photo of this.photos()) {
+        try {
+          const imageBlob = await this.downloadPhotoBlob(photo._id);
+          if (imageBlob) {
+            // 根據標籤建立資料夾結構
+            let folderName = '其他';
+            if (photo.metadata.tags && photo.metadata.tags.length > 0) {
+              folderName = photo.metadata.tags[0].title;
+            }
+            
+            // 建立檔案路徑
+            const fileName = `${folderName}/${photo.filename}`;
+            zip.file(fileName, imageBlob);
+            successCount++;
+          }
+        } catch (error) {
+          console.warn(`下載照片 ${photo.filename} 失敗:`, error);
+        }
+      }
+      
+      if (successCount > 0) {
+        // 生成 ZIP 檔案並下載
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        
+        // 建立下載連結
+        const url = window.URL.createObjectURL(zipBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = zipFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        alert(`成功下載 ${successCount} 張照片`);
+      } else {
+        alert('沒有照片可以下載');
+      }
+    } catch (error) {
+      console.error('下載照片時發生錯誤:', error);
+      alert('下載失敗，請稍後再試');
+    } finally {
+      this.isDownloading.set(false);
+    }
+  }
+
+  private async downloadPhotoBlob(photoId: string): Promise<Blob | null> {
+    try {
+      let url = `/api/gridfs/file/${photoId}`;
+      if (window.location.port === '4200') {
+        url = `http://localhost:3000${url}`;
+      }
+      
+      const response = await fetch(url);
+      if (response.ok) {
+        return await response.blob();
+      }
+      return null;
+    } catch (error) {
+      console.error(`下載照片 ${photoId} 失敗:`, error);
+      return null;
     }
   }
 } 
