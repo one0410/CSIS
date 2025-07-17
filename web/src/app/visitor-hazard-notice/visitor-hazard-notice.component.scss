@@ -1,0 +1,68 @@
+.container-fluid {
+  min-height: 100vh;
+}
+
+.card {
+  border: none;
+  border-radius: 10px;
+}
+
+.card-header {
+  border-radius: 10px 10px 0 0 !important;
+}
+
+.alert {
+  border-radius: 8px;
+}
+
+.form-control {
+  border-radius: 6px;
+}
+
+.btn {
+  border-radius: 6px;
+}
+
+// 簽名區域樣式
+app-signature-pad {
+  display: block;
+  max-width: 100%;
+}
+
+// 危害告知清單樣式
+.bg-light {
+  background-color: #f8f9fa !important;
+}
+
+// 載入和完成狀態的高度調整
+.h-100 {
+  min-height: calc(100vh - 2rem);
+}
+
+// 手機版優化
+@media (max-width: 768px) {
+  .card {
+    margin: 1rem 0.5rem;
+  }
+  
+  .col-md-6 {
+    margin-bottom: 1rem;
+  }
+}
+
+// 成功圖示動畫
+.text-success {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+} 

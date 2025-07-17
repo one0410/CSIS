@@ -2,13 +2,15 @@ import { Component, computed, signal, inject, OnInit, effect } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { QRCodeComponent } from 'angularx-qrcode';
 import { Worker } from '../../../model/worker.model';
+import { Visitor } from '../../../model/visitor.model';
 import { MongodbService } from '../../../services/mongodb.service';
 import { CurrentSiteService } from '../../../services/current-site.service';
 
 @Component({
   selector: 'app-site-visitor-list',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, QRCodeComponent],
   templateUrl: './site-visitor-list.component.html',
   styleUrl: './site-visitor-list.component.scss'
 })
@@ -20,46 +22,30 @@ export class SiteVisitorListComponent implements OnInit {
 
   //siteId = signal<string>('');
   site = computed(() => this.currentSiteService.currentSite());
-  visitors = signal<Worker[]>([]);
+  visitors = signal<Visitor[]>([]);
   loading = signal<boolean>(false);
   showAddForm = signal<boolean>(false);
   editingVisitorId = signal<string | null>(null);
   editingVisitor = signal<{ idno: string; tel: string }>({ idno: '', tel: '' });
   
-  // 危害告知狀態
-  visitorHazardNoticeStatus = signal<Map<string, boolean>>(new Map());
+  // 危害告知狀態 (現在從 visitor.hazardNoticeCompleted 直接取得)
+  // visitorHazardNoticeStatus = signal<Map<string, boolean>>(new Map());
+  
+  // QR Code modal 相關
+  showQRModal = signal<boolean>(false);
+  hazardNoticeUrl = computed(() => {
+    const currentSite = this.site();
+    if (!currentSite?._id) return '';
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/visitor-hazard-notice/${currentSite._id}`;
+  });
 
   // 新增訪客表單
-  newVisitor: Partial<Worker> = {
+  newVisitor: Partial<Visitor> = {
     name: '',
     idno: '',
     tel: '',
-    gender: '',
-    birthday: '',
-    bloodType: '',
-    liaison: '',
-    emergencyTel: '',
-    address: '',
-    profilePicture: '',
-    idCardFrontPicture: '',
-    idCardBackPicture: '',
-    supplierIndustrialSafetyNumber: '',
-    generalSafetyTrainingDate: '',
-    generalSafetyTrainingDueDate: '',
-    laborInsuranceApplyDate: '',
-    laborInsurancePicture: '',
-    laborAssociationDate: '',
-    sixHourTrainingDate: '',
-    sixHourTrainingFrontPicture: '',
-    sixHourTrainingBackPicture: '',
-    accidentInsurances: [],
-    contractingCompanyName: '',
-    viceContractingCompanyName: '',
-    certifications: [],
-    reviewStaff: '',
-    no: null,
-    medicalExamPictures: [],
-    belongSites: []
+    hazardNoticeCompleted: false
   };
 
   constructor() {
@@ -85,21 +71,13 @@ export class SiteVisitorListComponent implements OnInit {
         return;
       }
 
-      // 查詢該工地的訪客 (belongSites 中包含該 siteId 且 isVisitor 為 true)
+      // 查詢該工地的訪客
       const filter = {
-        'belongSites': {
-          $elemMatch: {
-            'siteId': currentSite._id,
-            'isVisitor': true
-          }
-        }
+        'siteId': currentSite._id
       };
       
-      const visitors = await this.mongodbService.get('worker', filter) as Worker[];
+      const visitors = await this.mongodbService.get('visitor', filter) as Visitor[];
       this.visitors.set(visitors);
-      
-      // 載入危害告知狀態
-      await this.loadVisitorHazardNoticeStatus();
       
     } catch (error) {
       console.error('載入訪客列表失敗:', error);
@@ -108,61 +86,19 @@ export class SiteVisitorListComponent implements OnInit {
     }
   }
 
-  // 從危害告知表單中查詢訪客簽名狀態
-  async loadVisitorHazardNoticeStatus() {
-    const currentSite = this.site();
-    if (!currentSite?._id) return;
-    
-    try {
-      // 清空之前的狀態
-      const statusMap = new Map<string, boolean>();
-      
-      // 獲取該工地的所有危害告知表單
-      const hazardNoticeForms = await this.mongodbService.get('siteForm', {
-        siteId: currentSite._id,
-        formType: 'hazardNotice'
-      });
-      
-      // 收集所有已簽名的訪客身份證號碼或電話號碼
-      const signedVisitorIds = new Set<string>();
-      
-      hazardNoticeForms.forEach((form: any) => {
-        if (form.workerSignatures && form.workerSignatures.length > 0) {
-          form.workerSignatures.forEach((signature: any) => {
-            if (signature.idno) {
-              signedVisitorIds.add(signature.idno);
-            }
-            if (signature.tel) {
-              signedVisitorIds.add(signature.tel);
-            }
-          });
-        }
-      });
-      
-      // 為每個訪客設定危害告知狀態
-      this.visitors().forEach(visitor => {
-        const hasHazardNotice = Boolean(
-          (visitor.idno && signedVisitorIds.has(visitor.idno)) ||
-          (visitor.tel && signedVisitorIds.has(visitor.tel))
-        );
-        statusMap.set(visitor._id!, hasHazardNotice);
-      });
-      
-      this.visitorHazardNoticeStatus.set(statusMap);
-      
-    } catch (error) {
-      console.error('載入訪客危害告知狀態時發生錯誤', error);
-    }
-  }
-
   // 檢查訪客是否有危害告知
-  hasHazardNotice(visitor: Worker): boolean {
-    return this.visitorHazardNoticeStatus().get(visitor._id!) || false;
+  hasHazardNotice(visitor: Visitor): boolean {
+    return visitor.hazardNoticeCompleted || false;
   }
 
   showAddVisitorForm() {
-    this.showAddForm.set(true);
-    this.resetNewVisitor();
+    // 導航到危害告知頁面供現場簽名（強制新增模式）
+    const currentSite = this.site();
+    if (currentSite?._id) {
+      this.router.navigate(['/visitor-hazard-notice', currentSite._id, 'new']);
+    } else {
+      alert('工地資訊尚未載入');
+    }
   }
 
   hideAddVisitorForm() {
@@ -175,32 +111,7 @@ export class SiteVisitorListComponent implements OnInit {
       name: '',
       idno: '',
       tel: '',
-      gender: '',
-      birthday: '',
-      bloodType: '',
-      liaison: '',
-      emergencyTel: '',
-      address: '',
-      profilePicture: '',
-      idCardFrontPicture: '',
-      idCardBackPicture: '',
-      supplierIndustrialSafetyNumber: '',
-      generalSafetyTrainingDate: '',
-      generalSafetyTrainingDueDate: '',
-      laborInsuranceApplyDate: '',
-      laborInsurancePicture: '',
-      laborAssociationDate: '',
-      sixHourTrainingDate: '',
-      sixHourTrainingFrontPicture: '',
-      sixHourTrainingBackPicture: '',
-      accidentInsurances: [],
-      contractingCompanyName: '',
-      viceContractingCompanyName: '',
-      certifications: [],
-      reviewStaff: '',
-      no: null,
-      medicalExamPictures: [],
-      belongSites: []
+      hazardNoticeCompleted: false
     };
   }
 
@@ -220,14 +131,9 @@ export class SiteVisitorListComponent implements OnInit {
       return;
     }
 
-    const existingVisitor = await this.mongodbService.get('worker', {
+    const existingVisitor = await this.mongodbService.get('visitor', {
       name: visitor.name.trim(),
-      'belongSites': {
-        $elemMatch: {
-          'siteId': currentSite._id,
-          'isVisitor': true
-        }
-      }
+      siteId: currentSite._id
     });
 
     if (existingVisitor && existingVisitor.length > 0) {
@@ -238,14 +144,19 @@ export class SiteVisitorListComponent implements OnInit {
     try {
       this.loading.set(true);
       
-      // 設定 belongSites，標記為訪客
-      visitor.belongSites = [{
+      // 設定 visitor 物件
+      const newVisitorData: Omit<Visitor, '_id'> = {
+        name: visitor.name!.trim(),
+        idno: visitor.idno?.trim(),
+        tel: visitor.tel?.trim(),
+        hazardNoticeCompleted: false,
         siteId: currentSite._id,
-        assignDate: new Date(),
-        isVisitor: true
-      }];
+        entryDate: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
 
-      const result = await this.mongodbService.post('worker', visitor);
+      const result = await this.mongodbService.post('visitor', newVisitorData);
 
       if (result.insertedId) {
         this.hideAddVisitorForm();
@@ -261,7 +172,7 @@ export class SiteVisitorListComponent implements OnInit {
     }
   }
 
-  async deleteVisitor(visitor: Worker) {
+  async deleteVisitor(visitor: Visitor) {
     if (!confirm(`確定要刪除訪客 ${visitor.name} 嗎？`)) {
       return;
     }
@@ -269,7 +180,7 @@ export class SiteVisitorListComponent implements OnInit {
     try {
       this.loading.set(true);
       
-      const result = await this.mongodbService.delete('worker', visitor._id!);
+      const result = await this.mongodbService.delete('visitor', visitor._id!);
 
       if (result) {
         await this.loadVisitors();
@@ -284,11 +195,11 @@ export class SiteVisitorListComponent implements OnInit {
     }
   }
 
-  startEditVisitor(visitor: Worker) {
+  startEditVisitor(visitor: Visitor) {
     this.editingVisitorId.set(visitor._id!);
     this.editingVisitor.set({
-      idno: visitor.idno,
-      tel: visitor.tel
+      idno: visitor.idno || '',
+      tel: visitor.tel || ''
     });
   }
 
@@ -297,7 +208,7 @@ export class SiteVisitorListComponent implements OnInit {
     this.editingVisitor.set({ idno: '', tel: '' });
   }
 
-  async saveEditVisitor(visitor: Worker) {
+  async saveEditVisitor(visitor: Visitor) {
     const editData = this.editingVisitor();
     if (!editData) return;
 
@@ -306,10 +217,11 @@ export class SiteVisitorListComponent implements OnInit {
       
       const updateData = {
         idno: editData.idno,
-        tel: editData.tel
+        tel: editData.tel,
+        updatedAt: new Date()
       };
 
-      const result = await this.mongodbService.patch('worker', visitor._id!, updateData);
+      const result = await this.mongodbService.patch('visitor', visitor._id!, updateData);
 
       if (result) {
         this.cancelEditVisitor();
@@ -325,6 +237,34 @@ export class SiteVisitorListComponent implements OnInit {
     }
   }
 
+  // QR Code modal 相關方法
+  showQRCodeModal() {
+    this.showQRModal.set(true);
+  }
 
+  hideQRCodeModal() {
+    this.showQRModal.set(false);
+  }
 
+  copyUrl(inputElement: HTMLInputElement) {
+    inputElement.select();
+    inputElement.setSelectionRange(0, 99999); // For mobile devices
+    navigator.clipboard.writeText(inputElement.value).then(() => {
+      alert('網址已複製到剪貼簿');
+    }).catch(() => {
+      // Fallback for older browsers
+      document.execCommand('copy');
+      alert('網址已複製到剪貼簿');
+    });
+  }
+
+  // 查看訪客危害告知單
+  viewVisitorDetail(visitor: Visitor) {
+    const currentSite = this.site();
+    if (currentSite?._id && visitor._id) {
+      this.router.navigate(['/visitor-hazard-notice', currentSite._id, visitor._id]);
+    } else {
+      alert('無法查看訪客詳情');
+    }
+  }
 }

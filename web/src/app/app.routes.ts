@@ -23,6 +23,22 @@ export const routes: Routes = [
     loadComponent: () => import('./site-list/site-detail/site-training/training-form/training-form.component').then(m => m.TrainingFormComponent)
   },
 
+  // 訪客危害告知專用路由 - 不需要登入
+  { 
+    path: 'visitor-hazard-notice/:siteId', 
+    loadComponent: () => import('./visitor-hazard-notice/visitor-hazard-notice.component').then(m => m.VisitorHazardNoticeComponent)
+  },
+  // 強制新增模式的訪客危害告知路由 - 不需要登入
+  { 
+    path: 'visitor-hazard-notice/:siteId/new', 
+    loadComponent: () => import('./visitor-hazard-notice/visitor-hazard-notice.component').then(m => m.VisitorHazardNoticeComponent)
+  },
+  // 查看特定訪客的危害告知單 - 不需要登入
+  { 
+    path: 'visitor-hazard-notice/:siteId/:visitorId', 
+    loadComponent: () => import('./visitor-hazard-notice/visitor-hazard-notice.component').then(m => m.VisitorHazardNoticeComponent)
+  },
+
   // Home 路由群組
   {
     path: '',

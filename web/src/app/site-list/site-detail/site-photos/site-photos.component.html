@@ -332,8 +332,9 @@
                           @if (selectedPhoto() && !hasTag(selectedPhoto()!, tag.title)) {
                           <button
                             type="button"
-                            class="btn btn-sm btn-outline-secondary"
+                            class="btn btn-sm tag-button"
                             [style.color]="tag.color"
+                            [style.background-color]="tag.background"
                             [style.border-color]="tag.background"
                             (click)="addTagToPhoto(tag)"
                           >

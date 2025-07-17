@@ -6,14 +6,24 @@
           <i class="bi bi-people me-2"></i>
           訪客列表
         </h4>
-        <button
-          class="btn btn-primary"
-          (click)="showAddVisitorForm()"
-          [disabled]="loading()"
-        >
-          <i class="bi bi-plus-circle me-1"></i>
-          新增訪客
-        </button>
+        <div class="d-flex gap-2">
+          <button
+            class="btn btn-info"
+            (click)="showQRCodeModal()"
+            [disabled]="loading()"
+          >
+            <i class="bi bi-qr-code me-1"></i>
+            產生QR code
+          </button>
+          <button
+            class="btn btn-primary"
+            (click)="showAddVisitorForm()"
+            [disabled]="loading()"
+          >
+            <i class="bi bi-plus-circle me-1"></i>
+            現場簽名
+          </button>
+        </div>
       </div>
 
       <!-- 載入中指示器 -->
@@ -123,7 +133,12 @@
               </thead>
               <tbody>
                 @for (visitor of visitors(); track visitor._id) {
-                <tr>
+                <tr 
+                  class="visitor-row" 
+                  (click)="viewVisitorDetail(visitor)"
+                  style="cursor: pointer;"
+                  title="點擊查看危害告知單"
+                >
                   <td>
                     <div class="d-flex align-items-center">
                       <i
@@ -159,10 +174,9 @@
                     }
                   </td>
                   <td>
-                    @if (visitor.belongSites && visitor.belongSites[0]) {
+                    @if (visitor.entryDate) {
                     {{
-                      visitor.belongSites[0].assignDate
-                        | date : "yyyy/MM/dd HH:mm"
+                      visitor.entryDate | date : "yyyy/MM/dd HH:mm"
                     }}
                     } @else { - }
                   </td>
@@ -175,7 +189,7 @@
                   </td>
                   <td class="text-center">
                     @if (editingVisitorId() === visitor._id) {
-                      <div class="btn-group" role="group">
+                      <div class="btn-group" role="group" (click)="$event.stopPropagation()">
                         <button
                           class="btn btn-sm btn-success"
                           (click)="saveEditVisitor(visitor)"
@@ -194,7 +208,7 @@
                         </button>
                       </div>
                     } @else {
-                      <div class="btn-group" role="group">
+                      <div class="btn-group" role="group" (click)="$event.stopPropagation()">
                         <button
                           class="btn btn-sm btn-outline-primary"
                           (click)="startEditVisitor(visitor)"
@@ -225,3 +239,72 @@
     </div>
   </div>
 </div>
+
+<!-- QR Code Modal -->
+@if (showQRModal()) {
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-qr-code me-2"></i>
+          訪客危害告知QR Code
+        </h5>
+        <button type="button" class="btn-close" (click)="hideQRCodeModal()"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="mb-3">
+          <h6 class="text-muted">可以印出以下的QR code, 黏貼在工務所或是工地入口處</h6>
+          <h6 class="text-muted">請訪客掃描以下QR Code進行危害告知</h6>
+        </div>
+        
+        <!-- QR Code 顯示區域 -->
+        <div class="d-flex justify-content-center mb-4">
+          <div class="border rounded p-3 bg-light">
+            <qrcode
+              [qrdata]="hazardNoticeUrl()"
+              [width]="256"
+              [errorCorrectionLevel]="'M'"
+              [elementType]="'canvas'"
+              [margin]="4"
+            ></qrcode>
+          </div>
+        </div>
+        
+        <!-- 網址顯示 -->
+        <div class="mb-3">
+          <label class="form-label text-muted">危害告知網址:</label>
+          <div class="input-group">
+            <input 
+              type="text" 
+              class="form-control text-center" 
+              [value]="hazardNoticeUrl()" 
+              readonly
+              #urlInput
+            >
+            <button 
+              class="btn btn-outline-secondary" 
+              type="button"
+              (click)="copyUrl(urlInput)"
+            >
+              <i class="bi bi-copy"></i>
+              複製
+            </button>
+          </div>
+        </div>
+        
+        <!-- 說明文字 -->
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle me-2"></i>
+          訪客掃描QR Code後，將進入危害告知頁面，完成簽名後資料會自動顯示在訪客列表中。
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="hideQRCodeModal()">
+          關閉
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}

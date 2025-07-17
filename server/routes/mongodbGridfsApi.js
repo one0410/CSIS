@@ -1,5 +1,6 @@
 const express = require('express');
 const { GridFSBucket } = require('mongodb');
+const { EJSON } = require('bson');
 const multer = require('multer');
 const db = require('../dbConnection');
 const logger = require('../logger');
@@ -173,7 +174,7 @@ app.post('/api/gridfs/upload', upload.single('file'), async (req, res) => {
 });
 
 // 查詢 metadata 符合條件的檔案列表
-app.post('/api/gridfs/files', async (req, res) => {
+app.post('/api/gridfs/metadata', async (req, res) => {
     try {
         const filter = req.body;
         
@@ -325,6 +326,113 @@ app.delete('/api/gridfs/:filename', async (req, res) => {
 
     } catch (error) {
         logger.error('刪除檔案錯誤', { error: error.message, stack: error.stack });
+        handleGridFSError(error, res);
+    }
+});
+
+// 新增：搜尋符合條件的檔案
+app.post('/api/gridfs/search', async (req, res) => {
+    try {
+        const query = EJSON.parse(JSON.stringify(req.body)) || {};
+        
+        logger.info('搜尋檔案', { query });
+
+        if (!db) {
+            logger.error('MongoDB 連接不可用');
+            return res.status(500).json({
+                success: false,
+                message: 'MongoDB 連接不可用'
+            });
+        }
+        
+        const bucket = new GridFSBucket(db);
+        
+        // 查詢文件
+        const files = await bucket.find(query)
+            //.sort({ uploadDate: -1 }) // 最新上傳的排在前面
+            .toArray();
+        
+        logger.info(`搜尋到 ${files.length} 個檔案`);
+        res.json(
+            {
+                success: true,
+                files: files
+            }
+        );
+    } catch (error) {
+        logger.error('搜尋檔案錯誤', { error: error.message, stack: error.stack });
+        handleGridFSError(error, res);
+    }
+});
+
+// 新增：根據檔案ID取得檔案內容（支援縮圖）
+app.get('/api/gridfs/file/:id', async (req, res) => {
+    try {
+        const { ObjectId } = require('mongodb');
+        const fileId = req.params.id;
+        const thumbnail = req.query.thumbnail === 'true';
+        
+        logger.info('取得檔案', { fileId, thumbnail });
+
+        if (!db) {
+            logger.error('MongoDB 連接不可用');
+            return res.status(500).json({
+                success: false,
+                message: 'MongoDB 連接不可用'
+            });
+        }
+        
+        const bucket = new GridFSBucket(db);
+        
+        // 檢查檔案是否存在
+        const files = await bucket.find({ _id: new ObjectId(fileId) }).toArray();
+        if (!files.length) {
+            return res.status(404).json({
+                success: false,
+                message: '檔案不存在'
+            });
+        }
+        
+        const file = files[0];
+        
+        // 設定回應標頭
+        res.set('Content-Type', file.contentType);
+        res.set('Content-Disposition', `inline; filename="${encodeURIComponent(file.filename)}"`);
+        
+        if (thumbnail && file.contentType && file.contentType.startsWith('image/')) {
+            // 使用 sharp 產生縮圖
+            const sharp = require('sharp');
+            const downloadStream = bucket.openDownloadStream(new ObjectId(fileId));
+            
+            const transformer = sharp()
+                .resize(150, 150, { 
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .jpeg({ quality: 80 });
+            
+            downloadStream.on('error', (error) => {
+                logger.error('檔案下載錯誤', { fileId, error: error.message });
+                handleGridFSError(error, res);
+            });
+            
+            transformer.on('error', (error) => {
+                logger.error('縮圖產生錯誤', { fileId, error: error.message });
+                handleGridFSError(error, res);
+            });
+            
+            downloadStream.pipe(transformer).pipe(res);
+        } else {
+            // 直接傳送檔案
+            const downloadStream = bucket.openDownloadStream(new ObjectId(fileId));
+            downloadStream.on('error', (error) => {
+                logger.error('檔案下載錯誤', { fileId, error: error.message });
+                handleGridFSError(error, res);
+            });
+            downloadStream.pipe(res);
+        }
+    } catch (error) {
+        logger.error('取得檔案錯誤', { error: error.message, stack: error.stack });
         handleGridFSError(error, res);
     }
 });

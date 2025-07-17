@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { environment } from '../../environments/environment';
+import { EJSON } from 'bson';
 
 @Injectable({
   providedIn: 'root'
@@ -114,7 +114,7 @@ export class GridFSService {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(metadata)
+        body: EJSON.stringify(metadata)
       });
       
       if (!response.ok) {
@@ -208,15 +208,15 @@ export class GridFSService {
    * @param filter 查詢 metadata 過濾條件, 例如 { workerId: '123' }
    * @returns Promise 包含檔案列表
    */
-  async getFiles(filter: Record<string, any> = {}): Promise<any> {
+  async getFiles(filter: Record<string, any> = {}): Promise<{success: boolean, files: any[]}> {
     try {
-      const url = `${this.apiBaseUrl}/api/gridfs/files`;
+      const url = `${this.apiBaseUrl}/api/gridfs/search`;
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(filter)
+        body: EJSON.stringify(filter)
       });
 
       if (!response.ok) {

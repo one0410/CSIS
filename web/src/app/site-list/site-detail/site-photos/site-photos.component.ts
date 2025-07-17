@@ -119,7 +119,34 @@ export class SitePhotosComponent implements OnInit {
       if (this.site()) {
         // 重置分頁狀態，確保每次返回此元件時都從第一頁開始加載
         this.photoService.resetPagination();
-        this.loadPhotos();
+        
+        // 處理查詢參數
+        this.route.queryParamMap.subscribe(queryParams => {
+          const startDate = queryParams.get('startDate');
+          const endDate = queryParams.get('endDate');
+          const photoId = queryParams.get('photoId');
+          
+          if (startDate) {
+            this.searchStartDate = startDate;
+          }
+          if (endDate) {
+            this.searchEndDate = endDate;
+          }
+          
+          // 如果有日期參數，自動執行搜尋
+          if (startDate || endDate) {
+            this.searchPhotos();
+          } else {
+            this.loadPhotos();
+          }
+          
+          // 如果有指定照片ID，可以後續實作自動定位到該照片
+          if (photoId) {
+            // TODO: 實作自動定位到指定照片的功能
+            console.log('Navigate to photo:', photoId);
+          }
+        });
+        
         this.setupScrollListener();
       }
     });

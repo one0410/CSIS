@@ -2,7 +2,7 @@
   <!-- 顶部导航栏组件 -->
   <app-top-bar (menuToggle)="toggleMenu()"></app-top-bar>
 
-  <div class="d-flex flex-fill">
+  <div class="d-flex flex-fill overflow-hidden" style="min-height: 0;">
     <!-- 左侧菜单组件 -->
     <app-side-menu [isMenuOpen]="isMenuOpen" [siteId]="siteId"></app-side-menu>
 

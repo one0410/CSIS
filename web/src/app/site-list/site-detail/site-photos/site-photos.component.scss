@@ -193,6 +193,23 @@
     }
   }
 
+  // 自定義標籤按鈕樣式
+  .btn.tag-button {
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+    border-width: 1px;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      opacity: 0.9;
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
   // 桌面設備樣式優化
   @media (min-width: 769px) {
     .col-md-3 > label.btn {
