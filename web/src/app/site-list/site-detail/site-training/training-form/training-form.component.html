@@ -397,10 +397,11 @@
     aria-labelledby="qrCodeModalLabel"
     aria-hidden="true"
   >
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="qrCodeModalLabel">
+            <i class="bi bi-qr-code me-2"></i>
             教育訓練表單 QR Code
           </h5>
           <button
@@ -411,24 +412,59 @@
           ></button>
         </div>
         <div class="modal-body text-center">
-          <p class="mb-3">掃描此 QR Code 可直接在手機上開啟表單進行簽名</p>
+          <div class="mb-3">
+            <h6 class="text-muted">可以印出以下的QR code，黏貼在工務所或是工地入口處</h6>
+            <h6 class="text-muted">請工作人員掃描以下QR Code進行教育訓練簽名</h6>
+          </div>
+          
+          <!-- QR Code 顯示區域 -->
           @if (formQrCodeUrl) {
-          <div
-            class="qrcode-container mx-auto mb-3"
-            style="width: 250px; height: 250px"
-          >
-            <qrcode
-              [qrdata]="formQrCodeUrl"
-              [width]="250"
-              [errorCorrectionLevel]="'M'"
-            ></qrcode>
+          <div class="d-flex justify-content-center mb-4">
+            <div class="border rounded p-3 bg-light">
+              <qrcode
+                [qrdata]="formQrCodeUrl"
+                [width]="256"
+                [errorCorrectionLevel]="'M'"
+                [elementType]="'canvas'"
+                [margin]="4"
+              ></qrcode>
+            </div>
           </div>
           } @else {
           <div class="text-center">
             <p class="text-muted">QR Code 載入中...</p>
           </div>
           }
-          <small class="text-muted d-block mb-3">{{ formQrCodeUrl }}</small>
+          
+          <!-- 網址顯示 -->
+          @if (formQrCodeUrl) {
+          <div class="mb-3">
+            <label class="form-label text-muted">教育訓練表單網址:</label>
+            <div class="input-group">
+              <input 
+                type="text" 
+                class="form-control text-center" 
+                [value]="formQrCodeUrl" 
+                readonly
+                #urlInput
+              >
+              <button 
+                class="btn btn-outline-secondary" 
+                type="button"
+                (click)="copyUrl(urlInput)"
+              >
+                <i class="bi bi-copy"></i>
+                複製
+              </button>
+            </div>
+          </div>
+          }
+          
+          <!-- 說明文字 -->
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            工作人員掃描QR Code後，將進入教育訓練表單頁面，完成簽名後資料會自動記錄在表單中。
+          </div>
         </div>
         <div class="modal-footer">
           <button

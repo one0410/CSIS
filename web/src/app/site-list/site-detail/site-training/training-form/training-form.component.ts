@@ -557,4 +557,16 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
       alert('簽名完成，請關閉此頁面');
     }
   }
+
+  copyUrl(inputElement: HTMLInputElement): void {
+    inputElement.select();
+    inputElement.setSelectionRange(0, 99999); // For mobile devices
+    navigator.clipboard.writeText(inputElement.value).then(() => {
+      alert('網址已複製到剪貼簿');
+    }).catch(() => {
+      // Fallback for older browsers
+      document.execCommand('copy');
+      alert('網址已複製到剪貼簿');
+    });
+  }
 }
