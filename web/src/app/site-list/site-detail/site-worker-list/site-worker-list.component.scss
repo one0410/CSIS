@@ -1,0 +1,41 @@
+.avatar {
+    width: 32px;
+    height: 32px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.avatar:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.avatar.selected {
+    border: 3px solid #28a745;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+}
+
+.selection-indicator {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: white;
+    border-radius: 50%;
+    padding: 1px;
+    font-size: 14px;
+}
+
+.search-results {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.stats-item {
+    display: flex;
+    padding: 10px 15px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    border-left: 3px solid #0d6efd;
+}

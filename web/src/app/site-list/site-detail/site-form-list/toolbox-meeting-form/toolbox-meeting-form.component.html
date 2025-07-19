@@ -1805,7 +1805,7 @@
         </div>
 
         <!-- 按鈕區域 -->
-        <div class="d-flex justify-content-between mt-4 pt-3">
+        <div class="d-flex mt-4 pt-3">
           <button
             type="button"
             class="btn btn-outline-secondary px-4"
@@ -1813,18 +1813,9 @@
           >
             <i class="bi bi-x-circle me-1"></i>取消
           </button>
-          <button
-            type="button"
-            class="btn btn-primary px-4"
-            (click)="saveMeeting()"
-          >
-            <i class="bi bi-save me-1"></i>儲存
-          </button>
-        </div>
-
-        <!-- Word下載按鈕區域 -->
-        @if (meetingData._id) {
-          <div class="d-flex justify-content-center mt-3 pt-2 border-top">
+          
+          @if (meetingData._id) {
+          <div class="mx-auto">
             <button
               type="button"
               class="btn btn-success px-4"
@@ -1839,7 +1830,18 @@
               }
             </button>
           </div>
-        }
+          }
+          
+          <div class="ms-auto">
+            <button
+              type="button"
+              class="btn btn-primary px-4"
+              (click)="saveMeeting()"
+            >
+              <i class="bi bi-save me-1"></i>儲存
+            </button>
+          </div>
+        </div>
       </form>
       </div>
     </div>

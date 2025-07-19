@@ -1,4 +1,4 @@
-import { Component, computed, OnInit } from '@angular/core';
+import { Component, computed, OnInit, AfterViewInit } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -9,7 +9,17 @@ import { SiteForm } from '../../../../model/siteForm.model';
 import { AuthService } from '../../../../services/auth.service';
 import { GridFSService } from '../../../../services/gridfs.service';
 import { PhotoService } from '../../../../services/photo.service';
+import { DocxTemplateService } from '../../../../services/docx-template.service';
 import { signal } from '@angular/core';
+
+// 導入 Bootstrap Modal 相關類型
+declare const bootstrap: {
+  Modal: new (element: HTMLElement, options?: any) => {
+    show: () => void;
+    hide: () => void;
+    dispose: () => void;
+  };
+};
 
 interface IssueRecord extends SiteForm {
   formType: 'safetyIssueRecord';
@@ -69,10 +79,11 @@ enum RemedyMeasure {
   imports: [FormsModule],
   standalone: true
 })
-export class SafetyIssueRecordComponent implements OnInit {
+export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
   siteId: string = '';
   formId: string = '';
   site = computed(() => this.currentSiteService.currentSite());
+  currentUser = computed(() => this.authService.user());
   
   supervisorSignature: string = '';
   workerSignature: string = '';
@@ -139,6 +150,15 @@ export class SafetyIssueRecordComponent implements OnInit {
     { value: 'after', label: '改善後' }
   ];
 
+  // 照片查看 Modal 相關
+  showPhotoModal = signal<boolean>(false);
+  currentPhotoIndex = signal<number>(-1);
+  editingPhotoTitle = signal<string>('');
+  photoModal: any;
+
+  // Word 文件生成狀態
+  isGeneratingDocument = signal<boolean>(false);
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -147,7 +167,8 @@ export class SafetyIssueRecordComponent implements OnInit {
     private currentSiteService: CurrentSiteService,
     private authService: AuthService,
     private gridFSService: GridFSService,
-    public photoService: PhotoService
+    public photoService: PhotoService,
+    private docxTemplateService: DocxTemplateService
   ) { }
 
   ngOnInit(): void {
@@ -400,6 +421,10 @@ export class SafetyIssueRecordComponent implements OnInit {
     
     if (confirm('確定要刪除這張照片嗎？')) {
       this.deletePhotoByFilename(photoToDelete.filename, index);
+      // 如果在 modal 中刪除照片，關閉 modal
+      if (this.showPhotoModal()) {
+        this.closePhotoModal();
+      }
     }
   }
 
@@ -469,5 +494,171 @@ export class SafetyIssueRecordComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['/site', this.siteId, 'forms']);
+  }
+
+  // 刪除缺失記錄
+  async deleteIssueRecord(): Promise<void> {
+    if (!this.formId) {
+      alert('無法刪除：缺少表單ID');
+      return;
+    }
+    
+    if (confirm('確定要刪除這筆安全缺失記錄嗎？此操作無法復原。')) {
+      try {
+        await this.mongodbService.delete('siteForm', this.formId);
+        
+        // 如果有相關照片，也要刪除
+        if (this.issueRecord.issuePhotos && this.issueRecord.issuePhotos.length > 0) {
+          for (const photo of this.issueRecord.issuePhotos) {
+            try {
+              await this.gridFSService.deleteFile(photo.filename);
+            } catch (error) {
+              console.error('刪除照片時發生錯誤:', error);
+            }
+          }
+          
+          // 通知照片服務統計更新
+          const currentSite = this.site();
+          if (currentSite && currentSite._id) {
+            this.photoService.notifyPhotoStatsUpdated(currentSite._id);
+          }
+        }
+        
+        alert('安全缺失記錄已刪除');
+        this.router.navigate(['/site', this.siteId, 'forms']);
+      } catch (error) {
+        console.error('刪除缺失記錄時發生錯誤:', error);
+        alert('刪除失敗，請稍後重試');
+      }
+    }
+  }
+
+  ngAfterViewInit(): void {
+    // 初始化照片 Modal
+    const photoModalEl = document.getElementById('photoModal');
+    if (photoModalEl) {
+      this.photoModal = new bootstrap.Modal(photoModalEl);
+    }
+  }
+
+  // 查看照片
+  viewPhoto(index: number): void {
+    const photos = this.uploadedPhotos();
+    if (photos[index]) {
+      this.currentPhotoIndex.set(index);
+      this.editingPhotoTitle.set(photos[index].title);
+      this.showPhotoModal.set(true);
+      if (this.photoModal) {
+        this.photoModal.show();
+      }
+    }
+  }
+
+  // 關閉照片 Modal
+  closePhotoModal(): void {
+    this.showPhotoModal.set(false);
+    this.currentPhotoIndex.set(-1);
+    this.editingPhotoTitle.set('');
+    if (this.photoModal) {
+      this.photoModal.hide();
+    }
+  }
+
+  // 儲存照片標題
+  savePhotoTitle(): void {
+    const index = this.currentPhotoIndex();
+    const newTitle = this.editingPhotoTitle();
+    
+    if (index >= 0 && newTitle.trim()) {
+      const photos = this.uploadedPhotos();
+      if (photos[index]) {
+        photos[index].title = newTitle.trim();
+        this.uploadedPhotos.set([...photos]);
+        
+        // 同步更新 issueRecord 中的照片標題
+        if (this.issueRecord.issuePhotos && this.issueRecord.issuePhotos[index]) {
+          this.issueRecord.issuePhotos[index].title = newTitle.trim();
+        }
+        
+        alert('照片備註已儲存');
+        this.closePhotoModal();
+      }
+    } else if (!newTitle.trim()) {
+      alert('請輸入照片標題或備註');
+    }
+  }
+
+  // 取得當前查看的照片
+  getCurrentPhoto(): any {
+    const index = this.currentPhotoIndex();
+    const photos = this.uploadedPhotos();
+    return index >= 0 && photos[index] ? photos[index] : null;
+  }
+
+  // 生成 Word 文件
+  async generateDocx(): Promise<void> {
+    if (!this.issueRecord._id) {
+      alert('請先儲存表單後再下載Word文件');
+      return;
+    }
+
+    this.isGeneratingDocument.set(true);
+    
+    try {
+      const currentSite = this.site();
+      if (!currentSite) {
+        throw new Error('無法取得工地資訊');
+      }
+
+      // 準備模板資料
+      const templateData = {
+        // 基本資訊
+        recordNo: this.issueRecord.recordNo || '',
+        establishPerson: this.issueRecord.establishPerson || '',
+        establishUnit: this.issueRecord.establishUnit || '',
+        projectNo: currentSite.projectNo || '',
+        establishDate: this.issueRecord.establishDate || '',
+        responsibleUnit: this.issueRecord.responsibleUnit === 'MIC' ? 'MIC' : '供應商',
+        issueDate: this.issueRecord.issueDate || '',
+        factoryArea: this.issueRecord.factoryArea || '',
+        
+        // 缺失說明
+        issueDescription: this.issueRecord.issueDescription || '',
+        
+        // 缺失處置
+        remedyMeasures: this.issueRecord.remedyMeasures || [],
+        improvementDeadline: this.issueRecord.improvementDeadline || '',
+        
+        // 缺失評核
+        deductionCode: this.issueRecord.deductionCode || '',
+        recordPoints: this.issueRecord.recordPoints || '',
+        
+        // 複查資訊
+        reviewDate: this.issueRecord.reviewDate || '',
+        reviewer: this.issueRecord.reviewer || '',
+        reviewResult: this.issueRecord.reviewResult === 'completed' ? '已完成改正' : 
+                     this.issueRecord.reviewResult === 'incomplete' ? '未完成改正(要求改善，再次開立工安缺失紀錄表)' : '',
+        
+        // 簽名（這裡可以根據需要處理簽名圖片）
+        supervisorSignature: this.supervisorSignature ? '已簽名' : '',
+        workerSignature: this.workerSignature ? '已簽名' : '',
+        
+        // 工地資訊
+        siteName: currentSite.projectName || '',
+        siteLocation: `${currentSite.county || ''} ${currentSite.town || ''}`.trim(),
+        
+        // 當前日期
+        currentDate: new Date().toLocaleDateString('zh-TW')
+      };
+
+      // 使用 DocxTemplateService 生成文件
+      await this.docxTemplateService.generateFormDocx(this.issueRecord._id!, 'safetyIssueRecord');
+      
+    } catch (error) {
+      console.error('生成Word文件時發生錯誤:', error);
+      alert('生成Word文件失敗，請稍後重試');
+    } finally {
+      this.isGeneratingDocument.set(false);
+    }
   }
 } 

@@ -3,8 +3,10 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 import { MongodbService } from '../../../services/mongodb.service';
-import { Worker } from '../../../model/worker.model';
+import { Worker, CertificationTypeManager } from '../../../model/worker.model';
 import { CurrentSiteService } from '../../../services/current-site.service';
+import { AuthService } from '../../../services/auth.service';
+import dayjs from 'dayjs';
 
 @Component({
   selector: 'app-site-worker-list',
@@ -16,12 +18,16 @@ import { CurrentSiteService } from '../../../services/current-site.service';
 export class SiteWorkerListComponent implements OnInit {
   siteId: string | null = null;
   site = computed(() => this.currentSiteService.currentSite());
+  currentUser = computed(() => this.authService.user());
   
   // 工作人員資料
   isLoading = false;
   siteWorkers: Worker[] = [];
   filteredSiteWorkers: Worker[] = [];
   allWorkers: Worker[] = [];
+  
+  // 工作人員選取狀態
+  selectedWorkers: Set<string> = new Set();
   
   // 危害告知狀態
   workerHazardNoticeStatus: Map<string, boolean> = new Map();
@@ -55,7 +61,8 @@ export class SiteWorkerListComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private mongodbService: MongodbService,
-    private currentSiteService: CurrentSiteService
+    private currentSiteService: CurrentSiteService,
+    private authService: AuthService
   ) {}
 
   async ngOnInit() {
@@ -442,7 +449,7 @@ export class SiteWorkerListComponent implements OnInit {
                              this.filteredModalWorkers.every(worker => worker.selected);
   }
 
-  getSelectedWorkersCount(): number {
+  getSelectedModalWorkersCount(): number {
     return this.filteredModalWorkers.filter(worker => worker.selected).length;
   }
 
@@ -625,6 +632,333 @@ export class SiteWorkerListComponent implements OnInit {
       return '其他';
     } else {
       return gender;
+    }
+  }
+
+  // 工作人員選取相關方法
+  toggleWorkerSelection(worker: Worker) {
+    if (!worker._id) return;
+    
+    if (this.selectedWorkers.has(worker._id)) {
+      this.selectedWorkers.delete(worker._id);
+    } else {
+      this.selectedWorkers.add(worker._id);
+    }
+  }
+
+  isWorkerSelected(worker: Worker): boolean {
+    return worker._id ? this.selectedWorkers.has(worker._id) : false;
+  }
+
+  clearAllSelections() {
+    this.selectedWorkers.clear();
+  }
+
+  get hasSelectedWorkers(): boolean {
+    return this.selectedWorkers.size > 0;
+  }
+
+  getSelectedWorkersCount(): number {
+    return this.selectedWorkers.size;
+  }
+
+  // 標纖印表功能
+  printWorkerLabels() {
+    if (this.selectedWorkers.size === 0) return;
+
+    const selectedWorkersData = this.siteWorkers.filter(worker => 
+      worker._id && this.selectedWorkers.has(worker._id)
+    );
+
+    this.openPrintWindow(selectedWorkersData);
+  }
+
+  private openPrintWindow(workers: Worker[]) {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('無法開啟印表視窗，請檢查瀏覽器設定');
+      return;
+    }
+
+    const printContent = this.generatePrintContent(workers);
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // 等待內容載入完成後自動印表
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    };
+  }
+
+  private generatePrintContent(workers: Worker[]): string {
+    const siteName = this.site()?.projectName || '工地名稱';
+    
+    let html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>工作人員標纖 - ${siteName}</title>
+        <style>
+          @page {
+            size: A4;
+            margin: 20mm;
+          }
+          
+          body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+          }
+          
+          .worker-label {
+            width: 100%;
+            /* border: 2px solid #000; */
+            margin-bottom: 20px;
+            page-break-after: always;
+            page-break-inside: avoid;
+          }
+          
+          .worker-label:last-child {
+            page-break-after: auto;
+          }
+          
+          .header {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px;
+            background-color: #f0f0f0;
+            /* border-bottom: 2px solid #000; */
+          }
+          
+          .worker-info {
+            padding: 15px;
+          }
+          
+          .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+          }
+          
+          .info-table td {
+            border: 1px solid #000;
+            padding: 8px;
+            vertical-align: top;
+          }
+          
+          .info-table .label {
+            background-color: #f8f8f8;
+            font-weight: bold;
+            width: 25%;
+            text-align: center;
+          }
+          
+          .info-table .value {
+            width: 25%;
+          }
+          
+          .mic-section {
+            margin-top: 20px;
+            border: 1px solid #000;
+          }
+          
+          .mic-header {
+            background-color: #f0f0f0;
+            text-align: right;
+            font-weight: bold;
+            padding: 8px;
+            /* border-bottom: 1px solid #000; */
+          }
+          
+          .mic-content {
+            padding: 10px;
+          }
+          
+          .mic-table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          
+          .mic-table td, .mic-table th {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: center;
+            vertical-align: middle;
+          }
+          
+                     .mic-table .field-label {
+             background-color: #f8f8f8;
+             font-weight: bold;
+             width: 120px;
+           }
+           
+           .photo-cell {
+             height: 60px;
+             width: 80px;
+           }
+           
+           .training-cell {
+             height: 80px;
+           }
+           
+           .certification-images {
+             display: flex;
+             flex-wrap: wrap;
+             align-items: center;
+             justify-content: center;
+             padding: 5px;
+             min-height: 40px;
+           }
+           
+           .certification-images img {
+             width: 72px !important;
+             height: 72px !important;
+             margin: 2px !important;
+             border-radius: 3px !important;
+             border: 1px solid #ccc;
+           }
+           
+           .date-section {
+             margin-top: 10px;
+             text-align: right;
+           }
+          
+          @media print {
+            body {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+          }
+        </style>
+      </head>
+      <body>
+    `;
+
+    workers.forEach((worker, index) => {
+      html += this.generateWorkerLabelHTML(worker, siteName);
+    });
+
+    html += `
+      </body>
+      </html>
+    `;
+
+    return html;
+  }
+
+  private generateWorkerLabelHTML(worker: Worker, siteName: string): string {
+    const age = this.calculateAge(worker.birthday || '');
+    const gender = this.formatGender(worker.gender);
+    const fromMonth = (dayjs().year() - 1911) + '年' + (dayjs().month() + 1) + '月';
+    const toMonth = (dayjs().year() + 1 - 1911) + '年' + (dayjs().month() + 1) + '月';
+
+    return `
+      <div class="worker-label">
+        <!-- <div class="header">工作人員標纖 - ${siteName}</div> -->
+        <div class="worker-info">
+                    
+          <div class="mic-section">
+            <div class="mic-header">MIC核發人：${this.currentUser()?.name}</div>
+            <div class="mic-content">
+              <table class="mic-table">
+                <tr>
+                  <td class="field-label">廠商名稱</td>
+                  <td>${worker.contractingCompanyName || ''}</td>
+                  <td class="field-label">姓名</td>
+                  <td>${worker.name || ''}</td>
+                </tr>
+                <tr>
+                  <td class="field-label">血型</td>
+                  <td>${worker.bloodType || ''}</td>
+                  <td class="field-label">背心編號</td>
+                  <td>${worker.supplierIndustrialSafetyNumber || ''}</td>
+                </tr>
+                <tr>
+                  <td class="field-label">緊急聯絡人</td>
+                  <td>${worker.liaison || ''}</td>
+                  <td class="field-label">電話</td>
+                  <td>${worker.emergencyTel || ''}</td>
+                </tr>
+                <tr style="height: 100px;">
+                  <td class="field-label">證照</td>
+                  <td colspan="3">${this.getWorkerCertificationImages(worker)}</td>
+                </tr>
+                <tr style="height: 100px;">
+                  <td class="field-label">教育訓練<br/>及危害告知</td>
+                  <td colspan="3"></td>
+                </tr>
+              </table>
+              <div class="date-section" title="一年內有效">
+                自民國 ${fromMonth} 至民國 ${toMonth} 有效
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 獲取證照對應的圖片檔案名稱
+  private getCertificationImageFileName(certificationType: string): string {
+    const certificationImageMap: { [key: string]: string } = {
+      'a': '高空工作車操作人員.png',
+      'fr': '急救人員.png',
+      'o2': '缺氧作業主管.png',
+      'os': '有機溶劑作業主管.png',
+      'sa': '施工架組配作業主管.png',
+      'sc': '特化.png',
+      'dw': '粉塵.png',
+      'ow': '氧乙炔.png',
+      'r': '屋頂作業.png',
+      'ssa': '鋼構組配作業主管.png',
+      'fs': '模板支撐作業主管.png',
+      'pe': '露天開挖.png',
+      'rs': '擋土支撐作業主管.png',
+      'bosh': '工安人員.png',
+      'aos': '工安人員.png',
+      's': '工安人員.png',
+      'ma': '工安人員.png',
+      // 其他常見證照
+      'forklift': '堆高機操作人員.png',
+      'crane_commander': '吊掛指揮手.png',
+      'crane_operator': '吊掛人員.png',
+      'fire_watch': '監火人員.png',
+      'hazard_notice': '已進行危害告知.png',
+      'six_hour': '六小時.png'
+    };
+    
+    return certificationImageMap[certificationType] || '';
+  }
+
+  // 獲取工作人員的證照圖片HTML
+  private getWorkerCertificationImages(worker: Worker): string {
+    if (!worker.certifications || worker.certifications.length === 0) {
+      return '<div class="certification-images"><span class="text-muted">無證照</span></div>';
+    }
+
+    const imageElements = worker.certifications
+      .map(cert => {
+        const imageName = this.getCertificationImageFileName(cert.type);
+        if (imageName) {
+          const certificationName = CertificationTypeManager.getName(cert.type);
+          return `<img src="/certificate/${imageName}" alt="${certificationName}" title="${certificationName}">`;
+        }
+        return '';
+      })
+      .filter(img => img !== '')
+      .join('');
+
+    if (imageElements) {
+      return `<div class="certification-images">${imageElements}</div>`;
+    } else {
+      return '<div class="certification-images"><span class="text-muted">無對應圖示</span></div>';
     }
   }
 }

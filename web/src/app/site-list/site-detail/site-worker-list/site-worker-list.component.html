@@ -1,5 +1,5 @@
 <div class="container-fluid mt-4">
-  <!-- 頁面標題 -->
+        <!-- 頁面標題 -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">
       <i class="bi bi-person-badge-fill me-2"></i>工地工作人員管理
@@ -168,6 +168,25 @@
         <i class="bi bi-person-badge me-2"></i>工地工作人員
         <span class="badge bg-primary ms-2">{{ filteredSiteWorkers.length }}/{{ siteWorkers.length }}</span>
       </h5>
+      @if (hasSelectedWorkers) {
+        <div class="d-flex gap-2 align-items-center">
+          <span class="badge bg-info">已選擇 {{ getSelectedWorkersCount() }} 位</span>
+          <button
+            class="btn btn-success btn-sm"
+            (click)="printWorkerLabels()"
+            title="列印選取工作人員的標纖"
+            >
+            <i class="bi bi-printer me-1"></i>顯示標纖
+          </button>
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            (click)="clearAllSelections()"
+            title="清除所有選取"
+            >
+            <i class="bi bi-x-circle me-1"></i>清除選取
+          </button>
+        </div>
+      }
     </div>
 
     <div class="card-body">
@@ -212,10 +231,21 @@
                   <tr>
                     <td class="text-center">
                       <div
-                        class="avatar rounded-circle d-flex align-items-center justify-content-center"
+                        class="avatar rounded-circle d-flex align-items-center justify-content-center position-relative"
                         [style.backgroundColor]="getRandomColor(worker.name)"
+                        [class.selected]="isWorkerSelected(worker)"
+                        (click)="toggleWorkerSelection(worker)"
+                        role="button"
+                        tabindex="0"
+                        [attr.aria-label]="isWorkerSelected(worker) ? '取消選取 ' + worker.name : '選取 ' + worker.name"
+                        title="點擊選取/取消選取"
                         >
                         {{ worker.name.charAt(0) }}
+                        @if (isWorkerSelected(worker)) {
+                          <div class="selection-indicator">
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                          </div>
+                        }
                       </div>
                     </td>
                     <td>{{ worker.name }}</td>
@@ -437,34 +467,12 @@
           type="button"
           class="btn btn-primary"
           (click)="addSelectedWorkers()"
-          [disabled]="getSelectedWorkersCount() === 0"
+          [disabled]="getSelectedModalWorkersCount() === 0"
           >
-          <i class="bi bi-check-circle me-1"></i>添加已選 ({{ getSelectedWorkersCount() }}) 位工作人員
+          <i class="bi bi-check-circle me-1"></i>添加已選 ({{ getSelectedModalWorkersCount() }}) 位工作人員
         </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- 樣式 -->
-<style>
-  .avatar {
-  width: 32px;
-  height: 32px;
-  color: white;
-  font-weight: bold;
-}
-
-.search-results {
-max-height: 300px;
-overflow-y: auto;
-}
-
-.stats-item {
-display: flex;
-padding: 10px 15px;
-border-radius: 8px;
-background-color: #f8f9fa;
-border-left: 3px solid #0d6efd;
-}
-</style>

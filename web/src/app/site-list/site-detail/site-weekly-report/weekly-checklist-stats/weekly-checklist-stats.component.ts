@@ -1,5 +1,6 @@
 import { Component, Input, OnInit, OnChanges, OnDestroy, computed, signal, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { CurrentSiteService } from '../../../../services/current-site.service';
 import dayjs from 'dayjs';
@@ -73,10 +74,18 @@ interface ChecklistStats {
                   <div class="d-flex justify-content-between align-items-start mb-2">
                     <div>
                       <h6 class="mb-1" [style.color]="stat.color">{{ stat.displayName }}</h6>
-                      <small class="text-muted">{{ stat.formType }}</small>
+                      <!-- <small class="text-muted">{{ stat.formType }}</small> -->
                     </div>
-                    <div class="text-end">
+                    <div class="text-end d-flex align-items-center gap-2">
                       <span class="badge" [style.background-color]="stat.color">{{ stat.totalCount }}</span>
+                      <button 
+                        type="button" 
+                        class="btn btn-outline-primary btn-sm"
+                        (click)="viewChecklistForms(stat.formType)"
+                        title="查看{{ stat.displayName }}列表"
+                      >
+                        <i class="bi bi-eye"></i>
+                      </button>
                     </div>
                   </div>
                   
@@ -166,6 +175,7 @@ export class WeeklyChecklistStatsComponent implements OnInit, OnChanges, OnDestr
   
   private mongodbService = inject(MongodbService);
   private currentSiteService = inject(CurrentSiteService);
+  private router = inject(Router);
   
   checklistStats = signal<ChecklistStats[]>([]);
   isLoading = signal<boolean>(false);
@@ -369,5 +379,21 @@ export class WeeklyChecklistStatsComponent implements OnInit, OnChanges, OnDestr
     const total = this.getTotalChecklists();
     const pass = this.getTotalPassCount();
     return total > 0 ? Math.round((pass / total) * 100) : 0;
+  }
+
+  viewChecklistForms(formType: string): void {
+    const currentSite = this.currentSiteService.currentSite();
+    if (!currentSite?._id) {
+      console.error('無法導航：缺少工地資訊');
+      return;
+    }
+
+    // 導航到表單列表頁面，並帶上表單類型過濾參數
+    this.router.navigate(['/site', currentSite._id, 'forms'], {
+      queryParams: {
+        formType: formType,
+        week: this.selectedWeek
+      }
+    });
   }
 } 

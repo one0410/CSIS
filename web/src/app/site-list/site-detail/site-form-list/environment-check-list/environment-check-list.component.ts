@@ -1,4 +1,4 @@
-import { Component, computed, OnInit } from '@angular/core';
+import { Component, computed, OnInit, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -6,6 +6,7 @@ import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
 import { CurrentSiteService } from '../../../../services/current-site.service';
 import { DocxTemplateService } from '../../../../services/docx-template.service';
+import { AuthService } from '../../../../services/auth.service';
 import dayjs from 'dayjs';
 
 interface ChecklistItem {
@@ -55,6 +56,7 @@ export class EnvironmentCheckListComponent implements OnInit {
   siteId: string = '';
   formId: string = '';
   site = computed(() => this.currentSiteService.currentSite());
+  currentUser = computed(() => this.authService.user());
   
   preWorkSupervisorSignature: string = '';
   preWorkWorkerSignature: string = '';
@@ -141,7 +143,7 @@ export class EnvironmentCheckListComponent implements OnInit {
   };
 
   // 文檔生成狀態
-  isGeneratingDocument: boolean = false;
+  isGeneratingDocument = signal<boolean>(false);
 
   constructor(
     private router: Router,
@@ -149,7 +151,8 @@ export class EnvironmentCheckListComponent implements OnInit {
     private mongodbService: MongodbService,
     private signatureDialog: SignatureDialogService,
     private currentSiteService: CurrentSiteService,
-    private docxTemplateService: DocxTemplateService
+    private docxTemplateService: DocxTemplateService,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {
@@ -292,7 +295,7 @@ export class EnvironmentCheckListComponent implements OnInit {
       return;
     }
 
-    this.isGeneratingDocument = true;
+    this.isGeneratingDocument.set(true);
     try {
       await this.docxTemplateService.generateEnvironmentChecklistDocx(this.checklistData._id);
       
@@ -301,12 +304,33 @@ export class EnvironmentCheckListComponent implements OnInit {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       alert(`Word生成失敗: ${errorMessage}`);
     } finally {
-      this.isGeneratingDocument = false;
+      this.isGeneratingDocument.set(false);
     }
   }
 
   // 取消並返回
   cancel(): void {
     this.router.navigate(['/site', this.siteId, 'forms']);
+  }
+
+  // 刪除檢查表
+  async deleteChecklist(): Promise<void> {
+    if (!this.formId) {
+      alert('無法刪除：缺少表單ID');
+      return;
+    }
+    
+    if (confirm('確定要刪除這份環安衛自主檢點表嗎？此操作無法復原。')) {
+      try {
+        await this.mongodbService.delete('siteForm', this.formId);
+        
+        alert('環安衛自主檢點表已刪除');
+        this.router.navigate(['/site', this.siteId, 'forms']);
+      } catch (error) {
+        console.error('刪除檢查表時發生錯誤:', error);
+        const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+        alert(`刪除失敗: ${errorMessage}`);
+      }
+    }
   }
 }

@@ -17,3 +17,5 @@ data/
 # Git 部署相關
 backup-*/
 deployment-*.log
+
+~*.docx

@@ -1,0 +1,270 @@
+---
+description: 當需求內容與工地表單相關的時候自動加入。
+alwaysApply: false
+---
+# 工地管理系統表單規則文件
+
+## 系統概述
+工地管理系統使用日曆視圖管理各種表單，每個表單都有特定的用途、權限控制和業務流程。
+
+## 表單類型定義
+
+### 基礎表單類型 (SiteForm)
+```typescript
+interface SiteForm {
+    _id?: string;
+    siteId: string;
+    formType: 'sitePermit' | 'toolboxMeeting' | 'safetyChecklist' | 'specialWorkChecklist' | 'defectRecord' | 'safetyIssueRecord' | 'hazardNotice' | 'training' | 'safetyPatrolChecklist';
+    applyDate: string | Date;
+    createdAt: string | Date;
+    createdBy: string;
+    updatedAt?: string | Date;
+    updatedBy?: string;
+}
+```
+
+### 表單狀態管理
+- **draft**: 草稿狀態 (灰色 #6c757d)
+- **pending**: 待審核狀態 (黃色 #ffc107)
+- **approved**: 已核准狀態 (綠色 #28a745)
+- **rejected**: 已拒絕狀態 (紅色 #dc3545)
+
+## 角色權限系統
+
+### 角色定義
+1. **專案經理** (projectManager)
+2. **專案秘書** (secretary)
+3. **專案工程師** (projectEngineer)
+4. **工地經理** (siteManager)
+5. **環安主管** (safetyManager)
+6. **環安工程師** (safetyEngineer)
+
+### 表單新增權限矩陣
+
+| 表單類型 | 專案經理 | 專案秘書 | 專案工程師 | 工地經理 | 環安主管 | 環安工程師 |
+|---------|---------|---------|-----------|---------|---------|-----------|
+| 工地許可單 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 工具箱會議 | ✓ | － | － | ✓ | ✓ | ✓ |
+| 環安衛自主檢點表 | ✓ | － | ✓ | ✓ | ✓ | ✓ |
+| 特殊作業自主檢點表 | ✓ | － | ✓ | ✓ | ✓ | ✓ |
+| 缺失記錄單 | ✓ | － | ✓ | ✓ | ✓ | ✓ |
+| 工安巡迴檢查表 | － | － | － | － | ✓ | ✓ |
+| 教育訓練 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+## 業務規則
+
+### 1. 工地許可單 (sitePermit)
+- **目的**: 工作許可申請和審核
+- **特殊規則**:
+  - 支援跨天工作期間 (workStartTime ~ workEndTime)
+  - 需要四重簽名流程: 申請人 → 申請主管 → 審核 → 核準
+  - 包含作業類別選擇 (selectedCategories)
+  - 在日曆中顯示簽名狀態圖示 (✅/❌)
+- **顯示名稱**: "工地許可單" + 簽名狀態圖示
+- **路由**: `/site/{siteId}/forms/permit/{formId}`
+
+### 2. 工具箱會議 (toolboxMeeting)
+- **目的**: 安全會議記錄
+- **特殊規則**:
+  - 每日必須檢查：有工地許可單的日期應該要有工具箱會議
+  - 缺少時在日曆顯示提醒: "⚠️ 新增工具箱會議" (黃色 #ffcc00)
+  - 支援日期參數傳遞: `createToolboxMeeting(date)`
+- **顯示名稱**: "工具箱會議"
+- **路由**: `/site/{siteId}/forms/toolbox-meeting/{formId}`
+
+### 3. 環安衛自主檢點表 (safetyChecklist/environmentChecklist)
+- **目的**: 每日環境安全衛生檢查
+- **特殊規則**:
+  - 新增表單時, 自動帶入表頭基本資料包含, 作業單位, 廠區, 檢查日期(預設今日), 施工地點
+  - 每日必須檢查：有工地許可單的日期應該要有環安衛自檢表
+  - 缺少時在日曆顯示提醒: "⚠️ 新增環安衛自檢表" (黃色 #ffcc00)
+  - 支援日期參數傳遞: `createEnvironmentCheckList(date)`
+- **顯示名稱**: "環安衛自檢表"
+- **路由**: `/site/{siteId}/forms/environment-check-list/{formId}`
+
+### 4. 特殊作業自主檢點表 (specialWorkChecklist)
+- **目的**: 特殊作業安全檢查
+- **特殊規則**:
+  - 與工地許可單的作業類別關聯
+  - 每個作業類別在對應日期需要有檢點表
+  - 缺少時顯示: "⚠️ 新增「{作業類別}」自檢表" (橘色 #ff4500)
+  - 包含作業類型 (workType) 和許可單關聯 (permitId)
+- **顯示名稱**: "特殊作業自檢表-{workType}"
+- **路由**: `/site/{siteId}/forms/special-work-checklist/{formId}`
+
+### 5. 缺失記錄單 (safetyIssueRecord)
+- **目的**: 安全缺失記錄和追蹤
+- **特殊規則**:
+  - 新增表單時, 開立人員自動帶入登入者姓名
+  - 支援照片上傳
+  - 包含缺失分類和改善建議
+  - issueRecord.reviewResult 判斷是否改善完成
+  - 改善完成時顯示: "👌安全缺失紀錄單", 未完成時顯示: "❌安全缺失紀錄單"
+- **顯示名稱**: "(👌/❌)安全缺失記錄單"
+- **路由**: `/site/{siteId}/forms/safety-issue-record/{formId}`
+
+### 6. 工安巡迴檢查表 (safetyPatrolChecklist)
+- **目的**: 定期工安巡迴檢查
+- **特殊規則**:
+  - 僅限環安主管和環安工程師
+  - 包含檢查項目和結果記錄
+- **顯示名稱**: "工安巡迴檢查表"
+- **路由**: `/site/{siteId}/forms/safety-patrol-checklist/{formId}`
+
+### 7. 危害告知單 (hazardNotice)
+- **目的**: 工地危害告知
+- **特殊規則**:
+  - 包含工程名稱 (workName)
+  - 支援 QR Code 生成供訪客簽名
+- **顯示名稱**: "危害告知單-{workName}"
+- **路由**: `/site/{siteId}/forms/hazard-notice/{formId}`
+
+### 8. 教育訓練 (training)
+- **目的**: 教育訓練記錄
+- **特殊規則**:
+  - 包含課程名稱 (courseName)
+  - 支援 QR Code 生成供參與者簽名
+  - 參與者簽到表格式 (最多40人，分兩欄顯示)
+- **顯示名稱**: "教育訓練-{courseName}"
+- **路由**: `/site/{siteId}/training/{formId}`
+
+## 表單顯示規則
+
+每個表單最下方顯示按鈕
+1. 所有按鈕在同一 row 
+2. 最左邊顯示取消按鈕
+3. 取消按鈕的右邊, 如果 currentUser()?.role 角色為管理員, 顯示刪除按鈕
+4. 如果有下載功能, 正中央顯示，下載word按鈕。
+5. 最右邊顯示儲存按鈕
+
+## 日曆顯示規則
+
+### 事件顏色系統
+- **草稿**: 灰色 (#6c757d)
+- **待審核**: 黃色 (#ffc107)
+- **已核准**: 綠色 (#28a745)
+- **已拒絕**: 紅色 (#dc3545)
+- **提醒事件**: 黃色/橘色 (#ffcc00/#ff4500)
+
+### 事件排序 (displayOrder)
+1. 工地許可單: 1
+2. 工具箱會議: 2
+3. 環安衛自檢表: 3
+4. 特殊作業檢點表: 4
+5. 其他表單: 5-97
+6. 提醒事件: 98-99
+
+### 跨天事件處理
+- 工地許可單支援跨天顯示 (workStartTime ~ workEndTime)
+- 其他表單均為單日事件
+
+## 自動提醒系統
+
+### 檢查邏輯
+1. 找出所有工地許可單的工作日期
+2. 對每個工作日期檢查:
+   - 是否有工具箱會議
+   - 是否有環安衛自檢表
+   - 對每個作業類別是否有對應的特殊作業檢點表
+3. 缺少時產生提醒事件
+
+### 提醒事件特性
+- 可點擊直接進入創建頁面
+- 閃爍動畫效果 (`animation: blink 1s ease-in-out infinite alternate`)
+- 傳遞日期參數到創建表單
+
+## QR Code 功能規則
+
+### 支援 QR Code 的表單
+- 危害告知單: 訪客掃描簽名
+- 教育訓練: 參與者掃描簽名
+
+### QR Code Modal 設計標準
+- 使用 `modal-lg` 尺寸
+- 包含說明文字、QR Code 圖片、網址輸入框和複製按鈕
+- 一致的樣式和交互體驗
+
+## 簽名系統規則
+
+### 簽名資料結構
+
+參考 signatureData.model.ts 檔案
+
+### 簽名類型
+- 工地許可單: 四重簽名 (申請人、申請主管、審核、核準)
+- 其他表單: 單一或多重簽名依需求而定
+
+## 表單快取管理
+
+### 快取策略
+- 快取時間: 5分鐘 (`FORMS_CACHE_DURATION = 5 * 60 * 1000`)
+- 載入範圍: 依據日曆當前視圖的日期範圍
+- 刷新時機: 新增/修改表單後、視圖切換時
+
+### 效能優化
+- 避免重複載入表單資料
+- 日曆視圖變更時重新載入對應日期範圍的表單
+- 支援手動刷新快取
+
+## 路由模式
+
+### 創建表單路由
+```
+/site/{siteId}/forms/create-{formType}
+```
+
+### 查看/編輯表單路由
+```
+/site/{siteId}/forms/{formType}/{formId}
+/site/{siteId}/training/{formId}  // 教育訓練特殊路由
+```
+
+### 查詢參數支援
+- `date`: 預設日期
+- `workCategory`: 作業類別
+- `permitId`: 關聯許可單ID
+
+## Template Driven Form 使用規範
+
+### Angular 表單處理
+- 使用 Template Driven Form 方式
+- 雙向綁定 `[(ngModel)]`
+- 表單驗證使用 HTML5 驗證屬性
+- 避免使用 rxjs，使用 signal 處理狀態變更
+
+### 組件結構標準
+```typescript
+// 使用 standalone 組件
+@Component({
+  selector: 'app-{form-name}',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ...],
+  templateUrl: './component.html',
+  styleUrls: ['./component.scss']
+})
+```
+
+## 列印功能規則
+
+### 列印樣式
+- 支援紙本表單列印
+- A4 尺寸適配
+- 隱藏按鈕和互動元素
+- 保持表單內容完整性
+
+### CSS 列印規範
+```css
+@media print {
+  .print-content {
+    /* 列印專用樣式 */
+  }
+  .btn, .modal {
+    display: none !important;
+  }
+}
+```
+
+## 下載功能
+
+- 下載功能透過 docxtemplater 套件來達成, 圖片則使用 docxtemplater-image-module-free 來達成。
+- docx 的模板檔案位於 /public/template 目錄下

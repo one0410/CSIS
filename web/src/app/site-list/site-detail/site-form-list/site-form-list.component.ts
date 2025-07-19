@@ -602,7 +602,7 @@ export class SiteFormListComponent implements AfterViewInit {
         return title;
       case 'toolboxMeeting':
         return '工具箱會議';
-      case 'safetyChecklist':
+      case 'environmentChecklist':
         return '環安衛自檢表';
       case 'specialWorkChecklist':
         return '特殊作業自檢表-' + (form as any).workType;
@@ -694,7 +694,7 @@ export class SiteFormListComponent implements AfterViewInit {
         case 'toolboxMeeting':
           route = ['/site', this.siteId, 'forms', 'toolbox-meeting', eventId];
           break;
-        case 'safetyChecklist':
+        case 'environmentChecklist':
           route = ['/site', this.siteId, 'forms', 'environment-check-list', eventId];
           break;
         case 'specialWorkChecklist':
