@@ -35,14 +35,14 @@ interface ChartData {
     <div class="card h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0">
-          <i class="bi bi-person-plus me-2"></i>帆宣出工人數
+          <i class="fas fa-user-plus me-2"></i>帆宣出工人數
         </h6>
         <button 
           class="btn btn-outline-primary btn-sm" 
           type="button"
           (click)="showUpdateModal()"
         >
-          <i class="bi bi-pencil me-1"></i>更新
+          <i class="fas fa-edit me-1"></i>更新
         </button>
       </div>
       <div class="card-body">
@@ -82,7 +82,7 @@ interface ChartData {
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="updateWorkerCountModalLabel">
-              <i class="bi bi-person-plus me-2"></i>更新帆宣出工人數
+              <i class="fas fa-user-plus me-2"></i>更新帆宣出工人數
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
           </div>

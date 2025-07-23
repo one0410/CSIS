@@ -1,6 +1,6 @@
 <div class="weather-detail-container">
   <div class="back-button" (click)="location.back()">
-    <i class="bi bi-arrow-left"></i> 返回
+    <i class="fas fa-arrow-left"></i> 返回
   </div>
 
   <!-- 載入中狀態 -->
@@ -14,7 +14,7 @@
   <!-- 錯誤狀態 -->
   @if (error) {
   <div class="error-container">
-    <i class="bi bi-exclamation-triangle-fill"></i>
+    <i class="fas fa-exclamation-triangle"></i>
     <p>{{ error }}</p>
   </div>
   }
@@ -43,74 +43,74 @@
 
     <div class="weather-details-grid">
       <div class="weather-detail-item">
-        <i class="bi bi-thermometer-half"></i>
+        <i class="fas fa-thermometer-half"></i>
         <span>體感溫度</span>
         <strong>{{ weatherData.current.feelslike_c }}°C</strong>
       </div>
 
       <div class="weather-detail-item">
-        <i class="bi bi-droplet-fill"></i>
+        <i class="fas fa-tint"></i>
         <span>濕度</span>
         <strong>{{ weatherData.current.humidity }}%</strong>
       </div>
 
       <div class="weather-detail-item">
-        <i class="bi bi-wind"></i>
+        <i class="fas fa-wind"></i>
         <span>風速</span>
         <strong>{{ weatherData.current.wind_kph }} km/h</strong>
       </div>
 
       <div class="weather-detail-item">
-        <i class="bi bi-compass"></i>
+        <i class="fas fa-compass"></i>
         <span>風向</span>
         <strong>{{ weatherData.current.wind_dir }}</strong>
       </div>
 
       <div class="weather-detail-item">
-        <i class="bi bi-cloud-fill"></i>
+        <i class="fas fa-cloud"></i>
         <span>雲量</span>
         <strong>{{ weatherData.current.cloud }}%</strong>
       </div>
 
       <div class="weather-detail-item">
-        <i class="bi bi-eye-fill"></i>
+        <i class="fas fa-eye"></i>
         <span>能見度</span>
         <strong>{{ weatherData.current.vis_km }} km</strong>
       </div>
 
       <div class="weather-detail-item">
-        <i class="bi bi-sun"></i>
+        <i class="fas fa-sun"></i>
         <span>紫外線指數</span>
         <strong>{{ weatherData.current.uv }}</strong>
       </div>
 
       <div class="weather-detail-item">
-        <i class="bi bi-water"></i>
+        <i class="fas fa-water"></i>
         <span>降水量</span>
         <strong>{{ weatherData.current.precip_mm }} mm</strong>
       </div>
 
       @if (weatherData.current.air_quality) {
       <div class="weather-detail-item">
-        <i class="bi bi-airplane"></i>
+        <i class="fas fa-plane"></i>
         <span>空氣品質</span>
         <strong>{{ weatherData.current.air_quality["us-epa-index"] }}</strong>
       </div>
 
       <div class="weather-detail-item">
-        <i class="bi bi-droplet-fill"></i>
+        <i class="fas fa-tint"></i>
         <span>PM10</span>
         <strong>{{ weatherData.current.air_quality.pm10 }} μg/m³</strong>
       </div>
 
       <div class="weather-detail-item">
-        <i class="bi bi-droplet-fill"></i>
+        <i class="fas fa-tint"></i>
         <span>PM2.5</span>
         <strong>{{ weatherData.current.air_quality.pm2_5 }} μg/m³</strong>
       </div>
 
       <div class="weather-detail-item">
-        <i class="bi bi-droplet-fill"></i>
+        <i class="fas fa-tint"></i>
         <span>CO2</span>
         <strong>{{ weatherData.current.air_quality.co }} μg/m³</strong>
       </div>
@@ -148,15 +148,15 @@
           <p>{{ getConditionText(day.day.condition.text) }}</p>
           <div class="forecast-extra">
             <div title="降雨機率">
-              <i class="bi bi-droplet"></i>
+              <i class="fas fa-tint"></i>
               <span>{{ day.day.daily_chance_of_rain }}%</span>
             </div>
             <div title="日出時間">
-              <i class="bi bi-sunrise"></i>
+              <i class="fas fa-sun"></i>
               <span>{{ day.astro.sunrise }}</span>
             </div>
             <div title="日落時間">
-              <i class="bi bi-sunset"></i>
+              <i class="fas fa-sun"></i>
               <span>{{ day.astro.sunset }}</span>
             </div>
           </div>

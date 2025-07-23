@@ -126,7 +126,7 @@ export class WorkerListComponent implements OnDestroy {
         } else {
           // 如果沒有大頭貼，顯示預設圖示
           const icon = document.createElement('i');
-          icon.className = 'bi bi-person-circle';
+          icon.className = 'fas fa-user-circle';
           icon.style.fontSize = '36px';
           icon.style.color = '#6c757d';
           icon.title = '點擊選取/取消選取';
@@ -153,7 +153,7 @@ export class WorkerListComponent implements OnDestroy {
           checkMark.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
 
           const checkIcon = document.createElement('i');
-          checkIcon.className = 'bi bi-check';
+          checkIcon.className = 'fas fa-check';
           checkIcon.style.color = 'white';
           checkIcon.style.fontSize = '10px';
           checkIcon.style.fontWeight = 'bold';
@@ -206,7 +206,7 @@ export class WorkerListComponent implements OnDestroy {
 
         // 設置 div 內容
         if (!isValid) {
-          div.innerHTML = `${params.data.name} <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>`;
+          div.innerHTML = `${params.data.name} <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>`;
         } else {
           div.innerHTML = params.data.name;
         }
@@ -322,7 +322,7 @@ export class WorkerListComponent implements OnDestroy {
             ).format('YYYY-MM-DD')} (保額: ${insurance.amount} 萬元)`;
             if (dayjs().isAfter(dayjs(insurance.end))) {
               result +=
-                '<i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+                '<i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
               div.style.backgroundColor = 'red';
               div.style.color = 'white';
               div.title = '意外險已過期';
@@ -380,7 +380,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '高空作業車操作人員(a)已過期';
@@ -411,7 +411,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '乙級職業安全管理員(bosh)已過期';
@@ -442,7 +442,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '甲級職業安全管理員(aos)已過期';
@@ -473,7 +473,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '甲級職業衛生管理師(aoh)已過期';
@@ -504,7 +504,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '急救人員(fr)已過期';
@@ -535,7 +535,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '缺氧(侷限)作業主管證照(o2)已過期';
@@ -566,7 +566,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '有機溶劑作業主管證照(os)已過期';
@@ -597,7 +597,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '施工架組配作業主管證照(sa)已過期';
@@ -628,7 +628,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '營造業職業安全衛生業務主管(s)已過期';
@@ -658,7 +658,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '一般業職業安全衛生業務主管(ma)已過期';
@@ -689,7 +689,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '特定化學物質作業主管(sc)已過期';
@@ -720,7 +720,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '粉塵作業主管(dw)已過期';
@@ -750,7 +750,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '氧乙炔熔接裝置作業人員(ow)已過期';
@@ -781,7 +781,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '屋頂作業主管(r)已過期';
@@ -812,7 +812,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '鋼構組配作業主管證照(ssa)已過期';
@@ -842,7 +842,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '模板支撐作業主管(fs)已過期';
@@ -872,7 +872,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '露天開挖作業主管(pe)已過期';
@@ -902,7 +902,7 @@ export class WorkerListComponent implements OnDestroy {
         // 檢查是否過期
         if (cert.isValid === false) {
           html +=
-            ' <i class="bi bi-exclamation-triangle text-danger" title="已過期"></i>';
+            ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
           div.title = '擋土支撐作業主管(rs)已過期';

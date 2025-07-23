@@ -1,6 +1,7 @@
 import { Component, computed, OnInit, AfterViewInit } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { SiteFormHeaderComponent } from '../site-form-header/site-form-header.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
@@ -76,7 +77,7 @@ enum RemedyMeasure {
   selector: 'app-safety-issue-record',
   templateUrl: './safety-issue-record.component.html',
   styleUrls: ['./safety-issue-record.component.scss'],
-  imports: [FormsModule],
+  imports: [FormsModule, SiteFormHeaderComponent],
   standalone: true
 })
 export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {

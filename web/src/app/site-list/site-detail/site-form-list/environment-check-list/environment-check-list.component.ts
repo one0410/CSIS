@@ -1,6 +1,7 @@
 import { Component, computed, OnInit, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { SiteFormHeaderComponent } from '../site-form-header/site-form-header.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
@@ -49,7 +50,7 @@ enum SignatureType {
   selector: 'app-environment-check-list',
   templateUrl: './environment-check-list.component.html',
   styleUrls: ['./environment-check-list.component.scss'],
-  imports: [FormsModule],
+  imports: [FormsModule, SiteFormHeaderComponent],
   standalone: true
 })
 export class EnvironmentCheckListComponent implements OnInit {

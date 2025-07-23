@@ -26,7 +26,7 @@ interface DefectByType {
       <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
           <h6 class="mb-0">
-            <i class="bi bi-exclamation-triangle me-2"></i>本月缺失累計
+            <i class="fas fa-exclamation-triangle me-2"></i>本月缺失累計
           </h6>
           <div class="btn-group btn-group-sm" role="group">
             <button 
@@ -90,7 +90,7 @@ interface DefectByType {
               </div>
             } @else {
               <div class="text-center text-muted">
-                <i class="bi bi-check-circle fs-1 mb-2 text-success opacity-50"></i>
+                <i class="fas fa-check-circle fs-1 mb-2 text-success opacity-50"></i>
                 <p class="mb-0">本月無缺失記錄</p>
                 <small>各廠商均無安全缺失</small>
               </div>
@@ -124,7 +124,7 @@ interface DefectByType {
               </div>
             } @else {
               <div class="text-center text-muted">
-                <i class="bi bi-check-circle fs-1 mb-2 text-success opacity-50"></i>
+                <i class="fas fa-check-circle fs-1 mb-2 text-success opacity-50"></i>
                 <p class="mb-0">本月無缺失記錄</p>
                 <small>各類型均無安全缺失</small>
               </div>

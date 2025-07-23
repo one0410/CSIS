@@ -12,7 +12,7 @@ import dayjs from 'dayjs';
     <div class="card h-100">
       <div class="card-header">
         <h6 class="mb-0">
-          <i class="bi bi-people me-2"></i>本月出工人數統計
+          <i class="fas fa-users me-2"></i>本月出工人數統計
         </h6>
         <small class="text-muted">{{ getMonthRangeDisplay() }}</small>
       </div>
@@ -110,7 +110,7 @@ import dayjs from 'dayjs';
             </div>
           } @else if (!isLoading()) {
             <div class="text-center text-muted">
-              <i class="bi bi-people-x fs-1 mb-2 opacity-50"></i>
+              <i class="fas fa-users fs-1 mb-2 opacity-50"></i>
               <p class="mb-0">本月無出工記錄</p>
               <small>暫無工具箱會議簽名資料</small>
             </div>

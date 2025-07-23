@@ -40,7 +40,7 @@ interface DailyPhoto {
     <div class="card h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0">
-          <i class="bi bi-camera me-2"></i>當日照片分類統計
+          <i class="fas fa-camera me-2"></i>當日照片分類統計
         </h6>
         <div class="d-flex align-items-center gap-2">
           @if (photos().length > 0) {
@@ -57,7 +57,7 @@ interface DailyPhoto {
                 <span class="spinner-border spinner-border-sm me-1" role="status"></span>
                 下載中...
               } @else {
-                <i class="bi bi-download me-1"></i>
+                <i class="fas fa-download me-1"></i>
                 下載全部
               }
             </button>
@@ -76,7 +76,7 @@ interface DailyPhoto {
           @if (photoStats().length > 0) {
             <div class="mb-3">
               <h6 class="fs-6 text-muted mb-2">
-                <i class="bi bi-tags me-1"></i>標籤統計
+                <i class="fas fa-tags me-1"></i>標籤統計
               </h6>
               <div class="d-flex flex-wrap gap-2 mb-3">
                 @for (stat of photoStats(); track stat.tagName) {
@@ -95,7 +95,7 @@ interface DailyPhoto {
           <!-- 照片縮圖區域 -->
           <div class="mb-3">
             <h6 class="fs-6 text-muted mb-2">
-              <i class="bi bi-images me-1"></i>照片預覽
+              <i class="fas fa-images me-1"></i>照片預覽
             </h6>
             <div class="photo-grid">
               @for (photo of displayPhotos(); track photo._id) {
@@ -135,7 +135,7 @@ interface DailyPhoto {
               @if (photos().length > maxDisplayPhotos) {
                 <div class="photo-item show-more-item" (click)="viewAllPhotos()">
                   <div class="show-more-content">
-                    <i class="bi bi-plus-lg fs-4 text-primary"></i>
+                    <i class="fas fa-plus fs-4 text-primary"></i>
                     <div class="text-center">
                       <small class="text-primary fw-medium">
                         查看全部<br>{{ photos().length }} 張
@@ -154,19 +154,19 @@ interface DailyPhoto {
               class="btn btn-sm btn-outline-primary"
               (click)="viewAllPhotos()"
               title="查看所有照片">
-              <i class="bi bi-images me-1"></i>
+              <i class="fas fa-images me-1"></i>
               查看全部照片
             </button>
             
             <!-- 檔案大小統計 -->
             <small class="text-muted">
-              <i class="bi bi-hdd me-1"></i>
+              <i class="fas fa-hdd me-1"></i>
               {{ getTotalSize() }}
             </small>
           </div>
         } @else {
           <div class="text-center text-muted">
-            <i class="bi bi-camera-fill fs-1 mb-2 opacity-50"></i>
+            <i class="fas fa-camera fs-1 mb-2 opacity-50"></i>
             <p class="mb-0">當日無照片記錄</p>
             <small>暫無任何照片上傳</small>
           </div>

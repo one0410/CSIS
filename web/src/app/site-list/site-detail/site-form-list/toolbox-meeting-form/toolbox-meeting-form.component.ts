@@ -1,6 +1,7 @@
 import { Component, computed, OnInit, AfterViewInit } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { SiteFormHeaderComponent } from '../site-form-header/site-form-header.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
@@ -41,6 +42,7 @@ interface ToolboxMeetingForm extends SiteForm {
   safetyPrecautions: SafetyPrecautions; // 安全防護措施
   healthWarnings: HealthWarnings; // 健康危害告知
   fieldCheckItems: FieldCheckItem[]; // 現場檢查項目
+  communicationItems?: string; // 其他溝通/協議/宣導事項
   leaderSignature: string;
   siteManagerSignature: string;
   worker1Signature: string;
@@ -75,13 +77,16 @@ interface WorkItem {
 interface Hazards {
   // 物理性危害
   physical: {
-    noise: boolean;
-    vibration: boolean;
-    highTemp: boolean;
-    lowTemp: boolean;
-    fallObject: boolean;
-    electric: boolean;
-    radiation: boolean;
+    fallDrop: boolean; // 跌墜落
+    physicalInjury: boolean; // 擦、刺、扭、壓、夾、碰撞、割傷
+    fallObject: boolean; // 物體飛落
+    foreignObjectInEye: boolean; // 異物入眼
+    highTempContact: boolean; // 與高溫接觸
+    lowTempContact: boolean; // 與低溫接觸
+    noise: boolean; // 噪音
+    electric: boolean; // 感電
+    collapse: boolean; // 塌陷
+    radiation: boolean; // 游離輻射
   };
   // 化學性危害
   chemical: {
@@ -90,14 +95,17 @@ interface Hazards {
   };
   // 火災危害
   fire: {
-    fire: boolean;
+    fire: boolean; // 火災
+    explosion: boolean; // 爆炸
   };
   // 其他危害
   other: {
-    biological: boolean;
-    outdoorHighTemp: boolean;
-    other: boolean;
-    otherContent: string;
+    none: boolean; // 無
+    oxygenDeficiency: boolean; // 缺氧
+    biological: boolean; // 生物性危害
+    outdoorHighTemp: boolean; // 戶外高溫
+    other: boolean; // 其他
+    otherContent: string; // 其他內容
   };
   // 作業區域包含以下化學品及其附屬設備管線
   chemicalArea: {
@@ -114,18 +122,33 @@ interface Hazards {
 interface SafetyPrecautions {
   // 依作業性質穿戴之安全防護具
   personalProtection: {
-    head: boolean; // 頭部防護：工地用 | 電工用 | 實驗室
-    eyes: boolean; // 眼部防護：防火花飛濺 | 防雷射射針能傷害的安全眼鏡
-    breath: boolean; // 呼吸防護：防塵 | 濾毒 | SCBA | PAPR | 輸氣管面罩
-    hand: boolean; // 手部防護：耐切割 | 耐熱 | 耐寒 | 電工用 | 防化學
-    foot: boolean; // 足部防護：一般安全鞋 | 防化學安全鞋
-    body: boolean; // 身體防護：穿著式安全帶 | 背負式安全帶 | 全身式安全防護衣 | 化學防護衣 | 反光背心
-    hearing: boolean; // 聽覺防護：耳塞 | 耳罩
-    fall: boolean; // 墜落防護：安全網 | 移動梯 | 施工架 | 高空工作車 | 安全母索 | 自動防墜器 | 安全繩 | 鷹架 | 固定梯
-    electric: boolean; // 電氣預防：漏電斷路器 | 交流電源機自動電擊防止裝置 | 接地器
-    fire: boolean; // 火災預防：滅火器 | 防火毯 | 滅火栓防火裝置
-    gas: boolean; // 氣體預防：通風設備 | 生命偵測裝置 | 氣體偵測器 | 吊掛設備 | 搶災設備
-    other: boolean; // 其他預防：
+    // 主類別checkbox
+    headProtection: boolean; // 01.□頭部防護
+    eyeProtection: boolean; // 02.□眼部防護
+    earProtection: boolean; // 03.□耳部防護
+    breathProtection: boolean; // 04.□呼吸防護
+    handProtection: boolean; // 05.□手部防護
+    footProtection: boolean; // 06.□足部防護
+    bodyProtection: boolean; // 07.□身體防護
+    fallPrevention: boolean; // 08.□墜落預防
+    electricPrevention: boolean; // 09.□感電預防
+    firePrevention: boolean; // 10.□火災預防
+    oxygenPrevention: boolean; // 11.□缺氧預防
+    otherPrevention: boolean; // 12.□其他預防
+    
+    // 舊有的詳細項目保留給細項使用
+    head: boolean; 
+    eyes: boolean; 
+    breath: boolean; 
+    hand: boolean; 
+    foot: boolean; 
+    body: boolean; 
+    hearing: boolean; 
+    fall: boolean; 
+    electric: boolean; 
+    fire: boolean; 
+    gas: boolean; 
+    other: boolean; 
     otherContent: string;
   };
 }
@@ -162,7 +185,7 @@ interface FieldCheckItem {
   templateUrl: './toolbox-meeting-form.component.html',
   styleUrls: ['./toolbox-meeting-form.component.scss'],
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, SiteFormHeaderComponent],
 })
 export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
   siteId: string = '';
@@ -193,26 +216,32 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     ],
     hazards: {
       physical: {
-        noise: false,
-        vibration: false,
-        highTemp: false,
-        lowTemp: false,
-        fallObject: false,
-        electric: false,
-        radiation: false,
+        fallDrop: false, // 跌墜落
+        physicalInjury: false, // 擦、刺、扭、壓、夾、碰撞、割傷
+        fallObject: false, // 物體飛落
+        foreignObjectInEye: false, // 異物入眼
+        highTempContact: false, // 與高溫接觸
+        lowTempContact: false, // 與低溫接觸
+        noise: false, // 噪音
+        electric: false, // 感電
+        collapse: false, // 塌陷
+        radiation: false, // 游離輻射
       },
       chemical: {
         burn: false,
         inhalation: false,
       },
       fire: {
-        fire: false,
+        fire: false, // 火災
+        explosion: false, // 爆炸
       },
       other: {
-        biological: false,
-        outdoorHighTemp: false,
-        other: false,
-        otherContent: '',
+        none: false, // 無
+        oxygenDeficiency: false, // 缺氧
+        biological: false, // 生物性危害
+        outdoorHighTemp: false, // 戶外高溫
+        other: false, // 其他
+        otherContent: '', // 其他內容
       },
       chemicalArea: {
         hasChemicals: false,
@@ -225,6 +254,21 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     },
     safetyPrecautions: {
       personalProtection: {
+        // 主類別checkbox
+        headProtection: false, // 01.□頭部防護
+        eyeProtection: false, // 02.□眼部防護
+        earProtection: false, // 03.□耳部防護
+        breathProtection: false, // 04.□呼吸防護
+        handProtection: false, // 05.□手部防護
+        footProtection: false, // 06.□足部防護
+        bodyProtection: false, // 07.□身體防護
+        fallPrevention: false, // 08.□墜落預防
+        electricPrevention: false, // 09.□感電預防
+        firePrevention: false, // 10.□火災預防
+        oxygenPrevention: false, // 11.□缺氧預防
+        otherPrevention: false, // 12.□其他預防
+        
+        // 舊有的詳細項目
         head: false,
         eyes: false,
         breath: false,
@@ -337,6 +381,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     worker1Signature: '',
     worker2Signature: '',
     worker3Signature: '',
+    communicationItems: '', // 其他溝通/協議/宣導事項
     status: 'draft',
     createdAt: new Date(),
     createdBy: '',

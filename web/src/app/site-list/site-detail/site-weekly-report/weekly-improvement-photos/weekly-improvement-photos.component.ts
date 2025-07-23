@@ -31,7 +31,7 @@ interface PhotoInfo {
     <div class="card h-100">
       <div class="card-header">
         <h6 class="mb-0">
-          <i class="bi bi-camera-fill me-2"></i>缺失改善照片
+          <i class="fas fa-camera me-2"></i>缺失改善照片
         </h6>
         <small class="text-muted">{{ getWeekRangeDisplay() }}</small>
       </div>
@@ -78,10 +78,10 @@ interface PhotoInfo {
                         <h6 class="mb-1">{{ item.issueDescription }}</h6>
                         <div class="d-flex gap-2 flex-wrap">
                           <small class="text-muted">
-                            <i class="bi bi-building me-1"></i>{{ item.responsibleUnit }}
+                            <i class="fas fa-building me-1"></i>{{ item.responsibleUnit }}
                           </small>
                           <small class="text-muted">
-                            <i class="bi bi-calendar me-1"></i>{{ formatDate(item.issueDate) }}
+                            <i class="fas fa-calendar me-1"></i>{{ formatDate(item.issueDate) }}
                           </small>
                         </div>
                       </div>
@@ -98,7 +98,7 @@ interface PhotoInfo {
                     <!-- 改善前照片 -->
                     <div class="col-md-6">
                       <h6 class="text-danger small mb-2">
-                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        <i class="fas fa-exclamation-triangle me-1"></i>
                         改善前 ({{ item.beforePhotos.length }} 張)
                       </h6>
                       @if (item.beforePhotos.length > 0) {
@@ -119,7 +119,7 @@ interface PhotoInfo {
                           @if (item.beforePhotos.length > 4) {
                             <div class="photo-item show-more-item">
                               <div class="show-more-content">
-                                <i class="bi bi-plus-lg"></i>
+                                <i class="fas fa-plus"></i>
                                 <small>+{{ item.beforePhotos.length - 4 }}</small>
                               </div>
                             </div>
@@ -127,7 +127,7 @@ interface PhotoInfo {
                         </div>
                       } @else {
                         <div class="text-center text-muted p-3 border rounded">
-                          <i class="bi bi-camera-fill opacity-50"></i>
+                          <i class="fas fa-camera opacity-50"></i>
                           <p class="mb-0 small">無改善前照片</p>
                         </div>
                       }
@@ -136,7 +136,7 @@ interface PhotoInfo {
                     <!-- 改善後照片 -->
                     <div class="col-md-6">
                       <h6 class="text-success small mb-2">
-                        <i class="bi bi-check-circle me-1"></i>
+                        <i class="fas fa-check-circle me-1"></i>
                         改善後 ({{ item.afterPhotos.length }} 張)
                       </h6>
                       @if (item.afterPhotos.length > 0) {
@@ -157,7 +157,7 @@ interface PhotoInfo {
                           @if (item.afterPhotos.length > 4) {
                             <div class="photo-item show-more-item">
                               <div class="show-more-content">
-                                <i class="bi bi-plus-lg"></i>
+                                <i class="fas fa-plus"></i>
                                 <small>+{{ item.afterPhotos.length - 4 }}</small>
                               </div>
                             </div>
@@ -165,7 +165,7 @@ interface PhotoInfo {
                         </div>
                       } @else {
                         <div class="text-center text-muted p-3 border rounded">
-                          <i class="bi bi-camera-fill opacity-50"></i>
+                          <i class="fas fa-camera opacity-50"></i>
                           <p class="mb-0 small">
                             {{ item.status === 'improved' ? '缺少改善後照片' : '待上傳改善後照片' }}
                           </p>
@@ -178,7 +178,7 @@ interface PhotoInfo {
             </div>
           } @else {
             <div class="text-center text-muted">
-              <i class="bi bi-camera-x fs-1 mb-2 opacity-50"></i>
+              <i class="fas fa-camera fs-1 mb-2 opacity-50"></i>
               <p class="mb-0">該週無缺失改善照片</p>
               <small>暫無缺失記錄或改善照片</small>
             </div>

@@ -74,6 +74,49 @@
     flex-direction: column;
   }
 
+  // FullCalendar 導航按鈕 Font Awesome 圖示
+  .fc-prev-button {
+    &::before {
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      content: "\f053"; // fa-chevron-left
+      margin-right: 4px;
+    }
+  }
+
+  .fc-next-button {
+    &::before {
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      content: "\f054"; // fa-chevron-right
+      margin-right: 4px;
+    }
+  }
+
+  .fc-today-button {
+    font-weight: 500;
+  }
+
+  // 隱藏可能存在的 Bootstrap Icons 和按鈕文字
+  .fc-icon {
+    display: none !important;
+  }
+
+  // 隱藏 prev/next 按鈕的文字，只顯示圖示
+  .fc-prev-button .fc-button-inner,
+  .fc-next-button .fc-button-inner {
+    visibility: hidden;
+    width: 0;
+    height: 0;
+  }
+
+  .fc-prev-button,
+  .fc-next-button {
+    width: auto;
+    min-width: 38px;
+    position: relative;
+  }
+
 
   // 針對 FullCalendar 事件內容自動換行
   .fc-event-title, 
@@ -211,5 +254,174 @@
     // .fc-popover-body .fc-daygrid-event-harness {
     //   margin: 4px !important;
     // }
+  }
+}
+
+/* === 共用表單輸入框樣式 === */
+// 增強所有子表單的輸入欄位視覺效果
+:host ::ng-deep {
+  .form-control, input[type="text"], input[type="date"], input[type="time"], textarea {
+    // 表格內輸入框樣式 (取代 border-0 bg-transparent)
+    &.table-input {
+      border: none;
+      border-bottom: 1px dashed #ced4da;
+      border-radius: 0;
+      background-color: rgba(248, 249, 250, 0.3);
+      transition: all 0.2s ease;
+      min-height: 32px;
+      padding: 4px 8px;
+      
+      &:hover {
+        border-bottom-color: #6c757d;
+        background-color: rgba(248, 249, 250, 0.6);
+      }
+      
+      &:focus {
+        border-bottom: 2px solid #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+        box-shadow: 0 1px 0 rgba(13, 110, 253, 0.25);
+        outline: none;
+        z-index: 2;
+        position: relative;
+      }
+      
+      // placeholder 樣式
+      &::placeholder {
+        color: #6c757d;
+        opacity: 0.7;
+        font-style: italic;
+      }
+    }
+    
+    // 只有底邊框的輸入框（化學品、氣體名稱等）
+    &.border-bottom-only {
+      border: none;
+      border-bottom: 1px solid #ced4da;
+      border-radius: 0;
+      background-color: rgba(255, 255, 255, 0.8);
+      
+      &:hover {
+        border-bottom-color: #6c757d;
+        background-color: rgba(255, 255, 255, 0.9);
+      }
+      
+      &:focus {
+        border-bottom: 2px solid #0d6efd;
+        background-color: white;
+        box-shadow: 0 1px 0 rgba(13, 110, 253, 0.25);
+      }
+    }
+    
+    // 處理舊的 border-0 bg-transparent 樣式
+    &.border-0.bg-transparent {
+      border: none !important;
+      border-bottom: 1px dashed #ced4da !important;
+      border-radius: 0;
+      background-color: rgba(248, 249, 250, 0.3) !important;
+      transition: all 0.2s ease;
+      padding: 4px 8px !important;
+      
+      &:hover {
+        border-bottom-color: #6c757d !important;
+        background-color: rgba(248, 249, 250, 0.6) !important;
+      }
+      
+      &:focus {
+        border-bottom: 2px solid #0d6efd !important;
+        background-color: rgba(13, 110, 253, 0.05) !important;
+        box-shadow: 0 1px 0 rgba(13, 110, 253, 0.25) !important;
+        outline: none;
+        z-index: 2;
+        position: relative;
+      }
+      
+      // placeholder 樣式
+      &::placeholder {
+        color: #6c757d !important;
+        opacity: 0.7;
+        font-style: italic;
+      }
+    }
+  }
+
+  // textarea 特別樣式
+  textarea.table-input, textarea.border-0.bg-transparent {
+    min-height: 80px;
+    resize: vertical;
+    
+    &:focus {
+      min-height: 100px;
+    }
+  }
+
+  // 禁用狀態樣式
+  .form-control:disabled, input:disabled, textarea:disabled {
+    &.table-input, &.border-bottom-only, &.border-0.bg-transparent {
+      background-color: rgba(233, 236, 239, 0.5) !important;
+      border-bottom: 1px dotted #adb5bd !important;
+      color: #6c757d !important;
+      cursor: not-allowed;
+      
+      &::placeholder {
+        color: #adb5bd !important;
+      }
+    }
+  }
+
+  // 輸入框標籤增強
+  label {
+    font-weight: 500;
+    color: #495057;
+    
+    .text-danger {
+      font-size: 0.875em;
+    }
+  }
+
+  // Hover效果增強
+  .form-check-input {
+    &:hover {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.125rem rgba(13, 110, 253, 0.15);
+    }
+  }
+
+  // 焦點狀態全域樣式
+  *:focus {
+    outline: none !important;
+  }
+
+  // 表單驗證樣式增強
+  .ng-invalid.ng-touched {
+    &.table-input, &.border-bottom-only, &.border-0.bg-transparent {
+      border-bottom: 2px solid #dc3545 !important;
+      background-color: rgba(220, 53, 69, 0.05) !important;
+      
+      &:focus {
+        box-shadow: 0 1px 0 rgba(220, 53, 69, 0.25) !important;
+      }
+    }
+  }
+
+  // 打印樣式
+  @media print {
+    .form-control, input, textarea {
+      &.table-input, &.border-bottom-only, &.border-0.bg-transparent {
+        border: none !important;
+        border-bottom: 1px solid #000 !important;
+        background-color: transparent !important;
+        color: #000 !important;
+        
+        &::placeholder {
+          color: transparent !important;
+        }
+      }
+    }
+    
+    // 確保文字在列印時清楚可見
+    * {
+      -webkit-print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
   }
 }

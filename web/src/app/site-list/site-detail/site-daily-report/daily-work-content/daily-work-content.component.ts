@@ -28,7 +28,7 @@ interface DailyWorkItem {
     <div class="card h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0">
-          <i class="bi bi-list-ul me-2"></i>各廠商當日執行內容
+          <i class="fas fa-list-ul me-2"></i>各廠商當日執行內容
         </h6>
         @if (dailyWorkItems().length > 0) {
           <button 
@@ -41,7 +41,7 @@ interface DailyWorkItem {
               <span class="spinner-border spinner-border-sm me-1" role="status"></span>
               下載中...
             } @else {
-              <i class="bi bi-download me-1"></i>
+              <i class="fas fa-download me-1"></i>
               下載全部
             }
           </button>
@@ -85,16 +85,16 @@ interface DailyWorkItem {
                     <div class="work-details">
                       @if (item.contractor) {
                         <div class="text-sm text-muted">
-                          <i class="bi bi-building me-1"></i>{{ item.contractor }}
+                          <i class="fas fa-building me-1"></i>{{ item.contractor }}
                         </div>
                       }
                       @if (item.system || item.location) {
                         <div class="text-sm text-muted">
                           @if (item.system) {
-                            <i class="bi bi-gear me-1"></i>{{ item.system }}
+                            <i class="fas fa-cog me-1"></i>{{ item.system }}
                           }
                           @if (item.location) {
-                            <i class="bi bi-geo-alt me-1 ms-2"></i>{{ item.location }}
+                            <i class="fas fa-map-marker-alt me-1 ms-2"></i>{{ item.location }}
                           }
                         </div>
                       }
@@ -115,10 +115,10 @@ interface DailyWorkItem {
                       @if (isDownloading()) {
                         <span class="spinner-border spinner-border-sm" role="status"></span>
                       } @else {
-                        <i class="bi bi-file-earmark-word"></i>
+                        <i class="fas fa-file-word"></i>
                       }
                     </button>
-                    <i class="bi bi-chevron-right text-muted cursor-pointer" (click)="navigateToForm(item)"></i>
+                    <i class="fas fa-chevron-right text-muted cursor-pointer" (click)="navigateToForm(item)"></i>
                   </div>
                 </div>
               </div>
@@ -126,7 +126,7 @@ interface DailyWorkItem {
           </div>
         } @else if (!isLoading()) {
           <div class="text-center text-muted">
-            <i class="bi bi-clipboard-x fs-1 mb-2"></i>
+            <i class="fas fa-clipboard-list fs-1 mb-2"></i>
             <p class="mb-0">當日無執行內容記錄</p>
             <small>暫無任何表單或工作項目</small>
           </div>

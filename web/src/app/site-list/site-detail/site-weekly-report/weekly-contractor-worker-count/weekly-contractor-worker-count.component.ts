@@ -12,7 +12,7 @@ import dayjs from 'dayjs';
     <div class="card h-100">
       <div class="card-header">
         <h6 class="mb-0">
-          <i class="bi bi-bar-chart me-2"></i>各廠商實際出工人數（週統計）
+          <i class="fas fa-chart-bar me-2"></i>各廠商實際出工人數（週統計）
         </h6>
         <small class="text-muted">{{ getWeekRangeDisplay() }}</small>
       </div>

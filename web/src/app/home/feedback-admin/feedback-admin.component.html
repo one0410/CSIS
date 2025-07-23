@@ -4,14 +4,14 @@
     <div class="col-12">
       <div class="d-flex justify-content-between align-items-center py-3">
         <h2 class="mb-0">
-          <i class="bi bi-gear me-2"></i>意見箱管理
+          <i class="fas fa-cog me-2"></i>意見箱管理
           <span class="badge bg-warning ms-2">管理員模式</span>
         </h2>
         
         <!-- 操作按鈕 -->
         <div class="d-flex gap-2">
           <button class="btn btn-outline-secondary" (click)="loadFeedbacks()">
-            <i class="bi bi-arrow-clockwise me-1"></i>重新整理
+            <i class="fas fa-sync me-1"></i>重新整理
           </button>
         </div>
       </div>
@@ -127,7 +127,7 @@
         </div>
       } @else if (filteredFeedbacks().length === 0) {
         <div class="text-center py-5">
-          <i class="bi bi-inbox display-1 text-muted"></i>
+          <i class="fas fa-inbox display-1 text-muted"></i>
           <p class="text-muted mt-3">目前沒有符合條件的意見反饋</p>
         </div>
       } @else {
@@ -143,7 +143,7 @@
                     <h6 class="card-title mb-1 cursor-pointer" (click)="selectFeedback(feedback)">
                       {{ feedback.title }}
                       @if (feedback.priority === 'high') {
-                        <i class="bi bi-exclamation-circle text-danger ms-1"></i>
+                        <i class="fas fa-exclamation-circle text-danger ms-1"></i>
                       }
                     </h6>
                     <div class="d-flex align-items-center gap-2 small text-muted">
@@ -160,7 +160,7 @@
                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
                             (click)="toggleDropdown(feedback._id!)" 
                             title="操作選單">
-                      <i class="bi bi-three-dots"></i>
+                      <i class="fas fa-ellipsis-h"></i>
                     </button>
                     @if (isDropdownOpen(feedback._id!)) {
                       <div class="dropdown-menu dropdown-menu-end show position-absolute shadow">
@@ -168,14 +168,14 @@
                         @for (status of statusOptions; track status.value) {
                           <a class="dropdown-item d-flex align-items-center" 
                              (click)="updateFeedbackStatus(feedback._id!, status.value); closeDropdown()">
-                            <i class="bi bi-circle-fill me-2" [class]="status.class"></i>
+                            <i class="fas fa-circle me-2" [class]="status.class"></i>
                             設為{{ status.label }}
                           </a>
                         }
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item text-danger d-flex align-items-center" 
                            (click)="deleteFeedback(feedback._id!); closeDropdown()">
-                          <i class="bi bi-trash me-2"></i>刪除反饋
+                          <i class="fas fa-trash me-2"></i>刪除反饋
                         </a>
                       </div>
                     }
@@ -186,20 +186,20 @@
                 
                 <div class="d-flex justify-content-between align-items-center small text-muted">
                   <span>
-                    <i class="bi bi-person me-1"></i>{{ feedback.submitterName }}
+                    <i class="fas fa-user me-1"></i>{{ feedback.submitterName }}
                     @if (feedback.submitterEmail) {
                       ({{ feedback.submitterEmail }})
                     }
                   </span>
                   <span>
-                    <i class="bi bi-clock me-1"></i>{{ formatDate(feedback.submittedAt) }}
+                    <i class="fas fa-clock me-1"></i>{{ formatDate(feedback.submittedAt) }}
                   </span>
                 </div>
                 
                 @if (feedback.replies && feedback.replies.length > 0) {
                   <div class="mt-2">
                     <small class="text-success">
-                      <i class="bi bi-reply me-1"></i>{{ feedback.replies.length }} 則回覆
+                      <i class="fas fa-reply me-1"></i>{{ feedback.replies.length }} 則回覆
                     </small>
                   </div>
                 }
@@ -217,7 +217,7 @@
           <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
               <h6 class="mb-0">
-                <i class="bi bi-chat-dots me-2"></i>意見詳情
+                <i class="fas fa-comments me-2"></i>意見詳情
               </h6>
               <button class="btn-close" (click)="closeFeedbackDetail()" title="關閉詳情"></button>
             </div>
@@ -252,7 +252,7 @@
             @if (selectedFeedback()!.replies && selectedFeedback()!.replies.length > 0) {
               <div class="mb-3">
                 <h6 class="border-bottom pb-2">
-                  <i class="bi bi-reply me-2"></i>回覆記錄
+                  <i class="fas fa-reply me-2"></i>回覆記錄
                 </h6>
                 <div class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;">
                   @for (reply of selectedFeedback()!.replies; track reply._id) {
@@ -266,7 +266,7 @@
                           <button class="btn btn-sm text-danger ms-2" 
                                   (click)="deleteReply(reply._id!)" 
                                   title="刪除回覆">
-                            <i class="bi bi-trash" style="font-size: 0.7rem;"></i>
+                            <i class="fas fa-trash" style="font-size: 0.7rem;"></i>
                           </button>
                         </div>
                       </div>
@@ -283,7 +283,7 @@
             <!-- 新增回覆表單 -->
             <div class="mt-3">
               <h6 class="border-bottom pb-2">
-                <i class="bi bi-plus-circle me-2"></i>新增回覆
+                <i class="fas fa-plus-circle me-2"></i>新增回覆
               </h6>
               <form (ngSubmit)="replyToFeedback(selectedFeedback()!._id!)">
                 <div class="mb-2">
@@ -296,7 +296,7 @@
                          [(ngModel)]="newReply.isInternal" name="isInternal" 
                          id="isInternal">
                   <label class="form-check-label small" for="isInternal">
-                    <i class="bi bi-eye-slash me-1"></i>內部註記（不對使用者顯示）
+                    <i class="fas fa-eye-slash me-1"></i>內部註記（不對使用者顯示）
                   </label>
                 </div>
                 <div class="d-grid gap-2">
@@ -305,7 +305,7 @@
                     @if (loading()) {
                       <span class="spinner-border spinner-border-sm me-1"></span>
                     }
-                    <i class="bi bi-send me-1"></i>發送回覆
+                    <i class="fas fa-paper-plane me-1"></i>發送回覆
                   </button>
                 </div>
               </form>
@@ -315,7 +315,7 @@
       } @else {
         <div class="card">
           <div class="card-body text-center text-muted py-5">
-            <i class="bi bi-arrow-left display-6"></i>
+            <i class="fas fa-arrow-left display-6"></i>
             <p class="mt-2">請從左側選擇一個意見以查看詳情</p>
           </div>
         </div>

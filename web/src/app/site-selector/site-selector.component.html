@@ -1,6 +1,6 @@
 <!-- 登出按鈕，固定在右上角 -->
 <button class="btn btn-outline-danger position-fixed" style="top: 15px; right: 15px; z-index: 1000;" title="登出系統" (click)="logout()">
-  <i class="bi bi-box-arrow-right me-1"></i>登出
+  <i class="fas fa-sign-out-alt me-1"></i>登出
 </button>
 
 <div class="container py-4">
@@ -12,10 +12,10 @@
   </div>
 
   <div class="row mb-4">
-    <div class="col-md-8 mx-auto">
+    <div class="col-md-10 mx-auto d-flex justify-content-between align-items-center">
       <div class="input-group">
         <span class="input-group-text">
-          <i class="bi bi-search"></i>
+          <i class="fas fa-search"></i>
         </span>
         <input
           type="text"
@@ -25,13 +25,19 @@
         />
         <div class="btn-group">
           <button type="button" class="btn btn-outline-secondary" (click)="setViewMode('card')" [class.active]="viewMode === 'card'" title="卡片檢視">
-            <i class="bi bi-grid-3x3-gap"></i>
+            <i class="fas fa-th"></i>
           </button>
           <button type="button" class="btn btn-outline-secondary" (click)="setViewMode('list')" [class.active]="viewMode === 'list'" title="列表檢視">
-            <i class="bi bi-list"></i>
+            <i class="fas fa-list"></i>
           </button>
         </div>
       </div>
+      @if (canCreateSite) {
+      <a class="btn btn-primary ms-2 text-nowrap" routerLink="/admin/site/new" title="新增工地">
+        <i class="fas fa-plus-circle me-1"></i>
+        <span class="d-none d-sm-inline">新增工地</span>
+      </a>
+      }
     </div>
   </div>
 
@@ -43,7 +49,7 @@
     </div>
   } @else if (filteredSites.length === 0) {
     <div class="alert alert-info text-center my-5">
-      <i class="bi bi-info-circle me-2"></i>
+      <i class="fas fa-info-circle me-2"></i>
       @if (searchTerm) {
         找不到符合 "{{searchTerm}}" 的工地
       } @else {
@@ -90,10 +96,10 @@
                 <h5 class="card-title">{{site.projectName}}</h5>
                 <p class="card-text text-muted small mb-2">專案編號：{{site.projectNo}}</p>
                 <p class="card-text text-muted small mb-2">
-                  <i class="bi bi-geo-alt me-1"></i> {{site.county}} {{site.town}}
+                  <i class="fas fa-map-marker-alt me-1"></i> {{site.county}} {{site.town}}
                 </p>
                 <p class="card-text text-muted small">
-                  <i class="bi bi-calendar-event me-1"></i> {{site.startDate}} ~ {{site.endDate}}
+                  <i class="fas fa-calendar-day me-1"></i> {{site.startDate}} ~ {{site.endDate}}
                 </p>
               </div>
               <div class="card-footer bg-transparent">

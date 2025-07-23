@@ -1,6 +1,7 @@
 import { Component, computed, OnInit } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { SiteFormHeaderComponent } from '../site-form-header/site-form-header.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
@@ -42,7 +43,7 @@ interface CheckItem {
   selector: 'app-safety-patrol-checklist',
   templateUrl: './safety-patrol-checklist.component.html',
   styleUrls: ['./safety-patrol-checklist.component.scss'],
-  imports: [FormsModule],
+  imports: [FormsModule, SiteFormHeaderComponent],
   standalone: true
 })
 export class SafetyPatrolChecklistComponent implements OnInit {

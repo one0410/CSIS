@@ -1,16 +1,37 @@
 import { Component, ElementRef, ViewChild, OnInit } from '@angular/core';
 import { Chart } from 'chart.js/auto';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DatePipe, CommonModule } from '@angular/common';
 
 import { Site } from '../site-list.component';
 import { MongodbService } from '../../services/mongodb.service';
 import { WeatherService } from '../../services/weather.service';
+import { AccidentService } from '../../services/accident.service';
+import { WorkerCountService, ContractorWorkerCount } from '../../services/worker-count.service';
 import { ProgressTrendChartComponent } from '../../shared/progress-trend-chart/progress-trend-chart.component';
 import dayjs from 'dayjs';
 
+// 作業類別統計介面
+interface PermitCategoryStat {
+  category: string;
+  displayName: string;
+  count: number;
+  color: string;
+  icon: string;
+}
+
+// 廠商工人統計介面
+interface ContractorWorkerStat {
+  contractorName: string;
+  workerCount: number;
+  color: string;
+  icon: string;
+  percentage: number;
+}
+
 @Component({
   selector: 'app-site-dashboard',
-  imports: [ProgressTrendChartComponent],
+  imports: [ProgressTrendChartComponent, CommonModule, DatePipe],
   templateUrl: './site-dashboard.component.html',
   styleUrl: './site-dashboard.component.scss',
 })
@@ -29,14 +50,23 @@ export class SiteDashboardComponent implements OnInit {
   todayFlawCount: number = 0;
   currentProjectProgress: number = 0;
   todayWeather: string = '';
+  zeroAccidentHours: number = 0;
+  lastAccidentDate: Date | null = null;
   
-
+  // 許可單作業類別統計
+  permitCategoryStats: PermitCategoryStat[] = [];
+  
+  // 廠商工人統計
+  contractorWorkerStats: ContractorWorkerStat[] = [];
+  
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private mongodbService: MongodbService,
-    private weatherService: WeatherService
+    private weatherService: WeatherService,
+    private accidentService: AccidentService,
+    private workerCountService: WorkerCountService
   ) {
     this.todayDate = new Date().toLocaleDateString('zh-TW', {
       year: 'numeric',
@@ -46,7 +76,7 @@ export class SiteDashboardComponent implements OnInit {
   }
 
   ngOnInit() {
-    // 从父路由获取工地ID
+    // 從父路由獲取工地ID
     const parent = this.route.parent;
     if (parent) {
       parent.paramMap.subscribe(async (params) => {
@@ -83,6 +113,12 @@ export class SiteDashboardComponent implements OnInit {
 
             // 計算當前工程進度
             this.calculateCurrentProgress();
+
+            // 計算工安零事故時數
+            this.calculateZeroAccidentHours();
+
+            // 計算廠商工人統計
+            this.calculateWorkerStats();
 
             // 在這裡初始化圖表，確保 allProjectDays 已經計算完成
             setTimeout(() => {
@@ -461,7 +497,7 @@ export class SiteDashboardComponent implements OnInit {
       const today = dayjs().format('YYYY-MM-DD');
       
       // 獲取許可單，條件為：工作時間包含今天
-      const permitCount = await this.mongodbService.get('siteForm', {
+      const permits = await this.mongodbService.get('siteForm', {
         formType: 'sitePermit',
         siteId: this.siteId,
         $and: [
@@ -470,10 +506,128 @@ export class SiteDashboardComponent implements OnInit {
         ]
       });
       
-      this.todayPermitCount = permitCount.length;
+      this.todayPermitCount = permits.length;
+      
+      console.log('📋 許可單查詢結果:', {
+        數量: permits.length,
+        許可單資料: permits.map((p: any) => ({
+          id: p._id,
+          selectedCategories: p.selectedCategories,
+          workStartTime: p.workStartTime,
+          workEndTime: p.workEndTime
+        }))
+      });
+      
+      // 統計作業類別 - 使用 selectedCategories 陣列
+      const categoryCountMap = new Map<string, number>();
+      permits.forEach((permit: any) => {
+        // 處理 selectedCategories 陣列
+        if (permit.selectedCategories && Array.isArray(permit.selectedCategories)) {
+          permit.selectedCategories.forEach((category: string) => {
+            if (category && category.trim()) {
+              categoryCountMap.set(category, (categoryCountMap.get(category) || 0) + 1);
+            }
+          });
+        }
+        
+        // 處理其他作業類別
+        if (permit.otherWork && permit.otherWorkContent && permit.otherWorkContent.trim()) {
+          const otherCategory = `其他: ${permit.otherWorkContent}`;
+          categoryCountMap.set(otherCategory, (categoryCountMap.get(otherCategory) || 0) + 1);
+        }
+      });
+      
+      // 獲取作業類別配置
+      const categoryConfigs = this.getPermitCategoryConfigs();
+      
+      // 轉換為統計數據
+      const stats: PermitCategoryStat[] = [];
+      categoryCountMap.forEach((count, category) => {
+        const config = categoryConfigs[category] || categoryConfigs['default'];
+        stats.push({
+          category,
+          displayName: config.displayName || category,
+          count,
+          color: config.color,
+          icon: config.icon
+        });
+      });
+      
+      // 按數量降序排列
+      stats.sort((a, b) => b.count - a.count);
+      this.permitCategoryStats = stats;
+      
+      console.log('📊 許可單統計:', {
+        總數: this.todayPermitCount,
+        作業類別統計: stats,
+        類別計數Map: Array.from(categoryCountMap.entries())
+      });
+      
     } catch (error) {
       console.error('計算許可單數時出錯:', error);
+      this.permitCategoryStats = [];
     }
+  }
+
+  // 獲取作業類別配置
+  private getPermitCategoryConfigs(): Record<string, {displayName?: string, color: string, icon: string}> {
+    return {
+      '動火作業': {
+        displayName: '動火作業',
+        color: '#dc3545',
+        icon: 'fas fa-fire'
+      },
+      '高架作業': {
+        displayName: '高架作業',
+        color: '#fd7e14',
+        icon: 'fas fa-arrow-up'
+      },
+      '局限空間作業': {
+        displayName: '局限空間',
+        color: '#6f42c1',
+        icon: 'fas fa-box'
+      },
+      '電力作業': {
+        displayName: '電力作業',
+        color: '#ffc107',
+        icon: 'fas fa-bolt'
+      },
+      '吊籠作業': {
+        displayName: '吊籠作業',
+        color: '#20c997',
+        icon: 'fas fa-building'
+      },
+      '起重吊掛作業': {
+        displayName: '起重吊掛',
+        color: '#17a2b8',
+        icon: 'fas fa-anchor'
+      },
+      '施工架組裝作業': {
+        displayName: '施工架組裝',
+        color: '#28a745',
+        icon: 'fas fa-layer-group'
+      },
+      '管線拆離作業': {
+        displayName: '管線拆離',
+        color: '#e83e8c',
+        icon: 'fas fa-cut'
+      },
+      '開口作業': {
+        displayName: '開口作業',
+        color: '#6610f2',
+        icon: 'fas fa-circle-notch'
+      },
+      '化學作業': {
+        displayName: '化學作業',
+        color: '#fd7e14',
+        icon: 'fas fa-flask'
+      },
+      'default': {
+        displayName: '其他作業',
+        color: '#6c757d',
+        icon: 'fas fa-tools'
+      }
+    };
   }
 
   async calculateFlawCount() {
@@ -543,6 +697,160 @@ export class SiteDashboardComponent implements OnInit {
       console.error('計算當前工程進度時出錯:', error);
       this.currentProjectProgress = 0;
     }
+  }
+
+  // 計算工安零事故時數
+  async calculateZeroAccidentHours(): Promise<void> {
+    if (!this.siteId || !this.site) return;
+    
+    try {
+      console.log('🏗️ Dashboard: 計算零事故時數...');
+      
+      // 檢查並處理專案開始日期
+      let projectStartDate: Date;
+      if (this.site.startDate) {
+        projectStartDate = new Date(this.site.startDate);
+        if (isNaN(projectStartDate.getTime())) {
+          console.error('❌ 專案開始日期無效:', this.site.startDate);
+          projectStartDate = new Date(); // 使用當前日期作為備用
+        }
+      } else {
+        console.warn('⚠️ 專案沒有設定開始日期，使用當前日期');
+        projectStartDate = new Date();
+      }
+      
+      this.zeroAccidentHours = await this.accidentService.getZeroAccidentHours(this.siteId, projectStartDate);
+      console.log('✅ Dashboard: 零事故時數 =', this.zeroAccidentHours, '小時');
+      
+      // 取得最後一次事故的完整日期時間
+      const latestAccident = await this.accidentService.getLatestAccidentBySite(this.siteId);
+      if (latestAccident) {
+        // 結合日期和時間建立完整的事故發生時間
+        let dateStr = dayjs(latestAccident.incidentDate).format('YYYY-MM-DD');
+        
+        if (dateStr) {
+          // 處理時間格式 - 確保是 HH:MM 格式
+          let timeStr = latestAccident.incidentTime || '00:00';
+          if (!timeStr.match(/^\d{2}:\d{2}$/)) {
+            console.warn('⚠️ Dashboard: 事故時間格式不正確，使用 00:00:', timeStr);
+            timeStr = '00:00';
+          }
+          
+          // 建立包含完整日期和時間的 Date 物件
+          const fullAccidentDateTime = new Date(`${dateStr}T${timeStr}:00`);
+          
+          if (!isNaN(fullAccidentDateTime.getTime())) {
+            this.lastAccidentDate = fullAccidentDateTime;
+            console.log('📅 Dashboard: 最後事故時間:', fullAccidentDateTime.toLocaleString());
+          } else {
+            console.error('❌ Dashboard: 無法解析完整事故日期時間:', dateStr, timeStr);
+            this.lastAccidentDate = null;
+          }
+        } else {
+          console.error('❌ Dashboard: 無法解析事故日期:', latestAccident.incidentDate);
+          this.lastAccidentDate = null;
+        }
+      } else {
+        console.log('✅ Dashboard: 沒有事故記錄');
+        this.lastAccidentDate = null;
+      }
+    } catch (error) {
+      console.error('計算工安零事故時數時出錯:', error);
+      this.zeroAccidentHours = 0;
+      this.lastAccidentDate = null;
+    }
+  }
+
+  // 計算廠商工人統計
+  async calculateWorkerStats(): Promise<void> {
+    if (!this.siteId || !this.site) return;
+
+    try {
+      console.log('👷 Dashboard: 計算廠商工人統計...');
+
+      // 使用今天的日期作為基準
+      const today = dayjs().format('YYYY-MM-DD');
+      
+      // 獲取今日廠商工人計數資料
+      const workerCounts = await this.workerCountService.getDailyContractorWorkerCount(this.siteId, today);
+
+      // 計算總工人數
+      const totalWorkerCount = workerCounts.reduce((sum: number, wc: ContractorWorkerCount) => sum + wc.workerCount, 0);
+      this.todayWorkerCount = totalWorkerCount;
+
+      // 獲取廠商顏色配置
+      const contractorConfigs = this.getContractorConfigs();
+
+      // 計算每個廠商的統計數據
+      const stats: ContractorWorkerStat[] = workerCounts.map((wc: ContractorWorkerCount) => {
+        const percentage = totalWorkerCount > 0 ? (wc.workerCount / totalWorkerCount) * 100 : 0;
+        const config = contractorConfigs[wc.contractorName] || contractorConfigs['default'];
+        
+        return {
+          contractorName: wc.contractorName,
+          workerCount: wc.workerCount,
+          color: config.color,
+          icon: config.icon,
+          percentage: Math.round(percentage * 10) / 10
+        };
+      });
+
+      // 按工人數量降序排列
+      stats.sort((a, b) => b.workerCount - a.workerCount);
+      this.contractorWorkerStats = stats;
+
+      console.log('📊 廠商工人統計:', {
+        總工人數: totalWorkerCount,
+        廠商統計: stats
+      });
+
+    } catch (error) {
+      console.error('計算廠商工人統計時出錯:', error);
+      this.contractorWorkerStats = [];
+      this.todayWorkerCount = 0;
+    }
+  }
+
+  // 獲取廠商配置
+  private getContractorConfigs(): Record<string, {color: string, icon: string}> {
+    return {
+      '帆宣系統科技股份有限公司': {
+        color: '#007bff',
+        icon: 'fas fa-building'
+      },
+      '廠商A': {
+        color: '#dc3545',
+        icon: 'fas fa-users'
+      },
+      '廠商B': {
+        color: '#28a745',
+        icon: 'fas fa-hard-hat'
+      },
+      '廠商C': {
+        color: '#ffc107',
+        icon: 'fas fa-tools'
+      },
+      '廠商D': {
+        color: '#17a2b8',
+        icon: 'fas fa-industry'
+      },
+      '廠商E': {
+        color: '#6f42c1',
+        icon: 'fas fa-wrench'
+      },
+      '廠商F': {
+        color: '#fd7e14',
+        icon: 'fas fa-hammer'
+      },
+      '廠商G': {
+        color: '#e83e8c',
+        icon: 'fas fa-cogs'
+      },
+      'default': {
+        color: '#6c757d',
+        icon: 'fas fa-users'
+      }
+    };
   }
 
   // 導航到子元件

@@ -2,7 +2,7 @@
   <!-- 頁面標題和新增按鈕 -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">
-      <i class="bi bi-person-badge me-2"></i>教育訓練管理
+      <i class="fas fa-id-badge me-2"></i>教育訓練管理
     </h2>
     <div class="d-flex align-items-center gap-3">
       <!-- 顯示作廢表單開關 - 只有專案經理和專案秘書可以看到 -->
@@ -20,7 +20,7 @@
       </div>
       }
       <button class="btn btn-primary" (click)="createNewTraining()">
-        <i class="bi bi-plus-circle me-2"></i>新增教育訓練
+        <i class="fas fa-plus-circle me-2"></i>新增教育訓練
       </button>
     </div>
   </div>
@@ -30,7 +30,7 @@
     <div class="card-body">
       @if (trainingForms().length === 0) {
       <div class="alert alert-info">
-        <i class="bi bi-info-circle me-2"></i>目前沒有教育訓練記錄
+        <i class="fas fa-info-circle me-2"></i>目前沒有教育訓練記錄
       </div>
       } @else {
       <div class="table-responsive">
@@ -70,7 +70,7 @@
                     title="查看詳細資料"
                     (click)="viewTraining(training._id!)"
                   >
-                    <i class="bi bi-eye"></i>
+                    <i class="fas fa-eye"></i>
                   </button>
                   @if (training.status === 'draft') {
                   <button
@@ -78,7 +78,7 @@
                     title="編輯"
                     (click)="editTraining(training._id!)"
                   >
-                    <i class="bi bi-pencil"></i>
+                    <i class="fas fa-edit"></i>
                   </button>
                   } 
                   @if (training.status !== 'revoked') {
@@ -87,7 +87,7 @@
                     title="作廢"
                     (click)="revokeTraining(training._id!)"
                   >
-                    <i class="bi bi-trash"></i>
+                    <i class="fas fa-trash"></i>
                   </button>
                   }
                   @if (training.status === 'revoked') {
@@ -96,14 +96,14 @@
                     title="回復狀態"
                     (click)="restoreTraining(training._id!)"
                   >
-                    <i class="bi bi-arrow-clockwise"></i>
+                    <i class="fas fa-sync"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger"
                     title="永久刪除"
                     (click)="deleteTraining(training._id!)"
                   >
-                    <i class="bi bi-x-circle"></i>
+                    <i class="fas fa-times-circle"></i>
                   </button>
                   }
                 </div>

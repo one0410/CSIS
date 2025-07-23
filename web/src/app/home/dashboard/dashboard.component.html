@@ -8,7 +8,7 @@
     <div class="row g-4">
       <div class="col-12 text-center">
         <div class="text-white">
-          <i class="bi bi-hourglass-split me-2"></i>
+          <i class="fas fa-hourglass-half me-2"></i>
           載入工地資料中...
         </div>
       </div>
@@ -26,12 +26,12 @@
                 <h5 class="text-white mb-1">{{ site.projectName }}
                 @if (site.location) {
                   <small class="text-light opacity-75 fs-6">
-                    <i class="bi bi-geo-alt me-1"></i>{{ site.location }}
+                    <i class="fas fa-map-marker-alt me-1"></i>{{ site.location }}
                   </small>
                 }
                 @if (site.county && site.county !== site.location) {
                   <small class="text-light opacity-75 ms-2 fs-6">
-                    <i class="bi bi-building me-1"></i>{{ site.county }}
+                    <i class="fas fa-building me-1"></i>{{ site.county }}
                   </small>
                 }</h5>
               </div>
@@ -59,7 +59,7 @@
                 <button class="btn btn-outline-light btn-sm" 
                         (click)="navigateToSite(site._id)"
                         title="查看工地詳細資訊">
-                  <i class="bi bi-eye me-1"></i>
+                  <i class="fas fa-eye me-1"></i>
                   查看詳情
                 </button>
               </div>
@@ -72,7 +72,7 @@
       <div class="row g-4">
         <div class="col-12 text-center">
           <div class="card p-5">
-            <i class="bi bi-building text-light opacity-50 mb-3" style="font-size: 3rem;"></i>
+            <i class="fas fa-building text-light opacity-50 mb-3" style="font-size: 3rem;"></i>
             <h5 class="text-white mb-2">目前沒有工地資料</h5>
             <p class="text-light opacity-75">請新增工地後再查看進度總覽</p>
           </div>

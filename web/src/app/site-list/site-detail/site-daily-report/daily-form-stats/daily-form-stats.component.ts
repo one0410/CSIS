@@ -21,7 +21,7 @@ interface FormTypeStat {
     <div class="card h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0">
-          <i class="bi bi-file-earmark-spreadsheet me-2"></i>當日表單總數及彙整
+          <i class="fas fa-file-excel me-2"></i>當日表單總數及彙整
         </h6>
         @if (totalFormsCount() > 0) {
           <small class="text-muted">
@@ -61,7 +61,7 @@ interface FormTypeStat {
                       {{ stat.count }}
                     </span>
                     <div>
-                      <i class="bi bi-chevron-right text-muted small"></i>
+                      <i class="fas fa-chevron-right text-muted small"></i>
                     </div>
                   </div>
                 </div>
@@ -94,7 +94,7 @@ interface FormTypeStat {
           </div>
         } @else if (!isLoading()) {
           <div class="text-center text-muted">
-            <i class="bi bi-file-earmark-x fs-1 mb-2 opacity-50"></i>
+            <i class="fas fa-file fs-1 mb-2 opacity-50"></i>
             <p class="mb-0">當日無表單記錄</p>
             <small>暫無任何表單建立</small>
           </div>

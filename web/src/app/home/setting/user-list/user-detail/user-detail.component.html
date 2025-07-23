@@ -2,7 +2,7 @@
   <!-- 頁面標題和錯誤訊息 -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">
-      <i class="bi bi-person-circle me-2"></i>
+      <i class="fas fa-user-circle me-2"></i>
       @if (userId) {
         編輯使用者資料
       } @else {
@@ -15,14 +15,14 @@
       </div>
     }
     <small class="text-muted bg-warning-subtle px-2 py-1 rounded">
-      <i class="bi bi-info-circle me-1"></i>
+      <i class="fas fa-info-circle me-1"></i>
       黃色底色為必填欄位
     </small>
   </div>
 
   @if (errorMessage) {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <i class="fas fa-exclamation-triangle me-2"></i>
       {{ errorMessage }}
       <button type="button" class="btn-close" aria-label="關閉" title="關閉" (click)="errorMessage = null"></button>
     </div>
@@ -32,7 +32,7 @@
     <!-- 基本資料卡片 -->
     <div class="card shadow-sm mb-4">
       <div class="card-header bg-light">
-        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>基本資料</h5>
+        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>基本資料</h5>
       </div>
       <div class="card-body">
         <div class="row g-3">
@@ -40,7 +40,7 @@
           <div class="col-md-6 mb-3">
             <label for="name" class="form-label fw-semibold">姓名 <span class="text-danger">*</span></label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-person"></i></span>
+              <span class="input-group-text"><i class="fas fa-user"></i></span>
               <input
                 name="name"
                 type="text"
@@ -57,7 +57,7 @@
           <div class="col-md-6 mb-3">
             <label for="idno" class="form-label fw-semibold">身分證</label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
+              <span class="input-group-text"><i class="fas fa-credit-card"></i></span>
               <input
                 name="idno"
                 type="text"
@@ -72,7 +72,7 @@
           <div class="col-md-6 mb-3">
             <label for="employeeId" class="form-label fw-semibold">員工編號</label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+              <span class="input-group-text"><i class="fas fa-id-card"></i></span>
               <input
                 name="employeeId"
                 type="text"
@@ -87,7 +87,7 @@
           <div class="col-md-6 mb-3">
             <label for="department" class="form-label fw-semibold">部門</label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-building"></i></span>
+              <span class="input-group-text"><i class="fas fa-building"></i></span>
               <input
                 name="department"
                 type="text"
@@ -102,7 +102,7 @@
           <div class="col-md-6 mb-3">
             <label for="gender" class="form-label fw-semibold">性別</label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-gender-ambiguous"></i></span>
+              <span class="input-group-text"><i class="fas fa-user"></i></span>
               <select
                 class="form-select"
                 id="gender"
@@ -121,7 +121,7 @@
           <div class="col-md-6 mb-3">
             <label for="birthday" class="form-label fw-semibold">生日</label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
+              <span class="input-group-text"><i class="fas fa-calendar-day"></i></span>
               <input
                 name="birthday"
                 type="date"
@@ -136,7 +136,7 @@
           <div class="col-md-6 mb-3">
             <label for="bloodType" class="form-label fw-semibold">血型</label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-droplet"></i></span>
+              <span class="input-group-text"><i class="fas fa-tint"></i></span>
               <select
                 class="form-select"
                 id="bloodType"
@@ -156,7 +156,7 @@
           <div class="col-md-6 mb-3">
             <label for="cell" class="form-label fw-semibold">手機</label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-phone"></i></span>
+              <span class="input-group-text"><i class="fas fa-phone"></i></span>
               <input
                 name="cell"
                 type="text"
@@ -181,7 +181,7 @@
           <div class="col-md-6 mb-3">
             <label for="email" class="form-label fw-semibold">電子郵件</label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+              <span class="input-group-text"><i class="fas fa-envelope"></i></span>
               <input
                 name="email"
                 type="email"
@@ -208,7 +208,7 @@
     <!-- 帳號資訊卡片 -->
     <div class="card shadow-sm mb-4">
       <div class="card-header bg-light">
-        <h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>帳號資訊</h5>
+        <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>帳號資訊</h5>
       </div>
       <div class="card-body">
         <div class="row g-3">
@@ -216,7 +216,7 @@
           <div class="col-md-6 mb-3">
             <label for="role" class="form-label fw-semibold">角色 <span class="text-danger">*</span></label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+              <span class="input-group-text"><i class="fas fa-id-badge"></i></span>
               <select
                 class="form-select"
                 id="role"
@@ -236,7 +236,7 @@
           <div class="col-md-6 mb-3">
             <label for="account" class="form-label fw-semibold">帳號 <span class="text-danger">*</span></label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-at"></i></span>
+              <span class="input-group-text"><i class="fas fa-at"></i></span>
               <input
                 name="account"
                 type="text"
@@ -253,7 +253,7 @@
           <div class="col-md-6 mb-3">
             <label for="password" class="form-label fw-semibold">密碼 <span class="text-danger">*</span></label>
             <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-key"></i></span>
+              <span class="input-group-text"><i class="fas fa-key"></i></span>
               <input
                 name="password"
                 type="password"
@@ -294,7 +294,7 @@
     <!-- 按鈕區域 -->
     <div class="d-flex gap-2 mb-4">
       <button class="btn btn-primary" (click)="saveUser()" [disabled]="saving">
-        <i class="bi bi-save me-2"></i>
+        <i class="fas fa-save me-2"></i>
         @if (saving) {
           <span
             class="spinner-border spinner-border-sm"
@@ -307,7 +307,7 @@
         }
       </button>
       <button class="btn btn-outline-secondary" type="button" (click)="navigateToList()">
-        <i class="bi bi-arrow-left me-2"></i>返回
+        <i class="fas fa-arrow-left me-2"></i>返回
       </button>
     </div>
   </form>

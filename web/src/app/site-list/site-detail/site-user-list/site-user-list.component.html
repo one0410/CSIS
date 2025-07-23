@@ -2,21 +2,21 @@
   <!-- 頁面標題 -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">
-      <i class="bi bi-people-fill me-2"></i>工地存取權限管理
+      <i class="fas fa-users me-2"></i>工地存取權限管理
     </h2>
   </div>
 
   <!-- 搜尋與添加使用者區域 -->
   <div class="card shadow-sm mb-4">
     <div class="card-header bg-light">
-      <h5 class="mb-0"><i class="bi bi-person-plus me-2"></i>添加使用者</h5>
+      <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>添加使用者</h5>
     </div>
     <div class="card-body">
       <div class="row g-3 align-items-end">
         <div class="col-md-10">
           <label for="userSearch" class="form-label fw-semibold">搜尋使用者</label>
           <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
             <input
               type="text"
               class="form-control"
@@ -33,7 +33,7 @@
               aria-label="執行搜尋"
               title="執行搜尋"
               >
-              <i class="bi bi-search"></i>
+              <i class="fas fa-search"></i>
             </button>
           </div>
         </div>
@@ -44,7 +44,7 @@
             [disabled]="isLoading"
             title="顯示所有可選使用者"
             >
-            <i class="bi bi-person-plus me-2"></i>選擇使用者
+            <i class="fas fa-user-plus me-2"></i>選擇使用者
           </button>
         </div>
       </div>
@@ -64,7 +64,7 @@
                   <th scope="col">角色</th>
                   <th scope="col">
                     工地權限
-                    <i class="bi bi-info-circle ms-1 text-muted" 
+                    <i class="fas fa-info-circle ms-1 text-muted" 
                        title="只有系統管理員、環安主管、專案經理或工地經理可以修改工地權限"
                        data-bs-toggle="tooltip"
                        data-bs-placement="top"
@@ -129,7 +129,7 @@
                         (click)="addUserToSite(user)"
                         title="添加此使用者到工地"
                         >
-                        <i class="bi bi-plus-circle me-1"></i>添加
+                        <i class="fas fa-plus-circle me-1"></i>添加
                       </button>
                     </td>
                   </tr>
@@ -143,7 +143,7 @@
       <!-- 無搜尋結果提示 -->
       @if (searchPerformed && searchResults.length === 0) {
         <div class="alert alert-info mt-3">
-          <i class="bi bi-info-circle me-2"></i>找不到符合條件的使用者
+          <i class="fas fa-info-circle me-2"></i>找不到符合條件的使用者
         </div>
       }
     </div>
@@ -152,7 +152,7 @@
   <!-- 已授權使用者列表 -->
   <div class="card shadow-sm mb-4">
     <div class="card-header bg-light d-flex justify-content-between align-items-center">
-      <h5 class="mb-0"><i class="bi bi-people me-2"></i>已授權使用者 ({{ siteUsers.length }})</h5>
+      <h5 class="mb-0"><i class="fas fa-users me-2"></i>已授權使用者 ({{ siteUsers.length }})</h5>
       <div class="form-check form-switch">
         <input
           class="form-check-input"
@@ -177,7 +177,7 @@
       } @else {
         @if (siteUsers.length === 0) {
           <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>目前沒有使用者被授權存取此工地
+            <i class="fas fa-info-circle me-2"></i>目前沒有使用者被授權存取此工地
           </div>
         } @else {
           <!-- 使用者列表表格 -->
@@ -193,7 +193,7 @@
                   <th scope="col">角色</th>
                   <th scope="col">
                     工地權限
-                    <i class="bi bi-info-circle ms-1 text-muted" 
+                    <i class="fas fa-info-circle ms-1 text-muted" 
                        title="只有系統管理員、專案經理、專案秘書可以修改工地權限"
                        data-bs-toggle="tooltip"
                        data-bs-placement="top"
@@ -269,7 +269,7 @@
                         title="移除此使用者的工地存取權限"
                         aria-label="移除使用者"
                         >
-                        <i class="bi bi-trash"></i>
+                        <i class="fas fa-trash"></i>
                       </button>
                     </td>
                   </tr>
@@ -285,7 +285,7 @@
               <ul class="pagination pagination-sm">
                 <li class="page-item" [class.disabled]="currentPage === 1">
                   <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage - 1)" aria-label="上一頁">
-                    <i class="bi bi-chevron-left"></i>
+                    <i class="fas fa-chevron-left"></i>
                   </a>
                 </li>
                 @for (page of getPageNumbers(); track page) {
@@ -295,7 +295,7 @@
                 }
                 <li class="page-item" [class.disabled]="currentPage === totalPages">
                   <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage + 1)" aria-label="下一頁">
-                    <i class="bi bi-chevron-right"></i>
+                    <i class="fas fa-chevron-right"></i>
                   </a>
                 </li>
               </ul>
@@ -313,7 +313,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="addUserModalLabel">
-          <i class="bi bi-person-plus me-2"></i>添加使用者到工地
+          <i class="fas fa-user-plus me-2"></i>添加使用者到工地
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉" title="關閉"></button>
       </div>
@@ -321,7 +321,7 @@
         <!-- 搜尋框 -->
         <div class="mb-3">
           <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
             <input
               type="text"
               class="form-control"
@@ -357,7 +357,7 @@
                 <th scope="col">角色</th>
                 <th scope="col">
                   工地權限
-                  <i class="bi bi-info-circle ms-1 text-muted" 
+                  <i class="fas fa-info-circle ms-1 text-muted" 
                      title="只有系統管理員、環安主管、專案經理或工地經理可以修改工地權限"
                      data-bs-toggle="tooltip"
                      data-bs-placement="top"
@@ -428,13 +428,13 @@
         <!-- 無結果提示 -->
         @if (filteredModalUsers.length === 0) {
           <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>找不到符合條件的使用者
+            <i class="fas fa-info-circle me-2"></i>找不到符合條件的使用者
           </div>
         }
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="bi bi-x-circle me-1"></i>取消
+          <i class="fas fa-times-circle me-1"></i>取消
         </button>
         <button
           type="button"
@@ -442,7 +442,7 @@
           (click)="addSelectedUsers()"
           [disabled]="getSelectedUsersCount() === 0"
           >
-          <i class="bi bi-check-circle me-1"></i>添加已選 ({{ getSelectedUsersCount() }}) 位使用者
+          <i class="fas fa-check-circle me-1"></i>添加已選 ({{ getSelectedUsersCount() }}) 位使用者
         </button>
       </div>
     </div>

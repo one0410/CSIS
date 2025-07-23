@@ -4,34 +4,7 @@
       <!-- 實際表單內容容器 -->
       <div class="print-content">
         <!-- 表單頭部 -->
-        <div
-          class="d-flex justify-content-between align-items-center mb-3 pb-2"
-        >
-          <div>
-            <!-- @if (site()?.formLogo) {
-            <img
-              [src]="site()?.formLogo"
-              alt="公司Logo"
-              class="img-fluid"
-              style="max-width: 100px; max-height: 100px"
-            />
-            } -->
-            <img
-              src="assets/miclogo.jpg"
-              alt="公司Logo"
-              class="img-fluid"
-              style="max-width: 100px; max-height: 100px"
-            />
-          </div>
-          <div class="form-title text-center p-2 flex-grow-1 mx-3">
-            <h5 class="m-0 fw-bold">帆宣系統科技股份有限公司</h5>
-            <h6 class="m-0 fw-bold fst-italic">
-              Marketech International Corp.
-            </h6>
-            <h5 class="m-1 fw-bold">工作許可單</h5>
-          </div>
-          <div style="width: 100px"></div>
-        </div>
+        <app-site-form-header title="工作許可單"></app-site-form-header>
 
         <form #permitForm="ngForm" class="mb-3">
           <!-- 在查看模式下添加返回按鈕 -->
@@ -57,7 +30,7 @@
                   class="btn btn-secondary"
                   (click)="cancel()"
                 >
-                  <i class="bi bi-arrow-left me-1"></i>返回列表
+                  <i class="fas fa-arrow-left me-1"></i>返回列表
                 </button>
               </div>
             </div>
@@ -111,7 +84,7 @@
                     <div class="d-flex align-items-center">
                       <input
                         type="date"
-                        class="form-control border-0 bg-transparent p-0"
+                        class="form-control table-input"
                         id="applyDate"
                         name="applyDate"
                         [(ngModel)]="permitData.applyDate"
@@ -131,7 +104,7 @@
                   </td>
                   <td colspan="3" class="py-2 px-2">
                     <textarea
-                      class="form-control border-0 bg-transparent p-0"
+                      class="form-control table-input"
                       id="workContent"
                       rows="2"
                       name="workContent"
@@ -151,7 +124,7 @@
                   <td style="width: 35%" class="py-2 px-2">
                     <input
                       type="text"
-                      class="form-control border-0 bg-transparent p-0"
+                      class="form-control table-input"
                       id="workLocation"
                       name="workLocation"
                       [(ngModel)]="permitData.workLocation"
@@ -166,7 +139,7 @@
                   <td style="width: 35%" class="py-2 px-2">
                     <input
                       type="text"
-                      class="form-control border-0 bg-transparent p-0"
+                      class="form-control table-input"
                       id="workArea"
                       name="workArea"
                       [(ngModel)]="permitData.workArea"
@@ -186,7 +159,7 @@
                     <div class="d-flex align-items-center flex-wrap gap-2">
                       <input
                         type="date"
-                        class="form-control border-0 bg-transparent p-0"
+                        class="form-control table-input"
                         name="workStartTime"
                         [(ngModel)]="permitData.workStartTime"
                         required
@@ -197,7 +170,7 @@
                       <span>至</span>
                       <input
                         type="date"
-                        class="form-control border-0 bg-transparent p-0"
+                        class="form-control table-input"
                         name="workEndTime"
                         [(ngModel)]="permitData.workEndTime"
                         required
@@ -216,7 +189,7 @@
                   <td colspan="3" class="py-2 px-2">
                     <input
                       type="text"
-                      class="form-control border-0 bg-transparent p-0"
+                      class="form-control table-input"
                       id="supervisor"
                       name="supervisor"
                       [(ngModel)]="permitData.supervisor"
@@ -233,7 +206,7 @@
                   <td style="width: 35%" class="py-2 px-2">
                     <input
                       type="text"
-                      class="form-control border-0 bg-transparent p-0"
+                      class="form-control table-input"
                       id="supervisorContact"
                       name="supervisorContact"
                       [(ngModel)]="permitData.supervisorContact"
@@ -247,7 +220,7 @@
                   <td style="width: 35%" class="py-2 px-2">
                     <input
                       type="tel"
-                      class="form-control border-0 bg-transparent p-0"
+                      class="form-control table-input"
                       id="supervisorPhone"
                       name="supervisorPhone"
                       [(ngModel)]="permitData.supervisorPhone"
@@ -263,7 +236,7 @@
                   <td style="width: 35%" class="py-2 px-2">
                     <input
                       type="text"
-                      class="form-control border-0 bg-transparent p-0"
+                      class="form-control table-input"
                       id="projectNo"
                       name="projectNo"
                       [(ngModel)]="permitData.projectNo"
@@ -277,7 +250,7 @@
                   <td style="width: 35%" class="py-2 px-2">
                     <input
                       type="text"
-                      class="form-control border-0 bg-transparent p-0"
+                      class="form-control table-input"
                       id="projectName"
                       name="projectName"
                       [(ngModel)]="permitData.projectName"
@@ -333,7 +306,7 @@
                 <div class="col-md-12">
                   <input
                     type="text"
-                    class="form-control border-bottom border-0 bg-transparent ps-3"
+                    class="form-control border-bottom-only ps-3"
                     name="otherWorkContent"
                     [(ngModel)]="permitData.otherWorkContent"
                     placeholder="請輸入其他作業內容"
@@ -497,7 +470,7 @@
               class="btn btn-outline-secondary px-4"
               (click)="cancel()"
             >
-              <i class="bi bi-x-circle me-1"></i>取消
+              <i class="fas fa-times-circle me-1"></i>取消
             </button>
             
             @if (permitData._id) {
@@ -512,7 +485,7 @@
                   <span class="spinner-border spinner-border-sm me-1" role="status"></span>
                   生成中...
                 } @else {
-                  <i class="bi bi-file-earmark-word me-1"></i>下載Word
+                  <i class="fas fa-file-word me-1"></i>下載Word
                 }
               </button>
             </div>
@@ -524,7 +497,7 @@
                 class="btn btn-primary px-4"
                 (click)="savePermit()"
               >
-                <i class="bi bi-save me-1"></i>儲存
+                <i class="fas fa-save me-1"></i>儲存
               </button>
             </div>
           </div>

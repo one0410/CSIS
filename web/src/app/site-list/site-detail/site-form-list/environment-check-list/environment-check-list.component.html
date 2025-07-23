@@ -4,34 +4,7 @@
       <!-- 實際表單內容容器 -->
       <div class="print-content">
         <!-- 表單頭部 -->
-        <div
-          class="d-flex justify-content-between align-items-center mb-3 pb-2"
-        >
-          <div>
-            <!-- @if (site()?.formLogo) {
-            <img
-              [src]="site()?.formLogo"
-              alt="公司Logo"
-              class="img-fluid"
-              style="max-width: 100px; max-height: 100px"
-            />
-            } -->
-            <img
-              src="assets/miclogo.jpg"
-              alt="公司Logo"
-              class="img-fluid"
-              style="max-width: 100px; max-height: 100px"
-            />
-          </div>
-          <div class="form-title text-center fw-bold p-2 flex-grow-1 mx-3">
-            <h5 class="m-0 fw-bold">帆宣系統科技南科分公司</h5>
-            <h6 class="m-0 fw-bold fst-italic">
-              Marketech International Corp.
-            </h6>
-            <h5 class="m-1 fw-bold">環安衛自主檢點表</h5>
-          </div>
-          <div style="width: 100px"></div>
-        </div>
+        <app-site-form-header title="環安衛自主檢點表"></app-site-form-header>
 
         <!-- 基本資訊表格 -->
         <table class="table mb-3">
@@ -41,7 +14,7 @@
               <td class="py-2 px-2">
                 <input
                   type="text"
-                  class="form-control border-0 bg-transparent p-0"
+                  class="form-control table-input"
                   id="projectNo"
                   name="projectNo"
                   [(ngModel)]="checklistData.projectNo"
@@ -52,7 +25,7 @@
               <td style="width: 15%" class="py-2 px-2">
                 <input
                   type="text"
-                  class="form-control border-0 bg-transparent p-0"
+                  class="form-control table-input"
                   id="factoryArea"
                   name="factoryArea"
                   [(ngModel)]="checklistData.factoryArea"
@@ -65,7 +38,7 @@
               <td style="width: 20%" class="py-2 px-2">
                 <input
                   type="date"
-                  class="form-control border-0 bg-transparent p-0"
+                  class="form-control table-input"
                   id="checkDate"
                   name="checkDate"
                   [(ngModel)]="checklistData.checkDate"
@@ -77,7 +50,7 @@
               <td style="width: 25%" class="py-2 px-2">
                 <input
                   type="text"
-                  class="form-control border-0 bg-transparent p-0"
+                  class="form-control table-input"
                   id="location"
                   name="location"
                   [(ngModel)]="checklistData.location"
@@ -227,7 +200,7 @@
               <td class="py-2 px-2 align-middle">
                 <input
                   type="datetime-local"
-                  class="form-control border-0 bg-transparent"
+                  class="form-control table-input"
                   name="preWorkCheckTime"
                   [(ngModel)]="checklistData.preWorkCheckTime"
                   title="施工前檢點時間"
@@ -377,7 +350,7 @@
               <td class="py-2 px-2 align-middle">
                 <input
                   type="datetime-local"
-                  class="form-control border-0 bg-transparent"
+                  class="form-control table-input"
                   name="postWorkCheckTime"
                   [(ngModel)]="checklistData.postWorkCheckTime"
                   title="檢查時間"
@@ -426,7 +399,7 @@
           class="btn btn-outline-secondary px-4"
           (click)="cancel()"
         >
-          <i class="bi bi-x-circle me-1"></i>取消
+          <i class="fas fa-times-circle me-1"></i>取消
         </button>
         @if (currentUser()?.role === 'admin' && formId) {
         <button
@@ -434,7 +407,7 @@
           class="btn btn-outline-danger px-4 ms-2"
           (click)="deleteChecklist()"
         >
-          <i class="bi bi-trash me-1"></i>刪除
+          <i class="fas fa-trash me-1"></i>刪除
         </button>
         }
         
@@ -450,7 +423,7 @@
               <span class="spinner-border spinner-border-sm me-1" role="status"></span>
               生成中...
             } @else {
-              <i class="bi bi-file-earmark-word me-1"></i>下載Word
+              <i class="fas fa-file-word me-1"></i>下載Word
             }
           </button>
         </div>
@@ -462,7 +435,7 @@
             class="btn btn-primary px-4"
             (click)="saveChecklist()"
           >
-            <i class="bi bi-save me-1"></i>儲存
+            <i class="fas fa-save me-1"></i>儲存
           </button>
         </div>
       </div>

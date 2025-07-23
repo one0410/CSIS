@@ -7,7 +7,7 @@
         [disabled]="!hasSelectedWorkers()"
         [title]="hasSelectedWorkers() ? '匯出選中的 ' + selectedWorkerIds.size + ' 筆工人資料（含背景浮水印）' : '請選取人員之後才能匯出'"
         (click)="exportSelectedWorkersWithWatermark()">
-        <i class="bi bi-file-earmark-excel me-1"></i>
+        <i class="fas fa-file-excel me-1"></i>
         匯出 Excel
         @if (hasSelectedWorkers()) {
           <span class="badge bg-light text-dark ms-1">{{selectedWorkerIds.size}}</span>
@@ -21,7 +21,7 @@
        (click)="clearSelection()"
        title="清除所有選取"
        aria-label="清除所有選取的人員">
-       <i class="bi bi-check2-square me-1"></i>
+       <i class="fas fa-check-square me-1"></i>
        清除選取
      </button>
     <button class="btn btn-primary" [routerLink]="['/worker', 'new']">新增人才</button>
@@ -59,7 +59,7 @@
             class="btn btn-outline-secondary btn-sm" 
             (click)="clearFilters()"
             title="清除所有過濾條件">
-            <i class="bi bi-x-circle"></i>
+            <i class="fas fa-times-circle"></i>
           </button>
         }
         
@@ -96,7 +96,7 @@
             class="btn btn-outline-secondary btn-sm flex-shrink-0" 
             (click)="clearFilters()"
             title="清除所有過濾條件">
-            <i class="bi bi-x-circle me-1"></i>清除
+            <i class="fas fa-times-circle me-1"></i>清除
           </button>
         </div>
 

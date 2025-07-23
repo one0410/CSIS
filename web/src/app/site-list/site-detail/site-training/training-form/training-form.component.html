@@ -8,7 +8,7 @@
           <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
               <h2 class="mb-0">
-                <i class="bi bi-person-badge me-2"></i>教育訓練表單
+                <i class="fas fa-id-badge me-2"></i>教育訓練表單
               </h2>
               <div class="d-flex gap-2"></div>
             </div>
@@ -154,7 +154,7 @@
                   class="btn btn-secondary btn-sm"
                   aria-label="新增簽名"
                 >
-                  <i class="bi bi-plus-circle me-1"></i>新增簽名
+                  <i class="fas fa-plus-circle me-1"></i>新增簽名
                 </button>
                 }
               </div>
@@ -291,7 +291,7 @@
             class="btn btn-outline-secondary px-4"
             (click)="cancel()"
           >
-            <i class="bi bi-x-circle me-1"></i>取消
+            <i class="fas fa-times-circle me-1"></i>取消
           </button>
           <div class="d-flex gap-2">
             <button
@@ -299,7 +299,7 @@
               class="btn btn-primary px-4"
               (click)="saveForm()"
             >
-              <i class="bi bi-save me-1"></i>儲存
+              <i class="fas fa-save me-1"></i>儲存
             </button>
             @if (formId) {
             <button
@@ -307,7 +307,7 @@
               class="btn btn-info px-4"
               (click)="showQrCodeModal()"
             >
-              <i class="bi bi-qr-code me-1"></i>顯示 QR Code
+              <i class="fas fa-qr-code me-1"></i>顯示 QR Code
             </button>
             }
           </div>
@@ -323,7 +323,7 @@
             class="btn btn-primary btn-lg px-4 py-3"
             aria-label="我要簽名"
           >
-            <i class="bi bi-pen me-2"></i>我要簽名
+            <i class="fas fa-pen me-2"></i>我要簽名
           </button>
         </div>
         }
@@ -401,7 +401,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="qrCodeModalLabel">
-            <i class="bi bi-qr-code me-2"></i>
+            <i class="fas fa-qr-code me-2"></i>
             教育訓練表單 QR Code
           </h5>
           <button
@@ -453,7 +453,7 @@
                 type="button"
                 (click)="copyUrl(urlInput)"
               >
-                <i class="bi bi-copy"></i>
+                <i class="fas fa-copy"></i>
                 複製
               </button>
             </div>
@@ -462,7 +462,7 @@
           
           <!-- 說明文字 -->
           <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>
+            <i class="fas fa-info-circle me-2"></i>
             工作人員掃描QR Code後，將進入教育訓練表單頁面，完成簽名後資料會自動記錄在表單中。
           </div>
         </div>

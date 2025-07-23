@@ -52,6 +52,82 @@ textarea.form-control {
   }
 }
 
+/* === 語義化輸入框樣式 === */
+/* 表格內輸入框樣式 - 清楚可見的邊框 */
+.table-input {
+  border: 1px solid #ced4da !important;
+  background-color: #ffffff !important;
+  padding: 6px 8px !important;
+  
+  &:hover {
+    border-color: #80bdff !important;
+    background-color: #f8f9fa !important;
+  }
+  
+  &:focus {
+    border-color: #80bdff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    background-color: #ffffff !important;
+  }
+  
+  &:disabled, &[readonly] {
+    background-color: #f8f9fa !important;
+    border-color: #dee2e6 !important;
+    color: #6c757d !important;
+  }
+  
+  &.is-invalid {
+    border-color: #dc3545 !important;
+    
+    &:focus {
+      border-color: #dc3545 !important;
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+  }
+}
+
+/* 僅底邊框輸入框樣式 - 適用於簡潔設計 */
+.border-bottom-only {
+  border: none !important;
+  border-bottom: 2px solid #ced4da !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  padding: 4px 8px !important;
+  
+  &:hover {
+    border-bottom-color: #80bdff !important;
+    background-color: rgba(0, 123, 255, 0.05) !important;
+  }
+  
+  &:focus {
+    border-bottom-color: #007bff !important;
+    box-shadow: none !important;
+    background-color: rgba(0, 123, 255, 0.1) !important;
+  }
+  
+  &:disabled, &[readonly] {
+    background-color: transparent !important;
+    border-bottom-color: #dee2e6 !important;
+    color: #6c757d !important;
+  }
+}
+
+/* 列印時確保輸入框內容可見 */
+@media print {
+  .table-input, 
+  .border-bottom-only {
+    border: 1px solid #000 !important;
+    background-color: transparent !important;
+    color: #000 !important;
+    
+    &:disabled, &[readonly] {
+      border-color: #000 !important;
+      background-color: transparent !important;
+      color: #000 !important;
+    }
+  }
+}
+
 // 標籤樣式
 .form-label {
   font-weight: 500;

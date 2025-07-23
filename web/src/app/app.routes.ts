@@ -39,6 +39,43 @@ export const routes: Routes = [
     loadComponent: () => import('./visitor-hazard-notice/visitor-hazard-notice.component').then(m => m.VisitorHazardNoticeComponent)
   },
 
+  // 系統管理布局路由群組 - 合併所有系統管理頁面
+  {
+    path: 'admin',
+    loadComponent: () => import('./shared/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
+    canActivate: [AuthGuard],
+    children: [
+      { 
+        path: 'feedback', 
+        loadComponent: () => import('./home/feedback-admin/feedback-admin.component').then(m => m.FeedbackAdminComponent)
+      },
+      { 
+        path: 'user', 
+        loadComponent: () => import('./home/setting/user-list/user-list.component').then(m => m.UserListComponent)
+      },
+      { 
+        path: 'user/:id', 
+        loadComponent: () => import('./home/setting/user-list/user-detail/user-detail.component').then(m => m.UserDetailComponent)
+      },
+      { 
+        path: 'worker', 
+        loadComponent: () => import('./home/worker-list/worker-list.component').then(m => m.WorkerListComponent)
+      },
+      { 
+        path: 'worker/:id', 
+        loadComponent: () => import('./home/worker-list/worker-detail/worker-detail.component').then(m => m.WorkerDetailComponent)
+      },
+      { 
+        path: 'sitelist', 
+        loadComponent: () => import('./site-list/site-list.component').then(m => m.SiteListComponent)
+      },
+      { 
+        path: 'site/new', 
+        loadComponent: () => import('./site-list/new-site/new-site.component').then(m => m.NewSiteComponent)
+      },
+    ],
+  },
+
   // Home 路由群組
   {
     path: '',
@@ -62,42 +99,9 @@ export const routes: Routes = [
         loadComponent: () => import('./site-list/site-dashboard/site-dashboard.component').then(m => m.SiteDashboardComponent)
       },
       
-      // Worker 相關路由
-      { 
-        path: 'worker', 
-        loadComponent: () => import('./home/worker-list/worker-list.component').then(m => m.WorkerListComponent)
-      },
-      { 
-        path: 'worker/:id', 
-        loadComponent: () => import('./home/worker-list/worker-detail/worker-detail.component').then(m => m.WorkerDetailComponent)
-      },
       { 
         path: 'worker-history/:id', 
         loadComponent: () => import('./worker-history/worker-history.component').then(m => m.WorkerHistoryComponent)
-      },
-      
-      // Admin 功能
-      { 
-        path: 'feedback-admin', 
-        loadComponent: () => import('./home/feedback-admin/feedback-admin.component').then(m => m.FeedbackAdminComponent)
-      },
-      { 
-        path: 'user', 
-        loadComponent: () => import('./home/setting/user-list/user-list.component').then(m => m.UserListComponent)
-      },
-      { 
-        path: 'user/:id', 
-        loadComponent: () => import('./home/setting/user-list/user-detail/user-detail.component').then(m => m.UserDetailComponent)
-      },
-      
-      // Site 相關路由
-      { 
-        path: 'sitelist', 
-        loadComponent: () => import('./site-list/site-list.component').then(m => m.SiteListComponent)
-      },
-      { 
-        path: 'site/new', 
-        loadComponent: () => import('./site-list/new-site/new-site.component').then(m => m.NewSiteComponent)
       },
       
       // Site Detail 路由群組
@@ -153,6 +157,10 @@ export const routes: Routes = [
           { 
             path: 'visitorList', 
             loadComponent: () => import('./site-list/site-detail/site-visitor-list/site-visitor-list.component').then(m => m.SiteVisitorListComponent)
+          },
+          { 
+            path: 'accidentList', 
+            loadComponent: () => import('./site-list/site-detail/site-accident-list/site-accident-list.component').then(m => m.SiteAccidentListComponent)
           },
           { 
             path: 'hazardNotice', 

@@ -24,7 +24,7 @@ interface ChecklistStats {
     <div class="card h-100">
       <div class="card-header">
         <h6 class="mb-0">
-          <i class="bi bi-clipboard-check me-2"></i>自檢表數量統計
+          <i class="fas fa-clipboard-check me-2"></i>自檢表數量統計
         </h6>
         <small class="text-muted">{{ getWeekRangeDisplay() }}</small>
       </div>
@@ -84,7 +84,7 @@ interface ChecklistStats {
                         (click)="viewChecklistForms(stat.formType)"
                         title="查看{{ stat.displayName }}列表"
                       >
-                        <i class="bi bi-eye"></i>
+                        <i class="fas fa-eye"></i>
                       </button>
                     </div>
                   </div>
@@ -123,7 +123,7 @@ interface ChecklistStats {
             </div>
           } @else {
             <div class="text-center text-muted">
-              <i class="bi bi-clipboard-x fs-1 mb-2 opacity-50"></i>
+              <i class="fas fa-clipboard-list fs-1 mb-2 opacity-50"></i>
               <p class="mb-0">該週無自檢表記錄</p>
               <small>暫無任何自檢表建立</small>
             </div>

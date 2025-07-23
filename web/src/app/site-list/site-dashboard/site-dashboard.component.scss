@@ -401,3 +401,394 @@ $transition: all 0.3s ease;
   background: rgba($danger-color, 0.2);
   i { color: $danger-color; }
 }
+
+// 作業類別統計樣式
+.category-stats {
+  margin-top: 16px;
+  
+  .category-stats-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    small {
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+  }
+  
+  .category-stats-list {
+    max-height: 150px;
+    overflow-y: auto;
+    
+    // 自定義滾動條樣式
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+  
+  .category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    transition: all 0.2s ease;
+    
+    &:not(:last-child) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    &:hover:not(.text-muted) {
+      background-color: rgba(255, 255, 255, 0.03);
+      border-radius: 4px;
+      margin: 0 -4px;
+      padding: 6px 4px;
+    }
+    
+    .category-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      
+      i {
+        font-size: 14px;
+        width: 16px;
+        text-align: center;
+      }
+      
+      .category-name {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+        
+        // 防止文字過長
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+    
+    .category-count {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 10px;
+      min-width: 20px;
+      text-align: center;
+      color: white !important;
+      
+      // 確保徽章有最小寬度
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    // 針對 "還有X種作業類別" 的樣式
+    &.text-muted {
+      font-size: 0.7rem;
+      opacity: 0.6;
+      
+      .category-name {
+        font-style: italic;
+        color: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+}
+
+// 響應式調整
+@media (max-width: 768px) {
+  .category-stats {
+    .category-stats-list {
+      max-height: 120px;
+    }
+    
+    .category-item {
+      padding: 4px 0;
+      
+      .category-info {
+        gap: 6px;
+        
+        .category-name {
+          font-size: 0.7rem;
+        }
+      }
+      
+      .category-count {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+        min-width: 16px;
+      }
+    }
+  }
+}
+
+// 在超小螢幕上進一步縮小
+@media (max-width: 480px) {
+  .category-stats {
+    margin-top: 12px;
+    
+    .category-stats-header {
+      margin-bottom: 8px;
+      
+      small {
+        font-size: 0.75rem;
+      }
+    }
+    
+    .category-stats-list {
+      max-height: 100px;
+    }
+    
+    .category-item {
+      padding: 3px 0;
+      
+      .category-info {
+        gap: 4px;
+        
+        i {
+          font-size: 12px;
+          width: 14px;
+        }
+        
+        .category-name {
+          font-size: 0.65rem;
+        }
+      }
+      
+      .category-count {
+        font-size: 0.6rem;
+        padding: 1px 3px;
+        min-width: 14px;
+      }
+    }
+  }
+}
+
+// 廠商統計樣式
+.contractor-stats {
+  margin-top: 16px;
+  
+  .contractor-stats-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    small {
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+  }
+  
+  .contractor-stats-list {
+    max-height: 150px;
+    overflow-y: auto;
+    
+    // 自定義滾動條樣式
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+  
+  .contractor-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    transition: all 0.2s ease;
+    
+    &:not(:last-child) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    &:hover:not(.text-muted) {
+      background-color: rgba(255, 255, 255, 0.03);
+      border-radius: 4px;
+      margin: 0 -4px;
+      padding: 6px 4px;
+    }
+    
+    .contractor-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0; // 允許文字截斷
+      
+      i {
+        font-size: 14px;
+        width: 16px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      
+      .contractor-name {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+        
+        // 防止文字過長
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+      }
+    }
+    
+    .contractor-count-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      
+      .contractor-count {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 10px;
+        min-width: 20px;
+        text-align: center;
+        color: white !important;
+        
+        // 確保徽章有最小寬度
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .contractor-percentage {
+        font-size: 0.65rem;
+        font-weight: 500;
+        min-width: 35px;
+        text-align: right;
+      }
+    }
+    
+    // 針對 "還有X個廠商" 的樣式
+    &.text-muted {
+      font-size: 0.7rem;
+      opacity: 0.6;
+      
+      .contractor-name {
+        font-style: italic;
+        color: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+}
+
+// 響應式調整
+@media (max-width: 768px) {
+  .contractor-stats {
+    .contractor-stats-list {
+      max-height: 120px;
+    }
+    
+    .contractor-item {
+      padding: 4px 0;
+      
+      .contractor-info {
+        gap: 6px;
+        
+        .contractor-name {
+          font-size: 0.7rem;
+        }
+      }
+      
+      .contractor-count-info {
+        gap: 4px;
+        
+        .contractor-count {
+          font-size: 0.65rem;
+          padding: 1px 4px;
+          min-width: 16px;
+        }
+        
+        .contractor-percentage {
+          font-size: 0.6rem;
+          min-width: 30px;
+        }
+      }
+    }
+  }
+}
+
+// 在超小螢幕上進一步縮小
+@media (max-width: 480px) {
+  .contractor-stats {
+    margin-top: 12px;
+    
+    .contractor-stats-header {
+      margin-bottom: 8px;
+      
+      small {
+        font-size: 0.75rem;
+      }
+    }
+    
+    .contractor-stats-list {
+      max-height: 100px;
+    }
+    
+    .contractor-item {
+      padding: 3px 0;
+      
+      .contractor-info {
+        gap: 4px;
+        
+        i {
+          font-size: 12px;
+          width: 14px;
+        }
+        
+        .contractor-name {
+          font-size: 0.65rem;
+        }
+      }
+      
+      .contractor-count-info {
+        gap: 3px;
+        
+        .contractor-count {
+          font-size: 0.6rem;
+          padding: 1px 3px;
+          min-width: 14px;
+        }
+        
+        .contractor-percentage {
+          font-size: 0.55rem;
+          min-width: 25px;
+        }
+      }
+    }
+  }
+}

@@ -17,7 +17,7 @@ interface ChartData {
     <div class="card h-100">
       <div class="card-header">
         <h6 class="mb-0">
-          <i class="bi bi-graph-up me-2"></i>累積工期與人數
+          <i class="fas fa-chart-line me-2"></i>累積工期與人數
         </h6>
       </div>
       <div class="card-body">

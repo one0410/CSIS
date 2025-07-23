@@ -1,0 +1,11 @@
+/* 系統管理布局樣式 */
+.admin-layout {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 確保內容區域可以正確滾動 */
+.content-area {
+  overflow-y: auto;
+  height: calc(100vh - 60px); /* 減去頂部導航欄的高度 */
+} 

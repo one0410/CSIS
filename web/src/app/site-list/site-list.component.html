@@ -2,10 +2,10 @@
   <div class="d-flex justify-content-end align-items-center mb-4">
     <div class="btn-group me-2" role="group" aria-label="View toggle">
       <button type="button" class="btn btn-outline-secondary" (click)="setViewMode('card')" [class.active]="viewMode === 'card'" title="卡片檢視">
-        <i class="bi bi-grid-3x3-gap"></i> <!-- Card view icon -->
+        <i class="fas fa-th"></i> <!-- Card view icon -->
       </button>
       <button type="button" class="btn btn-outline-secondary" (click)="setViewMode('list')" [class.active]="viewMode === 'list'" title="列表檢視">
-        <i class="bi bi-list"></i> <!-- List view icon -->
+        <i class="fas fa-bars"></i> <!-- List view icon -->
       </button>
     </div>
     <button class="btn btn-primary" routerLink="/site/new">新增工地</button>

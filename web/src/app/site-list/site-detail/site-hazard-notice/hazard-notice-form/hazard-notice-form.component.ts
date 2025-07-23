@@ -462,6 +462,20 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // 複製 URL 功能
+  copyUrl(input: HTMLInputElement): void {
+    input.select();
+    input.setSelectionRange(0, 99999); // For mobile devices
+    navigator.clipboard.writeText(input.value).then(() => {
+      alert('網址已複製到剪貼簿');
+    }).catch(err => {
+      console.error('複製失敗:', err);
+      // 備用方法
+      document.execCommand('copy');
+      alert('網址已複製到剪貼簿');
+    });
+  }
+
   cancel(): void {
     if (this.isLoggedIn) {
       this.router.navigate(['/site', this.siteId, 'hazardNotice']);

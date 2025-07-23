@@ -10,7 +10,7 @@
       (click)="closeMenu()"
       title="關閉選單"
     >
-      <i class="bi bi-x"></i>
+      <i class="fas fa-times"></i>
     </button>
     <!-- 選單標題 -->
     <h5>選單</h5>
@@ -21,7 +21,7 @@
       <!-- 我的工地 -->
       <div class="accordion-item border-0">
         <button class="accordion-button p-2" type="button" data-bs-target="#site-collapse">
-          <i class="bi bi-building me-2"></i>我的工地({{currentSite()?.projectName}})
+          <i class="fas fa-building me-2"></i>我的工地({{currentSite()?.projectName}})
         </button>
         <div id="site-collapse" class="accordion-collapse collapse show">
           <div class="accordion-body p-0">
@@ -54,6 +54,7 @@
                 }
               </a>
               <a class="nav-link py-2" [routerLink]="['/site', siteId, 'visitorList']" routerLinkActive="active">訪客列表</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'accidentList']" routerLinkActive="active">工安事故</a>
               <a class="nav-link py-2" [routerLink]="['/site', siteId, 'daily-report']" routerLinkActive="active">日報表</a>
               <a class="nav-link py-2" [routerLink]="['/site', siteId, 'weekly-report']" routerLinkActive="active">週報表</a>
               <a class="nav-link py-2" [routerLink]="['/site', siteId, 'monthly-report']" routerLinkActive="active">月報表</a>
@@ -71,7 +72,7 @@
       <!-- 報表查詢 -->
       <!-- <div class="accordion-item border-0">
         <button class="accordion-button p-2" type="button" data-bs-target="#report-collapse">
-          <i class="bi bi-file-earmark-text me-2"></i>報表查詢
+          <i class="fas fa-file-alt me-2"></i>報表查詢
         </button>
         <div id="report-collapse" class="accordion-collapse collapse show">
           <div class="accordion-body p-0">

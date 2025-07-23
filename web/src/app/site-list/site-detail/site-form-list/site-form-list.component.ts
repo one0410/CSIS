@@ -86,6 +86,14 @@ export class SiteFormListComponent implements AfterViewInit {
         center: 'title',
         right: 'dayGridMonth,dayGridWeek,dayGridDay',
       },
+      // 自定義按鈕文字 (prev 和 next 使用 CSS 顯示 Font Awesome 圖示)
+      buttonText: {
+        today: '今天',
+        month: '月',
+        week: '週', 
+        day: '日',
+        list: '列表'
+      },
       locale: twLocale, // 設置為繁體中文
       height: '100%', // 讓日曆填滿容器高度
       expandRows: true, // 自動調整行高以填滿容器

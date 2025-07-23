@@ -3,7 +3,7 @@
     <div class="col-12">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0">
-          <i class="bi bi-people me-2"></i>
+          <i class="fas fa-users me-2"></i>
           訪客列表
         </h4>
         <div class="d-flex gap-2">
@@ -12,7 +12,7 @@
             (click)="showQRCodeModal()"
             [disabled]="loading()"
           >
-            <i class="bi bi-qr-code me-1"></i>
+            <i class="fas fa-qr-code me-1"></i>
             產生QR code
           </button>
           <button
@@ -20,7 +20,7 @@
             (click)="showAddVisitorForm()"
             [disabled]="loading()"
           >
-            <i class="bi bi-plus-circle me-1"></i>
+            <i class="fas fa-plus-circle me-1"></i>
             現場簽名
           </button>
         </div>
@@ -93,7 +93,7 @@
                 class="btn btn-success"
                 [disabled]="loading() || !newVisitor.name?.trim()"
               >
-                <i class="bi bi-check-circle me-1"></i>
+                <i class="fas fa-check-circle me-1"></i>
                 儲存
               </button>
               <button
@@ -101,7 +101,7 @@
                 class="btn btn-secondary"
                 (click)="hideAddVisitorForm()"
               >
-                <i class="bi bi-x-circle me-1"></i>
+                <i class="fas fa-times-circle me-1"></i>
                 取消
               </button>
             </div>
@@ -113,7 +113,7 @@
       <!-- 訪客列表 -->
       @if (!loading()) { @if (visitors().length === 0) {
       <div class="text-center py-5">
-        <i class="bi bi-people fs-1 text-muted"></i>
+        <i class="fas fa-users fs-1 text-muted"></i>
         <p class="text-muted mt-2">目前沒有訪客資料</p>
       </div>
       } @else {
@@ -142,7 +142,7 @@
                   <td>
                     <div class="d-flex align-items-center">
                       <i
-                        class="bi bi-person-circle fs-4 me-2 text-secondary"
+                        class="fas fa-user-circle fs-4 me-2 text-secondary"
                       ></i>
                       <span>{{ visitor.name }}</span>
                     </div>
@@ -182,9 +182,9 @@
                   </td>
                   <td class="text-center">
                     @if (hasHazardNotice(visitor)) {
-                      <i class="bi bi-check-circle-fill text-success fs-5" title="已完成危害告知"></i>
+                      <i class="fas fa-check-circle text-success fs-5" title="已完成危害告知"></i>
                     } @else {
-                      <i class="bi bi-x-circle-fill text-danger fs-5" title="尚未完成危害告知"></i>
+                      <i class="fas fa-times-circle text-danger fs-5" title="尚未完成危害告知"></i>
                     }
                   </td>
                   <td class="text-center">
@@ -196,7 +196,7 @@
                           [disabled]="loading()"
                           title="儲存"
                         >
-                          <i class="bi bi-check"></i>
+                          <i class="fas fa-check"></i>
                         </button>
                         <button
                           class="btn btn-sm btn-secondary"
@@ -204,7 +204,7 @@
                           [disabled]="loading()"
                           title="取消"
                         >
-                          <i class="bi bi-x"></i>
+                          <i class="fas fa-times"></i>
                         </button>
                       </div>
                     } @else {
@@ -215,7 +215,7 @@
                           [disabled]="loading() || editingVisitorId() !== null"
                           title="編輯"
                         >
-                          <i class="bi bi-pencil"></i>
+                          <i class="fas fa-edit"></i>
                         </button>
                         <button
                           class="btn btn-sm btn-outline-danger"
@@ -223,7 +223,7 @@
                           [disabled]="loading() || editingVisitorId() !== null"
                           title="刪除訪客"
                         >
-                          <i class="bi bi-trash"></i>
+                          <i class="fas fa-trash"></i>
                         </button>
                       </div>
                     }
@@ -247,7 +247,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          <i class="bi bi-qr-code me-2"></i>
+          <i class="fas fa-qr-code me-2"></i>
           訪客危害告知QR Code
         </h5>
         <button type="button" class="btn-close" (click)="hideQRCodeModal()"></button>
@@ -287,7 +287,7 @@
               type="button"
               (click)="copyUrl(urlInput)"
             >
-              <i class="bi bi-copy"></i>
+              <i class="fas fa-copy"></i>
               複製
             </button>
           </div>
@@ -295,7 +295,7 @@
         
         <!-- 說明文字 -->
         <div class="alert alert-info">
-          <i class="bi bi-info-circle me-2"></i>
+          <i class="fas fa-info-circle me-2"></i>
           訪客掃描QR Code後，將進入危害告知頁面，完成簽名後資料會自動顯示在訪客列表中。
         </div>
       </div>

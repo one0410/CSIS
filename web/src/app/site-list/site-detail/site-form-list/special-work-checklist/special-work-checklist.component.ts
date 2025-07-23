@@ -1,6 +1,7 @@
 import { Component, computed, OnInit } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { SiteFormHeaderComponent } from '../site-form-header/site-form-header.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
@@ -66,7 +67,7 @@ enum SignatureType {
   selector: 'app-special-work-checklist',
   templateUrl: './special-work-checklist.component.html',
   styleUrls: ['./special-work-checklist.component.scss'],
-  imports: [FormsModule],
+  imports: [FormsModule, SiteFormHeaderComponent],
   standalone: true
 })
 export class SpecialWorkChecklistComponent implements OnInit {

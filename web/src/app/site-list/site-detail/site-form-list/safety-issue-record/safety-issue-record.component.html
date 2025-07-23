@@ -4,33 +4,7 @@
       <!-- 實際表單內容容器 -->
       <div class="print-content">
         <!-- 表單頭部 -->
-      <div class="d-flex justify-content-between align-items-center mb-3 pb-2">
-        <div>
-         <!-- @if (site()?.formLogo) {
-          <img
-            [src]="site()?.formLogo"
-            alt="公司Logo"
-            class="img-fluid"
-            style="max-width: 100px; max-height: 100px"
-          />
-          } -->
-          <img
-            src="assets/miclogo.jpg"
-            alt="公司Logo"
-            title="公司Logo"
-            class="img-fluid"
-            style="max-width: 100px; max-height: 100px"
-          />
-        </div>
-        <div class="form-title text-center fw-bold p-2 flex-grow-1 mx-3">
-          <h5 class="m-0 fw-bold">帆宣系統科技南科分公司</h5>
-          <h6 class="m-0 fw-bold fst-italic">
-            Marketech International Corp.
-          </h6>
-          <h5 class="m-1 fw-bold">工安缺失紀錄表</h5>
-        </div>
-        <div style="width: 100px"></div>
-      </div>
+        <app-site-form-header title="工安缺失紀錄表"></app-site-form-header>
 
       <!-- 表單內容 -->
       <!-- 第一行：編號、開立人員 -->
@@ -41,7 +15,7 @@
         <div style="width: 35%" class="d-flex align-items-center border-end border-dark py-2 px-2">
           <input 
             type="text" 
-            class="form-control border-0 bg-transparent p-0" 
+            class="form-control table-input" 
             [(ngModel)]="issueRecord.recordNo"
             name="recordNo"
             title="編號"
@@ -53,7 +27,7 @@
         <div style="width: 35%" class="d-flex align-items-center py-2 px-2">
           <input 
             type="text" 
-            class="form-control border-0 bg-transparent p-0" 
+            class="form-control table-input" 
             [(ngModel)]="issueRecord.establishPerson"
             name="establishPerson"
             placeholder="請輸入開立人員"
@@ -71,7 +45,7 @@
         <div style="width: 35%" class="d-flex align-items-center border-end border-dark py-2 px-2">
           <input 
             type="text" 
-            class="form-control border-0 bg-transparent p-0" 
+            class="form-control table-input" 
             [(ngModel)]="issueRecord.establishUnit"
             name="establishUnit"
             placeholder="請輸入開立單位"
@@ -85,7 +59,7 @@
         <div style="width: 35%" class="d-flex align-items-center py-2 px-2">
           <input 
             type="text" 
-            class="form-control border-0 bg-transparent p-0" 
+            class="form-control table-input" 
             value="{{ site()?.projectNo || '' }}"
             readonly
             title="專案編號"
@@ -101,7 +75,7 @@
         <div style="width: 35%" class="d-flex align-items-center border-end border-dark py-2 px-2">
           <input 
             type="date" 
-            class="form-control border-0 bg-transparent p-0" 
+            class="form-control table-input" 
             [(ngModel)]="issueRecord.establishDate"
             name="establishDate"
             title="開立日期"
@@ -152,7 +126,7 @@
         <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
           <input 
             type="date" 
-            class="form-control border-0 bg-transparent p-0" 
+            class="form-control table-input" 
             [(ngModel)]="issueRecord.issueDate"
             name="issueDate"
             title="缺失日期"
@@ -169,7 +143,7 @@
         <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
           <input 
             type="text" 
-            class="form-control border-0 bg-transparent p-0" 
+            class="form-control table-input" 
             [(ngModel)]="issueRecord.factoryArea"
             name="factoryArea"
             placeholder="請輸入發生廠區/地點"
@@ -188,7 +162,7 @@
               class="btn btn-sm btn-primary"
               title="上傳缺失照片"
             >
-              <i class="bi bi-camera me-1"></i>新增照片
+              <i class="fas fa-camera me-1"></i>新增照片
               <input
                 type="file"
                 id="photoUpload"
@@ -202,7 +176,7 @@
         </div>
         <div class="p-3">
           <textarea 
-            class="form-control border-0 bg-transparent p-0" 
+            class="form-control table-input" 
             rows="10"
             [(ngModel)]="issueRecord.issueDescription"
             name="issueDescription"
@@ -252,7 +226,7 @@
                      title="刪除照片"
                      style="top: 5px; right: 5px; width: 30px; height: 30px; padding: 0; opacity: 0; transition: opacity 0.2s ease;"
                    >
-                     <i class="bi bi-x-lg"></i>
+                     <i class="fas fa-times"></i>
                    </button>
                    <div class="card-body p-2">
                      <select 
@@ -295,7 +269,7 @@
                 1. 已立即完成改正 限期改善完成時間
                 <input 
                   type="date" 
-                  class="form-control mx-2 border-bottom border-0 bg-transparent" 
+                  class="form-control mx-2 border-bottom-only" 
                   style="width: 150px;"
                   [(ngModel)]="issueRecord.improvementDeadline"
                   name="improvementDeadline"
@@ -366,7 +340,7 @@
           <div style="width: 35%" class="d-flex align-items-center border-end border-dark py-2 px-2">
             <input 
               type="date" 
-              class="form-control border-0 bg-transparent p-0" 
+              class="form-control table-input" 
               [(ngModel)]="issueRecord.reviewDate"
               name="reviewDate"
               title="複查日期"
@@ -378,7 +352,7 @@
           <div style="width: 35%" class="d-flex align-items-center py-2 px-2">
             <input 
               type="text" 
-              class="form-control border-0 bg-transparent p-0" 
+              class="form-control table-input" 
               [(ngModel)]="issueRecord.reviewer"
               name="reviewer"
               placeholder="請輸入複查者"
@@ -448,7 +422,7 @@
                   } @else {
                   <div class="p-3 border rounded h-100 d-flex align-items-center justify-content-center">
                     <div class="text-muted">
-                      <i class="bi bi-pencil-square"></i> 
+                      <i class="fas fa-edit"></i> 
                       <br>點擊此處進行簽名
                     </div>
                   </div>
@@ -477,7 +451,7 @@
                   } @else {
                   <div class="p-3 border rounded h-100 d-flex align-items-center justify-content-center">
                     <div class="text-muted">
-                      <i class="bi bi-pencil-square"></i> 
+                      <i class="fas fa-edit"></i> 
                       <br>點擊此處進行簽名
                     </div>
                   </div>
@@ -512,7 +486,7 @@
           class="btn btn-outline-secondary px-4"
           (click)="cancel()"
         >
-          <i class="bi bi-x-circle me-1"></i>取消
+          <i class="fas fa-times-circle me-1"></i>取消
         </button>
         @if (currentUser()?.role === 'admin' && formId) {
         <button
@@ -520,7 +494,7 @@
           class="btn btn-outline-danger px-4 ms-2"
           (click)="deleteIssueRecord()"
         >
-          <i class="bi bi-trash me-1"></i>刪除
+          <i class="fas fa-trash me-1"></i>刪除
         </button>
         }
         
@@ -536,7 +510,7 @@
               <span class="spinner-border spinner-border-sm me-1" role="status"></span>
               生成中...
             } @else {
-              <i class="bi bi-file-earmark-word me-1"></i>下載Word
+              <i class="fas fa-file-word me-1"></i>下載Word
             }
           </button>
         </div>
@@ -548,7 +522,7 @@
             class="btn btn-primary px-4"
             (click)="saveIssueRecord()"
           >
-            <i class="bi bi-save me-1"></i>儲存
+            <i class="fas fa-save me-1"></i>儲存
           </button>
         </div>
       </div>
@@ -569,7 +543,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="photoModalLabel">
-          <i class="bi bi-image me-2"></i>照片查看
+          <i class="fas fa-image me-2"></i>照片查看
         </h5>
         <button
           type="button"
@@ -598,7 +572,7 @@
             <div class="card">
               <div class="card-header">
                 <h6 class="mb-0">
-                  <i class="bi bi-info-circle me-1"></i>照片資訊
+                  <i class="fas fa-info-circle me-1"></i>照片資訊
                 </h6>
               </div>
               <div class="card-body">
@@ -637,14 +611,14 @@
                     class="btn btn-primary"
                     (click)="savePhotoTitle()"
                   >
-                    <i class="bi bi-save me-1"></i>儲存備註
+                    <i class="fas fa-save me-1"></i>儲存備註
                   </button>
                   <button
                     type="button"
                     class="btn btn-outline-danger"
                     (click)="deletePhoto(currentPhotoIndex())"
                   >
-                    <i class="bi bi-trash me-1"></i>刪除照片
+                    <i class="fas fa-trash me-1"></i>刪除照片
                   </button>
                 </div>
               </div>

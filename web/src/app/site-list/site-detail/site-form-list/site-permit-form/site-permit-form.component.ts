@@ -1,6 +1,7 @@
 import { Component, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { SiteFormHeaderComponent } from '../site-form-header/site-form-header.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
@@ -50,7 +51,7 @@ export enum SignatureType {
   templateUrl: './site-permit-form.component.html',
   styleUrls: ['./site-permit-form.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SiteFormHeaderComponent],
 })
 export class SitePermitFormComponent implements OnInit {
   siteId: string = '';

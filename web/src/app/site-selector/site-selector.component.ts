@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, computed } from '@angular/core';
 
 import { Router, RouterModule } from '@angular/router';
 import { MongodbService } from '../services/mongodb.service';
@@ -30,6 +30,14 @@ export class SiteSelectorComponent {
     private toastService: ToastService,
     private currentSiteService: CurrentSiteService
   ) {}
+
+  // 獲取當前用戶
+  currentUser = computed(() => this.authService.user());
+
+  // 檢查用戶是否有新增工地的權限
+  get canCreateSite() {
+    return this.currentUser() && (this.currentUser()?.role === 'admin' || this.currentUser()?.role === 'manager');
+  }
 
   async ngOnInit() {
     this.isLoading = true;
