@@ -1,27 +1,67 @@
-// 全域變數
-$primary-color: #1890ff;
-$secondary-color: #52c41a;
-$danger-color: #ff4d4f;
-$background-color: #001529;
-$card-background: rgba(255, 255, 255, 0.05);
-$text-color: #ffffff;
-$border-radius: 8px;
-$box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-$transition: all 0.3s ease;
+// 全域變數 - 現代化色彩方案
+$primary-color: #4f46e5; // 靛藍色（更現代的主色）
+$primary-light: #818cf8;
+$primary-dark: #3730a3;
+
+$secondary-color: #10b981; // 翠綠色（更清新的輔色）
+$secondary-light: #34d399;
+$secondary-dark: #059669;
+
+$accent-color: #f59e0b; // 琥珀色（強調色）
+$accent-light: #fbbf24;
+
+$danger-color: #ef4444; // 更柔和的紅色
+$warning-color: #f97316; // 橙色
+$info-color: #06b6d4; // 青色
+$success-color: #22c55e; // 成功綠
+
+// 背景色系
+$background-color: #0f172a; // 更深的藍黑色
+$background-secondary: #1e293b;
+$background-tertiary: #334155;
+
+// 卡片背景 - 使用漸變和更好的透明度
+$card-background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+$card-background-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
+
+// 文字顏色
+$text-primary: #f1f5f9; // 主要文字
+$text-secondary: #cbd5e1; // 次要文字
+$text-muted: #94a3b8; // 靜音文字
+
+// 邊框和分隔線
+$border-color: rgba(255, 255, 255, 0.1);
+$border-color-light: rgba(255, 255, 255, 0.05);
+
+// 陰影系統
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+$border-radius: 12px; // 增加圓角
+$border-radius-sm: 8px;
+$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
 
 // 基本樣式
 .dashboard-container {
-  padding: 20px;
-  background-color: $background-color;
-  color: $text-color;
-  height: 100%;
+  padding: 24px;
+  background: linear-gradient(135deg, $background-color 0%, #1a202c 100%);
+  color: $text-primary;
+  min-height: 100vh;
   overflow-y: auto;
+  
+  // 添加微妙的紋理效果
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
   
   // 在較高解析度螢幕上使用網格佈局
   @media (min-width: 992px) {
     display: grid;
     grid-template-rows: auto auto 1fr;
-    gap: 24px;
+    gap: 32px;
+    padding: 32px;
   }
 }
 
@@ -63,16 +103,38 @@ $transition: all 0.3s ease;
 // 通用卡片樣式
 .info-card {
   background: $card-background;
+  border: 1px solid $border-color-light;
   border-radius: $border-radius;
-  box-shadow: $box-shadow;
+  box-shadow: $shadow-md;
   transition: $transition;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  backdrop-filter: blur(10px);
+  position: relative;
+  
+  // 頂部條紋效果
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, $primary-color 0%, $secondary-color 50%, $accent-color 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
   
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-4px);
+    box-shadow: $shadow-xl;
+    background: $card-background-hover;
+    border-color: $border-color;
+    
+    &:before {
+      opacity: 0.8;
+    }
     
     .card-title {
       .info-icon-right {
@@ -93,7 +155,7 @@ $transition: all 0.3s ease;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(255, 255, 255, 0.05);
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
       opacity: 0;
       transition: opacity 0.3s ease;
       pointer-events: none;
@@ -104,19 +166,20 @@ $transition: all 0.3s ease;
     }
     
     &:active:after {
-      background: rgba(0, 0, 0, 0.1);
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%);
       opacity: 1;
     }
   }
   
   .card-title {
     font-size: 1rem;
-    font-weight: 500;
-    padding: 12px 16px;
+    font-weight: 600;
+    padding: 16px 20px;
     margin: 0;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+    border-bottom: 1px solid $border-color;
     position: relative;
+    color: $text-primary;
     
     &:hover {
       .info-icon-right {
@@ -127,22 +190,24 @@ $transition: all 0.3s ease;
     
     .info-icon-right {
       position: absolute;
-      right: 16px;
+      right: 20px;
       top: 50%;
       transform: translateY(-50%);
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
+      transition: all 0.3s ease;
       cursor: help;
+      color: $primary-light;
       
       &:hover {
         transform: translateY(-50%) scale(1.2);
+        color: $primary-color;
       }
     }
     
     .bi-info-circle {
-      font-size: 0.8em;
-      opacity: 0.7;
+      font-size: 0.85em;
+      opacity: 0.8;
       
       &:hover {
         opacity: 1;
@@ -151,7 +216,7 @@ $transition: all 0.3s ease;
   }
   
   .card-content {
-    padding: 16px;
+    padding: 20px;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -159,22 +224,23 @@ $transition: all 0.3s ease;
     
     // 在小螢幕上減少 padding
     @media (max-width: 480px) {
-      padding: 12px 8px;
+      padding: 16px 12px;
     }
     
     // 在中等螢幕上適度調整
     @media (min-width: 481px) and (max-width: 768px) {
-      padding: 14px 12px;
+      padding: 18px 16px;
     }
   }
   
   .large-value {
     // 使用更保守的 clamp() 函數實現響應式字體大小
-    // 降低 vw 值避免在中等寬度下過大
-    font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
     font-weight: 700;
     text-align: center;
-    margin: 12px 0;
+    margin: 16px 0;
+    // 添加文字陰影增強可讀性
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     // 防止文字換行
     white-space: nowrap;
     // 如果內容太長，顯示省略號
@@ -183,30 +249,47 @@ $transition: all 0.3s ease;
     
     // 在極小螢幕上進一步縮小
     @media (max-width: 480px) {
-      font-size: clamp(0.9rem, 2.8vw, 1.2rem);
-      transform: scale(0.95);
-      transform-origin: center;
+      font-size: clamp(1.2rem, 3.2vw, 1.6rem);
     }
     
     // 在小到中等螢幕上的調整
     @media (min-width: 481px) and (max-width: 768px) {
-      font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+      font-size: clamp(1.4rem, 2.8vw, 1.8rem);
     }
     
-    // 在中等到大螢幕上的調整（包含 1280px）
+    // 在中等到大螢幕上的調整
     @media (min-width: 769px) and (max-width: 1199px) {
-      font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+      font-size: clamp(1.6rem, 2.2vw, 2rem);
     }
     
     // 在超大螢幕上才使用較大字體
     @media (min-width: 1200px) {
-      font-size: clamp(1.5rem, 1.5vw, 2rem);
+      font-size: clamp(1.8rem, 1.8vw, 2.4rem);
     }
-    
-    // 在超寬螢幕上恢復原始大小
-    @media (min-width: 1600px) {
-      font-size: 2rem;
-    }
+  }
+  
+  .stat-subtitle {
+    font-size: 0.9rem;
+    color: $text-secondary;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+  
+  // 特殊卡片的頂部條紋顏色
+  &:nth-of-type(4n+1):before {
+    background: linear-gradient(90deg, $primary-color 0%, $primary-light 100%);
+  }
+  
+  &:nth-of-type(4n+2):before {
+    background: linear-gradient(90deg, $secondary-color 0%, $secondary-light 100%);
+  }
+  
+  &:nth-of-type(4n+3):before {
+    background: linear-gradient(90deg, $accent-color 0%, $accent-light 100%);
+  }
+  
+  &:nth-of-type(4n+4):before {
+    background: linear-gradient(90deg, $danger-color 0%, #f87171 100%);
   }
 }
 
@@ -214,21 +297,23 @@ $transition: all 0.3s ease;
 .progress-banner {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 20px;
+  margin-bottom: 24px;
   
   .progress-icon {
-    background: rgba($primary-color, 0.2);
-    width: 60px;
-    height: 60px;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(129, 140, 248, 0.1) 100%);
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
+    border: 2px solid rgba(79, 70, 229, 0.3);
     
     i {
-      font-size: 30px;
-      color: $primary-color;
+      font-size: 32px;
+      color: $primary-light;
+      filter: drop-shadow(0 2px 4px rgba(79, 70, 229, 0.3));
     }
   }
   
@@ -237,23 +322,26 @@ $transition: all 0.3s ease;
   }
   
   .progress-value {
-    font-size: 2rem;
+    font-size: 2.4rem;
     font-weight: 700;
-    margin-bottom: 8px;
-    color: $primary-color;
+    margin-bottom: 12px;
+    color: $primary-light;
+    text-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
   }
   
   .progress-bar {
-    height: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+    height: 10px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-radius: 6px;
     overflow: hidden;
+    border: 1px solid $border-color-light;
     
     .progress-fill {
       height: 100%;
-      background-color: $primary-color;
-      border-radius: 4px;
-      transition: width 0.5s ease;
+      background: linear-gradient(90deg, $primary-color 0%, $primary-light 100%);
+      border-radius: 6px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 10px rgba(79, 70, 229, 0.4);
     }
   }
 }
@@ -263,47 +351,60 @@ $transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: 20px;
   
   .stat-card {
     flex: 1;
     text-align: center;
     
     .stat-value {
-      font-size: 1.6rem;
-      font-weight: 600;
-      margin-bottom: 4px;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: $text-primary;
     }
     
     .stat-label {
-      font-size: 0.9rem;
-      opacity: 0.8;
+      font-size: 0.85rem;
+      color: $text-secondary;
+      font-weight: 500;
+    }
+    
+    .stat-subtitle {
+      font-size: 0.75rem;
+      color: $text-muted;
+      margin-top: 4px;
     }
   }
   
   .timeline-separator {
-    width: 80px;
-    padding: 0 16px;
+    width: 100px;
+    padding: 0 20px;
     
     .timeline-line {
-      height: 3px;
-      background: linear-gradient(to right, $secondary-color, $primary-color);
+      height: 4px;
+      background: linear-gradient(90deg, $secondary-color 0%, $primary-color 100%);
       position: relative;
+      border-radius: 2px;
+      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
       
       &:before, &:after {
         content: '';
         position: absolute;
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         background-color: $secondary-color;
-        top: -2.5px;
-        left: -4px;
+        top: -3px;
+        left: -5px;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.4);
       }
       
       &:after {
         left: auto;
-        right: -4px;
+        right: -5px;
         background-color: $primary-color;
+        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.4);
       }
     }
   }
@@ -317,28 +418,41 @@ $transition: all 0.3s ease;
   justify-content: center;
   
   .weather-icon {
-    font-size: 3.5rem;
-    color: #f9d71c;
-    margin-bottom: 16px;
+    font-size: 4rem;
+    color: $accent-color;
+    margin-bottom: 20px;
     
     i {
-      filter: drop-shadow(0 0 8px rgba(249, 215, 28, 0.5));
+      filter: drop-shadow(0 4px 8px rgba(245, 158, 11, 0.4));
+      animation: float 3s ease-in-out infinite;
     }
   }
   
   .weather-value {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     font-weight: 600;
     text-align: center;
+    color: $text-primary;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+// 添加浮動動畫
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
   }
 }
 
 // 統計網格
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
 }
 
 // 統計內容
@@ -350,30 +464,60 @@ $transition: all 0.3s ease;
   text-align: center;
   
   .stat-tile-icon {
-    width: 70px;
-    height: 70px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    position: relative;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    
+    &:before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    &:hover {
+      transform: scale(1.05);
+      
+      &:before {
+        opacity: 1;
+      }
+      
+      i {
+        transform: scale(1.1);
+      }
+    }
     
     i {
-      font-size: 32px;
+      font-size: 36px;
+      transition: all 0.3s ease;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
     }
   }
   
   .stat-subtitle {
     font-size: 0.9rem;
-    opacity: 0.7;
-    margin-top: 4px;
+    color: $text-secondary;
+    margin-top: 8px;
+    font-weight: 500;
   }
 }
 
 // 圖表容器
 .charts-container {
   display: grid;
-  gap: 20px;
+  gap: 24px;
   
   @media (min-width: 992px) {
     grid-template-columns: 1fr 1fr;
@@ -382,61 +526,114 @@ $transition: all 0.3s ease;
 
 // 圖表樣式
 .chart-wrapper {
-  height: 300px;
+  height: 320px;
   position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-radius: $border-radius-sm;
+  border: 1px solid $border-color-light;
 }
 
-// 圖示顏色
-.info-card:nth-of-type(3n+1) .stat-tile-icon {
-  background: rgba($primary-color, 0.2);
-  i { color: $primary-color; }
+// 圖示顏色 - 使用新的顏色系統
+.info-card:nth-of-type(4n+1) .stat-tile-icon {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(129, 140, 248, 0.1) 100%);
+  border-color: rgba(79, 70, 229, 0.3);
+  
+  &:before {
+    background: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
+  }
+  
+  i { 
+    color: $primary-light; 
+  }
 }
 
-.info-card:nth-of-type(3n+2) .stat-tile-icon {
-  background: rgba($secondary-color, 0.2);
-  i { color: $secondary-color; }
+.info-card:nth-of-type(4n+2) .stat-tile-icon {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(52, 211, 153, 0.1) 100%);
+  border-color: rgba(16, 185, 129, 0.3);
+  
+  &:before {
+    background: linear-gradient(135deg, $secondary-color 0%, $secondary-light 100%);
+  }
+  
+  i { 
+    color: $secondary-light; 
+  }
 }
 
-.info-card:nth-of-type(3n+3) .stat-tile-icon {
-  background: rgba($danger-color, 0.2);
-  i { color: $danger-color; }
+.info-card:nth-of-type(4n+3) .stat-tile-icon {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(251, 191, 36, 0.1) 100%);
+  border-color: rgba(245, 158, 11, 0.3);
+  
+  &:before {
+    background: linear-gradient(135deg, $accent-color 0%, $accent-light 100%);
+  }
+  
+  i { 
+    color: $accent-light; 
+  }
+}
+
+.info-card:nth-of-type(4n+4) .stat-tile-icon {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(248, 113, 113, 0.1) 100%);
+  border-color: rgba(239, 68, 68, 0.3);
+  
+  &:before {
+    background: linear-gradient(135deg, $danger-color 0%, #f87171 100%);
+  }
+  
+  i { 
+    color: #f87171; 
+  }
+}
+
+// 特殊情況：工安零事故時數使用成功色
+.info-card .stat-content .text-success {
+  color: $success-color !important;
+}
+
+.info-card .stat-content .stat-tile-icon .text-success {
+  color: $success-color !important;
 }
 
 // 作業類別統計樣式
 .category-stats {
-  margin-top: 16px;
+  margin-top: 20px;
   
   .category-stats-header {
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $border-color;
     
     small {
-      font-size: 0.8rem;
-      font-weight: 500;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: $text-secondary;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
   }
   
   .category-stats-list {
-    max-height: 150px;
+    max-height: 160px;
     overflow-y: auto;
     
     // 自定義滾動條樣式
     &::-webkit-scrollbar {
-      width: 4px;
+      width: 6px;
     }
     
     &::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
     }
     
     &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 2px;
+      background: linear-gradient(180deg, $primary-color 0%, $primary-light 100%);
+      border-radius: 3px;
       
       &:hover {
-        background: rgba(255, 255, 255, 0.5);
+        background: linear-gradient(180deg, $primary-light 0%, $primary-color 100%);
       }
     }
   }
@@ -445,36 +642,39 @@ $transition: all 0.3s ease;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 0;
-    transition: all 0.2s ease;
+    padding: 10px 8px;
+    margin: 4px 0;
+    transition: all 0.3s ease;
+    border-radius: $border-radius-sm;
     
     &:not(:last-child) {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid $border-color-light;
     }
     
     &:hover:not(.text-muted) {
-      background-color: rgba(255, 255, 255, 0.03);
-      border-radius: 4px;
-      margin: 0 -4px;
-      padding: 6px 4px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+      transform: translateX(4px);
+      border-left: 3px solid $primary-light;
+      padding-left: 12px;
     }
     
     .category-info {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
       flex: 1;
       
       i {
-        font-size: 14px;
-        width: 16px;
+        font-size: 16px;
+        width: 20px;
         text-align: center;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
       }
       
       .category-name {
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: $text-primary;
         
         // 防止文字過長
         overflow: hidden;
@@ -484,13 +684,14 @@ $transition: all 0.3s ease;
     }
     
     .category-count {
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 2px 6px;
-      border-radius: 10px;
-      min-width: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 12px;
+      min-width: 24px;
       text-align: center;
       color: white !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       
       // 確保徽章有最小寬度
       display: inline-flex;
@@ -500,81 +701,12 @@ $transition: all 0.3s ease;
     
     // 針對 "還有X種作業類別" 的樣式
     &.text-muted {
-      font-size: 0.7rem;
-      opacity: 0.6;
+      font-size: 0.75rem;
+      opacity: 0.7;
       
       .category-name {
         font-style: italic;
-        color: rgba(255, 255, 255, 0.5);
-      }
-    }
-  }
-}
-
-// 響應式調整
-@media (max-width: 768px) {
-  .category-stats {
-    .category-stats-list {
-      max-height: 120px;
-    }
-    
-    .category-item {
-      padding: 4px 0;
-      
-      .category-info {
-        gap: 6px;
-        
-        .category-name {
-          font-size: 0.7rem;
-        }
-      }
-      
-      .category-count {
-        font-size: 0.65rem;
-        padding: 1px 4px;
-        min-width: 16px;
-      }
-    }
-  }
-}
-
-// 在超小螢幕上進一步縮小
-@media (max-width: 480px) {
-  .category-stats {
-    margin-top: 12px;
-    
-    .category-stats-header {
-      margin-bottom: 8px;
-      
-      small {
-        font-size: 0.75rem;
-      }
-    }
-    
-    .category-stats-list {
-      max-height: 100px;
-    }
-    
-    .category-item {
-      padding: 3px 0;
-      
-      .category-info {
-        gap: 4px;
-        
-        i {
-          font-size: 12px;
-          width: 14px;
-        }
-        
-        .category-name {
-          font-size: 0.65rem;
-        }
-      }
-      
-      .category-count {
-        font-size: 0.6rem;
-        padding: 1px 3px;
-        min-width: 14px;
+        color: $text-muted;
       }
     }
   }
@@ -582,39 +714,43 @@ $transition: all 0.3s ease;
 
 // 廠商統計樣式
 .contractor-stats {
-  margin-top: 16px;
+  margin-top: 20px;
   
   .contractor-stats-header {
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $border-color;
     
     small {
-      font-size: 0.8rem;
-      font-weight: 500;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: $text-secondary;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
   }
   
   .contractor-stats-list {
-    max-height: 150px;
+    max-height: 160px;
     overflow-y: auto;
     
     // 自定義滾動條樣式
     &::-webkit-scrollbar {
-      width: 4px;
+      width: 6px;
     }
     
     &::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
     }
     
     &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 2px;
+      background: linear-gradient(180deg, $secondary-color 0%, $secondary-light 100%);
+      border-radius: 3px;
       
       &:hover {
-        background: rgba(255, 255, 255, 0.5);
+        background: linear-gradient(180deg, $secondary-light 0%, $secondary-color 100%);
       }
     }
   }
@@ -623,38 +759,41 @@ $transition: all 0.3s ease;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 0;
-    transition: all 0.2s ease;
+    padding: 10px 8px;
+    margin: 4px 0;
+    transition: all 0.3s ease;
+    border-radius: $border-radius-sm;
     
     &:not(:last-child) {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid $border-color-light;
     }
     
     &:hover:not(.text-muted) {
-      background-color: rgba(255, 255, 255, 0.03);
-      border-radius: 4px;
-      margin: 0 -4px;
-      padding: 6px 4px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+      transform: translateX(4px);
+      border-left: 3px solid $secondary-light;
+      padding-left: 12px;
     }
     
     .contractor-info {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
       flex: 1;
       min-width: 0; // 允許文字截斷
       
       i {
-        font-size: 14px;
-        width: 16px;
+        font-size: 16px;
+        width: 20px;
         text-align: center;
         flex-shrink: 0;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
       }
       
       .contractor-name {
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: $text-primary;
         
         // 防止文字過長
         overflow: hidden;
@@ -667,17 +806,18 @@ $transition: all 0.3s ease;
     .contractor-count-info {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       flex-shrink: 0;
       
       .contractor-count {
-        font-size: 0.7rem;
-        font-weight: 600;
-        padding: 2px 6px;
-        border-radius: 10px;
-        min-width: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 4px 8px;
+        border-radius: 12px;
+        min-width: 24px;
         text-align: center;
         color: white !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         
         // 確保徽章有最小寬度
         display: inline-flex;
@@ -686,57 +826,215 @@ $transition: all 0.3s ease;
       }
       
       .contractor-percentage {
-        font-size: 0.65rem;
-        font-weight: 500;
-        min-width: 35px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        min-width: 40px;
         text-align: right;
+        color: $text-secondary;
       }
     }
     
     // 針對 "還有X個廠商" 的樣式
     &.text-muted {
-      font-size: 0.7rem;
-      opacity: 0.6;
+      font-size: 0.75rem;
+      opacity: 0.7;
       
       .contractor-name {
         font-style: italic;
-        color: rgba(255, 255, 255, 0.5);
+        color: $text-muted;
       }
     }
   }
 }
 
+
+
+// 添加一些微妙的動畫效果
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.category-item, .contractor-item {
+  position: relative;
+  overflow: hidden;
+  
+  &:hover:not(.text-muted):after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: shimmer 0.6s ease-out;
+  }
+}
+
 // 響應式調整
 @media (max-width: 768px) {
-  .contractor-stats {
-    .contractor-stats-list {
+  .dashboard-container {
+    padding: 16px;
+    background: linear-gradient(135deg, $background-color 0%, #1a202c 100%);
+  }
+  
+  .dashboard-header {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .info-card {
+    .card-title {
+      padding: 12px 16px;
+      font-size: 0.9rem;
+    }
+    
+    .card-content {
+      padding: 16px;
+    }
+    
+    .large-value {
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
+      margin: 12px 0;
+    }
+  }
+  
+  .progress-banner {
+    gap: 16px;
+    margin-bottom: 20px;
+    
+    .progress-icon {
+      width: 60px;
+      height: 60px;
+      
+      i {
+        font-size: 28px;
+      }
+    }
+    
+    .progress-value {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+    
+    .progress-bar {
+      height: 8px;
+    }
+  }
+  
+  .timeline-info {
+    .stat-card {
+      .stat-value {
+        font-size: 1.5rem;
+      }
+      
+      .stat-label {
+        font-size: 0.8rem;
+      }
+    }
+    
+    .timeline-separator {
+      width: 80px;
+      padding: 0 16px;
+      
+      .timeline-line {
+        height: 3px;
+        
+        &:before, &:after {
+          width: 8px;
+          height: 8px;
+          top: -2.5px;
+        }
+        
+        &:before {
+          left: -4px;
+        }
+        
+        &:after {
+          right: -4px;
+        }
+      }
+    }
+  }
+  
+  .weather-content {
+    .weather-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+    
+    .weather-value {
+      font-size: 1.3rem;
+    }
+  }
+  
+  .stat-content {
+    .stat-tile-icon {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 16px;
+      
+      i {
+        font-size: 28px;
+      }
+    }
+  }
+  
+  .category-stats, .contractor-stats {
+    margin-top: 16px;
+    
+    .category-stats-header, .contractor-stats-header {
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      
+      small {
+        font-size: 0.8rem;
+      }
+    }
+    
+    .category-stats-list, .contractor-stats-list {
       max-height: 120px;
     }
     
-    .contractor-item {
-      padding: 4px 0;
+    .category-item, .contractor-item {
+      padding: 8px 6px;
       
-      .contractor-info {
-        gap: 6px;
+      &:hover:not(.text-muted) {
+        transform: translateX(2px);
+        padding-left: 10px;
+      }
+      
+      .category-info, .contractor-info {
+        gap: 8px;
         
-        .contractor-name {
-          font-size: 0.7rem;
+        i {
+          font-size: 14px;
+          width: 16px;
+        }
+        
+        .category-name, .contractor-name {
+          font-size: 0.75rem;
         }
       }
       
-      .contractor-count-info {
-        gap: 4px;
-        
-        .contractor-count {
-          font-size: 0.65rem;
-          padding: 1px 4px;
-          min-width: 16px;
-        }
-        
-        .contractor-percentage {
-          font-size: 0.6rem;
-          min-width: 30px;
-        }
+      .category-count, .contractor-count {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        min-width: 20px;
+      }
+      
+      .contractor-percentage {
+        font-size: 0.65rem;
+        min-width: 30px;
       }
     }
   }
@@ -744,10 +1042,99 @@ $transition: all 0.3s ease;
 
 // 在超小螢幕上進一步縮小
 @media (max-width: 480px) {
-  .contractor-stats {
+  .dashboard-container {
+    padding: 12px;
+  }
+  
+  .dashboard-header {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .info-card {
+    .card-title {
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+    
+    .card-content {
+      padding: 12px;
+    }
+    
+    .large-value {
+      font-size: clamp(1.2rem, 5vw, 1.6rem);
+      margin: 8px 0;
+    }
+  }
+  
+  .progress-banner {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+    
+    .progress-icon {
+      width: 50px;
+      height: 50px;
+      
+      i {
+        font-size: 24px;
+      }
+    }
+    
+    .progress-value {
+      font-size: 1.8rem;
+      margin-bottom: 6px;
+    }
+  }
+  
+  .timeline-info {
+    .stat-card {
+      .stat-value {
+        font-size: 1.3rem;
+      }
+      
+      .stat-label {
+        font-size: 0.75rem;
+      }
+    }
+    
+    .timeline-separator {
+      width: 60px;
+      padding: 0 12px;
+    }
+  }
+  
+  .weather-content {
+    .weather-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+    
+    .weather-value {
+      font-size: 1.1rem;
+    }
+  }
+  
+  .stat-content {
+    .stat-tile-icon {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 12px;
+      
+      i {
+        font-size: 24px;
+      }
+    }
+    
+    .stat-subtitle {
+      font-size: 0.8rem;
+    }
+  }
+  
+  .category-stats, .contractor-stats {
     margin-top: 12px;
     
-    .contractor-stats-header {
+    .category-stats-header, .contractor-stats-header {
       margin-bottom: 8px;
       
       small {
@@ -755,39 +1142,40 @@ $transition: all 0.3s ease;
       }
     }
     
-    .contractor-stats-list {
+    .category-stats-list, .contractor-stats-list {
       max-height: 100px;
     }
     
-    .contractor-item {
-      padding: 3px 0;
+    .category-item, .contractor-item {
+      padding: 6px 4px;
       
-      .contractor-info {
-        gap: 4px;
+      &:hover:not(.text-muted) {
+        transform: translateX(1px);
+        padding-left: 8px;
+      }
+      
+      .category-info, .contractor-info {
+        gap: 6px;
         
         i {
           font-size: 12px;
           width: 14px;
         }
         
-        .contractor-name {
-          font-size: 0.65rem;
+        .category-name, .contractor-name {
+          font-size: 0.7rem;
         }
       }
       
-      .contractor-count-info {
-        gap: 3px;
-        
-        .contractor-count {
-          font-size: 0.6rem;
-          padding: 1px 3px;
-          min-width: 14px;
-        }
-        
-        .contractor-percentage {
-          font-size: 0.55rem;
-          min-width: 25px;
-        }
+      .category-count, .contractor-count {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+        min-width: 16px;
+      }
+      
+      .contractor-percentage {
+        font-size: 0.6rem;
+        min-width: 25px;
       }
     }
   }

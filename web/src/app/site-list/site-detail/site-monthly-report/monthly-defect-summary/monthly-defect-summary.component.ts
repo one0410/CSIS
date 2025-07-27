@@ -367,21 +367,7 @@ export class MonthlyDefectSummaryComponent implements OnInit, OnChanges, OnDestr
   }
 
   private parseDefectTypeFromCode(deductionCode: string): string {
-    if (!deductionCode) return 'OTHER';
-    
-    // 解析缺失代碼的第一個字符或前綴來判斷類型
-    const code = deductionCode.toUpperCase();
-    
-    if (code.startsWith('S')) return 'S';
-    if (code.startsWith('E')) return 'E';
-    if (code.startsWith('Q')) return 'Q';
-    if (code.startsWith('M')) return 'M';
-    if (code.startsWith('EL')) return 'EL';
-    if (code.startsWith('F')) return 'F';
-    if (code.startsWith('H')) return 'H';
-    if (code.startsWith('C')) return 'C';
-    
-    return 'OTHER';
+    return deductionCode || '';
   }
 
   getMonthRangeDisplay(): string {

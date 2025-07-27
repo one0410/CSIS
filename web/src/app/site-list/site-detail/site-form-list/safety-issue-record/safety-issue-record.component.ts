@@ -22,7 +22,7 @@ declare const bootstrap: {
   };
 };
 
-interface IssueRecord extends SiteForm {
+export interface IssueRecord extends SiteForm {
   formType: 'safetyIssueRecord';
   recordNo: string; // 編號(單位-工號-年/月/流水號)
   establishUnit: string; // 開立單位
@@ -31,6 +31,8 @@ interface IssueRecord extends SiteForm {
   issueDate: string; // 缺失日期
   factoryArea: string; // 發生廠區/地點
   responsibleUnit: string; // 缺失責任單位（選項：MIC或供應商）
+  responsibleUnitName?: string; // MIC單位名稱
+  supplierName?: string; // 供應商名稱
   issueDescription: string; // 缺失說明及照片黏貼處
   remedyMeasures: string[]; // 缺失處置
   improvementDeadline: string; // 改善完成時間
@@ -124,6 +126,8 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
     issueDate: new Date().toISOString().slice(0, 10),
     factoryArea: '',
     responsibleUnit: '',
+    responsibleUnitName: '',
+    supplierName: '',
     issueDescription: '',
     remedyMeasures: [], 
     improvementDeadline: '',
@@ -606,52 +610,6 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
     this.isGeneratingDocument.set(true);
     
     try {
-      const currentSite = this.site();
-      if (!currentSite) {
-        throw new Error('無法取得工地資訊');
-      }
-
-      // 準備模板資料
-      const templateData = {
-        // 基本資訊
-        recordNo: this.issueRecord.recordNo || '',
-        establishPerson: this.issueRecord.establishPerson || '',
-        establishUnit: this.issueRecord.establishUnit || '',
-        projectNo: currentSite.projectNo || '',
-        establishDate: this.issueRecord.establishDate || '',
-        responsibleUnit: this.issueRecord.responsibleUnit === 'MIC' ? 'MIC' : '供應商',
-        issueDate: this.issueRecord.issueDate || '',
-        factoryArea: this.issueRecord.factoryArea || '',
-        
-        // 缺失說明
-        issueDescription: this.issueRecord.issueDescription || '',
-        
-        // 缺失處置
-        remedyMeasures: this.issueRecord.remedyMeasures || [],
-        improvementDeadline: this.issueRecord.improvementDeadline || '',
-        
-        // 缺失評核
-        deductionCode: this.issueRecord.deductionCode || '',
-        recordPoints: this.issueRecord.recordPoints || '',
-        
-        // 複查資訊
-        reviewDate: this.issueRecord.reviewDate || '',
-        reviewer: this.issueRecord.reviewer || '',
-        reviewResult: this.issueRecord.reviewResult === 'completed' ? '已完成改正' : 
-                     this.issueRecord.reviewResult === 'incomplete' ? '未完成改正(要求改善，再次開立工安缺失紀錄表)' : '',
-        
-        // 簽名（這裡可以根據需要處理簽名圖片）
-        supervisorSignature: this.supervisorSignature ? '已簽名' : '',
-        workerSignature: this.workerSignature ? '已簽名' : '',
-        
-        // 工地資訊
-        siteName: currentSite.projectName || '',
-        siteLocation: `${currentSite.county || ''} ${currentSite.town || ''}`.trim(),
-        
-        // 當前日期
-        currentDate: new Date().toLocaleDateString('zh-TW')
-      };
-
       // 使用 DocxTemplateService 生成文件
       await this.docxTemplateService.generateFormDocx(this.issueRecord._id!, 'safetyIssueRecord');
       

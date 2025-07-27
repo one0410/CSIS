@@ -76,9 +76,16 @@
           <app-fanshien-worker-count [selectedDate]="selectedDate"></app-fanshien-worker-count>
         </div>
         
-        <!-- 各廠商當日執行內容 -->
+        <!-- 今日表單內容 -->
         <div class="col-lg-6 mb-3">
           <app-daily-work-content [selectedDate]="selectedDate"></app-daily-work-content>
+        </div>
+      </div>
+
+      <!-- 各廠商當日執行內容 -->
+      <div class="row mb-4">
+        <div class="col-12 mb-3">
+          <app-daily-permit-content [selectedDate]="selectedDate"></app-daily-permit-content>
         </div>
       </div>
 

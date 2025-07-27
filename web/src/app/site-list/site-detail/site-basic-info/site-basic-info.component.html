@@ -44,20 +44,20 @@
         
         <!-- 工期 -->
         <div class="info-group mb-3">
-          <label class="info-label">開始日期</label>
+          <label class="info-label">合約開始日期</label>
           @if (!isEditMode) {
             <div class="info-value">{{site()?.startDate || '尚未設定'}}</div>
           } @else {
-            <input type="date" class="form-control" id="startDate" [(ngModel)]="editForm.startDate" name="startDate" required aria-label="開始日期">
+            <input type="date" class="form-control" id="startDate" [(ngModel)]="editForm.startDate" name="startDate" required aria-label="合約開始日期">
           }
         </div>
         
         <div class="info-group mb-3">
-          <label class="info-label">結束日期</label>
+          <label class="info-label">合約結束日期</label>
           @if (!isEditMode) {
             <div class="info-value">{{site()?.endDate || '尚未設定'}}</div>
           } @else {
-            <input type="date" class="form-control" id="endDate" [(ngModel)]="editForm.endDate" name="endDate" required aria-label="結束日期">
+            <input type="date" class="form-control" id="endDate" [(ngModel)]="editForm.endDate" name="endDate" required aria-label="合約結束日期">
           }
         </div>
         
@@ -93,15 +93,15 @@
       
       <!-- 右側圖片 - 大畫面 col-md-6, 小畫面 col-12 -->
       <div class="col-12 col-md-6 order-1 order-md-2">
-        <!-- 工地圖片 -->
+        <!-- 專案代表圖片 -->
         <div class="info-group mb-3">
-          <label class="info-label">工地圖片</label>
+          <label class="info-label">專案圖片</label>
           @if (!isEditMode) {
             <div class="info-value">
               @if (site()?.image) {
-                <img [src]="site()?.image" alt="工地圖片" class="site-preview-image w-100">
+                <img [src]="site()?.image" alt="專案圖片" class="site-preview-image w-100">
               } @else {
-                <div class="text-muted">尚未設定工地圖片</div>
+                <div class="text-muted">尚未設定專案圖片</div>
               }
             </div>
           } @else {
@@ -112,11 +112,11 @@
                    (dragleave)="onImageDragLeave($event)" 
                    (drop)="onImageDrop($event)">
                 @if (editForm.image || editForm.imagePreview) {
-                  <img [src]="editForm.imagePreview || editForm.image" alt="工地圖片預覽" class="site-preview-image">
+                  <img [src]="editForm.imagePreview || editForm.image" alt="專案圖片預覽" class="site-preview-image">
                 } @else {
                   <div class="image-placeholder d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-building fs-2"></i>
-                    <span class="mt-2">請上傳工地圖片</span>
+                    <span class="mt-2">請上傳專案圖片</span>
                     <span class="mt-1 text-muted small">點擊選擇或拖放檔案至此</span>
                   </div>
                 }
@@ -140,15 +140,15 @@
           }
         </div>
         
-        <!-- 表單Logo - 在小畫面隱藏 -->
+        <!-- 業主Logo - 在小畫面隱藏 -->
         <div class="info-group mb-3 d-none d-md-block">
-          <label class="info-label">表單 Logo</label>
+          <label class="info-label">業主 Logo</label>
           @if (!isEditMode) {
             <div class="info-value">
               @if (site()?.formLogo) {
-                <img [src]="site()?.formLogo" alt="表單Logo" class="site-logo">
+                <img [src]="site()?.formLogo" alt="業主Logo" class="site-logo">
               } @else {
-                <div class="text-muted">尚未設定 Logo</div>
+                <div class="text-muted">尚未設定業主Logo</div>
               }
             </div>
           } @else {
@@ -242,10 +242,10 @@
         </div>
       </div>
       
-      <!-- 作業類型 - 全寬顯示 -->
+      <!-- 系統別 - 全寬顯示 -->
       <div class="col-12 order-4">
         <div class="info-group mb-4">
-          <label class="info-label">作業類型</label>
+          <label class="info-label">系統別</label>
           @if (!isEditMode) {
             <div class="info-value">
               @if (site()?.constructionTypes?.length) {
@@ -253,7 +253,7 @@
                   <span class="badge bg-secondary me-1 mb-1 px-3 py-2">{{type}}</span>
                 }
               } @else {
-                <div class="text-muted">尚未設定作業類型</div>
+                <div class="text-muted">尚未設定系統別</div>
               }
             </div>
           } @else {
@@ -303,14 +303,14 @@
         </div>
       }
       
-      <!-- 備註 -->
+      <!-- 專案簡述 -->
       <div class="col-12 order-5">
         <div class="info-group mb-3">
-          <label class="info-label">備註</label>
+          <label class="info-label">專案簡述</label>
           @if (!isEditMode) {
             <div class="info-value">{{site()?.remark || '無'}}</div>
           } @else {
-            <textarea class="form-control" id="remark" [(ngModel)]="editForm.remark" name="remark" rows="3" aria-label="備註"></textarea>
+            <textarea class="form-control" id="remark" [(ngModel)]="editForm.remark" name="remark" rows="3" aria-label="專案簡述"></textarea>
           }
         </div>
       </div>

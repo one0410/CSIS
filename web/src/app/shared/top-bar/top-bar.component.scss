@@ -179,6 +179,43 @@
   }
 }
 
+// 導航按鈕統一樣式 - 確保中等螢幕時大小一致
+.nav-btn {
+  min-width: 80px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  @media (min-width: 576px) {
+    min-width: 110px;
+  }
+  
+  @media (min-width: 768px) {
+    min-width: 120px;
+  }
+  
+  // 確保文字和圖示對齊
+  i {
+    margin-right: 0;
+    
+    // 當有文字時，添加右邊距
+    & + span {
+      margin-left: 0.5rem;
+    }
+  }
+  
+  span {
+    white-space: nowrap;
+  }
+  
+  // 統一下拉箭頭的位置
+  &.dropdown-toggle::after {
+    margin-left: 0.5rem;
+  }
+}
+
 // Profile menu
 .profile-menu {
   display: none;

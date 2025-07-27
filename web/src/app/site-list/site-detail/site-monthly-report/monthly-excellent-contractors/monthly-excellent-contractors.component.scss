@@ -1,0 +1,86 @@
+.contractor-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.contractor-item {
+  &:last-child {
+    border-bottom: none !important;
+  }
+
+  &:hover {
+    background-color: var(--bs-light);
+  }
+}
+
+.contractor-info {
+  min-width: 0;
+  flex: 1;
+  
+  .fw-medium {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.contractor-status {
+  .badge {
+    font-size: 0.75rem;
+  }
+}
+
+// 優良率進度條樣式
+.progress {
+  border-radius: 10px;
+  background-color: var(--bs-gray-200);
+  
+  .progress-bar {
+    border-radius: 10px;
+    transition: width 0.6s ease;
+  }
+}
+
+// 統計數字動畫
+.fs-4 {
+  transition: color 0.3s ease;
+}
+
+// 響應式調整
+@media (max-width: 768px) {
+  .contractor-info {
+    .fw-medium {
+      font-size: 0.9rem;
+    }
+    
+    small {
+      font-size: 0.75rem;
+    }
+  }
+  
+  .contractor-status .badge {
+    font-size: 0.7rem;
+  }
+}
+
+// 卡片內容間距優化
+.card-body {
+  .row .col-4 {
+    padding: 0 0.5rem;
+  }
+  
+  @media (max-width: 576px) {
+    .row .col-4 {
+      padding: 0.25rem;
+      
+      .fs-4 {
+        font-size: 1.1rem !important;
+      }
+      
+      small {
+        font-size: 0.75rem;
+      }
+    }
+  }
+} 

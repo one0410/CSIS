@@ -57,17 +57,17 @@ export class SiteTrainingComponent implements OnInit {
   }
 
   createNewTraining() {
-    this.router.navigate(['/site', this.siteId, 'forms', 'create-training']);
+    this.router.navigate(['/site', this.siteId, 'training', 'create']);
   }
 
   // 查看詳細資料
   viewTraining(trainingId: string) {
-    this.router.navigate(['/site', this.siteId, 'forms', 'training', trainingId]);
+    this.router.navigate(['/site', this.siteId, 'training', trainingId]);
   }
 
   // 編輯教育訓練表單
   editTraining(trainingId: string) {
-    this.router.navigate(['/site', this.siteId, 'forms', 'training', trainingId, 'edit']);
+    this.router.navigate(['/site', this.siteId, 'training', trainingId, 'edit']);
   }
 
   // 檢查當前使用者是否有權限顯示作廢表單開關

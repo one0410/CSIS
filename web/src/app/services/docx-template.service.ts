@@ -5,6 +5,12 @@ import { saveAs } from 'file-saver';
 import { MongodbService } from './mongodb.service';
 import { CurrentSiteService } from './current-site.service';
 import dayjs from 'dayjs';
+import { IssueRecord } from '../site-list/site-detail/site-form-list/safety-issue-record/safety-issue-record.component';
+import { SitePermitForm } from '../site-list/site-detail/site-form-list/site-permit-form/site-permit-form.component';
+import { ToolboxMeetingForm } from '../site-list/site-detail/site-form-list/toolbox-meeting-form/toolbox-meeting-form.component';
+import { SpecialWorkChecklistData } from '../site-list/site-detail/site-form-list/special-work-checklist/special-work-checklist.component';
+import { EnvironmentChecklistData } from '../site-list/site-detail/site-form-list/environment-check-list/environment-check-list.component';
+
 
 @Injectable({
   providedIn: 'root'
@@ -14,9 +20,15 @@ export class DocxTemplateService {
   private currentSiteService = inject(CurrentSiteService);
 
   /**
-   * 生成工作許可單 DOCX
+   * 通用的文檔生成方法
    */
-  async generateWorkPermitDocx(formId: string): Promise<void> {
+  private async generateDocumentBlob(
+    formId: string,
+    templatePath: string,
+    prepareDataFn: (formData: any, currentSite: any) => any,
+    generateFileNameFn: (formData: any, currentSite: any) => string,
+    needsExpressionParser: boolean = false
+  ): Promise<{ blob: Blob, fileName: string }> {
     try {
       // 獲取表單資料
       const formData = await this.mongodbService.getById('siteForm', formId);
@@ -27,111 +39,101 @@ export class DocxTemplateService {
       }
 
       // 載入模板檔案
-      const templatePath = '/template/帆宣-ee-4404-01工作許可單.docx';
       const response = await fetch(templatePath);
-      
       if (!response.ok) {
         throw new Error(`無法載入模板檔案: ${response.status}`);
       }
       
-             const arrayBuffer = await response.arrayBuffer();
-       const zip = new PizZip(arrayBuffer);
+      const arrayBuffer = await response.arrayBuffer();
+      const zip = new PizZip(arrayBuffer);
 
-       // 設定圖片模組
-       const modules = [];
-       
-       try {
-         // 使用動態 import 載入 ImageModule
-         const ImageModule = await import('docxtemplater-image-module-free');
-         
-         const imageOptions = {
-           centered: true,
-           getImage: (tagValue: string) => {
-             return this.getImageData(tagValue);
-           },
-           getSize: (img: ArrayBuffer, tagValue: string): [number, number] => {
-             return [120, 60]; // 簽名圖片尺寸：寬度120px, 高度60px
-           }
-         };
-         
-         const ModuleConstructor = ImageModule.default || ImageModule;
-         const imageModule = new ModuleConstructor(imageOptions);
-         modules.push(imageModule);
-       } catch (error) {
-         console.error('ImageModule 載入失敗:', error);
-       }
+      // 設定圖片模組
+      const modules = [];
+      try {
+        const ImageModule = await import('docxtemplater-image-module-free');
+        const imageOptions = {
+          centered: true,
+          getImage: (tagValue: string) => this.getImageData(tagValue),
+          getSize: (img: ArrayBuffer, tagValue: string): [number, number] => [120, 60]
+        };
+        const ModuleConstructor = ImageModule.default || ImageModule;
+        const imageModule = new ModuleConstructor(imageOptions);
+        modules.push(imageModule);
+      } catch (error) {
+        console.error('ImageModule 載入失敗:', error);
+      }
 
-       // 創建 docxtemplater 實例
-       const doc = new Docxtemplater()
-         .loadZip(zip);
-       
-       // 添加模組
-       if (modules.length > 0) {
-         modules.forEach(module => {
-           doc.attachModule(module);
-         });
-       }
-       
-       doc.setOptions({
-         paragraphLoop: true,
-         linebreaks: true,
-       });
-       
-       console.log('Docxtemplater 初始化完成');
+      // 創建 docxtemplater 實例
+      const doc = new Docxtemplater().loadZip(zip);
+      
+      // 添加模組
+      if (modules.length > 0) {
+        modules.forEach(module => doc.attachModule(module));
+      }
 
-             // 準備模板數據
-       const templateData = this.prepareWorkPermitData(formData, currentSite);
-       
-       console.log('原始表單數據:', formData);
-       console.log('簽名數據檢查:', {
-         applicantSignature: formData.applicantSignature,
-         departmentManagerSignature: formData.departmentManagerSignature,
-         reviewSignature: formData.reviewSignature,
-         approvalSignature: formData.approvalSignature
-       });
-                console.log('模板數據:', templateData);
-         console.log('簽名圖片數據詳細檢查:', {
-           applicantSignatureImage: templateData.applicantSignatureImage?.substring(0, 100) + '...',
-           departmentManagerSignatureImage: templateData.departmentManagerSignatureImage?.substring(0, 100) + '...',
-           reviewSignatureImage: templateData.reviewSignatureImage?.substring(0, 100) + '...',
-           approvalSignatureImage: templateData.approvalSignatureImage?.substring(0, 100) + '...'
-         });
-         
-         // 檢查是否有任何圖片數據
-         const hasImages = [
-           templateData.applicantSignatureImage,
-           templateData.departmentManagerSignatureImage,
-           templateData.reviewSignatureImage,
-           templateData.approvalSignatureImage
-         ].some(img => img && img.length > 0);
-         
-         console.log('是否包含圖片數據:', hasImages);
+      // 設定選項
+      if (needsExpressionParser) {
+        const expressionParser = await import('angular-expressions');
+        doc.setOptions({
+          parser: (tag: string) => {
+            const compiled = (expressionParser.default || expressionParser).compile(tag);
+            return { get: (scope: any) => compiled(scope) };
+          },
+          nullGetter: (part: any) => ''
+        });
+      } else {
+        doc.setOptions({
+          paragraphLoop: true,
+          linebreaks: true,
+        });
+      }
 
-       // 渲染文檔
-       console.log('開始渲染文檔...');
-       try {
-         doc.render(templateData);
-         console.log('文檔渲染成功');
-       } catch (error) {
-         console.error('文檔渲染失敗:', error);
-         throw error;
-       }
+      // 準備模板資料
+      const templateData = prepareDataFn(formData, currentSite);
 
-      // 生成並下載檔案
-      const output = doc.getZip().generate({
+      // 填充模板
+      doc.render(templateData);
+
+      // 生成文檔
+      const blob = doc.getZip().generate({ 
         type: 'blob',
-        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       });
 
       // 生成檔案名稱
-      const fileName = `工作許可單_${formData.applyDate || new Date().toISOString().split('T')[0]}_${formData.projectNo || formId}.docx`;
-      
-      saveAs(output, fileName);
+      const fileName = generateFileNameFn(formData, currentSite);
 
+      return { blob, fileName };
+
+    } catch (error) {
+      console.error('生成文檔失敗:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 生成工作許可單 DOCX
+   */
+  async generateWorkPermitDocx(formId: string): Promise<void> {
+    try {
+      const result = await this.generateWorkPermitDocxBlob(formId);
+      saveAs(result.blob, result.fileName);
     } catch (error) {
       console.error('生成工作許可單DOCX失敗:', error);
       throw error;
     }
+  }
+
+  /**
+   * 生成工作許可單 DOCX Blob（用於批量下載）
+   */
+  async generateWorkPermitDocxBlob(formId: string): Promise<{ blob: Blob, fileName: string }> {
+    return this.generateDocumentBlob(
+      formId,
+      '/template/帆宣-ee-4404-01工作許可單.docx',
+      (formData, currentSite) => this.prepareWorkPermitData(formData, currentSite),
+      (formData, currentSite) => `工作許可單_${formData.applyDate || new Date().toISOString().split('T')[0]}_${formData.projectNo || formId}.docx`
+    );
   }
 
   /**
@@ -288,79 +290,24 @@ export class DocxTemplateService {
    */
   async generateToolboxMeetingDocx(formId: string): Promise<void> {
     try {
-      // 獲取表單資料
-      const formData = await this.mongodbService.getById('siteForm', formId);
-      const currentSite = this.currentSiteService.currentSite();
-      
-      if (!formData || !currentSite) {
-        throw new Error('無法獲取表單或工地資料');
-      }
-
-      // 載入模板檔案
-      const templatePath = '/template/帆宣-ee-4411-15工具箱會議及巡檢紀錄.docx';
-      const response = await fetch(templatePath);
-      
-      if (!response.ok) {
-        throw new Error(`無法載入模板檔案: ${response.status}`);
-      }
-      
-      const arrayBuffer = await response.arrayBuffer();
-      const zip = new PizZip(arrayBuffer);
-
-      // 設定圖片模組
-      const modules = [];
-      
-      try {
-        // 使用動態 import 載入 ImageModule
-        const ImageModule = await import('docxtemplater-image-module-free');
-        
-        const imageOptions = {
-          centered: true,
-          getImage: (tagValue: string) => {
-            return this.getImageData(tagValue);
-          },
-          getSize: (img: ArrayBuffer, tagValue: string): [number, number] => {
-            return [120, 60]; // 簽名圖片尺寸：寬度120px, 高度60px
-          }
-        };
-        
-        const ModuleConstructor = ImageModule.default || ImageModule;
-        const imageModule = new ModuleConstructor(imageOptions);
-        modules.push(imageModule);
-      } catch (error) {
-        console.error('ImageModule 載入失敗:', error);
-      }
-
-      // 創建 docxtemplater 實例
-      const doc = new Docxtemplater()
-        .loadZip(zip);
-      
-      // 添加模組
-      if (modules.length > 0) {
-        modules.forEach(module => {
-          doc.attachModule(module);
-        });
-      }
-
-      // 準備模板資料
-      const templateData = this.prepareToolboxMeetingData(formData, currentSite);
-
-      // 填充模板
-      doc.render(templateData);
-
-      // 生成文檔
-      const out = doc.getZip().generate({ type: 'blob' });
-
-      // 生成檔案名稱
-      const fileName = `工具箱會議記錄_${currentSite.projectName}_${formData.applyDate}_${formData._id.substring(0, 8)}.docx`;
-
-      // 下載檔案
-      saveAs(out, fileName);
-
+      const result = await this.generateToolboxMeetingDocxBlob(formId);
+      saveAs(result.blob, result.fileName);
     } catch (error) {
       console.error('無法生成工具箱會議記錄 DOCX:', error);
       throw error;
     }
+  }
+
+  /**
+   * 生成工具箱會議記錄 DOCX Blob（用於批量下載）
+   */
+  async generateToolboxMeetingDocxBlob(formId: string): Promise<{ blob: Blob, fileName: string }> {
+    return this.generateDocumentBlob(
+      formId,
+      '/template/帆宣-ee-4411-15工具箱會議及巡檢紀錄.docx',
+      (formData, currentSite) => this.prepareToolboxMeetingData(formData, currentSite),
+      (formData, currentSite) => `工具箱會議記錄_${currentSite.projectName}_${formData.applyDate}.docx`
+    );
   }
 
   /**
@@ -395,79 +342,24 @@ export class DocxTemplateService {
    */
   async generateEnvironmentChecklistDocx(formId: string): Promise<void> {
     try {
-      // 獲取表單資料
-      const formData = await this.mongodbService.getById('siteForm', formId);
-      const currentSite = this.currentSiteService.currentSite();
-      
-      if (!formData || !currentSite) {
-        throw new Error('無法獲取表單或工地資料');
-      }
-
-      // 載入模板檔案
-      const templatePath = '/template/帆宣-ee-4404-02環安衛自主檢點表.docx';
-      const response = await fetch(templatePath);
-      
-      if (!response.ok) {
-        throw new Error(`無法載入模板檔案: ${response.status}`);
-      }
-      
-      const arrayBuffer = await response.arrayBuffer();
-      const zip = new PizZip(arrayBuffer);
-
-      // 設定圖片模組
-      const modules = [];
-      
-      try {
-        // 使用動態 import 載入 ImageModule
-        const ImageModule = await import('docxtemplater-image-module-free');
-        
-        const imageOptions = {
-          centered: true,
-          getImage: (tagValue: string) => {
-            return this.getImageData(tagValue);
-          },
-          getSize: (img: ArrayBuffer, tagValue: string): [number, number] => {
-            return [120, 60]; // 簽名圖片尺寸：寬度120px, 高度60px
-          }
-        };
-        
-        const ModuleConstructor = ImageModule.default || ImageModule;
-        const imageModule = new ModuleConstructor(imageOptions);
-        modules.push(imageModule);
-      } catch (error) {
-        console.error('ImageModule 載入失敗:', error);
-      }
-
-      // 創建 docxtemplater 實例
-      const doc = new Docxtemplater()
-        .loadZip(zip);
-      
-      // 添加模組
-      if (modules.length > 0) {
-        modules.forEach(module => {
-          doc.attachModule(module);
-        });
-      }
-
-      // 準備模板資料
-      const templateData = this.prepareEnvironmentChecklistData(formData, currentSite);
-
-      // 填充模板
-      doc.render(templateData);
-
-      // 生成文檔
-      const out = doc.getZip().generate({ type: 'blob' });
-
-      // 生成檔案名稱
-      const fileName = `環安衛自主檢點表_${currentSite.projectName}_${formData.checkDate}_${formData._id.substring(0, 8)}.docx`;
-
-      // 下載檔案
-      saveAs(out, fileName);
-
+      const result = await this.generateEnvironmentChecklistDocxBlob(formId);
+      saveAs(result.blob, result.fileName);
     } catch (error) {
       console.error('無法生成環安衛自主檢點表 DOCX:', error);
       throw error;
     }
+  }
+
+  /**
+   * 生成環安衛自主檢點表 DOCX Blob（用於批量下載）
+   */
+  async generateEnvironmentChecklistDocxBlob(formId: string): Promise<{ blob: Blob, fileName: string }> {
+    return this.generateDocumentBlob(
+      formId,
+      '/template/帆宣-ee-4404-02環安衛自主檢點表.docx',
+      (formData, currentSite) => this.prepareEnvironmentChecklistData(formData, currentSite),
+      (formData, currentSite) => `環安衛自主檢點表_${currentSite.projectName}_${formData.checkDate}.docx`
+    );
   }
 
   /**
@@ -510,6 +402,43 @@ export class DocxTemplateService {
    */
   async generateSpecialWorkChecklistDocx(formId: string): Promise<void> {
     try {
+      const result = await this.generateSpecialWorkChecklistDocxBlob(formId);
+      saveAs(result.blob, result.fileName);
+    } catch (error) {
+      console.error('無法生成特殊作業工安自主檢點表 DOCX:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 生成特殊作業工安自主檢點表 DOCX Blob（用於批量下載）
+   */
+  async generateSpecialWorkChecklistDocxBlob(formId: string): Promise<{ blob: Blob, fileName: string }> {
+    return this.generateDocumentBlobWithDynamicTemplate(
+      formId,
+      (formData) => {
+        if (!formData.workType) {
+          throw new Error('表單缺少作業類型資訊');
+        }
+        return this.getSpecialWorkTemplateePath(formData.workType);
+      },
+      (formData, currentSite) => this.prepareSpecialWorkChecklistData(formData, currentSite),
+      (formData, currentSite) => `特殊作業工安自主檢點表_${formData.workType}_${currentSite.projectName}_${formData.applyDate}.docx`,
+      true // 需要 expression parser
+    );
+  }
+
+  /**
+   * 支援動態模板路徑的文檔生成方法
+   */
+  private async generateDocumentBlobWithDynamicTemplate(
+    formId: string,
+    getTemplatePathFn: (formData: any) => string,
+    prepareDataFn: (formData: any, currentSite: any) => any,
+    generateFileNameFn: (formData: any, currentSite: any) => string,
+    needsExpressionParser: boolean = false
+  ): Promise<{ blob: Blob, fileName: string }> {
+    try {
       // 獲取表單資料
       const formData = await this.mongodbService.getById('siteForm', formId);
       const currentSite = this.currentSiteService.currentSite();
@@ -518,14 +447,11 @@ export class DocxTemplateService {
         throw new Error('無法獲取表單或工地資料');
       }
 
-      if (!formData.workType) {
-        throw new Error('表單缺少作業類型資訊');
-      }
+      // 動態獲取模板路徑
+      const templatePath = getTemplatePathFn(formData);
 
-      // 根據作業類型選擇對應的模板檔案
-      const templatePath = this.getSpecialWorkTemplateePath(formData.workType);
+      // 載入模板檔案
       const response = await fetch(templatePath);
-      
       if (!response.ok) {
         throw new Error(`無法載入模板檔案: ${response.status}`);
       }
@@ -535,73 +461,64 @@ export class DocxTemplateService {
 
       // 設定圖片模組
       const modules = [];
-      
       try {
-        // 使用動態 import 載入 ImageModule
         const ImageModule = await import('docxtemplater-image-module-free');
-        
         const imageOptions = {
           centered: true,
-          getImage: (tagValue: string) => {
-            return this.getImageData(tagValue);
-          },
-          getSize: (img: ArrayBuffer, tagValue: string): [number, number] => {
-            return [120, 60]; // 簽名圖片尺寸：寬度120px, 高度60px
-          }
+          getImage: (tagValue: string) => this.getImageData(tagValue),
+          getSize: (img: ArrayBuffer, tagValue: string): [number, number] => [120, 60]
         };
-        
         const ModuleConstructor = ImageModule.default || ImageModule;
         const imageModule = new ModuleConstructor(imageOptions);
         modules.push(imageModule);
       } catch (error) {
         console.error('ImageModule 載入失敗:', error);
       }
-      
-      // 創建 docxtemplater 實例
-      const doc = new Docxtemplater()
-      .loadZip(zip);
-      
-      // expression 模組
-      const expressionParser = await import('angular-expressions');
 
-      // 修正 parser 設定，避免型別錯誤
-      doc.setOptions({
-        parser: (tag: string) => {
-          // angular-expressions 的 compile 回傳一個 function
-          const compiled = (expressionParser.default || expressionParser).compile(tag);
-          return {
-            get: (scope: any) => compiled(scope)
-          };
-        },
-        nullGetter: (part: any) => {
-          return '';
-        }
-      });
+      // 創建 docxtemplater 實例
+      const doc = new Docxtemplater().loadZip(zip);
       
       // 添加模組
       if (modules.length > 0) {
-        modules.forEach(module => {
-          doc.attachModule(module);
+        modules.forEach(module => doc.attachModule(module));
+      }
+
+      // 設定選項
+      if (needsExpressionParser) {
+        const expressionParser = await import('angular-expressions');
+        doc.setOptions({
+          parser: (tag: string) => {
+            const compiled = (expressionParser.default || expressionParser).compile(tag);
+            return { get: (scope: any) => compiled(scope) };
+          },
+          nullGetter: (part: any) => ''
+        });
+      } else {
+        doc.setOptions({
+          paragraphLoop: true,
+          linebreaks: true,
         });
       }
 
       // 準備模板資料
-      const templateData = this.prepareSpecialWorkChecklistData(formData, currentSite);
+      const templateData = prepareDataFn(formData, currentSite);
 
       // 填充模板
       doc.render(templateData);
 
       // 生成文檔
-      const out = doc.getZip().generate({ type: 'blob' });
+      const blob = doc.getZip().generate({ 
+        type: 'blob',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
 
       // 生成檔案名稱
-      const fileName = `特殊作業工安自主檢點表_${formData.workType}_${currentSite.projectName}_${formData.applyDate}_${formData._id.substring(0, 8)}.docx`;
+      const fileName = generateFileNameFn(formData, currentSite);
 
-      // 下載檔案
-      saveAs(out, fileName);
+      return { blob, fileName };
 
     } catch (error) {
-      console.error('無法生成特殊作業工安自主檢點表 DOCX:', error);
+      console.error('生成文檔失敗:', error);
       throw error;
     }
   }
@@ -642,6 +559,8 @@ export class DocxTemplateService {
         formData.items[key + 'Normal'] = 'V';
       } else if (formData.items[key] == '異常') {
         formData.items[key + 'Abnormal'] = 'V';
+      } else if (formData.items[key] == '不適用') {
+        formData.items[key + 'NotApplicable'] = 'N/A';
       }
     }
 
@@ -677,6 +596,100 @@ export class DocxTemplateService {
   }
 
   /**
+   * 生成工安缺失紀錄表 DOCX
+   */
+  async generateSafetyIssueRecordDocx(formId: string): Promise<void> {
+    try {
+      const result = await this.generateSafetyIssueRecordDocxBlob(formId);
+      // 下載檔案
+      saveAs(result.blob, result.fileName);
+    } catch (error) {
+      console.error('無法生成工安缺失紀錄表 DOCX:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 生成工安缺失紀錄表 DOCX Blob（用於批量下載）
+   */
+  async generateSafetyIssueRecordDocxBlob(formId: string): Promise<{ blob: Blob, fileName: string }> {
+    return this.generateDocumentBlob(
+      formId,
+      '/template/ee-4411-06工安缺失紀錄表.docx',
+      (formData, currentSite) => this.prepareSafetyIssueRecordData(formData, currentSite),
+      (formData, currentSite) => `工安缺失紀錄表_${formData.recordNo || formData.establishDate}_${currentSite.projectNo || 'XXXX'}.docx`,
+      true // 需要 expression parser
+    );
+  }
+
+  /**
+   * 準備工安缺失紀錄表的模板資料
+   */
+  private prepareSafetyIssueRecordData(formData: IssueRecord, currentSite: any): any {
+    // 處置措施轉換
+    const remedyMeasuresText = formData.remedyMeasures?.map((measure: string) => {
+      switch(measure) {
+        case 'immediateCorrection':
+          return '立即完成改正';
+        case 'improvementWithDeadline':
+          return '限期改善完成';
+        case 'correctivePreventionReport':
+          return '須提出矯正預防措施報告';
+        default:
+          return measure;
+      }
+    }).join(', ') || '';
+
+    return {
+      // 基本資訊
+      recordNo: formData.recordNo || '',
+      establishPerson: formData.establishPerson || '',
+      establishUnit: formData.establishUnit || '',
+      projectNo: currentSite.projectNo || '',
+      establishDate: dayjs(formData.establishDate).format('YYYY 年 MM 月 DD 日') || '',
+      responsibleUnitMIC: formData.responsibleUnit === 'MIC' ? '■' : '□',
+      responsibleUnitSupplier: formData.responsibleUnit === 'supplier' ? '■' : '□',
+      issueDate: dayjs(formData.issueDate).format('YYYY 年 MM 月 DD 日') || '',
+      factoryArea: formData.factoryArea || '',
+      responsibleUnitName: formData.responsibleUnit === 'MIC' ? (formData.responsibleUnitName || '') : (formData.supplierName || ''),
+      supplierName: formData.supplierName || '',
+      
+      // 缺失說明
+      issueDescription: formData.issueDescription || '',
+      
+      // 缺失處置
+      remedyMeasuresText: remedyMeasuresText,
+      remedyMeasuresImmediate: formData.remedyMeasures.includes('immediate') ? '■' : '□',
+      remedyMeasuresImprovementWithDeadline: formData.remedyMeasures.includes('improvementWithDeadline') ? '■' : '□',
+      remedyMeasuresCorrectivePreventionReport: formData.remedyMeasures.includes('correctivePreventionReport') ? '■' : '□',
+      improvementDeadline: dayjs(formData.improvementDeadline).format('YYYY 年 MM 月 DD 日') || '  年  月  日',
+      
+      // 缺失評核
+      deductionCode: formData.deductionCode || '',
+      recordPoints: formData.recordPoints || '',
+      
+      // 複查資訊
+      reviewDate: dayjs(formData.reviewDate).format('YYYY 年 MM 月 DD 日') || '  年  月  日',
+      reviewer: formData.reviewer || '',
+      reviewResult: formData.reviewResult === 'completed' ? '已完成改正' : 
+                   formData.reviewResult === 'incomplete' ? '未完成改正(要求改善，再次開立工安缺失紀錄表)' : '',
+      reviewResultCompleted: formData.reviewResult === 'completed' ? '■' : '□',
+      reviewResultIncomplete: formData.reviewResult === 'incomplete' ? '■' : '□',
+      
+      // 簽名圖片
+      supervisorSignatureImage: formData.supervisorSignature || '',
+      workerSignatureImage: formData.workerSignature || '',
+      
+      // 工地資訊
+      siteName: currentSite.projectName || '',
+      siteLocation: `${currentSite.county || ''} ${currentSite.town || ''}`.trim(),
+      
+      // 當前日期
+      currentDate: dayjs().format('YYYY年MM月DD日')
+    };
+  }
+
+  /**
    * 根據表單類型生成對應的DOCX
    */
   async generateFormDocx(formId: string, formType: string): Promise<void> {
@@ -689,8 +702,30 @@ export class DocxTemplateService {
         return this.generateEnvironmentChecklistDocx(formId);
       case 'specialWorkChecklist':
         return this.generateSpecialWorkChecklistDocx(formId);
+      case 'safetyIssueRecord':
+        return this.generateSafetyIssueRecordDocx(formId);
       default:
         throw new Error(`不支援的表單類型: ${formType}`);
+    }
+  }
+
+  /**
+   * 根據表單類型生成對應的DOCX Blob（用於批量下載）
+   */
+  async generateFormDocxBlob(formId: string, formType: string): Promise<{ blob: Blob, fileName: string }> {
+    switch (formType) {
+      case 'sitePermit':
+        return this.generateWorkPermitDocxBlob(formId);
+      case 'toolboxMeeting':
+        return this.generateToolboxMeetingDocxBlob(formId);
+      case 'environmentChecklist':
+        return this.generateEnvironmentChecklistDocxBlob(formId);
+      case 'specialWorkChecklist':
+        return this.generateSpecialWorkChecklistDocxBlob(formId);
+      case 'safetyIssueRecord':
+        return this.generateSafetyIssueRecordDocxBlob(formId);
+      default:
+        throw new Error(`表單類型 ${formType} 尚未支援批量下載，請使用單個下載功能`);
     }
   }
 } 

@@ -140,39 +140,55 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     this.isLoggedIn = !!this.authService.user();
     
     this.route.paramMap.subscribe(async (params) => {
-      const id = params.get('id');
+      const id = params.get('id'); // 對於工人簽名路由，這可能是 null
       const formId = params.get('formId');
 
-      if (id) {
-        this.siteId = id;
+      if (formId) {
+        this.formId = formId;
+        await this.loadFormDetails(formId);
         
-        // 如果已登入，設定當前工地；如果未登入，直接載入表單資料
-        if (this.isLoggedIn) {
-          await this.currentSiteService.setCurrentSiteById(id);
-        }
-        
-        this.formData.siteId = id;
-        
-        if (formId) {
-          this.formId = formId;
-          await this.loadFormDetails(formId);
+        // 從表單數據中獲取 siteId
+        if (this.formData.siteId) {
+          this.siteId = this.formData.siteId;
           
-          // 檢查 URL 是否包含 '/edit' 來判斷是否為編輯模式
-          const currentUrl = this.router.url;
-          const isEditMode = currentUrl.includes('/edit');
+          // 如果已登入，設定當前工地
+          if (this.isLoggedIn) {
+            await this.currentSiteService.setCurrentSiteById(this.siteId);
+          }
+        } else if (id) {
+          // 向後兼容：如果表單數據中沒有 siteId，則使用路由參數中的 id
+          this.siteId = id;
+          this.formData.siteId = id;
           
-          // 如果未登入且有表單ID，則為工人簽名模式
-          if (!this.isLoggedIn) {
-            this.isWorkerSigningMode = true;
-            this.isViewMode = false; // 工人需要能夠簽名
-          } else {
-            // 已登入用戶：如果是編輯模式則可編輯，否則為查看模式
-            this.isViewMode = !isEditMode;
+          if (this.isLoggedIn) {
+            await this.currentSiteService.setCurrentSiteById(id);
           }
         }
+        
+        // 檢查 URL 是否包含 '/edit' 來判斷是否為編輯模式
+        const currentUrl = this.router.url;
+        const isEditMode = currentUrl.includes('/edit');
+        
+        // 如果未登入且有表單ID，則為工人簽名模式
+        if (!this.isLoggedIn) {
+          this.isWorkerSigningMode = true;
+          this.isViewMode = false; // 工人需要能夠簽名
+        } else {
+          // 已登入用戶：如果是編輯模式則可編輯，否則為查看模式
+          this.isViewMode = !isEditMode;
+        }
 
-        // 只有在登入狀態下才載入專案工人列表
-        if (this.isLoggedIn || this.isWorkerSigningMode) {
+        // 載入專案工人列表（需要 siteId）
+        if (this.siteId && (this.isLoggedIn || this.isWorkerSigningMode)) {
+          await this.loadProjectWorkers(this.siteId);
+        }
+      } else if (id) {
+        // 如果只有 id 沒有 formId（創建新表單的情況）
+        this.siteId = id;
+        this.formData.siteId = id;
+        
+        if (this.isLoggedIn) {
+          await this.currentSiteService.setCurrentSiteById(id);
           await this.loadProjectWorkers(id);
         }
       }
@@ -529,13 +545,13 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
   }
 
   private generateFormQrCodeUrl(): void {
-    if (this.formId && this.siteId) {
-      // 產生可供工人掃描的 QR Code URL
+    if (this.formId) {
+      // 產生可供工人掃描的 QR Code URL（使用最簡化的路由）
       const baseUrl = window.location.origin;
-      this.formQrCodeUrl = `${baseUrl}/site/${this.siteId}/training/${this.formId}`;
+      this.formQrCodeUrl = `${baseUrl}/training/${this.formId}`;
       console.log('Generated QR Code URL:', this.formQrCodeUrl);
     } else {
-      console.log('Cannot generate QR Code URL - formId:', this.formId, 'siteId:', this.siteId);
+      console.log('Cannot generate QR Code URL - formId:', this.formId);
       this.formQrCodeUrl = '';
     }
   }

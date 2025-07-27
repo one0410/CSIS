@@ -15,7 +15,7 @@ interface ChecklistItem {
   [key: string]: string;
 }
 
-interface ChecklistData extends SiteForm {
+export interface SpecialWorkChecklistData extends SiteForm {
   formType: 'specialWorkChecklist';
   location: string;
   projectNo: string;
@@ -318,7 +318,7 @@ export class SpecialWorkChecklistComponent implements OnInit {
     return this.getPreWorkItems();
   }
   
-  checklistData: ChecklistData = {
+  checklistData: SpecialWorkChecklistData = {
     siteId: '',
     formType: 'specialWorkChecklist',
     applyDate: dayjs().format('YYYY-MM-DD'),

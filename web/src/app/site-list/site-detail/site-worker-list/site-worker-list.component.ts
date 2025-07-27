@@ -571,12 +571,12 @@ export class SiteWorkerListComponent implements OnInit {
     
     if (targetFormId) {
       // 跳轉到危害告知表單
-      this.router.navigate(['/site', this.siteId, 'forms', 'hazard-notice', targetFormId], {
+      this.router.navigate(['/site', this.siteId, 'hazardNotice', targetFormId], {
         queryParams: { workerId: worker._id }
       });
     } else {
       // 如果沒有任何危害告知表單，跳轉到創建新表單頁面
-      this.router.navigate(['/site', this.siteId, 'forms', 'create-hazard-notice'], {
+      this.router.navigate(['/site', this.siteId, 'hazardNotice', 'create'], {
         queryParams: { workerId: worker._id }
       });
     }
@@ -612,12 +612,12 @@ export class SiteWorkerListComponent implements OnInit {
     
     if (targetFormId) {
       // 跳轉到教育訓練表單
-      this.router.navigate(['/site', this.siteId, 'forms', 'training', targetFormId], {
+      this.router.navigate(['/site', this.siteId, 'training', targetFormId], {
         queryParams: { workerId: worker._id }
       });
     } else {
       // 如果沒有任何教育訓練表單，跳轉到創建新表單頁面
-      this.router.navigate(['/site', this.siteId, 'forms', 'create-training'], {
+      this.router.navigate(['/site', this.siteId, 'training', 'create'], {
         queryParams: { workerId: worker._id }
       });
     }

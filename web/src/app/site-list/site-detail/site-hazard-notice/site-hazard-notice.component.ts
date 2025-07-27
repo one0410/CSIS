@@ -59,17 +59,17 @@ export class SiteHazardNoticeComponent implements OnInit {
   }
 
   createNewNotice() {
-    this.router.navigate(['/site', this.siteId, 'forms', 'create-hazard-notice']);
+    this.router.navigate(['/site', this.siteId, 'hazardNotice', 'create']);
   }
 
   // 查看詳細資料
   viewNotice(noticeId: string) {
-    this.router.navigate(['/site', this.siteId, 'forms', 'hazard-notice', noticeId]);
+    this.router.navigate(['/site', this.siteId, 'hazardNotice', noticeId]);
   }
 
   // 編輯危害告知單
   editNotice(noticeId: string) {
-    this.router.navigate(['/site', this.siteId, 'forms', 'hazard-notice', noticeId, 'edit']);
+    this.router.navigate(['/site', this.siteId, 'hazardNotice', noticeId, 'edit']);
   }
 
   // 作廢危害告知單

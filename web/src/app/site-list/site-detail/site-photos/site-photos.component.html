@@ -11,7 +11,7 @@
     <!-- 拖放提示區域 -->
     <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
       <i class="fas fa-info-circle me-2"></i>
-      <strong>小提示：</strong> 您可以直接將圖片檔案拖放到此區域快速上傳，或點擊下方「上傳照片」按鈕選擇檔案。
+      <strong>小提示：</strong> 您可以直接將多張圖片檔案拖放到此區域快速上傳，或點擊下方「上傳照片」按鈕一次選擇多個檔案。
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="關閉"></button>
     </div>
 
@@ -27,7 +27,7 @@
             <label 
               for="fileUpload" 
               class="btn btn-primary w-100"
-              title="點擊選擇檔案或直接拖放圖片到此區域上傳"
+              title="點擊選擇多張檔案或直接拖放圖片到此區域上傳"
               data-bs-toggle="tooltip"
               data-bs-placement="top"
             >
@@ -69,7 +69,7 @@
         <label 
           for="fileUploadDesktop" 
           class="btn btn-primary w-100"
-          title="點擊選擇檔案或直接拖放圖片到此區域上傳"
+          title="點擊選擇多張檔案或直接拖放圖片到此區域上傳"
           data-bs-toggle="tooltip"
           data-bs-placement="top"
         >
@@ -205,6 +205,7 @@
               (load)="onPhotoLoad($event)"
             />
             <div class="image-overlay">
+              @if (!hasSystemTags(image)) {
               <button
                 class="btn btn-sm btn-danger"
                 (click)="deletePhoto(image); $event.stopPropagation()"
@@ -212,6 +213,16 @@
               >
                 刪除
               </button>
+              } @else {
+                <button
+                  class="btn btn-sm btn-secondary"
+                  disabled
+                  title="此照片來自系統功能，無法在此處刪除"
+                  aria-label="系統照片無法刪除"
+                >
+                  <i class="fas fa-lock me-1"></i>系統照片
+                </button>
+              }
             </div>
             <div class="m-0 p-2">
               @if (image.metadata && image.metadata.tags && image.metadata.tags.length > 0) {

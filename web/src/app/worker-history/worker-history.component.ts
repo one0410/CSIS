@@ -401,10 +401,10 @@ export class WorkerHistoryComponent implements OnInit {
     if (record.formId && record.siteId) {
       switch (record.type) {
         case 'hazard_notice':
-          this.router.navigate(['/site', record.siteId, 'forms', 'hazard-notice', record.formId]);
+          this.router.navigate(['/site', record.siteId, 'hazardNotice', record.formId]);
           break;
         case 'training':
-          this.router.navigate(['/site', record.siteId, 'forms', 'training', record.formId]);
+            this.router.navigate(['/site', record.siteId, 'training', record.formId]);
           break;
         case 'toolbox_meeting':
           this.router.navigate(['/site', record.siteId, 'forms', 'toolbox-meeting', record.formId]);

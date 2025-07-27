@@ -9,14 +9,14 @@ import { CurrentSiteService } from '../../../../services/current-site.service';
 import { DocxTemplateService } from '../../../../services/docx-template.service';
 import { AuthService } from '../../../../services/auth.service';
 import dayjs from 'dayjs';
+import { SiteForm } from '../../../../model/siteForm.model';
 
 interface ChecklistItem {
   [key: string]: string;
 }
 
-interface ChecklistData {
-  _id?: string;
-  siteId: string;
+export interface EnvironmentChecklistData extends SiteForm {
+  formType: 'environmentChecklist';
   checkDate: string;
   location: string;
   projectNo: string;
@@ -125,8 +125,12 @@ export class EnvironmentCheckListComponent implements OnInit {
     { code: 'AB06', description: '生活廢棄物依照各區垃圾分類規定丟棄於各分類垃圾桶內。', category: '二、收工前' }
   ];
   
-  checklistData: ChecklistData = {
+  checklistData: EnvironmentChecklistData = {
     siteId: '',
+    formType: 'environmentChecklist',
+    applyDate: dayjs().format('YYYY-MM-DD'),
+    createdAt: dayjs().format('YYYY-MM-DD'),
+    createdBy: '',
     checkDate: new Date().toISOString().slice(0, 10),
     location: '',
     projectNo: '',
@@ -158,10 +162,11 @@ export class EnvironmentCheckListComponent implements OnInit {
 
   ngOnInit(): void {
     // 從路由獲取工地ID
-    this.route.paramMap.subscribe(params => {
+    this.route.paramMap.subscribe(async (params) => {
       const id = params.get('id');
       if (id) {
         this.siteId = id;
+        await this.currentSiteService.setCurrentSiteById(id);
         this.checklistData.siteId = id;
         this.checklistData.location = (this.site()?.county || '') + (this.site()?.town || '');
         this.checklistData.projectNo = this.site()?.projectNo || '';

@@ -1,6 +1,7 @@
 import { Component, AfterViewInit, Input, computed } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CurrentSiteService } from '../../services/current-site.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-side-menu',
@@ -17,8 +18,23 @@ export class SideMenuComponent implements AfterViewInit {
   disqualifiedEquipmentCount = computed(() => this.currentSiteService.disqualifiedEquipmentCount());
   pendingFormsCount = computed(() => this.currentSiteService.pendingFormsCount());
   workersWithoutHazardNoticeCount = computed(() => this.currentSiteService.workersWithoutHazardNoticeCount());
+  
+  // 檢查當前使用者是否為本工地的專案經理
+  isProjectManager = computed(() => {
+    const user = this.authService.user();
+    if (!user || !user.belongSites || !this.siteId) {
+      return false;
+    }
+    
+    // 檢查使用者在此工地的角色是否為專案經理
+    const siteRole = user.belongSites.find(site => site.siteId === this.siteId);
+    return siteRole?.role === 'manager' || siteRole?.role === 'projectManager';
+  });
 
-  constructor(private currentSiteService: CurrentSiteService) {}
+  constructor(
+    private currentSiteService: CurrentSiteService,
+    private authService: AuthService
+  ) {}
 
   ngAfterViewInit() {
     let menuButtons = document.querySelectorAll('.accordion-button');
@@ -46,5 +62,13 @@ export class SideMenuComponent implements AfterViewInit {
   
   closeMenu() {
     document.getElementById('container')?.classList.remove('menu-open');
+  }
+
+  // 處理導航連結點擊，在小螢幕時自動關閉選單
+  onNavLinkClick() {
+    // 檢查是否為小螢幕 (lg breakpoint 以下)
+    if (window.innerWidth < 992) {
+      this.closeMenu();
+    }
   }
 }

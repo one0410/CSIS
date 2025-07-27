@@ -13,7 +13,7 @@ import { CurrentSiteService } from '../../../../services/current-site.service';
 import { SignatureData } from '../../../../model/signatureData.model';
 import { AuthService } from '../../../../services/auth.service';
 
-interface SitePermitForm extends SiteForm {
+export interface SitePermitForm extends SiteForm {
   applicant: string;
   applyType: string;
   workContent: string;
@@ -322,7 +322,6 @@ export class SitePermitFormComponent implements OnInit {
     // 返回工地詳情頁面
     this.router.navigate(['/site', this.siteId, 'forms']);
   }
-
 
 
   // DocX模板生成方法

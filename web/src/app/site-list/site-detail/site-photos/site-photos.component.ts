@@ -11,16 +11,16 @@ import { GridFSService } from '../../../services/gridfs.service';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
-    selector: 'app-site-photos',
-    imports: [CommonModule, FormsModule],
-    templateUrl: './site-photos.component.html',
-    styleUrls: ['./site-photos.component.scss']
+  selector: 'app-site-photos',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './site-photos.component.html',
+  styleUrls: ['./site-photos.component.scss']
 })
 export class SitePhotosComponent implements OnInit {
   siteId = '';
   site = computed(() => this.currentSiteService.currentSite());
   photoCount = computed(() => this.photoGroups().reduce((acc, group) => acc + group.photos.length, 0));
-  
+
   photoGroups = signal<PhotoGroup[]>([]);
   photoCategories = signal<string[]>([]);
   isLoading = signal<boolean>(false);
@@ -28,7 +28,7 @@ export class SitePhotosComponent implements OnInit {
   uploadProgress = signal<number>(0);
   uploadingFiles = signal<boolean>(false);
   selectedPhoto = signal<Photo | null>(null);
-  
+
   // 搜尋相關屬性
   searchStartDate: string = '';
   searchEndDate: string = '';
@@ -40,8 +40,8 @@ export class SitePhotosComponent implements OnInit {
   isMobileDevice = computed(() => {
     const userAgent = navigator.userAgent;
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|tablet/i.test(userAgent) ||
-           // 額外檢測iPad（iOS 13+的iPad可能不會顯示iPad在userAgent中）
-           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      // 額外檢測iPad（iOS 13+的iPad可能不會顯示iPad在userAgent中）
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   });
 
   // 標籤管理相關
@@ -49,7 +49,7 @@ export class SitePhotosComponent implements OnInit {
   newTagColor = '#ffffff';
   newTagBackground = '#007bff';
   showNewTagModal = signal<boolean>(false);
-  
+
   // 預設顏色組合
   presetColors = [
     { color: '#ffffff', background: '#007bff', name: '藍色' },
@@ -63,7 +63,7 @@ export class SitePhotosComponent implements OnInit {
     { color: '#000000', background: '#f8f9fa', name: '淺灰色' },
     { color: '#ffffff', background: '#6c757d', name: '深灰色' }
   ];
-  
+
   // 系統標籤定義
   systemTags: PhotoTag[] = [
     {
@@ -74,7 +74,7 @@ export class SitePhotosComponent implements OnInit {
     },
     {
       title: '工地缺失',
-      color: '#ffffff', 
+      color: '#ffffff',
       background: '#dc3545',
       isSystemTag: true
     }
@@ -83,24 +83,24 @@ export class SitePhotosComponent implements OnInit {
   // 權限檢查 - 只有管理員、專案經理、專案秘書可以管理標籤
   canManageTags = computed(() => {
     const user = this.authService.user();
-    
+
     if (!user) {
       return false;
     }
-    
+
     // 檢查全域角色
     const globalAllowedRoles = ['admin', 'manager', 'secretary'];
     const hasGlobalPermission = globalAllowedRoles.includes(user.role);
-    
+
     // 檢查工地特定角色（如果有 belongSites 的話）
     let hasSitePermission = false;
     if (user.belongSites && user.belongSites.length > 0) {
       const siteAllowedRoles = ['專案經理', '專案秘書', '專案工程師'];
-      hasSitePermission = user.belongSites.some(site => 
+      hasSitePermission = user.belongSites.some(site =>
         site.siteId === this.siteId && siteAllowedRoles.includes(site.role)
       );
     }
-    
+
     return hasGlobalPermission || hasSitePermission;
   });
 
@@ -112,41 +112,41 @@ export class SitePhotosComponent implements OnInit {
     private authService: AuthService) {
     this.route.parent?.paramMap.subscribe(async params => {
       this.siteId = params.get('id') || '';
-      
+
       // 使用 CurrentSiteService 獲取工地資訊，避免重複從資料庫載入
       await this.currentSiteService.loadSite(this.siteId);
 
       if (this.site()) {
         // 重置分頁狀態，確保每次返回此元件時都從第一頁開始加載
         this.photoService.resetPagination();
-        
+
         // 處理查詢參數
         this.route.queryParamMap.subscribe(queryParams => {
           const startDate = queryParams.get('startDate');
           const endDate = queryParams.get('endDate');
           const photoId = queryParams.get('photoId');
-          
+
           if (startDate) {
             this.searchStartDate = startDate;
           }
           if (endDate) {
             this.searchEndDate = endDate;
           }
-          
+
           // 如果有日期參數，自動執行搜尋
           if (startDate || endDate) {
             this.searchPhotos();
           } else {
             this.loadPhotos();
           }
-          
+
           // 如果有指定照片ID，可以後續實作自動定位到該照片
           if (photoId) {
             // TODO: 實作自動定位到指定照片的功能
             console.log('Navigate to photo:', photoId);
           }
         });
-        
+
         this.setupScrollListener();
       }
     });
@@ -196,7 +196,7 @@ export class SitePhotosComponent implements OnInit {
 
   private updateImageGroups(newPhotos: Photo[]): void {
     let allPhotos: Photo[];
-    
+
     // 檢查是否為第一頁加載
     if (this.photoService.getCurrentPage() === 1) {
       // 如果是第一頁，直接使用新照片替換舊列表
@@ -206,10 +206,10 @@ export class SitePhotosComponent implements OnInit {
       allPhotos = this.getAllPhotosFromGroups();
       allPhotos.push(...newPhotos);
     }
-    
+
     // 保存所有照片用於搜尋
     this.allPhotos = [...allPhotos];
-    
+
     // 如果有搜尋條件，則應用過濾
     if (this.isSearchActive()) {
       const filteredPhotos = this.filterPhotos(allPhotos);
@@ -217,7 +217,7 @@ export class SitePhotosComponent implements OnInit {
     } else {
       this.photoGroups.set(this.groupPhotosByDate(allPhotos));
     }
-    
+
     // 更新分類列表
     this.updatePhotoCategories(allPhotos);
   }
@@ -233,7 +233,7 @@ export class SitePhotosComponent implements OnInit {
 
   private groupPhotosByDate(photos: Photo[]): PhotoGroup[] {
     const groups = new Map<string, Photo[]>();
-    
+
     photos.forEach(photo => {
       const dateStr = new Date(photo.date).toDateString();
       if (!groups.has(dateStr)) {
@@ -250,36 +250,45 @@ export class SitePhotosComponent implements OnInit {
   }
 
   private async handleFiles(files: FileList) {
+    
+    // 🔧 重要修正：將 FileList 轉換為 Array，避免在處理過程中被清空
+    const fileArray: File[] = Array.from(files);
+    
     this.uploadingFiles.set(true);
     this.uploadProgress.set(0);
-    
-    const totalFiles = files.length;
+
+    const totalFiles = fileArray.length;
     let uploadedCount = 0;
-    
+
     // 手機瀏覽器上的特殊處理
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     if (isMobile) {
       console.log('檢測到手機瀏覽器，正在處理檔案上傳...');
     }
-    
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+      
       if (file.type.startsWith('image/')) {
         try {
           await this.uploadFile(file);
           uploadedCount++;
           this.uploadProgress.set(Math.round((uploadedCount / totalFiles) * 100));
         } catch (error) {
-          console.error('上傳文件時發生錯誤:', error);
+          console.error(`❌ 上傳文件 ${file.name} 時發生錯誤:`, error);
         }
+      } else {
+        console.warn(`⚠️ 跳過非圖片文件: ${file.name} (類型: ${file.type})`);
       }
     }
+
+    console.log(`✅ 文件處理完成! 總共處理: ${totalFiles} 個，成功上傳: ${uploadedCount} 個`);
     
     this.uploadingFiles.set(false);
     // 上傳完成後刷新照片列表
     this.photoService.resetPagination();
     this.loadPhotos();
-    
+
     // 通知照片統計更新
     const currentSite = this.site();
     if (currentSite && currentSite._id) {
@@ -288,9 +297,14 @@ export class SitePhotosComponent implements OnInit {
   }
 
   private async uploadFile(file: File): Promise<void> {
-    const currentSite = this.site();
-    if (!currentSite) return;
+    console.log(`🚀 開始上傳文件: ${file.name}`);
     
+    const currentSite = this.site();
+    if (!currentSite) {
+      console.error('❌ 找不到工地資訊，無法上傳文件:', file.name);
+      return;
+    }
+
     try {
       // 準備元數據，包含標籤信息
       const metadata = {
@@ -298,13 +312,14 @@ export class SitePhotosComponent implements OnInit {
         siteId: currentSite._id!,
         tags: [] // 從這個組件上傳的照片沒有特定的系統標籤
       };
-      
+
+      console.log(`📤 正在上傳 ${file.name} 到 GridFS...`);
       // 使用 GridFSService 上傳檔案
       const result = await this.gridfsService.uploadFile(file, metadata);
-      console.log('照片上傳成功:', result);
+      console.log(`✅ 照片 ${file.name} 上傳成功:`, result);
       return;
     } catch (error) {
-      console.error('照片上傳失敗:', error);
+      console.error(`❌ 照片 ${file.name} 上傳失敗:`, error);
       throw error;
     }
   }
@@ -313,11 +328,11 @@ export class SitePhotosComponent implements OnInit {
   async uploadFileWithSystemTag(file: File, systemTagTitle: string): Promise<any> {
     const currentSite = this.site();
     if (!currentSite) throw new Error('找不到工地資訊');
-    
+
     // 找到對應的系統標籤
     const systemTag = this.systemTags.find(tag => tag.title === systemTagTitle);
     if (!systemTag) throw new Error('找不到指定的系統標籤');
-    
+
     try {
       // 準備元數據，包含系統標籤
       const metadata = {
@@ -325,7 +340,7 @@ export class SitePhotosComponent implements OnInit {
         siteId: currentSite._id!,
         tags: [systemTag]
       };
-      
+
       // 使用 GridFSService 上傳檔案
       const result = await this.gridfsService.uploadFile(file, metadata);
       console.log('照片上傳成功（含系統標籤）:', result);
@@ -358,7 +373,7 @@ export class SitePhotosComponent implements OnInit {
     if (!photo || !photo.url) {
       return;
     }
-    
+
     // 從 URL 中獲取檔案名稱
     const filename = photo.url.split('/').pop();
     if (!filename) {
@@ -369,29 +384,29 @@ export class SitePhotosComponent implements OnInit {
       this.deletePhotoByFilename(filename, photo.id);
     }
   }
-  
+
   private async deletePhotoByFilename(filename: string, photoId: number) {
     try {
       // 使用 GridFSService 刪除檔案
       await this.gridfsService.deleteFile(filename);
-      
+
       // 更新本地照片列表
       const groups = [...this.photoGroups()];
       for (let i = 0; i < groups.length; i++) {
         const photoIndex = groups[i].photos.findIndex(p => p.id === photoId);
         if (photoIndex > -1) {
           groups[i].photos.splice(photoIndex, 1);
-          
+
           // 如果該組沒有照片了，刪除該組
           if (groups[i].photos.length === 0) {
             groups.splice(i, 1);
           }
-          
+
           this.photoGroups.set([...groups]);
           break;
         }
       }
-      
+
       // 通知照片統計更新
       const currentSite = this.site();
       if (currentSite && currentSite._id) {
@@ -425,14 +440,14 @@ export class SitePhotosComponent implements OnInit {
     try {
       // 創建一個新的物件以避免直接修改原始參考
       const photoClone = { ...photo };
-      
+
       // 從伺服器獲取最新的照片詳細資訊
       const filename = photo.url.split('/').pop();
       if (filename) {
         try {
           // 嘗試獲取完整的照片資訊
           const photoInfo = await this.gridfsService.getFileInfo(filename);
-          
+
           if (photoInfo && photoInfo.metadata) {
             // 更新分類和描述
             if (photoInfo.metadata.tags) {
@@ -453,7 +468,7 @@ export class SitePhotosComponent implements OnInit {
           // 繼續使用現有數據
         }
       }
-      
+
       // 確保有分類欄位，如果沒有就設為空字串
       if (!photoClone.metadata.tags || photoClone.metadata.tags.length === 0) {
         photoClone.metadata.tags = [];
@@ -467,7 +482,7 @@ export class SitePhotosComponent implements OnInit {
         photoClone.metadata.location = '';
       }
       this.selectedPhoto.set(photoClone);
-      
+
       // 防止頁面滾動
       document.body.style.overflow = 'hidden';
     } catch (error) {
@@ -484,7 +499,7 @@ export class SitePhotosComponent implements OnInit {
         return;
       }
     }
-    
+
     this.selectedPhoto.set(null);
     // 恢復頁面滾動
     document.body.style.overflow = '';
@@ -494,29 +509,29 @@ export class SitePhotosComponent implements OnInit {
     // 此方法現在用於更新照片標籤
     console.log('更新照片標籤:', this.selectedPhoto()?.metadata.tags);
   }
-  
+
   updatePhotoTitle() {
     // 此方法將在編輯標題後被呼叫
     console.log('更新照片標題:', this.selectedPhoto()?.title);
   }
-  
+
   updatePhotoDescription() {
     // 此方法將在編輯描述後被呼叫
     console.log('更新照片描述:', this.selectedPhoto()?.metadata.description);
   }
-  
+
   updatePhotoLocation() {
     // 此方法將在編輯地點後被呼叫
     console.log('更新照片地點:', this.selectedPhoto()?.metadata.location);
   }
-  
+
   savePhotoChanges() {
     const photo = this.selectedPhoto();
     if (!photo) return;
-    
+
     // 儲存照片變更
     console.log('儲存照片變更:', photo);
-    
+
     // 使用 GridFSService 更新檔案元數據
     this.updatePhotoMetadata(photo).then(() => {
       // 更新本地資料
@@ -527,7 +542,7 @@ export class SitePhotosComponent implements OnInit {
       console.error('儲存照片變更時發生錯誤:', error);
     });
   }
-  
+
   private async updatePhotoMetadata(photo: Photo): Promise<void> {
     try {
       // 從 URL 中獲取檔案 ID
@@ -535,7 +550,7 @@ export class SitePhotosComponent implements OnInit {
       if (!fileId) {
         throw new Error('無法從 URL 獲取檔案 ID');
       }
-      
+
       // 準備元數據
       const metadata = {
         title: photo.title,
@@ -543,7 +558,7 @@ export class SitePhotosComponent implements OnInit {
         description: photo.metadata.description,
         location: photo.metadata.location
       };
-      
+
       // 使用 GridFSService 更新檔案元數據
       return await this.gridfsService.updateFileMetadata(fileId, metadata);
     } catch (error) {
@@ -551,10 +566,10 @@ export class SitePhotosComponent implements OnInit {
       throw error;
     }
   }
-  
+
   private updateLocalPhoto(updatedPhoto: Photo): void {
     const groups = [...this.photoGroups()];
-    
+
     for (const group of groups) {
       const photoIndex = group.photos.findIndex(p => p.id === updatedPhoto.id);
       if (photoIndex !== -1) {
@@ -563,18 +578,18 @@ export class SitePhotosComponent implements OnInit {
         break;
       }
     }
-    
+
     // 更新 signal 值
     this.photoGroups.set(groups);
   }
-  
+
   /**
    * 收集所有照片中的分類，並更新分類列表
    */
   private updatePhotoCategories(photos: Photo[]): void {
     // 建立一個 Set 來去除重複的分類
     const categories = new Set<string>();
-    
+
     // 收集所有有效的分類
     photos.forEach(photo => {
       if (photo.metadata.tags && photo.metadata.tags.length > 0) {
@@ -585,14 +600,14 @@ export class SitePhotosComponent implements OnInit {
         });
       }
     });
-    
+
     // 將預設分類加入集合
     const defaultCategories = ['未分類', '機具管理'];
     defaultCategories.forEach(category => categories.add(category));
-    
+
     // 轉換 Set 為陣列並排序
     const sortedCategories = Array.from(categories).sort();
-    
+
     // 更新 signal
     this.photoCategories.set(sortedCategories);
   }
@@ -605,14 +620,14 @@ export class SitePhotosComponent implements OnInit {
     const filteredPhotos = this.filterPhotos(this.allPhotos);
     this.photoGroups.set(this.groupPhotosByDate(filteredPhotos));
   }
-  
+
   /**
    * 根據搜尋條件過濾照片
    */
   private filterPhotos(photos: Photo[]): Photo[] {
     return photos.filter(photo => {
       const photoDate = new Date(photo.date);
-      
+
       // 檢查起始日期
       if (this.searchStartDate) {
         const startDate = new Date(this.searchStartDate);
@@ -620,7 +635,7 @@ export class SitePhotosComponent implements OnInit {
           return false;
         }
       }
-      
+
       // 檢查結束日期
       if (this.searchEndDate) {
         const endDate = new Date(this.searchEndDate);
@@ -630,16 +645,16 @@ export class SitePhotosComponent implements OnInit {
           return false;
         }
       }
-      
+
       // 檢查分類
       if (this.searchCategory && !(photo.metadata.tags && photo.metadata.tags.some(tag => tag.title === this.searchCategory))) {
         return false;
       }
-      
+
       return true;
     });
   }
-  
+
   /**
    * 清除搜尋條件
    */
@@ -648,11 +663,11 @@ export class SitePhotosComponent implements OnInit {
     this.searchEndDate = '';
     this.searchCategory = '';
     this.isFiltered.set(false);
-    
+
     // 重新顯示所有照片
     this.photoGroups.set(this.groupPhotosByDate(this.allPhotos));
   }
-  
+
   /**
    * 判斷是否有搜尋條件
    */
@@ -681,7 +696,7 @@ export class SitePhotosComponent implements OnInit {
     if (!photo || !photo.metadata.tags) return;
 
     const tag = photo.metadata.tags[tagIndex];
-    
+
     // 系統標籤不可刪除
     if (tag.isSystemTag) {
       alert('系統標籤無法刪除');
@@ -696,13 +711,13 @@ export class SitePhotosComponent implements OnInit {
       alert('您沒有權限管理標籤');
       return;
     }
-    
+
     // 重置表單為預設值
     this.newTagTitle = '';
     this.newTagColor = '#ffffff';
     this.newTagBackground = '#007bff';
     this.showNewTagModal.set(true);
-    
+
     // 防止頁面滾動
     document.body.style.overflow = 'hidden';
   }
@@ -741,7 +756,7 @@ export class SitePhotosComponent implements OnInit {
   // 獲取所有可用標籤（系統標籤 + 用戶自定義標籤）
   getAvailableTags(): PhotoTag[] {
     const userTags: PhotoTag[] = [];
-    
+
     // 從所有照片中收集用戶自定義標籤
     this.allPhotos.forEach(photo => {
       if (photo.metadata.tags) {
@@ -759,7 +774,18 @@ export class SitePhotosComponent implements OnInit {
   // 獲取僅用戶自定義標籤（排除系統標籤）
   getUserDefinedTags(): PhotoTag[] {
     const userTags: PhotoTag[] = [];
-    
+
+    // 加入幾個系統標籤, 空調系統/給排水系統/消防系統/電力系統/內裝系統/製程系統/監控系統/環安
+    let systemTags = ['空調系統', '給排水系統', '消防系統', '電力系統', '內裝系統', '製程系統', '監控系統', '環安'];
+    for (let i = 0; i < systemTags.length; i++) {
+      userTags.push({
+        title: systemTags[i],
+        color: this.presetColors[i].color,
+        background: this.presetColors[i].background,
+        isSystemTag: true
+      });
+    }
+
     // 從所有照片中收集用戶自定義標籤
     this.allPhotos.forEach(photo => {
       if (photo.metadata.tags) {
@@ -777,6 +803,18 @@ export class SitePhotosComponent implements OnInit {
   // 檢查照片是否已有某個標籤
   hasTag(photo: Photo, tagTitle: string): boolean {
     return photo.metadata.tags?.some(tag => tag.title === tagTitle) || false;
+  }
+
+  // 檢查照片是否包含系統標籤（機具管理、工地缺失等）
+  hasSystemTags(photo: Photo): boolean {
+    if (!photo.metadata.tags) {
+      return false;
+    }
+
+    return photo.metadata.tags.some(tag =>
+      tag.isSystemTag === true ||
+      this.systemTags.some(systemTag => systemTag.title === tag.title)
+    );
   }
 }
 

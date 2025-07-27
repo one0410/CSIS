@@ -10,7 +10,7 @@ import SignaturePad from 'signature_pad';
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">請簽名</h5>
+          <h5 class="modal-title">請仔細閱讀後簽名</h5>
           <button type="button" class="btn-close" (click)="close()"></button>
         </div>
         <div class="modal-body">

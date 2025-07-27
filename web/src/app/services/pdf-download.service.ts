@@ -243,9 +243,9 @@ export class PdfDownloadService {
       case 'safetyIssueRecord':
         return ['/site', siteId, 'forms', 'safety-issue-record', formItem.id];
       case 'hazardNotice':
-        return ['/site', siteId, 'forms', 'hazard-notice', formItem.id];
+        return ['/site', siteId, 'hazardNotice', formItem.id];
       case 'training':
-        return ['/site', siteId, 'forms', 'training', formItem.id];
+                  return ['/site', siteId, 'training', formItem.id];
       default:
         return ['/site', siteId, 'forms', 'view', formItem.id];
     }

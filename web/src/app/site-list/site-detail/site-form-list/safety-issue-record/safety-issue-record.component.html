@@ -85,8 +85,9 @@
           <span class="fw-normal">缺失責任單位</span>
         </div>
         <div style="width: 35%" class="d-flex align-items-center py-2 px-2">
-          <div class="d-flex gap-3">
-            <div class="form-check">
+          <div class="d-flex flex-column gap-2 w-100">
+            <div class="d-flex align-items-center">
+              <div class="form-check me-2">
               <input 
                 class="form-check-input" 
                 type="radio" 
@@ -100,7 +101,19 @@
                 MIC
               </label>
             </div>
-            <div class="form-check">
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                [(ngModel)]="issueRecord.responsibleUnitName"
+                name="responsibleUnitName"
+                placeholder="請輸入MIC單位名稱"
+                title="MIC單位名稱"
+                [disabled]="issueRecord.responsibleUnit !== 'MIC'"
+                style="border-bottom: 1px solid #000; border-top: none; border-left: none; border-right: none; border-radius: 0;"
+              />
+            </div>
+            <div class="d-flex align-items-center">
+              <div class="form-check me-2">
               <input 
                 class="form-check-input" 
                 type="radio" 
@@ -113,6 +126,17 @@
               <label class="form-check-label" for="responsibleUnit_supplier">
                 供應商
               </label>
+              </div>
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                [(ngModel)]="issueRecord.supplierName"
+                name="supplierName"
+                placeholder="請輸入供應商名稱"
+                title="供應商名稱"
+                [disabled]="issueRecord.responsibleUnit !== 'supplier'"
+                style="border-bottom: 1px solid #000; border-top: none; border-left: none; border-right: none; border-radius: 0;"
+              />
             </div>
           </div>
         </div>
@@ -256,20 +280,35 @@
         </div>
         <div class="p-3">
           <div class="mb-3">
-            <div class="form-check d-flex align-items-center">
+            <div class="form-check">
               <input 
-                class="form-check-input me-2" 
+                class="form-check-input" 
                 type="checkbox" 
                 id="remedy_immediate"
                 [checked]="issueRecord.remedyMeasures.includes('immediate')"
                 (change)="toggleRemedyMeasure('immediate')"
                 title="選擇立即完成改正"
               />
-              <label class="form-check-label d-flex align-items-center" for="remedy_immediate">
-                1. 已立即完成改正 限期改善完成時間
+              <label class="form-check-label" for="remedy_immediate">
+                1. 已立即完成改正
+              </label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="form-check d-flex align-items-center">
+              <input 
+                class="form-check-input me-2" 
+                type="checkbox" 
+                id="remedy_deadline"
+                [checked]="issueRecord.remedyMeasures.includes('improvementWithDeadline')"
+                (change)="toggleRemedyMeasure('improvementWithDeadline')"
+                title="選擇限期改善完成時間"
+              />
+              <label class="form-check-label d-flex align-items-center" for="remedy_deadline">
+                限期改善完成時間
                 <input 
                   type="date" 
-                  class="form-control mx-2 border-bottom-only" 
+                  class="form-control mx-2" 
                   style="width: 150px;"
                   [(ngModel)]="issueRecord.improvementDeadline"
                   name="improvementDeadline"
@@ -283,8 +322,8 @@
               class="form-check-input" 
               type="checkbox" 
               id="remedy_report"
-              [checked]="issueRecord.remedyMeasures.includes('report')"
-              (change)="toggleRemedyMeasure('report')"
+              [checked]="issueRecord.remedyMeasures.includes('correctivePreventionReport')"
+              (change)="toggleRemedyMeasure('correctivePreventionReport')"
               title="選擇提出矯正預防措施報告"
             />
             <label class="form-check-label" for="remedy_report">
@@ -303,7 +342,7 @@
           <div class="row">
             <div class="col-md-6 mb-2">
               <div class="d-flex align-items-center">
-                <label class="form-label me-2 mb-0" style="width: 80px;">缺失代碼：</label>
+                <label class="form-label me-2 mb-0" style="width: 80px;">缺失代碼：<span class="text-danger">*</span></label>
                 <input 
                   type="text" 
                   class="form-control" 
@@ -311,6 +350,7 @@
                   name="deductionCode"
                   placeholder="請輸入缺失代碼"
                   title="缺失代碼"
+                  required
                 />
               </div>
             </div>

@@ -10,6 +10,7 @@ export interface Visitor {
   // 危害告知狀態
   hazardNoticeCompleted: boolean; // 是否完成危害告知
   hazardNoticeCompletedAt?: Date; // 危害告知完成時間
+  hazardNoticeContent?: string; // 危害告知內容（簽名時的注意事項）
   // 所屬工地
   siteId: string; // 工地ID
   // 進入日期

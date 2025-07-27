@@ -76,17 +76,25 @@ export class VisitorHazardNoticeComponent implements OnInit {
   isSelectionMode = computed(() => this.showVisitorSelection());
   isHistoryMode = computed(() => this.showBrowserHistory());
   
-  // 危害告知內容
-  hazardNoticeContent = signal<string[]>([
-    '1. 工地內禁止吸菸、嚼檳榔、酗酒',
-    '2. 進入工地必須配戴安全帽',
-    '3. 注意工地內機械設備運作，避免進入危險區域',
-    '4. 遵守工地安全標示及指示',
-    '5. 如有緊急狀況，請立即通知工地負責人',
-    '6. 工地內請勿奔跑，注意腳下安全',
-    '7. 未經許可不得操作任何機械設備',
-    '8. 離開工地前請確實清點隨身物品'
-  ]);
+  // 危害告知內容（從設定載入）
+  hazardNoticeContent = signal<string>(`01. 本人承諾絕對遵守職業安全衛生法規定與相關設施規則及帆宣系統科技股份有限公司之安全衛生規定，且依規定佩戴個人防護具(安全帽、安全帶、繫帽扣…等)、穿背心，決不打赤膊及穿拖(涼)鞋進場。
+02. 承攬商進入本公司作業前需指派一位現場負責人或安衛人員，負責於現場督導現場工作之安全衛生、環境維護、品質及進度等事項，並作為本公司與承攬商間之溝通窗口，與本公司工安及工程承辦人員密切配合及討論，以了解工作環境及潛在危險因素，並應向其所屬施工人員（含下屬承包商）告知以防止災害之發生，否則本公司人員有權終止承攬商之現場作業。
+03. 人員未取得工作證資格者，禁止從事施工作業之行為，緊急搶修及來賓訪客須由陪同人員全程陪同。
+04. 本人絕對確實執行作業前、中及作業後之自動檢點事項，並使用相關安全防護具，遵守作業安全規定。
+05. 廠內嚴禁攜帶、夾帶、販賣、飲用含酒精性飲料與禁藥及賭博、鬥毆、起鬨、鬧事…等行為，否則驅逐出場（嚴重者依法究辦）。
+06. 廠內禁菸、檳榔，吸煙區外其餘區域一律禁菸及禁食檳榔。
+07. 非指定區域禁止用餐，廠內電氣室、監控室…等管制區域非經申請不得進入，且不得於此飲食。
+08. 使用電源、電器設備應使用壓接端子，嚴禁裸線搭接，線路應架高或以堅硬物件加以保護，並使用標準插頭、插座、接地裝置、漏電斷路裝置、線路絕緣不得破損且須避開積水之處。
+09. 廠內各開關、閥件應予以管制、標示，非經申請或許可不得擅自操作或動作。
+10. 如發現突發狀況應叫支援及通知相關單位處理，如火警時應立即停止手上工作並關閉所有開關、閥件後立即使用滅火器滅火，並高聲喊叫支援及通知相關單位。
+11. 如因工作需求，需打開或拆除安全設施或設備時，須事先提出申請，於現場做好開口防護措施及派專人於現場監督管制，施工告一段落或完畢後應隨手復原並檢查有無牢固，確保他人安全。
+12. 絕對遵守潔淨室之安全衛生規定，違反者依規定處置辦理。
+13. 廠內產生之生活廢棄物應放置於設置定點之生活廢棄物專用桶，不得隨意丟棄。
+14. 易生蚊蠅之液體食物、檳榔汁不得隨地丟棄，以保持環境衛生。
+15. 場內人員嚴禁有言語挑釁、傷害、暴力…等行為，否則除驅逐出場外並負一切賠償責任，嚴重者甚至依法究辦。
+16. 若於廠內聽到警報時，應注意聆聽警衛室廣播，若有緊急疏散廣播時，依照廣播指示或廠內引導人員指示疏散，廠區皆有張貼逃生路線。
+17. 如有違背上述規定願接受帆宣系統科技股份有限公司罰責處理。
+18. 如有未盡告知之安全衛生相關法規得依帆宣系統科技股份有限公司之承攬商安全衛生管理辦法執行辦理。`);
 
   ngOnInit() {
     const siteId = this.route.snapshot.paramMap.get('siteId');
@@ -139,6 +147,12 @@ export class VisitorHazardNoticeComponent implements OnInit {
           this.visitorName.set(visitor.name);
           this.visitorTel.set(visitor.tel || '');
           this.signature.set(visitor.signature || '');
+          
+                  // 如果訪客記錄中有儲存的注意事項內容，則使用它
+        if (visitor.hazardNoticeContent) {
+          this.hazardNoticeContent.set(visitor.hazardNoticeContent);
+        }
+          
           // 查看模式不設定completed狀態，讓內容可以正常顯示
         } else {
           alert('找不到指定的訪客');
@@ -146,7 +160,8 @@ export class VisitorHazardNoticeComponent implements OnInit {
           return;
         }
       } else {
-        // 新增模式：檢查今日同設備記錄
+        // 新增模式：載入設定並檢查今日同設備記錄
+        await this.loadHazardNoticeSettings();
         await this.checkTodayVisitors();
       }
     } catch (error) {
@@ -191,6 +206,7 @@ export class VisitorHazardNoticeComponent implements OnInit {
         signedAt: new Date(),
         hazardNoticeCompleted: true,
         hazardNoticeCompletedAt: new Date(),
+        hazardNoticeContent: this.hazardNoticeContent(), // 儲存當前的注意事項內容
         siteId: this.siteId(),
         entryDate: new Date(),
         createdAt: new Date(),
@@ -292,7 +308,45 @@ export class VisitorHazardNoticeComponent implements OnInit {
 
   // 選擇新增新的訪客記錄
   createNewVisitor(): void {
+    // 重置所有狀態以進入新增模式
     this.showVisitorSelection.set(false);
+    this.showBrowserHistory.set(false);
+    this.completed.set(false);
+    this.visitorId.set(''); // 確保不是查看模式
+    
+    // 重置表單數據
+    this.visitorName.set('');
+    this.visitorTel.set('');
+    this.signature.set('');
+    this.existingVisitor.set(null);
+    
+    // 除錯資訊
+    console.log('已切換到新增訪客模式');
+    console.log('isViewMode:', this.isViewMode());
+    console.log('isNewMode:', this.isNewMode());
+    console.log('showVisitorSelection:', this.showVisitorSelection());
+    console.log('showBrowserHistory:', this.showBrowserHistory());
+    console.log('completed:', this.completed());
+    console.log('currentSite:', this.currentSite());
+  }
+
+  // 載入危害告知設定
+  async loadHazardNoticeSettings(): Promise<void> {
+    try {
+      if (!this.siteId()) return;
+
+      const settings = await this.mongodbService.get('setting',
+        {
+          type: 'visitorHazardNotice',
+          siteId: this.siteId()
+        });
+      
+      if (settings && settings.length > 0) {
+        this.hazardNoticeContent.set(settings[0].content);
+      }
+    } catch (error) {
+      console.error('載入危害告知設定失敗:', error);
+    }
   }
 
   // 查看瀏覽器歷史記錄

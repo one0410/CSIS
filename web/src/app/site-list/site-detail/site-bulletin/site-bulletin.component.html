@@ -1,0 +1,325 @@
+<div class="container-fluid h-100">
+  <div class="row h-100">
+    <div class="col-12">
+      <!-- 頁面標題與操作按鈕 -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">
+          <i class="fas fa-bullhorn me-2"></i>
+          公佈欄
+        </h4>
+        @if (hasManagePermission()) {
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" (click)="showAddBulletinModal()" [disabled]="loading()">
+              <i class="fas fa-plus-circle me-1"></i>
+              新增公告
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- 載入中指示器 -->
+      @if (loading()) {
+        <div class="text-center py-4">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">載入中...</span>
+          </div>
+        </div>
+      }
+
+      <!-- 公告列表 -->
+      @if (!loading()) { 
+        @if (bulletins().length === 0) {
+          <div class="text-center py-5">
+            <i class="fas fa-bullhorn fs-1 text-muted"></i>
+            <p class="text-muted mt-2">目前沒有公告</p>
+            @if (hasManagePermission()) {
+              <p class="text-muted mt-1">開始新增第一則公告吧！</p>
+            }
+          </div>
+        } @else {
+          <div class="row">
+            @for (bulletin of bulletins(); track bulletin._id) {
+              <div class="col-12 col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 bulletin-card" [class.pinned]="bulletin.isPinned">
+                  <!-- 置頂標籤 -->
+                  @if (bulletin.isPinned) {
+                    <div class="position-absolute top-0 start-0 p-2">
+                      <span class="badge bg-success">
+                        <i class="fas fa-thumbtack me-1"></i>置頂
+                      </span>
+                    </div>
+                  }
+                  
+                  <!-- 優先級標籤 -->
+                  @if (bulletin.priority === 'urgent') {
+                    <div class="position-absolute top-0 end-0 p-2">
+                      <span class="badge bg-danger">
+                        <i class="fas fa-exclamation-triangle me-1"></i>緊急
+                      </span>
+                    </div>
+                  }
+
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex gap-2">
+                      <span class="badge {{ getCategoryBadgeClass(bulletin.category) }}">
+                        {{ getCategoryText(bulletin.category) }}
+                      </span>
+                      <span class="badge {{ getPriorityBadgeClass(bulletin.priority) }}">
+                        {{ getPriorityText(bulletin.priority) }}
+                      </span>
+                    </div>
+                    @if (hasManagePermission()) {
+                      <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                          <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                          <li>
+                            <button class="dropdown-item" (click)="editBulletin(bulletin)">
+                              <i class="fas fa-edit me-2"></i>編輯
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item" (click)="togglePin(bulletin)">
+                              <i class="fas fa-thumbtack me-2"></i>
+                              {{ bulletin.isPinned ? '取消置頂' : '置頂' }}
+                            </button>
+                          </li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li>
+                            <button class="dropdown-item text-danger" (click)="deleteBulletin(bulletin)">
+                              <i class="fas fa-trash me-2"></i>刪除
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="card-body" (click)="viewBulletinDetail(bulletin)" style="cursor: pointer;">
+                    <h6 class="card-title">{{ bulletin.title }}</h6>
+                    <p class="card-text text-muted small">
+                      {{ bulletin.content.length > 100 ? (bulletin.content.substring(0, 100) + '...') : bulletin.content }}
+                    </p>
+                  </div>
+
+                  <div class="card-footer text-muted d-flex justify-content-between align-items-center">
+                    <small>
+                      <i class="fas fa-user me-1"></i>{{ bulletin.authorName }}
+                    </small>
+                    <small>
+                      <i class="fas fa-calendar me-1"></i>{{ bulletin.publishDate | date: 'yyyy/MM/dd' }}
+                    </small>
+                  </div>
+
+                  @if (bulletin.viewCount && bulletin.viewCount > 0) {
+                    <div class="position-absolute bottom-0 end-0 p-2">
+                      <small class="text-muted">
+                        <i class="fas fa-eye me-1"></i>{{ bulletin.viewCount }}
+                      </small>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>
+
+<!-- 新增/編輯公告Modal -->
+@if (showModal()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-bullhorn me-2"></i>
+            {{ isEditing() ? '編輯公告' : '新增公告' }}
+          </h5>
+          <button type="button" class="btn-close" (click)="hideModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form #bulletinForm="ngForm" (ngSubmit)="saveBulletin()">
+            <!-- 公告標題 -->
+            <div class="mb-3">
+              <label class="form-label">
+                公告標題 <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" [(ngModel)]="editingBulletin().title" 
+                     name="title" placeholder="請輸入公告標題" required>
+            </div>
+
+            <!-- 公告內容 -->
+            <div class="mb-3">
+              <label class="form-label">
+                公告內容 <span class="text-danger">*</span>
+              </label>
+              <textarea class="form-control" rows="6" [(ngModel)]="editingBulletin().content" 
+                        name="content" placeholder="請輸入公告內容" required></textarea>
+            </div>
+
+            <div class="row">
+              <!-- 公告類別 -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  公告類別 <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" [(ngModel)]="editingBulletin().category" name="category" required>
+                  <option value="general">一般公告</option>
+                  <option value="safety">安全須知</option>
+                  <option value="schedule">進度通知</option>
+                  <option value="urgent">緊急通知</option>
+                </select>
+              </div>
+
+              <!-- 重要程度 -->
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  重要程度 <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" [(ngModel)]="editingBulletin().priority" name="priority" required>
+                  <option value="low">低</option>
+                  <option value="normal">一般</option>
+                  <option value="high">高</option>
+                  <option value="urgent">緊急</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 過期日期 -->
+            <div class="mb-3">
+              <label class="form-label">過期日期（可選）</label>
+              <input type="date" class="form-control" 
+                     [value]="editingBulletin().expiryDate ? (editingBulletin().expiryDate | date: 'yyyy-MM-dd') : ''"
+                     (change)="onExpiryDateChange($event)"
+                     name="expiryDate">
+              <div class="form-text">若不設定過期日期，公告將永久顯示</div>
+            </div>
+
+            <!-- 置頂選項 -->
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" 
+                       [(ngModel)]="editingBulletin().isPinned" name="isPinned" id="isPinned">
+                <label class="form-check-label" for="isPinned">
+                  <i class="fas fa-thumbtack me-1"></i>置頂此公告
+                </label>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="hideModal()">
+            取消
+          </button>
+          <button type="button" class="btn btn-primary" (click)="saveBulletin()" 
+                  [disabled]="loading() || !isFormValid()">
+            <i class="fas fa-check-circle me-1"></i>
+            {{ isEditing() ? '更新' : '新增' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- 公告詳細Modal -->
+@if (showDetailModal() && selectedBulletin()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-bullhorn me-2"></i>
+            公告詳細
+          </h5>
+          <button type="button" class="btn-close" (click)="hideDetailModal()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="bulletin-detail">
+            <!-- 標題 -->
+            <h4 class="mb-3">{{ selectedBulletin()!.title }}</h4>
+            
+            <!-- 標籤區 -->
+            <div class="d-flex gap-2 mb-3">
+              @if (selectedBulletin()!.isPinned) {
+                <span class="badge bg-success">
+                  <i class="fas fa-thumbtack me-1"></i>置頂
+                </span>
+              }
+              <span class="badge {{ getCategoryBadgeClass(selectedBulletin()!.category) }}">
+                {{ getCategoryText(selectedBulletin()!.category) }}
+              </span>
+              <span class="badge {{ getPriorityBadgeClass(selectedBulletin()!.priority) }}">
+                {{ getPriorityText(selectedBulletin()!.priority) }}
+              </span>
+            </div>
+
+            <!-- 內容 -->
+            <div class="mb-4">
+              <div class="content-box p-3 bg-light rounded">
+                {{ selectedBulletin()!.content }}
+              </div>
+            </div>
+
+            <!-- 資訊區 -->
+            <div class="info-section">
+              <div class="row">
+                <div class="col-md-6">
+                  <small class="text-muted">
+                    <i class="fas fa-user me-1"></i>
+                    發布者：{{ selectedBulletin()!.authorName }}
+                  </small>
+                </div>
+                <div class="col-md-6">
+                  <small class="text-muted">
+                    <i class="fas fa-calendar me-1"></i>
+                    發布日期：{{ selectedBulletin()!.publishDate | date: 'yyyy/MM/dd HH:mm' }}
+                  </small>
+                </div>
+              </div>
+
+              @if (selectedBulletin()!.expiryDate) {
+                <div class="row mt-2">
+                  <div class="col-md-6">
+                    <small class="text-muted">
+                      <i class="fas fa-clock me-1"></i>
+                      過期日期：{{ selectedBulletin()!.expiryDate | date: 'yyyy/MM/dd' }}
+                    </small>
+                  </div>
+                </div>
+              }
+
+              @if (selectedBulletin()!.viewCount && selectedBulletin()!.viewCount! > 0) {
+                <div class="row mt-2">
+                  <div class="col-md-6">
+                    <small class="text-muted">
+                      <i class="fas fa-eye me-1"></i>
+                      查看次數：{{ selectedBulletin()!.viewCount }}
+                    </small>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="hideDetailModal()">
+            <i class="fas fa-times me-1"></i>
+            關閉
+          </button>
+          @if (hasManagePermission()) {
+            <button type="button" class="btn btn-primary" (click)="editBulletin(selectedBulletin()!); hideDetailModal()">
+              <i class="fas fa-edit me-1"></i>
+              編輯
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+} 

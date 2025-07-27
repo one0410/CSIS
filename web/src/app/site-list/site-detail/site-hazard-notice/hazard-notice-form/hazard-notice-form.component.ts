@@ -141,43 +141,62 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
     this.isLoggedIn = !!this.authService.user();
     
     this.route.paramMap.subscribe(async (params) => {
-      const id = params.get('id');
+      const id = params.get('id'); // 對於工人簽名路由，這可能是 null
       const formId = params.get('formId');
 
-      if (id) {
-        this.siteId = id;
+      if (formId) {
+        this.formId = formId;
+        await this.loadFormDetails(formId);
         
-        // 如果已登入，設定當前工地；如果未登入，直接載入表單資料
-        if (this.isLoggedIn) {
-          await this.currentSiteService.setCurrentSiteById(id);
+        // 從表單數據中獲取 siteId
+        if (this.formData.siteId) {
+          this.siteId = this.formData.siteId;
+          
+          // 如果已登入，設定當前工地
+          if (this.isLoggedIn) {
+            await this.currentSiteService.setCurrentSiteById(this.siteId);
+          }
+          
+          this.formData.projectNo = this.site()?.projectNo || '';
+        } else if (id) {
+          // 向後兼容：如果表單數據中沒有 siteId，則使用路由參數中的 id
+          this.siteId = id;
+          this.formData.siteId = id;
+          
+          if (this.isLoggedIn) {
+            await this.currentSiteService.setCurrentSiteById(id);
+          }
+          
+          this.formData.projectNo = this.site()?.projectNo || '';
         }
         
-        this.formData.siteId = id;
-        this.formData.projectNo = this.site()?.projectNo || '';
+        // 檢查 URL 是否包含 '/edit' 來判斷是否為編輯模式
+        const currentUrl = this.router.url;
+        const isEditMode = currentUrl.includes('/edit');
         
-        if (formId) {
-          this.formId = formId;
-          await this.loadFormDetails(formId);
-          
-          // 檢查 URL 是否包含 '/edit' 來判斷是否為編輯模式
-          const currentUrl = this.router.url;
-          const isEditMode = currentUrl.includes('/edit');
-          
-          // 如果未登入且有表單ID，則為工人簽名模式
-          if (!this.isLoggedIn) {
-            this.isWorkerSigningMode = true;
-            this.isViewMode = false; // 工人需要能夠簽名
-          } else {
-            // 已登入用戶：如果是編輯模式則可編輯，否則為查看模式
-            this.isViewMode = !isEditMode;
-          }
+        // 如果未登入且有表單ID，則為工人簽名模式
+        if (!this.isLoggedIn) {
+          this.isWorkerSigningMode = true;
+          this.isViewMode = false; // 工人需要能夠簽名
         } else {
-          // 只在新建表單時自動帶入 currentSite 的 projectName 到施工地點
-          this.formData.workLocation = this.site()?.projectName || '';
+          // 已登入用戶：如果是編輯模式則可編輯，否則為查看模式
+          this.isViewMode = !isEditMode;
         }
 
-        // 只有在登入狀態下才載入專案工人列表
+        // 載入專案工人列表（需要 siteId）
+        if (this.siteId && this.isLoggedIn) {
+          await this.loadProjectWorkers(this.siteId);
+        }
+      } else if (id) {
+        // 如果只有 id 沒有 formId（創建新表單的情況）
+        this.siteId = id;
+        this.formData.siteId = id;
+        
         if (this.isLoggedIn) {
+          await this.currentSiteService.setCurrentSiteById(id);
+          this.formData.projectNo = this.site()?.projectNo || '';
+          // 只在新建表單時自動帶入 currentSite 的 projectName 到施工地點
+          this.formData.workLocation = this.site()?.projectName || '';
           await this.loadProjectWorkers(id);
         }
       }
@@ -216,8 +235,10 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
     try {
       this.formData = await this.mongodbService.getById('siteForm', formId);
 
-      // 重新載入專案工人以標記已簽名狀態
-      await this.loadProjectWorkers(this.siteId);
+      // 確保從表單數據中獲取 siteId
+      if (this.formData.siteId && !this.siteId) {
+        this.siteId = this.formData.siteId;
+      }
 
       // 生成表單 QR Code URL
       this.generateFormQrCodeUrl();
@@ -449,9 +470,9 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
   // 生成表單 QR Code URL
   private generateFormQrCodeUrl(): void {
     if (this.formId) {
-      // 使用絕對 URL，指向不需要登入的路由
+      // 使用絕對 URL，指向最簡化的工人簽名路由（不需要登入，無側邊選單）
       const baseUrl = window.location.origin;
-      this.formQrCodeUrl = `${baseUrl}/site/${this.siteId}/hazardNotice/${this.formId}`;
+      this.formQrCodeUrl = `${baseUrl}/hazardNotice/${this.formId}`;
     }
   }
 

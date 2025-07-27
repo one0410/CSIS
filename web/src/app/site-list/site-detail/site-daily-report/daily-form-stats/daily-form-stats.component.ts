@@ -358,7 +358,7 @@ export class DailyFormStatsComponent implements OnInit, OnChanges, OnDestroy {
     // 導航到表單列表頁面，並設置篩選條件
     const currentSite = this.currentSiteService.currentSite();
     if (currentSite) {
-      this.router.navigate(['/site', currentSite._id, 'formList'], {
+      this.router.navigate(['/site', currentSite._id, 'forms'], {
         queryParams: { 
           formType: formType,
           date: this.selectedDate

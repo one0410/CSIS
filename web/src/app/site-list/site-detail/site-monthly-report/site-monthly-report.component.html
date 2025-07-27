@@ -96,19 +96,7 @@
         </div>
         
         <div class="col-lg-6 mb-3">
-          <div class="card h-100">
-            <div class="card-header">
-              <h6 class="mb-0">
-                <i class="fas fa-shield-alt me-2"></i>月度安全績效
-              </h6>
-            </div>
-            <div class="card-body">
-              <div class="alert alert-info mb-0">
-                <i class="fas fa-info-circle me-2"></i>
-                此功能尚未實作，將顯示月度安全績效分析。
-              </div>
-            </div>
-          </div>
+          <app-monthly-excellent-contractors [selectedMonth]="selectedMonth()"></app-monthly-excellent-contractors>
         </div>
       </div>
     </div>

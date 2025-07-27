@@ -28,7 +28,7 @@ interface ProjectWorker extends Worker {
   hasSigned?: boolean;
 }
 
-interface ToolboxMeetingForm extends SiteForm {
+export interface ToolboxMeetingForm extends SiteForm {
   formType: 'toolboxMeeting';
   projectNo: string;
   projectName: string;
