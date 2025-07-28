@@ -1,6 +1,6 @@
 <nav class="navbar bg-light">
   <div class="container-fluid d-flex flex-nowrap align-items-center">
-    <button class="navbar-toggler flex-shrink-0" type="button" (click)="toggleMenu()" title="打開選單">
+    <button class="btn btn-sm btn-outline-secondary navbar-toggler flex-shrink-0" type="button" (click)="toggleMenu()" title="打開選單">
       <i class="fas fa-bars"></i>
     </button>
 
@@ -8,73 +8,69 @@
     <div class="d-flex align-items-center gap-2">
       <!-- 工地信息和選擇按鈕 -->
       @if (currentSite()) {
-      <div class="d-flex flex-row align-items-center site-info">
-        <span class="site-name fs-6 m-2">{{ currentSite()?.projectName }}</span>
-        <button class="btn btn-sm btn-outline-primary" (click)="goToSiteSelector()" title="切換工地">
-          <i class="fas fa-city me-1"></i>
-          <span class="d-none d-sm-inline ms-1">切換工地</span>
-        </button>
-      </div>
+      <span class="site-name fs-6 m-2">{{ currentSite()?.projectName }}</span>
+      <button class="btn btn-sm btn-outline-primary" (click)="goToSiteSelector()" title="切換工地">
+        <i class="fas fa-city me-1"></i>
+        <span class="d-none d-sm-inline ms-1">切換工地</span>
+      </button>
       }
 
       <!-- 系統管理選單 - 只有管理員才能看到 -->
-      <div class="d-flex align-items-center gap-1">
-        @if (currentUser()?.role === 'admin' || currentUser()?.role === 'manager' || currentUser()?.role === 'secretary')
-        {
-        <!-- 總覽按鈕 -->
-        <a class="btn btn-sm btn-outline-success" routerLink="/dashboard" title="總覽">
-          <i class="fas fa-home"></i><span class="d-none d-sm-inline ms-1">總覽</span>
-        </a>
-        }
-        @if (currentUser()?.role === 'admin' || currentUser()?.role === 'manager')
-        {
-        <!-- 系統管理下拉選單 -->
-        <div class="dropdown">
-          <button class="btn btn-sm btn-outline-info dropdown-toggle" type="button" id="systemDropdown"
-            aria-expanded="false" (click)="toggleSystemMenu()">
-            <i class="fas fa-cog"></i><span class="d-none d-sm-inline ms-1">系統管理</span>
-          </button>
-          <ul class="dropdown-menu" id="systemMenu" aria-labelledby="systemDropdown">
-            <li><a class="dropdown-item" routerLink="/admin/sitelist">工地管理</a></li>
-            <li><a class="dropdown-item" routerLink="/admin/user">使用者管理</a></li>
-            <li><a class="dropdown-item" routerLink="/admin/worker">人才管理</a></li>
-            <li>
-              <a class="dropdown-item d-flex align-items-center justify-content-between" routerLink="/admin/feedback">
-                <span>意見箱管理</span>
-                @if (pendingFeedbackCount() > 0) {
-                  <span class="badge bg-danger rounded-pill">{{ pendingFeedbackCount() }}</span>
-                }
-              </a>
-            </li>
-          </ul>
-        </div>
-        }
+      @if (currentUser()?.role === 'admin' || currentUser()?.role === 'manager' || currentUser()?.role === 'secretary')
+      {
+      <!-- 總覽按鈕 -->
+      <a class="btn btn-sm btn-outline-success" routerLink="/dashboard" title="總覽">
+        <i class="fas fa-home"></i><span class="d-none d-sm-inline ms-1">總覽</span>
+      </a>
+      }
+      @if (currentUser()?.role === 'admin' || currentUser()?.role === 'manager')
+      {
+      <!-- 系統管理下拉選單 -->
+      <div class="dropdown">
+        <button class="btn btn-sm btn-outline-info dropdown-toggle" type="button" id="systemDropdown"
+          aria-expanded="false" (click)="toggleSystemMenu()">
+          <i class="fas fa-cog"></i><span class="d-none d-sm-inline ms-1">系統管理</span>
+        </button>
+        <ul class="dropdown-menu" id="systemMenu" aria-labelledby="systemDropdown">
+          <li><a class="dropdown-item" routerLink="/admin/sitelist">工地管理</a></li>
+          <li><a class="dropdown-item" routerLink="/admin/user">使用者管理</a></li>
+          <li><a class="dropdown-item" routerLink="/admin/worker">人才管理</a></li>
+          <li>
+            <a class="dropdown-item d-flex align-items-center justify-content-between" routerLink="/admin/feedback">
+              <span>意見箱管理</span>
+              @if (pendingFeedbackCount() > 0) {
+              <span class="badge bg-danger rounded-pill">{{ pendingFeedbackCount() }}</span>
+              }
+            </a>
+          </li>
+        </ul>
       </div>
+      }
     </div>
 
     <span class="flex-grow-1"></span>
     <!-- 最右邊人頭, 點擊後會跳出 profile, logout 選單 -->
-    <div class="d-flex justify-content-end align-items-center position-relative flex-shrink-0" 
-         data-profile-menu (click)="toggleProfileMenu()" style="cursor: pointer">
-      <span class="me-2 d-none d-lg-inline">
+    <div class="d-flex justify-content-end align-items-center position-relative flex-shrink-0" data-profile-menu
+      (click)="toggleProfileMenu()" style="cursor: pointer">
+      <span class="me-2 d-none d-sm-inline">
         @if (currentUser()) {
         {{ currentUser()?.name }} {{ getRoleDisplay(currentUser()?.role || '') }}，{{ greeting }}
         } @else {
         訪客，{{ greeting }}
         }
       </span>
-      
+
       <!-- 動態頭像顯示 -->
       @if (currentUser()?.avatar) {
-        <img [src]="getUserAvatar()" alt="user avatar" class="img-fluid rounded-circle border"
-          style="width: 36px; height: 36px; object-fit: cover;" />
+      <img [src]="getUserAvatar()" alt="user avatar" class="img-fluid rounded-circle border"
+        style="width: 32px; height: 32px; object-fit: cover;" />
       } @else {
-        <div class="avatar-placeholder rounded-circle border d-flex align-items-center justify-content-center"
-          style="width: 36px; height: 36px; background: linear-gradient(135deg, #3f51b5, #7986cb); color: white; font-weight: bold; font-size: 14px;">
-          {{ getUserInitial() }}
-        </div>
+      <div class="avatar-placeholder rounded-circle border d-flex align-items-center justify-content-center"
+        style="width: 32px; height: 32px; background: linear-gradient(135deg, #3f51b5, #7986cb); color: white; font-weight: bold; font-size: 12px;">
+        {{ getUserInitial() }}
+      </div>
       }
-      
+
       <div class="profile-menu position-absolute p-0 mt-2" style="top: 100%; right: 0;" id="profileMenu">
         <a routerLink="/feedback" title="意見箱">
           <i class="fas fa-comments"></i>意見箱

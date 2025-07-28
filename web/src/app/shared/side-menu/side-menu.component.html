@@ -27,37 +27,37 @@
           <div class="accordion-body p-0">
             <div class="d-flex flex-column ps-4">
               <!-- 工地詳情選單 -->
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'overview']" routerLinkActive="active">工地總覽</a>
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'dashboard']" routerLinkActive="active">Dashboard</a>
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'schedule']" routerLinkActive="active">進度表</a>
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'photos']" routerLinkActive="active">相片</a>
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'hazardNotice']" routerLinkActive="active">危害告知</a>
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'training']" routerLinkActive="active">教育訓練</a>
-              <a class="nav-link py-2 d-flex justify-content-between align-items-center" [routerLink]="['/site', siteId, 'equipment']" routerLinkActive="active">
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'overview']" routerLinkActive="active" (click)="onNavLinkClick()">工地總覽</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'dashboard']" routerLinkActive="active" (click)="onNavLinkClick()">Dashboard</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'schedule']" routerLinkActive="active" (click)="onNavLinkClick()">進度表</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'photos']" routerLinkActive="active" (click)="onNavLinkClick()">相片</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'hazardNotice']" routerLinkActive="active" (click)="onNavLinkClick()">危害告知</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'training']" routerLinkActive="active" (click)="onNavLinkClick()">教育訓練</a>
+              <a class="nav-link py-2 d-flex justify-content-between align-items-center" [routerLink]="['/site', siteId, 'equipment']" routerLinkActive="active" (click)="onNavLinkClick()">
                 <span>機具管理</span>
                 @if (disqualifiedEquipmentCount() > 0) {
                   <span class="badge bg-danger">{{ disqualifiedEquipmentCount() }}</span>
                 }
               </a>
-              <a class="nav-link py-2 d-flex justify-content-between align-items-center" [routerLink]="['/site', siteId, 'forms']" routerLinkActive="active">
+              <a class="nav-link py-2 d-flex justify-content-between align-items-center" [routerLink]="['/site', siteId, 'forms']" routerLinkActive="active" (click)="onNavLinkClick()">
                 <span>工地表單</span>
                 @if (pendingFormsCount() > 0) {
                   <span class="badge bg-warning text-dark">{{ pendingFormsCount() }}</span>
                 }
               </a>
               <!-- <a class="nav-link py-2" [routerLink]="['/site', siteId, 'blankForms']" routerLinkActive="active">空白表單</a> -->
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'userList']" routerLinkActive="active">使用者</a>
-              <a class="nav-link py-2 d-flex justify-content-between align-items-center" [routerLink]="['/site', siteId, 'workerList']" routerLinkActive="active">
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'userList']" routerLinkActive="active" (click)="onNavLinkClick()">使用者</a>
+              <a class="nav-link py-2 d-flex justify-content-between align-items-center" [routerLink]="['/site', siteId, 'workerList']" routerLinkActive="active" (click)="onNavLinkClick()">
                 <span>人才列表</span>
                 @if (workersWithoutHazardNoticeCount() > 0) {
                   <span class="badge bg-danger">{{ workersWithoutHazardNoticeCount() }}</span>
                 }
               </a>
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'visitorList']" routerLinkActive="active">訪客列表</a>
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'accidentList']" routerLinkActive="active">工安事故</a>
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'daily-report']" routerLinkActive="active">日報表</a>
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'weekly-report']" routerLinkActive="active">週報表</a>
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'monthly-report']" routerLinkActive="active">月報表</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'visitorList']" routerLinkActive="active" (click)="onNavLinkClick()">訪客列表</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'accidentList']" routerLinkActive="active" (click)="onNavLinkClick()">工安事件(故)</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'daily-report']" routerLinkActive="active" (click)="onNavLinkClick()">日報表</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'weekly-report']" routerLinkActive="active" (click)="onNavLinkClick()">週報表</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'monthly-report']" routerLinkActive="active" (click)="onNavLinkClick()">月報表</a>
               <!-- <a
                 href="#"
                 class="nav-link py-2"

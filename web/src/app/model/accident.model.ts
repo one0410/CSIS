@@ -13,7 +13,7 @@ export interface Accident {
   
   // 事故分類
   severity: 'minor' | 'moderate' | 'serious' | 'critical'; // 事故嚴重程度
-  category: 'injury' | 'near_miss' | 'property_damage' | 'environmental' | 'other'; // 事故類別
+  category: 'event' | 'accident'; // 類別
   
   // 處理狀態
   status: 'reported' | 'investigating' | 'resolved' | 'closed'; // 處理狀態

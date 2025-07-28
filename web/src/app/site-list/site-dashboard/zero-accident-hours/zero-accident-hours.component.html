@@ -1,0 +1,38 @@
+<div class="info-card">
+  <h3 class="card-title">
+    工安零事故時數
+  </h3>
+  <div class="card-content">
+    @if (loading()) {
+      <div class="text-center py-4">
+        <div class="spinner-border text-success" role="status">
+          <span class="visually-hidden">載入中...</span>
+        </div>
+      </div>
+    } @else {
+      <!-- 主要統計內容 -->
+      <div class="stat-content mb-3">
+        <div class="stat-tile-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="large-value">{{ zeroAccidentHours() }}</div>
+        <div class="stat-subtitle">連續安全小時</div>
+      </div>
+      
+      <!-- 詳細資訊 -->
+      <div class="text-center">
+        @if (lastAccidentDate()) {
+          <small class="text-muted">
+            <i class="fas fa-calendar-alt me-1"></i>
+            自 {{ lastAccidentDate() | date : "yyyy/MM/dd HH:mm" }} 以來
+          </small>
+        } @else {
+          <small class="text-success">
+            <i class="fas fa-star me-1"></i>
+            專案開始以來零事故
+          </small>
+        }
+      </div>
+    }
+  </div>
+</div> 

@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, Input, computed } from '@angular/core';
+import { Component, AfterViewInit, Input, Output, EventEmitter, computed } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CurrentSiteService } from '../../services/current-site.service';
 import { AuthService } from '../../services/auth.service';
@@ -13,6 +13,7 @@ import { AuthService } from '../../services/auth.service';
 export class SideMenuComponent implements AfterViewInit {
   @Input() isMenuOpen: boolean = false;
   @Input() siteId: string | null = null;
+  @Output() menuClose = new EventEmitter<void>();
   
   currentSite = computed(() => this.currentSiteService.currentSite());
   disqualifiedEquipmentCount = computed(() => this.currentSiteService.disqualifiedEquipmentCount());
@@ -62,6 +63,7 @@ export class SideMenuComponent implements AfterViewInit {
   
   closeMenu() {
     document.getElementById('container')?.classList.remove('menu-open');
+    this.menuClose.emit();
   }
 
   // 處理導航連結點擊，在小螢幕時自動關閉選單

@@ -4,7 +4,7 @@
 
   <div class="d-flex flex-fill overflow-hidden" style="min-height: 0;">
     <!-- 左侧菜单组件 -->
-    <app-side-menu [isMenuOpen]="isMenuOpen" [siteId]="siteId"></app-side-menu>
+    <app-side-menu [isMenuOpen]="isMenuOpen" [siteId]="siteId" (menuClose)="onMenuClose()"></app-side-menu>
 
     <!-- 右側內容區 -->
     <div class="flex-fill" style="overflow-y: auto">

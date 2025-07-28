@@ -89,6 +89,10 @@ export class HomeComponent implements OnInit {
     }
   }
 
+  onMenuClose() {
+    this.isMenuOpen = false;
+  }
+
   toggleProfileMenu() {
     document.getElementById('profileMenu')?.classList.toggle('show');
   }

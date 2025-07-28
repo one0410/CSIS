@@ -6,9 +6,10 @@ import { DatePipe, CommonModule } from '@angular/common';
 import { Site } from '../site-list.component';
 import { MongodbService } from '../../services/mongodb.service';
 import { WeatherService } from '../../services/weather.service';
-import { AccidentService } from '../../services/accident.service';
+
 import { WorkerCountService, ContractorWorkerCount } from '../../services/worker-count.service';
 import { ProgressTrendChartComponent } from '../../shared/progress-trend-chart/progress-trend-chart.component';
+import { ZeroAccidentHoursComponent } from './zero-accident-hours/zero-accident-hours.component';
 import dayjs from 'dayjs';
 
 // 作業類別統計介面
@@ -31,7 +32,7 @@ interface ContractorWorkerStat {
 
 @Component({
   selector: 'app-site-dashboard',
-  imports: [ProgressTrendChartComponent, CommonModule, DatePipe],
+  imports: [ProgressTrendChartComponent, ZeroAccidentHoursComponent, CommonModule],
   templateUrl: './site-dashboard.component.html',
   styleUrl: './site-dashboard.component.scss',
 })
@@ -50,22 +51,18 @@ export class SiteDashboardComponent implements OnInit {
   todayFlawCount: number = 0;
   currentProjectProgress: number = 0;
   todayWeather: string = '';
-  zeroAccidentHours: number = 0;
-  lastAccidentDate: Date | null = null;
   
   // 許可單作業類別統計
   permitCategoryStats: PermitCategoryStat[] = [];
   
   // 廠商工人統計
   contractorWorkerStats: ContractorWorkerStat[] = [];
-  
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private mongodbService: MongodbService,
     private weatherService: WeatherService,
-    private accidentService: AccidentService,
     private workerCountService: WorkerCountService
   ) {
     this.todayDate = new Date().toLocaleDateString('zh-TW', {
@@ -114,8 +111,7 @@ export class SiteDashboardComponent implements OnInit {
             // 計算當前工程進度
             this.calculateCurrentProgress();
 
-            // 計算工安零事故時數
-            this.calculateZeroAccidentHours();
+            // 移除零事故時數計算，改用獨立元件
 
             // 計算廠商工人統計
             this.calculateWorkerStats();
@@ -699,67 +695,7 @@ export class SiteDashboardComponent implements OnInit {
     }
   }
 
-  // 計算工安零事故時數
-  async calculateZeroAccidentHours(): Promise<void> {
-    if (!this.siteId || !this.site) return;
-    
-    try {
-      console.log('🏗️ Dashboard: 計算零事故時數...');
-      
-      // 檢查並處理專案開始日期
-      let projectStartDate: Date;
-      if (this.site.startDate) {
-        projectStartDate = new Date(this.site.startDate);
-        if (isNaN(projectStartDate.getTime())) {
-          console.error('❌ 專案開始日期無效:', this.site.startDate);
-          projectStartDate = new Date(); // 使用當前日期作為備用
-        }
-      } else {
-        console.warn('⚠️ 專案沒有設定開始日期，使用當前日期');
-        projectStartDate = new Date();
-      }
-      
-      this.zeroAccidentHours = await this.accidentService.getZeroAccidentHours(this.siteId, projectStartDate);
-      console.log('✅ Dashboard: 零事故時數 =', this.zeroAccidentHours, '小時');
-      
-      // 取得最後一次事故的完整日期時間
-      const latestAccident = await this.accidentService.getLatestAccidentBySite(this.siteId);
-      if (latestAccident) {
-        // 結合日期和時間建立完整的事故發生時間
-        let dateStr = dayjs(latestAccident.incidentDate).format('YYYY-MM-DD');
-        
-        if (dateStr) {
-          // 處理時間格式 - 確保是 HH:MM 格式
-          let timeStr = latestAccident.incidentTime || '00:00';
-          if (!timeStr.match(/^\d{2}:\d{2}$/)) {
-            console.warn('⚠️ Dashboard: 事故時間格式不正確，使用 00:00:', timeStr);
-            timeStr = '00:00';
-          }
-          
-          // 建立包含完整日期和時間的 Date 物件
-          const fullAccidentDateTime = new Date(`${dateStr}T${timeStr}:00`);
-          
-          if (!isNaN(fullAccidentDateTime.getTime())) {
-            this.lastAccidentDate = fullAccidentDateTime;
-            console.log('📅 Dashboard: 最後事故時間:', fullAccidentDateTime.toLocaleString());
-          } else {
-            console.error('❌ Dashboard: 無法解析完整事故日期時間:', dateStr, timeStr);
-            this.lastAccidentDate = null;
-          }
-        } else {
-          console.error('❌ Dashboard: 無法解析事故日期:', latestAccident.incidentDate);
-          this.lastAccidentDate = null;
-        }
-      } else {
-        console.log('✅ Dashboard: 沒有事故記錄');
-        this.lastAccidentDate = null;
-      }
-    } catch (error) {
-      console.error('計算工安零事故時數時出錯:', error);
-      this.zeroAccidentHours = 0;
-      this.lastAccidentDate = null;
-    }
-  }
+
 
   // 計算廠商工人統計
   async calculateWorkerStats(): Promise<void> {

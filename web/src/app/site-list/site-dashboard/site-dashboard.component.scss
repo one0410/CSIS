@@ -46,10 +46,28 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
 // 基本樣式
 .dashboard-container {
   padding: 24px;
-  background: linear-gradient(135deg, $background-color 0%, #1a202c 100%);
-  color: $text-primary;
+  background: linear-gradient(135deg, $background-color 0%, #1a202c 100%) !important;
+  color: $text-primary !important;
   min-height: 100vh;
   overflow-y: auto;
+  
+  // 強制覆蓋所有子元素的文字顏色
+  * {
+    color: inherit !important;
+  }
+  
+  // 確保所有文字元素都使用深色主題顏色
+  h1, h2, h3, h4, h5, h6 {
+    color: $text-primary !important;
+  }
+  
+  p, span, div {
+    color: $text-primary !important;
+  }
+  
+  small {
+    color: $text-secondary !important;
+  }
   
   // 添加微妙的紋理效果
   background-image: 
@@ -102,16 +120,35 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
 
 // 通用卡片樣式
 .info-card {
-  background: $card-background;
-  border: 1px solid $border-color-light;
-  border-radius: $border-radius;
-  box-shadow: $shadow-md;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: $border-radius !important;
+  box-shadow: 
+    0 10px 25px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05) !important;
   transition: $transition;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   backdrop-filter: blur(10px);
   position: relative;
+  color: $text-primary !important;
+  
+  // 科技感背景效果
+  &::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+    animation: glow 8s ease-in-out infinite alternate;
+    z-index: 1;
+    pointer-events: none;
+  }
   
   // 頂部條紋效果
   &:before {
@@ -124,13 +161,15 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
     background: linear-gradient(90deg, $primary-color 0%, $secondary-color 50%, $accent-color 100%);
     opacity: 0;
     transition: opacity 0.3s ease;
+    z-index: 2;
   }
   
   &:hover {
     transform: translateY(-4px);
-    box-shadow: $shadow-xl;
-    background: $card-background-hover;
-    border-color: $border-color;
+    box-shadow: 
+      0 15px 35px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
     
     &:before {
       opacity: 0.8;
@@ -148,27 +187,44 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
     cursor: pointer;
     position: relative;
     
-    &:after {
-      content: '';
+    // 可點擊區塊的展開圖示
+    .expand-icon {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
+      bottom: 0.5rem;
+      right: 0.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.8) 0%, rgba(16, 185, 129, 0.8) 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.7;
+      transition: all 0.3s ease;
+      z-index: 10;
+      
+      i {
+        font-size: 14px;
+        color: white;
+      }
     }
     
-    &:hover:after {
+    &:hover .expand-icon {
       opacity: 1;
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
     }
     
-    &:active:after {
-      background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%);
-      opacity: 1;
+    &:active .expand-icon {
+      transform: scale(0.95);
     }
+  }
+  
+  // 內容層級
+  .card-title,
+  .card-content {
+    position: relative;
+    z-index: 3;
   }
   
   .card-title {
@@ -176,10 +232,11 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
     font-weight: 600;
     padding: 16px 20px;
     margin: 0;
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
-    border-bottom: 1px solid $border-color;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(51, 65, 85, 0.8) 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     position: relative;
-    color: $text-primary;
+    color: $text-primary !important;
+    z-index: 3;
     
     &:hover {
       .info-icon-right {
@@ -221,6 +278,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
     display: flex;
     flex-direction: column;
     justify-content: center;
+    color: $text-primary !important;
     
     // 在小螢幕上減少 padding
     @media (max-width: 480px) {
@@ -246,6 +304,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
     // 如果內容太長，顯示省略號
     overflow: hidden;
     text-overflow: ellipsis;
+    color: $text-primary !important;
     
     // 在極小螢幕上進一步縮小
     @media (max-width: 480px) {
@@ -270,7 +329,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
   
   .stat-subtitle {
     font-size: 0.9rem;
-    color: $text-secondary;
+    color: $text-secondary !important;
     margin-top: 8px;
     font-weight: 500;
   }
@@ -325,7 +384,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
     font-size: 2.4rem;
     font-weight: 700;
     margin-bottom: 12px;
-    color: $primary-light;
+    color: $primary-light !important;
     text-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
   }
   
@@ -361,12 +420,12 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
       font-size: 1.8rem;
       font-weight: 700;
       margin-bottom: 6px;
-      color: $text-primary;
+      color: $text-primary !important;
     }
     
     .stat-label {
       font-size: 0.85rem;
-      color: $text-secondary;
+      color: $text-secondary !important;
       font-weight: 500;
     }
     
@@ -416,6 +475,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  color: $text-primary !important;
   
   .weather-icon {
     font-size: 4rem;
@@ -432,7 +492,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
     font-size: 1.5rem;
     font-weight: 600;
     text-align: center;
-    color: $text-primary;
+    color: $text-primary !important;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
 }
@@ -447,12 +507,259 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
   }
 }
 
+// 科技感發光動畫
+@keyframes glow {
+  0% {
+    opacity: 0.3;
+    transform: rotate(0deg) scale(1);
+  }
+  100% {
+    opacity: 0.6;
+    transform: rotate(10deg) scale(1.05);
+  }
+}
+
+// 子元件樣式穿透 - 確保 zero-accident-hours 元件能夠使用父層的樣式
+::ng-deep app-zero-accident-hours {
+  .info-card {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: $border-radius !important;
+    box-shadow: 
+      0 10px 25px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+    transition: $transition;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(10px);
+    position: relative;
+    color: $text-primary !important;
+    
+    // 科技感背景效果
+    &::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+      animation: glow 8s ease-in-out infinite alternate;
+      z-index: 1;
+      pointer-events: none;
+    }
+    
+    // 頂部條紋效果
+    &:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, $primary-color 0%, $secondary-color 50%, $accent-color 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 2;
+    }
+    
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      
+      &:before {
+        opacity: 0.8;
+      }
+    }
+  }
+  
+  .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 16px 20px;
+    margin: 0;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(51, 65, 85, 0.8) 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    position: relative;
+    color: $text-primary !important;
+    z-index: 3;
+  }
+  
+  .card-content {
+    padding: 20px !important;
+    flex: 1 !important;
+    position: relative !important;
+    z-index: 3 !important;
+    color: $text-primary !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+  
+  .stat-content {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    color: $text-primary !important;
+    flex: 1 !important;
+  }
+  
+  .stat-tile-icon {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin-bottom: 20px !important;
+    position: relative !important;
+    border: 2px solid rgba(16, 185, 129, 0.3) !important;
+    transition: all 0.3s ease !important;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(52, 211, 153, 0.1) 100%) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    
+    &:before {
+      content: '' !important;
+      position: absolute !important;
+      top: -3px !important;
+      left: -3px !important;
+      right: -3px !important;
+      bottom: -3px !important;
+      border-radius: 50% !important;
+      background: linear-gradient(135deg, $secondary-color 0%, #34d399 100%) !important;
+      opacity: 0 !important;
+      transition: opacity 0.3s ease !important;
+    }
+    
+    &:hover {
+      transform: scale(1.05) !important;
+      
+      &:before {
+        opacity: 1 !important;
+      }
+      
+      i {
+        transform: scale(1.1) !important;
+      }
+    }
+    
+    i {
+      font-size: 36px !important;
+      color: #34d399 !important;
+      position: relative !important;
+      z-index: 1 !important;
+      transition: all 0.3s ease !important;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+    }
+  }
+  
+  .large-value,
+  .stat-content .large-value,
+  .card-content .large-value {
+    font-size: clamp(1.5rem, 3vw, 2.2rem) !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    margin: 16px 0 !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    color: $text-primary !important;
+    line-height: 1 !important;
+    
+    // 在極小螢幕上進一步縮小
+    @media (max-width: 480px) {
+      &, .stat-content &, .card-content & {
+        font-size: clamp(1.2rem, 3.2vw, 1.6rem) !important;
+      }
+    }
+    
+    // 在小到中等螢幕上的調整
+    @media (min-width: 481px) and (max-width: 768px) {
+      &, .stat-content &, .card-content & {
+        font-size: clamp(1.4rem, 2.8vw, 1.8rem) !important;
+      }
+    }
+    
+    // 在中等到大螢幕上的調整
+    @media (min-width: 769px) and (max-width: 1199px) {
+      &, .stat-content &, .card-content & {
+        font-size: clamp(1.6rem, 2.2vw, 2rem) !important;
+      }
+    }
+    
+    // 在超大螢幕上才使用較大字體
+    @media (min-width: 1200px) {
+      &, .stat-content &, .card-content & {
+        font-size: clamp(1.8rem, 1.8vw, 2.4rem) !important;
+      }
+    }
+  }
+  
+  .stat-subtitle {
+    font-size: 0.9rem !important;
+    color: $text-secondary !important;
+    margin-top: 8px !important;
+    font-weight: 500 !important;
+    margin-bottom: 0 !important;
+  }
+  
+  // 載入狀態樣式
+  .spinner-border {
+    color: $secondary-color !important;
+  }
+  
+  // 詳細資訊樣式
+  .text-muted {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+  
+  .text-success {
+    color: $secondary-color !important;
+  }
+}
+
 // 統計網格
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   margin-bottom: 24px;
+  
+  // 確保所有卡片有統一的最小高度
+  .info-card, 
+  app-zero-accident-hours {
+    min-height: 280px !important;
+    
+    .info-card {
+      height: 100%;
+      min-height: 280px !important;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+  
+  .info-card {
+    min-height: 280px !important;
+    display: flex;
+    flex-direction: column;
+    
+    .card-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+  }
 }
 
 // 統計內容
@@ -462,6 +769,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
   align-items: center;
   justify-content: center;
   text-align: center;
+  color: $text-primary !important;
   
   .stat-tile-icon {
     width: 80px;
@@ -508,7 +816,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); // 更流暢的過渡
   
   .stat-subtitle {
     font-size: 0.9rem;
-    color: $text-secondary;
+    color: $text-secondary !important;
     margin-top: 8px;
     font-weight: 500;
   }

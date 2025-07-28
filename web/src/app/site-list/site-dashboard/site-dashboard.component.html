@@ -70,31 +70,17 @@
         </div>
         <div class="weather-value">{{ todayWeather }}</div>
       </div>
+      <!-- 展開圖示 -->
+      <div class="expand-icon">
+        <i class="fas fa-external-link-alt"></i>
+      </div>
     </div>
   </div>
 
   <!-- 其他統計資訊 -->
   <div class="stats-grid">
-    <div class="info-card">
-      <h3 class="card-title">
-        工安零事故時數
-        <!-- <span class="info-icon-right"
-          ><i class="fas fa-info-circle" title="顯示距離最後一次事故的連續安全時數"></i
-        ></span> -->
-      </h3>
-      <div class="card-content stat-content">
-        <div class="stat-tile-icon">
-          <i class="fas fa-shield-alt text-success"></i>
-        </div>
-        <div class="large-value text-success">{{ zeroAccidentHours }}</div>
-        <div class="stat-subtitle">連續安全小時</div>
-        @if (lastAccidentDate) {
-          <small class="text-muted">自 {{ lastAccidentDate | date : "yyyy/MM/dd HH:mm" }} 以來</small>
-        } @else {
-          <small class="text-success">專案開始以來零事故</small>
-        }
-      </div>
-    </div>
+    <app-zero-accident-hours>
+    </app-zero-accident-hours>
 
     <div
       class="info-card"
@@ -157,6 +143,10 @@
             <small>許可單無作業類別資料</small>
           </div>
         }
+      </div>
+      <!-- 展開圖示 -->
+      <div class="expand-icon">
+        <i class="fas fa-external-link-alt"></i>
       </div>
     </div>
 
@@ -231,6 +221,10 @@
         </div>
         <div class="large-value">{{ todayFlawCount }}</div>
         <div class="stat-subtitle">今日缺失單數</div>
+      </div>
+      <!-- 展開圖示 -->
+      <div class="expand-icon">
+        <i class="fas fa-external-link-alt"></i>
       </div>
     </div>
   </div>

@@ -109,7 +109,7 @@ export const routes: Routes = [
         path: 'site/:id',
         loadComponent: () => import('./site-list/site-detail/site-detail.component').then(m => m.SiteDetailComponent),
         children: [
-          { path: '', redirectTo: 'overview', pathMatch: 'full' },
+          { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
           { 
             path: 'overview', 
             loadComponent: () => import('./site-list/site-detail/site-basic-info/site-basic-info.component').then(m => m.SiteBasicInfoComponent)

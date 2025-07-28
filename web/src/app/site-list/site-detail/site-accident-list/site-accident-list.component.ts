@@ -20,9 +20,11 @@ export class SiteAccidentListComponent implements OnInit {
   // 狀態管理
   loading = signal(false);
   showModal = signal(false);
+  showViewModal = signal(false);
   siteId = signal('');
   accidents = signal<Accident[]>([]);
   editingAccident = signal<Accident>({} as Accident);
+  viewingAccident = signal<Accident>({} as Accident);
   accidentDateStr = '';
 
   // 計算屬性
@@ -72,7 +74,7 @@ export class SiteAccidentListComponent implements OnInit {
       reporterTitle: '',
       reporterPhone: '',
       severity: 'minor',
-      category: 'other',
+      category: 'event',
       status: 'reported',
       siteId: this.siteId(),
       location: '',
@@ -159,8 +161,13 @@ export class SiteAccidentListComponent implements OnInit {
   }
 
   viewAccidentDetail(accident: Accident) {
-    // 可以實作詳細檢視modal或跳轉到詳細頁面
-    alert(`事故詳細資訊：\n\n日期時間：${new Date(accident.incidentDate).toLocaleDateString()} ${accident.incidentTime}\n事故內容：${accident.description}\n回報人員：${accident.reporterName}\n嚴重程度：${this.getSeverityText(accident.severity)}\n處理狀態：${this.getStatusText(accident.status)}`);
+    this.viewingAccident.set({ ...accident });
+    this.showViewModal.set(true);
+  }
+
+  hideViewModal() {
+    this.showViewModal.set(false);
+    this.viewingAccident.set({} as Accident);
   }
 
   private getSeverityText(severity: string): string {

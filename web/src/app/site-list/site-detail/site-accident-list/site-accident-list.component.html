@@ -4,16 +4,12 @@
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="mb-0">
           <i class="fas fa-triangle-exclamation me-2"></i>
-          工安事故列表
+          工安事件(故)列表
         </h4>
         <div class="d-flex gap-2">
-          <button
-            class="btn btn-primary"
-            (click)="showAddAccidentModal()"
-            [disabled]="loading()"
-          >
+          <button class="btn btn-primary" (click)="showAddAccidentModal()" [disabled]="loading()">
             <i class="fas fa-plus-circle me-1"></i>
-            新增事故回報
+            新增回報
           </button>
         </div>
       </div>
@@ -31,7 +27,7 @@
       @if (!loading()) { @if (accidents().length === 0) {
       <div class="text-center py-5">
         <i class="fas fa-shield-alt fs-1 text-success"></i>
-        <p class="text-muted mt-2">目前沒有工安事故記錄</p>
+        <p class="text-muted mt-2">目前沒有工安記錄</p>
         <p class="text-success mt-1">工地零事故，安全第一！</p>
       </div>
       } @else {
@@ -41,9 +37,9 @@
             <table class="table table-hover mb-0">
               <thead class="table-light">
                 <tr>
-                  <th scope="col" style="width: 15%;">事故日期</th>
+                  <th scope="col" style="width: 15%;">日期</th>
                   <th scope="col" style="width: 8%;">時間</th>
-                  <th scope="col" style="width: 25%;">事故內容</th>
+                  <th scope="col" style="width: 25%;">內容</th>
                   <th scope="col" style="width: 15%;">回報人員</th>
                   <th scope="col" style="width: 10%;">嚴重程度</th>
                   <th scope="col" style="width: 10%;">處理狀態</th>
@@ -54,10 +50,10 @@
                 @for (accident of accidents(); track accident._id) {
                 <tr class="accident-row">
                   <td>
-                                         <div class="d-flex align-items-center">
-                       <i class="fas fa-calendar me-2 text-secondary"></i>
-                       {{ accident.incidentDate | date : "yyyy/MM/dd" }}
-                     </div>
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-calendar me-2 text-secondary"></i>
+                      {{ accident.incidentDate | date : "yyyy/MM/dd" }}
+                    </div>
                   </td>
                   <td>
                     <span class="badge bg-info">{{ accident.incidentTime }}</span>
@@ -68,69 +64,57 @@
                     </div>
                   </td>
                   <td>
-                                         <div class="d-flex align-items-center">
-                       <i class="fas fa-user-circle me-2 text-secondary"></i>
-                       {{ accident.reporterName }}
-                     </div>
+                    <div class="d-flex align-items-center">
+                      <i class="fas fa-user-circle me-2 text-secondary"></i>
+                      {{ accident.reporterName }}
+                    </div>
                   </td>
                   <td>
                     @switch (accident.severity) {
-                      @case ('minor') {
-                        <span class="badge bg-warning">輕微</span>
-                      }
-                      @case ('moderate') {
-                        <span class="badge bg-secondary">中等</span>
-                      }
-                      @case ('serious') {
-                        <span class="badge bg-danger">嚴重</span>
-                      }
-                      @case ('critical') {
-                        <span class="badge bg-dark">危急</span>
-                      }
+                    @case ('minor') {
+                    <span class="badge bg-warning">輕微</span>
+                    }
+                    @case ('moderate') {
+                    <span class="badge bg-secondary">中等</span>
+                    }
+                    @case ('serious') {
+                    <span class="badge bg-danger">嚴重</span>
+                    }
+                    @case ('critical') {
+                    <span class="badge bg-dark">危急</span>
+                    }
                     }
                   </td>
                   <td>
                     @switch (accident.status) {
-                      @case ('reported') {
-                        <span class="badge bg-primary">已回報</span>
-                      }
-                      @case ('investigating') {
-                        <span class="badge bg-warning">調查中</span>
-                      }
-                      @case ('resolved') {
-                        <span class="badge bg-success">已解決</span>
-                      }
-                      @case ('closed') {
-                        <span class="badge bg-secondary">已結案</span>
-                      }
+                    @case ('reported') {
+                    <span class="badge bg-primary">已回報</span>
+                    }
+                    @case ('investigating') {
+                    <span class="badge bg-warning">調查中</span>
+                    }
+                    @case ('resolved') {
+                    <span class="badge bg-success">已解決</span>
+                    }
+                    @case ('closed') {
+                    <span class="badge bg-secondary">已結案</span>
+                    }
                     }
                   </td>
                   <td class="text-center">
                     <div class="btn-group" role="group">
-                                             <button
-                         class="btn btn-sm btn-outline-primary"
-                         (click)="viewAccidentDetail(accident)"
-                         [disabled]="loading()"
-                         title="查看詳細"
-                       >
-                         <i class="fas fa-eye"></i>
-                       </button>
-                       <button
-                         class="btn btn-sm btn-outline-warning"
-                         (click)="editAccident(accident)"
-                         [disabled]="loading()"
-                         title="編輯"
-                       >
-                         <i class="fas fa-edit"></i>
-                       </button>
-                       <button
-                         class="btn btn-sm btn-outline-danger"
-                         (click)="deleteAccident(accident)"
-                         [disabled]="loading()"
-                         title="刪除"
-                       >
-                         <i class="fas fa-trash"></i>
-                       </button>
+                      <button class="btn btn-sm btn-outline-primary" (click)="viewAccidentDetail(accident)"
+                        [disabled]="loading()" title="查看詳細">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-warning" (click)="editAccident(accident)"
+                        [disabled]="loading()" title="編輯">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger" (click)="deleteAccident(accident)"
+                        [disabled]="loading()" title="刪除">
+                        <i class="fas fa-trash"></i>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -151,57 +135,40 @@
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-                 <h5 class="modal-title">
-           <i class="fas fa-triangle-exclamation me-2"></i>
-           {{ editingAccident()._id ? '編輯事故記錄' : '新增事故回報' }}
-         </h5>
+        <h5 class="modal-title">
+          <i class="fas fa-triangle-exclamation me-2"></i>
+          {{ editingAccident()._id ? '編輯記錄' : '新增回報' }}
+        </h5>
         <button type="button" class="btn-close" (click)="hideModal()"></button>
       </div>
       <div class="modal-body">
         <form #accidentForm="ngForm" (ngSubmit)="saveAccident()">
           <div class="row">
-            <!-- 事故日期 -->
+            <!-- 日期 -->
             <div class="col-md-6 mb-3">
               <label class="form-label">
-                事故日期 <span class="text-danger">*</span>
+                日期 <span class="text-danger">*</span>
               </label>
-              <input
-                type="date"
-                class="form-control"
-                [(ngModel)]="accidentDateStr"
-                name="incidentDate"
-                required
-              />
+              <input type="date" class="form-control" [(ngModel)]="accidentDateStr" name="incidentDate" required />
             </div>
 
-            <!-- 事故時間 -->
+            <!-- 時間 -->
             <div class="col-md-6 mb-3">
               <label class="form-label">
-                事故時間 <span class="text-danger">*</span>
+                時間 <span class="text-danger">*</span>
               </label>
-              <input
-                type="time"
-                class="form-control"
-                [(ngModel)]="editingAccident().incidentTime"
-                name="incidentTime"
-                required
-              />
+              <input type="time" class="form-control" [(ngModel)]="editingAccident().incidentTime" name="incidentTime"
+                required />
             </div>
           </div>
 
           <!-- 事故內容 -->
           <div class="mb-3">
             <label class="form-label">
-              事故內容 <span class="text-danger">*</span>
+              內容 <span class="text-danger">*</span>
             </label>
-            <textarea
-              class="form-control"
-              rows="3"
-              [(ngModel)]="editingAccident().description"
-              name="description"
-              placeholder="請詳細描述事故發生的經過與情況"
-              required
-            ></textarea>
+            <textarea class="form-control" rows="3" [(ngModel)]="editingAccident().description" name="description"
+              placeholder="請詳細描述事件(故)發生的經過與情況" required></textarea>
           </div>
 
           <!-- 回報人員 -->
@@ -209,14 +176,8 @@
             <label class="form-label">
               回報人員 <span class="text-danger">*</span>
             </label>
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="editingAccident().reporterName"
-              name="reporterName"
-              placeholder="請輸入回報人員姓名"
-              required
-            />
+            <input type="text" class="form-control" [(ngModel)]="editingAccident().reporterName" name="reporterName"
+              placeholder="請輸入回報人員姓名" required />
           </div>
 
           <div class="row">
@@ -225,12 +186,7 @@
               <label class="form-label">
                 嚴重程度 <span class="text-danger">*</span>
               </label>
-              <select
-                class="form-select"
-                [(ngModel)]="editingAccident().severity"
-                name="severity"
-                required
-              >
+              <select class="form-select" [(ngModel)]="editingAccident().severity" name="severity" required>
                 <option value="">請選擇嚴重程度</option>
                 <option value="minor">輕微</option>
                 <option value="moderate">中等</option>
@@ -239,23 +195,15 @@
               </select>
             </div>
 
-            <!-- 事故類別 -->
+            <!-- 類別 -->
             <div class="col-md-6 mb-3">
               <label class="form-label">
-                事故類別 <span class="text-danger">*</span>
+                類別 <span class="text-danger">*</span>
               </label>
-              <select
-                class="form-select"
-                [(ngModel)]="editingAccident().category"
-                name="category"
-                required
-              >
-                <option value="">請選擇事故類別</option>
-                <option value="injury">人員受傷</option>
-                <option value="near_miss">虛驚事件</option>
-                <option value="property_damage">財物損失</option>
-                <option value="environmental">環境影響</option>
-                <option value="other">其他</option>
+              <select class="form-select" [(ngModel)]="editingAccident().category" name="category" required>
+                <option value="">請選擇類別為事件或事故</option>
+                <option value="event">事件</option>
+                <option value="accident">事故</option>
               </select>
             </div>
           </div>
@@ -263,25 +211,15 @@
           <!-- 發生地點 -->
           <div class="mb-3">
             <label class="form-label">發生地點</label>
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="editingAccident().location"
-              name="location"
-              placeholder="請輸入事故發生的具體地點"
-            />
+            <input type="text" class="form-control" [(ngModel)]="editingAccident().location" name="location"
+              placeholder="請輸入事故發生的具體地點" />
           </div>
 
           <!-- 備註 -->
           <div class="mb-3">
             <label class="form-label">備註</label>
-            <textarea
-              class="form-control"
-              rows="2"
-              [(ngModel)]="editingAccident().notes"
-              name="notes"
-              placeholder="其他相關資訊"
-            ></textarea>
+            <textarea class="form-control" rows="2" [(ngModel)]="editingAccident().notes" name="notes"
+              placeholder="其他相關資訊"></textarea>
           </div>
         </form>
       </div>
@@ -289,17 +227,233 @@
         <button type="button" class="btn btn-secondary" (click)="hideModal()">
           取消
         </button>
-        <button 
-          type="button" 
-          class="btn btn-primary" 
-          (click)="saveAccident()"
-          [disabled]="loading() || !isFormValid()"
-        >
-                     <i class="fas fa-check-circle me-1"></i>
-           {{ editingAccident()._id ? '更新' : '新增' }}
+        <button type="button" class="btn btn-primary" (click)="saveAccident()" [disabled]="loading() || !isFormValid()">
+          <i class="fas fa-check-circle me-1"></i>
+          {{ editingAccident()._id ? '更新' : '新增' }}
         </button>
       </div>
     </div>
   </div>
 </div>
-} 
+}
+
+<!-- 檢視事故詳細Modal -->
+@if (showViewModal()) {
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-info-circle me-2"></i>
+          詳細資訊
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="hideViewModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <!-- 基本資訊 -->
+          <div class="col-12">
+            <div class="card border-0 bg-light">
+              <div class="card-header bg-transparent border-0">
+                <h6 class="card-title mb-0">
+                  <i class="fas fa-calendar-clock me-2"></i>
+                  基本資訊
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                      <i class="fas fa-calendar me-2 text-primary"></i>
+                      <strong>發生日期：</strong>
+                      <span class="ms-2">{{ viewingAccident().incidentDate | date : "yyyy年MM月dd日" }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                      <i class="fas fa-clock me-2 text-primary"></i>
+                      <strong>發生時間：</strong>
+                      <span class="ms-2 badge bg-info">{{ viewingAccident().incidentTime }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                      <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                      <strong>嚴重程度：</strong>
+                      @switch (viewingAccident().severity) {
+                        @case ('minor') {
+                          <span class="ms-2 badge bg-warning">輕微</span>
+                        }
+                        @case ('moderate') {
+                          <span class="ms-2 badge bg-secondary">中等</span>
+                        }
+                        @case ('serious') {
+                          <span class="ms-2 badge bg-danger">嚴重</span>
+                        }
+                        @case ('critical') {
+                          <span class="ms-2 badge bg-dark">危急</span>
+                        }
+                      }
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                      <i class="fas fa-tags me-2 text-info"></i>
+                      <strong>類別：</strong>
+                      @switch (viewingAccident().category) {
+                        @case ('event') {
+                          <span class="ms-2 badge bg-danger">事件</span>
+                        }
+                        @case ('accident') {
+                          <span class="ms-2 badge bg-warning">事故</span>
+                        }
+                        @default {
+                          <span class="ms-2 badge bg-secondary">{{ viewingAccident().category }}</span>
+                        }
+                      }
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12">
+                    <div class="d-flex align-items-center mb-2">
+                      <i class="fas fa-tasks me-2 text-success"></i>
+                      <strong>處理狀態：</strong>
+                      @switch (viewingAccident().status) {
+                        @case ('reported') {
+                          <span class="ms-2 badge bg-primary">已回報</span>
+                        }
+                        @case ('investigating') {
+                          <span class="ms-2 badge bg-warning">調查中</span>
+                        }
+                        @case ('resolved') {
+                          <span class="ms-2 badge bg-success">已解決</span>
+                        }
+                        @case ('closed') {
+                          <span class="ms-2 badge bg-secondary">已結案</span>
+                        }
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 事故內容 -->
+          <div class="col-12">
+            <div class="card border-0 bg-light">
+              <div class="card-header bg-transparent border-0">
+                <h6 class="card-title mb-0">
+                  <i class="fas fa-file-text me-2"></i>
+                  事故內容
+                </h6>
+              </div>
+              <div class="card-body">
+                <p class="mb-0 text-justify">{{ viewingAccident().description }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 回報人員資訊 -->
+          <div class="col-12">
+            <div class="card border-0 bg-light">
+              <div class="card-header bg-transparent border-0">
+                <h6 class="card-title mb-0">
+                  <i class="fas fa-user-circle me-2"></i>
+                  回報人員資訊
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-2">
+                      <i class="fas fa-user me-2 text-secondary"></i>
+                      <strong>姓名：</strong>
+                      <span class="ms-2">{{ viewingAccident().reporterName }}</span>
+                    </div>
+                  </div>
+                  @if (viewingAccident().reporterTitle) {
+                  <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-2">
+                      <i class="fas fa-id-badge me-2 text-secondary"></i>
+                      <strong>職稱：</strong>
+                      <span class="ms-2">{{ viewingAccident().reporterTitle }}</span>
+                    </div>
+                  </div>
+                  }
+                  @if (viewingAccident().reporterPhone) {
+                  <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-2">
+                      <i class="fas fa-phone me-2 text-secondary"></i>
+                      <strong>電話：</strong>
+                      <span class="ms-2">{{ viewingAccident().reporterPhone }}</span>
+                    </div>
+                  </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 附加資訊 -->
+          @if (viewingAccident().location || viewingAccident().witnessCount || viewingAccident().injuredCount || viewingAccident().notes) {
+          <div class="col-12">
+            <div class="card border-0 bg-light">
+              <div class="card-header bg-transparent border-0">
+                <h6 class="card-title mb-0">
+                  <i class="fas fa-info me-2"></i>
+                  附加資訊
+                </h6>
+              </div>
+              <div class="card-body">
+                @if (viewingAccident().location) {
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fas fa-map-marker-alt me-2 text-danger"></i>
+                  <strong>發生地點：</strong>
+                  <span class="ms-2">{{ viewingAccident().location }}</span>
+                </div>
+                }
+                @if (viewingAccident().witnessCount) {
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fas fa-eye me-2 text-info"></i>
+                  <strong>目擊人數：</strong>
+                  <span class="ms-2">{{ viewingAccident().witnessCount }} 人</span>
+                </div>
+                }
+                @if (viewingAccident().injuredCount) {
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fas fa-ambulance me-2 text-danger"></i>
+                  <strong>受傷人數：</strong>
+                  <span class="ms-2">{{ viewingAccident().injuredCount }} 人</span>
+                </div>
+                }
+                @if (viewingAccident().notes) {
+                <div class="mt-2">
+                  <div class="d-flex align-items-start">
+                    <i class="fas fa-sticky-note me-2 text-warning"></i>
+                    <div>
+                      <strong>備註：</strong>
+                      <p class="ms-2 mt-1 mb-0">{{ viewingAccident().notes }}</p>
+                    </div>
+                  </div>
+                </div>
+                }
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="hideViewModal()">
+          <i class="fas fa-times me-1"></i>
+          關閉
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}
