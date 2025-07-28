@@ -13,6 +13,8 @@ import dayjs from 'dayjs';
 import { AuthService } from '../../../../services/auth.service';
 import { Worker } from '../../../../model/worker.model';
 import { SignatureData } from '../../../../model/signatureData.model';
+import { BulletinService } from '../../../../services/bulletin.service';
+import { Bulletin } from '../../../../model/bulletin.model';
 
 // 導入 Bootstrap Modal 相關類型
 declare const bootstrap: {
@@ -414,7 +416,8 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     private signatureDialog: SignatureDialogService,
     private currentSiteService: CurrentSiteService,
     private authService: AuthService,
-    private docxTemplateService: DocxTemplateService
+    private docxTemplateService: DocxTemplateService,
+    private bulletinService: BulletinService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -437,7 +440,10 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
         if (formId) {
           await this.loadFormData(formId);
         } else {
-          // 新表單：檢查 URL 查詢參數中是否有日期
+          // 新表單：載入公佈欄內容
+          await this.loadBulletinContent(id);
+          
+          // 檢查 URL 查詢參數中是否有日期
           this.route.queryParams.subscribe((queryParams) => {
             if (queryParams['date']) {
               // 從 URL 查詢參數獲取日期並設置為 applyDate
@@ -814,6 +820,64 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     } catch (error) {
       console.error('載入專案工人資料失敗', error);
     }
+  }
+
+  // 載入公佈欄內容
+  async loadBulletinContent(siteId: string): Promise<void> {
+    try {
+      // 取得尚未過期的公佈欄內容
+      const bulletins = await this.bulletinService.getBulletinsBySite(siteId);
+      
+      if (bulletins && bulletins.length > 0) {
+        // 格式化公佈欄內容
+        const bulletinContent = this.formatBulletinContent(bulletins);
+        
+        // 填入到其他溝通/協議/宣導事項欄位
+        this.meetingData.communicationItems = bulletinContent;
+        
+        console.log('已載入公佈欄內容到工具箱會議表單');
+      }
+    } catch (error) {
+      console.error('載入公佈欄內容失敗', error);
+      // 載入失敗不影響表單正常運作，僅記錄錯誤
+    }
+  }
+
+  // 格式化公佈欄內容
+  private formatBulletinContent(bulletins: Bulletin[]): string {
+    const formattedContent: string[] = [];
+    
+    bulletins.forEach((bulletin, index) => {
+      // 格式化單筆公佈欄內容
+      let bulletinText = `${index + 1}. ${bulletin.title}`;
+      
+      // 如果有內容且不是只有標題，則加入內容
+      if (bulletin.content && bulletin.content.trim() !== bulletin.title.trim()) {
+        bulletinText += `\n   ${bulletin.content}`;
+      }
+      
+      // 如果是緊急或高優先級的公告，加上標記
+      if (bulletin.priority === 'urgent') {
+        bulletinText = `【緊急】${bulletinText}`;
+      } else if (bulletin.priority === 'high') {
+        bulletinText = `【重要】${bulletinText}`;
+      }
+      
+      // 如果有過期日期，加上提醒
+      if (bulletin.expiryDate) {
+        const expiryDate = dayjs(bulletin.expiryDate).format('YYYY-MM-DD');
+        bulletinText += `\n   (有效期限：${expiryDate})`;
+      }
+      
+      formattedContent.push(bulletinText);
+    });
+    
+    // 如果有內容，在開頭加上說明
+    if (formattedContent.length > 0) {
+      return `【工地公佈欄重要事項】\n${formattedContent.join('\n\n')}\n\n【其他事項】\n`;
+    }
+    
+    return '';
   }
 
   // 工人身份驗證

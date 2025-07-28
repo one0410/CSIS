@@ -40,7 +40,9 @@
           <div class="row">
             @for (bulletin of bulletins(); track bulletin._id) {
               <div class="col-12 col-md-6 col-lg-4 mb-3">
-                <div class="card h-100 bulletin-card" [class.pinned]="bulletin.isPinned">
+                <div class="card h-100 bulletin-card" 
+                     [class.pinned]="bulletin.isPinned"
+                     [class.dropdown-active]="isDropdownOpen(bulletin._id || '')">
                   <!-- 置頂標籤 -->
                   @if (bulletin.isPinned) {
                     <div class="position-absolute top-0 start-0 p-2">
@@ -71,24 +73,29 @@
                     @if (hasManagePermission()) {
                       <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
-                                data-bs-toggle="dropdown" aria-expanded="false">
+                                data-bs-toggle="dropdown" 
+                                data-bs-boundary="viewport"
+                                data-bs-placement="bottom-end"
+                                aria-expanded="false"
+                                (click)="toggleDropdown(bulletin._id || '')"
+                                (blur)="onDropdownBlur(bulletin._id || '', $event)">
                           <i class="fas fa-ellipsis-v"></i>
                         </button>
-                        <ul class="dropdown-menu">
+                        <ul class="dropdown-menu dropdown-menu-end">
                           <li>
-                            <button class="dropdown-item" (click)="editBulletin(bulletin)">
+                            <button class="dropdown-item" (click)="editBulletin(bulletin); closeDropdown(bulletin._id || '')">
                               <i class="fas fa-edit me-2"></i>編輯
                             </button>
                           </li>
                           <li>
-                            <button class="dropdown-item" (click)="togglePin(bulletin)">
+                            <button class="dropdown-item" (click)="togglePin(bulletin); closeDropdown(bulletin._id || '')">
                               <i class="fas fa-thumbtack me-2"></i>
                               {{ bulletin.isPinned ? '取消置頂' : '置頂' }}
                             </button>
                           </li>
                           <li><hr class="dropdown-divider"></li>
                           <li>
-                            <button class="dropdown-item text-danger" (click)="deleteBulletin(bulletin)">
+                            <button class="dropdown-item text-danger" (click)="deleteBulletin(bulletin); closeDropdown(bulletin._id || '')">
                               <i class="fas fa-trash me-2"></i>刪除
                             </button>
                           </li>

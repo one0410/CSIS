@@ -1,6 +1,35 @@
+// 確保容器不會裁切dropdown
+.container-fluid {
+  overflow: visible !important;
+}
+
+.row {
+  overflow: visible !important;
+}
+
+.col-12, .col-md-6, .col-lg-4 {
+  overflow: visible !important;
+}
+
+// 確保卡片在dropdown展開時不會遮蔽選單
 .bulletin-card {
   transition: all 0.3s ease;
   border: 1px solid #dee2e6;
+  position: relative;
+  z-index: 1; // 降低預設z-index
+  overflow: visible !important; // 確保dropdown不被裁切
+  
+  // 當卡片有dropdown-active class時，提高z-index
+  &.dropdown-active {
+    z-index: 9998; // 比dropdown-menu稍低
+  }
+  
+  // 確保卡片不會創建新的stacking context影響dropdown
+  .card-header {
+    position: relative;
+    z-index: 0;
+    overflow: visible !important;
+  }
   
   &:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -49,9 +78,25 @@
 }
 
 // 下拉選單樣式
+.dropdown {
+  // 確保dropdown容器有足夠的z-index
+  position: relative;
+  z-index: 1;
+  
+  // 當dropdown展開時，提高整個容器的z-index
+  &.show {
+    z-index: 9999; // 使用非常高的z-index值
+    isolation: isolate; // 創建新的stacking context
+  }
+}
+
 .dropdown-menu {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   border: 1px solid #dee2e6;
+  z-index: 9999 !important; // 強制設定最高層級
+  position: absolute !important; // 確保絕對定位
+  transform: translateZ(0) !important; // 強制創建composite layer
+  will-change: transform; // 提示瀏覽器這個元素會變化
   
   .dropdown-item {
     padding: 0.5rem 1rem;

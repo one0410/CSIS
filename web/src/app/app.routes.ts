@@ -109,10 +109,14 @@ export const routes: Routes = [
         path: 'site/:id',
         loadComponent: () => import('./site-list/site-detail/site-detail.component').then(m => m.SiteDetailComponent),
         children: [
-          { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+          { path: '', redirectTo: 'bulletin', pathMatch: 'full' },
           { 
             path: 'overview', 
             loadComponent: () => import('./site-list/site-detail/site-basic-info/site-basic-info.component').then(m => m.SiteBasicInfoComponent)
+          },
+          { 
+            path: 'bulletin', 
+            loadComponent: () => import('./site-list/site-detail/site-bulletin/site-bulletin.component').then(m => m.SiteBulletinComponent)
           },
           { 
             path: 'dashboard', 

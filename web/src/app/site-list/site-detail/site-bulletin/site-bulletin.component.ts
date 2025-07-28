@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, computed, signal, inject, OnInit, effect } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { BulletinService } from '../../../services/bulletin.service';
 import { AuthService } from '../../../services/auth.service';
 import { Bulletin } from '../../../model/bulletin.model';
+import { CurrentSiteService } from '../../../services/current-site.service';
 
 @Component({
   selector: 'app-site-bulletin',
@@ -17,15 +18,19 @@ export class SiteBulletinComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private bulletinService = inject(BulletinService);
   private authService = inject(AuthService);
+  private currentSiteService = inject(CurrentSiteService);
 
   // 狀態管理
   loading = signal(false);
   showModal = signal(false);
-  siteId = signal('');
+  site = computed(() => this.currentSiteService.currentSite());
   bulletins = signal<Bulletin[]>([]);
   editingBulletin = signal<Bulletin>({} as Bulletin);
   selectedBulletin = signal<Bulletin | null>(null);
   showDetailModal = signal(false);
+  
+  // 追蹤開啟的dropdown
+  openDropdowns = signal<Set<string>>(new Set());
 
   // 計算屬性
   isEditing = computed(() => !!this.editingBulletin()._id);
@@ -34,32 +39,50 @@ export class SiteBulletinComponent implements OnInit {
   // 檢查當前使用者是否有管理權限 (專案經理/工地經理/專案秘書)
   hasManagePermission = computed(() => {
     const user = this.currentUser();
-    if (!user || !user.belongSites || !this.siteId()) {
+    const currentSite = this.site();
+    if (!user || !user.belongSites || !currentSite?._id) {
       return false;
     }
     
     // 檢查使用者在此工地的角色
-    const siteRole = user.belongSites.find(site => site.siteId === this.siteId());
+    const siteRole = user.belongSites.find(site => site.siteId === currentSite._id);
     return siteRole?.role === 'manager' || 
            siteRole?.role === 'projectManager' || 
            siteRole?.role === 'secretary';
   });
 
-  ngOnInit() {
-    // 從父路由獲取工地ID
-    this.route.parent?.paramMap.subscribe(params => {
-      const id = params.get('id');
-      if (id) {
-        this.siteId.set(id);
+  constructor() {
+    // 監聽工地變化，當有工地資料時載入公佈欄
+    effect(() => {
+      const currentSite = this.site();
+      if (currentSite?._id) {
         this.loadBulletins();
       }
     });
   }
 
+  ngOnInit() {
+    // 監聽點擊事件來關閉dropdown
+    if (typeof document !== 'undefined') {
+      document.addEventListener('click', (event) => {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.dropdown')) {
+          this.openDropdowns.set(new Set());
+        }
+      });
+    }
+  }
+
   async loadBulletins() {
+    const currentSite = this.site();
+    if (!currentSite?._id) {
+      console.warn('無法載入公佈欄：缺少工地ID');
+      return;
+    }
+
     try {
       this.loading.set(true);
-      const bulletins = await this.bulletinService.getBulletinsBySite(this.siteId());
+      const bulletins = await this.bulletinService.getBulletinsBySite(currentSite._id);
       this.bulletins.set(bulletins);
     } catch (error) {
       console.error('載入公佈欄資料失敗:', error);
@@ -76,6 +99,13 @@ export class SiteBulletinComponent implements OnInit {
     }
 
     const user = this.currentUser();
+    const currentSite = this.site();
+    
+    if (!currentSite?._id) {
+      alert('無法新增公告：缺少工地資訊');
+      return;
+    }
+
     this.editingBulletin.set({
       title: '',
       content: '',
@@ -83,7 +113,7 @@ export class SiteBulletinComponent implements OnInit {
       priority: 'normal',
       authorId: user?._id || '',
       authorName: user?.name || '',
-      siteId: this.siteId(),
+      siteId: currentSite._id,
       isActive: true,
       isPinned: false,
       publishDate: new Date()
@@ -258,5 +288,38 @@ export class SiteBulletinComponent implements OnInit {
       'urgent': 'bg-danger'
     };
     return classMap[priority] || 'bg-secondary';
+  }
+
+  // Dropdown管理方法
+  isDropdownOpen(bulletinId: string): boolean {
+    return this.openDropdowns().has(bulletinId);
+  }
+
+  toggleDropdown(bulletinId: string): void {
+    const current = new Set(this.openDropdowns());
+    if (current.has(bulletinId)) {
+      current.delete(bulletinId);
+    } else {
+      // 關閉其他dropdown，只保留當前的
+      current.clear();
+      current.add(bulletinId);
+    }
+    this.openDropdowns.set(current);
+  }
+
+  closeDropdown(bulletinId: string): void {
+    const current = new Set(this.openDropdowns());
+    current.delete(bulletinId);
+    this.openDropdowns.set(current);
+  }
+
+  onDropdownBlur(bulletinId: string, event: FocusEvent): void {
+    // 延遲執行以允許dropdown項目的點擊事件先執行
+    setTimeout(() => {
+      const relatedTarget = event.relatedTarget as HTMLElement;
+      if (!relatedTarget || !relatedTarget.closest('.dropdown')) {
+        this.closeDropdown(bulletinId);
+      }
+    }, 150);
   }
 } 
