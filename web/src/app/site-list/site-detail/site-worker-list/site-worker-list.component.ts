@@ -892,7 +892,7 @@ export class SiteWorkerListComponent implements OnInit {
                 </tr>
                 <tr style="height: 100px;">
                   <td class="field-label">教育訓練<br/>及危害告知</td>
-                  <td colspan="3"></td>
+                  <td colspan="3">${this.getWorkerTrainingAndHazardImages(worker)}</td>
                 </tr>
               </table>
               <div class="date-section" title="一年內有效">
@@ -923,6 +923,7 @@ export class SiteWorkerListComponent implements OnInit {
       'rs': '擋土支撐作業主管.png',
       'bosh': '工安人員.png',
       'aos': '工安人員.png',
+      'aoh': '工安人員.png',
       's': '工安人員.png',
       'ma': '工安人員.png',
       // 其他常見證照
@@ -948,7 +949,10 @@ export class SiteWorkerListComponent implements OnInit {
         const imageName = this.getCertificationImageFileName(cert.type);
         if (imageName) {
           const certificationName = CertificationTypeManager.getName(cert.type);
-          return `<img src="/certificate/${imageName}" alt="${certificationName}" title="${certificationName}">`;
+          return `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px;">
+          <img src="/certificate/${imageName}" alt="${certificationName}" title="${certificationName}">
+          <span style="font-size: 10px; text-align: center;">${certificationName}</span>
+          </div>`;
         }
         return '';
       })
@@ -959,6 +963,27 @@ export class SiteWorkerListComponent implements OnInit {
       return `<div class="certification-images">${imageElements}</div>`;
     } else {
       return '<div class="certification-images"><span class="text-muted">無對應圖示</span></div>';
+    }
+  }
+
+  // 獲取工作人員的教育訓練及危害告知圖片HTML
+  private getWorkerTrainingAndHazardImages(worker: Worker): string {
+    const images: string[] = [];
+    
+    // 檢查是否有教育訓練
+    if (this.hasTraining(worker)) {
+      images.push('<img src="/certificate/六小時.png" alt="教育訓練" title="教育訓練">');
+    }
+    
+    // 檢查是否有危害告知
+    if (this.hasHazardNotice(worker)) {
+      images.push('<img src="/certificate/已進行危害告知.png" alt="危害告知" title="危害告知">');
+    }
+    
+    if (images.length > 0) {
+      return `<div class="certification-images">${images.join('')}</div>`;
+    } else {
+      return '<div class="certification-images"><span class="text-muted">未完成</span></div>';
     }
   }
 }

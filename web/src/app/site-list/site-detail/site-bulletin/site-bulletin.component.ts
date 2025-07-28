@@ -29,8 +29,8 @@ export class SiteBulletinComponent implements OnInit {
   selectedBulletin = signal<Bulletin | null>(null);
   showDetailModal = signal(false);
   
-  // 追蹤開啟的dropdown
-  openDropdowns = signal<Set<string>>(new Set());
+  // 追蹤開啟的dropdown (已改用Bootstrap原生功能，保留以防其他地方使用)
+  // openDropdowns = signal<Set<string>>(new Set());
 
   // 計算屬性
   isEditing = computed(() => !!this.editingBulletin()._id);
@@ -62,15 +62,8 @@ export class SiteBulletinComponent implements OnInit {
   }
 
   ngOnInit() {
-    // 監聽點擊事件來關閉dropdown
-    if (typeof document !== 'undefined') {
-      document.addEventListener('click', (event) => {
-        const target = event.target as HTMLElement;
-        if (!target.closest('.dropdown')) {
-          this.openDropdowns.set(new Set());
-        }
-      });
-    }
+    // Bootstrap 原生 dropdown 功能已經處理所有事件，不需要手動管理
+    // 已移除自定義 dropdown 事件監聽器
   }
 
   async loadBulletins() {
@@ -288,38 +281,5 @@ export class SiteBulletinComponent implements OnInit {
       'urgent': 'bg-danger'
     };
     return classMap[priority] || 'bg-secondary';
-  }
-
-  // Dropdown管理方法
-  isDropdownOpen(bulletinId: string): boolean {
-    return this.openDropdowns().has(bulletinId);
-  }
-
-  toggleDropdown(bulletinId: string): void {
-    const current = new Set(this.openDropdowns());
-    if (current.has(bulletinId)) {
-      current.delete(bulletinId);
-    } else {
-      // 關閉其他dropdown，只保留當前的
-      current.clear();
-      current.add(bulletinId);
-    }
-    this.openDropdowns.set(current);
-  }
-
-  closeDropdown(bulletinId: string): void {
-    const current = new Set(this.openDropdowns());
-    current.delete(bulletinId);
-    this.openDropdowns.set(current);
-  }
-
-  onDropdownBlur(bulletinId: string, event: FocusEvent): void {
-    // 延遲執行以允許dropdown項目的點擊事件先執行
-    setTimeout(() => {
-      const relatedTarget = event.relatedTarget as HTMLElement;
-      if (!relatedTarget || !relatedTarget.closest('.dropdown')) {
-        this.closeDropdown(bulletinId);
-      }
-    }, 150);
   }
 } 

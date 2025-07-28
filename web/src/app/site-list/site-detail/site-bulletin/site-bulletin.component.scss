@@ -19,10 +19,7 @@
   z-index: 1; // 降低預設z-index
   overflow: visible !important; // 確保dropdown不被裁切
   
-  // 當卡片有dropdown-active class時，提高z-index
-  &.dropdown-active {
-    z-index: 9998; // 比dropdown-menu稍低
-  }
+  // 已移除dropdown-active管理，改用Bootstrap原生dropdown功能
   
   // 確保卡片不會創建新的stacking context影響dropdown
   .card-header {

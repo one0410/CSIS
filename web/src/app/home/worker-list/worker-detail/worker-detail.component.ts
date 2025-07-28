@@ -499,7 +499,7 @@ export class WorkerDetailComponent implements OnInit {
           this.showSaveSuccess = true;
           
           setTimeout(() => {
-            this.router.navigate(['/worker']);
+            this.router.navigate(['/admin/worker']);
           }, 2000);
           
         } catch (error) {
@@ -530,7 +530,7 @@ export class WorkerDetailComponent implements OnInit {
   }
 
   navigateToList() {
-    this.router.navigate(['/worker']);
+    this.router.navigate(['/admin/worker']);
   }
 
   // 取得證照類型選項

@@ -8,7 +8,9 @@
     <div class="d-flex align-items-center gap-2">
       <!-- 工地信息和選擇按鈕 -->
       @if (currentSite()) {
-      <span class="site-name fs-6 m-2">{{ currentSite()?.projectName }}</span>
+      <span class="site-name fs-6 m-2" style="cursor: pointer;" [routerLink]="['/site', currentSite()?._id, 'bulletin']">
+        {{ currentSite()?.projectName }}
+      </span>
       <button class="btn btn-sm btn-outline-primary" (click)="goToSiteSelector()" title="切換工地">
         <i class="fas fa-city me-1"></i>
         <span class="d-none d-sm-inline ms-1">切換工地</span>

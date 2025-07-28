@@ -176,7 +176,7 @@
             (click)="printWorkerLabels()"
             title="列印選取工作人員的標纖"
             >
-            <i class="fas fa-print me-1"></i>顯示標纖
+            <i class="fas fa-print me-1"></i>列印標籤
           </button>
           <button
             class="btn btn-outline-secondary btn-sm"
@@ -318,7 +318,7 @@
                     <td>
                       <div class="d-flex gap-1">
                         <a
-                          [routerLink]="['/worker', worker._id]"
+                          [routerLink]="['/admin/worker', worker._id]"
                           class="btn btn-sm btn-outline-primary"
                           title="查看工作人員詳細資料"
                           aria-label="查看工作人員詳細資料"

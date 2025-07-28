@@ -192,7 +192,7 @@ export class WorkerListComponent implements OnDestroy {
       onCellClicked: (params) => {
         console.log(params);
         // navigate to user detail page
-        this.router.navigate(['/worker', params.data._id]);
+        this.router.navigate(['/admin/worker', params.data._id]);
       },
       cellRenderer: (params: any) => {
         // 檢查 isValid 是否為 Signal 函數，並正確獲取值
@@ -236,7 +236,7 @@ export class WorkerListComponent implements OnDestroy {
       onCellClicked: (params) => {
         console.log(params);
         // navigate to user detail page
-        this.router.navigate(['/worker', params.data._id]);
+        this.router.navigate(['/admin/worker', params.data._id]);
       },
     },
     {
@@ -257,7 +257,7 @@ export class WorkerListComponent implements OnDestroy {
       onCellClicked: (params) => {
         console.log(params);
         // navigate to user detail page
-        this.router.navigate(['/worker', params.data._id]);
+        this.router.navigate(['/admin/worker', params.data._id]);
       },
     },
     { headerName: '血型', field: 'bloodType', flex: 1, minWidth: 60 },
