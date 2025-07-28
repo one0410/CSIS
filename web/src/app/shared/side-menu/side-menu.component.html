@@ -21,13 +21,13 @@
       <!-- 我的工地 -->
       <div class="accordion-item border-0">
         <button class="accordion-button p-2" type="button" data-bs-target="#site-collapse">
-          <i class="fas fa-building me-2"></i>我的工地({{currentSite()?.projectName}})
+          <i class="fas fa-building me-2"></i>我的專案({{currentSite()?.projectName}})
         </button>
         <div id="site-collapse" class="accordion-collapse collapse show">
           <div class="accordion-body p-0">
             <div class="d-flex flex-column ps-4">
               <!-- 工地詳情選單 -->
-              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'overview']" routerLinkActive="active" (click)="onNavLinkClick()">工地總覽</a>
+              <a class="nav-link py-2" [routerLink]="['/site', siteId, 'overview']" routerLinkActive="active" (click)="onNavLinkClick()">專案基本資料</a>
               <a class="nav-link py-2" [routerLink]="['/site', siteId, 'bulletin']" routerLinkActive="active" (click)="onNavLinkClick()">公佈欄</a>
               <a class="nav-link py-2" [routerLink]="['/site', siteId, 'dashboard']" routerLinkActive="active" (click)="onNavLinkClick()">Dashboard</a>
               <a class="nav-link py-2" [routerLink]="['/site', siteId, 'schedule']" routerLinkActive="active" (click)="onNavLinkClick()">進度表</a>
