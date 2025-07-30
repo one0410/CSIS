@@ -139,21 +139,15 @@ export class DocxTemplateService {
   /**
    * 準備工作許可單的模板數據
    */
-  private prepareWorkPermitData(formData: any, currentSite: any): any {
-    // 處理日期格式
-    const formatDate = (dateStr: string) => {
-      if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-    };
+  private prepareWorkPermitData(formData: SitePermitForm, currentSite: any): any {
 
     return {
       // 基本資料
-      applyDate: formatDate(formData.applyDate) || formatDate(new Date().toISOString()),
+      applyDate: dayjs(formData.applyDate).format('YYYY-MM-DD') || dayjs().format('YYYY-MM-DD'),
       applyDateYear: dayjs(formData.applyDate).year(),
       applyDateMonth: dayjs(formData.applyDate).month() + 1,
       applyDateDay: dayjs(formData.applyDate).date(),
-      workContent: formData.workContent || formData.workDescription || '',
+      workContent: formData.workContent || '',
       workSite: formData.workLocation || '',
       workArea: formData.workArea || '',
       workStartTimeYear: dayjs(formData.workStartTime).year(),
@@ -207,10 +201,10 @@ export class DocxTemplateService {
        approvalName: formData.approvalSignature?.name || '',
        
        // 簽名日期 - 處理可能是Date物件或字串的情況
-       applicantSignDate: formData.applicantSignature?.signedAt ? formatDate(formData.applicantSignature.signedAt instanceof Date ? formData.applicantSignature.signedAt.toISOString() : formData.applicantSignature.signedAt.toString()) : '',
-       departmentManagerSignDate: formData.departmentManagerSignature?.signedAt ? formatDate(formData.departmentManagerSignature.signedAt instanceof Date ? formData.departmentManagerSignature.signedAt.toISOString() : formData.departmentManagerSignature.signedAt.toString()) : '',
-       reviewSignDate: formData.reviewSignature?.signedAt ? formatDate(formData.reviewSignature.signedAt instanceof Date ? formData.reviewSignature.signedAt.toISOString() : formData.reviewSignature.signedAt.toString()) : '',
-       approvalSignDate: formData.approvalSignature?.signedAt ? formatDate(formData.approvalSignature.signedAt instanceof Date ? formData.approvalSignature.signedAt.toISOString() : formData.approvalSignature.signedAt.toString()) : '',
+       applicantSignDate: formData.applicantSignature?.signedAt ? dayjs(formData.applicantSignature.signedAt).format('YYYY-MM-DD') : '',
+       departmentManagerSignDate: formData.departmentManagerSignature?.signedAt ? dayjs(formData.departmentManagerSignature.signedAt).format('YYYY-MM-DD') : '',
+       reviewSignDate: formData.reviewSignature?.signedAt ? dayjs(formData.reviewSignature.signedAt).format('YYYY-MM-DD') : '',
+       approvalSignDate: formData.approvalSignature?.signedAt ? dayjs(formData.approvalSignature.signedAt).format('YYYY-MM-DD') : '',
        
        // 表單狀態
        status: formData.status || 'draft'
@@ -313,27 +307,232 @@ export class DocxTemplateService {
   /**
    * 準備工具箱會議模板資料
    */
-  private prepareToolboxMeetingData(formData: any, currentSite: any): any {
-    const applyDate = dayjs(formData.applyDate);
+  private prepareToolboxMeetingData(formData: ToolboxMeetingForm, currentSite: any): any {
 
     return {
       // 基本資訊
       projectName: currentSite.projectName || '',
       meetingDate: formData.applyDate || '',
-      meetingDateYear: applyDate.year().toString(),
-      meetingDateMonth: (applyDate.month() + 1).toString().padStart(2, '0'),
-      meetingDateDay: applyDate.date().toString().padStart(2, '0'),
+      meetingDateYear: dayjs(formData.applyDate).year(),
+      meetingDateMonth: dayjs(formData.applyDate).month() + 1,
+      meetingDateDay: dayjs(formData.applyDate).date(),
       meetingTime: formData.meetingTime || '',
       meetingLocation: formData.meetingLocation || '',
       hostCompany: formData.hostCompany || '',
       hostPerson: formData.hostPerson || '',
+      contractorCompany0: formData.contractors[0].company || '',
+      contractorCompany1: formData.contractors[1].company || '',
+      contractorCompany2: formData.contractors[2].company || '',
+      contractorCompany3: formData.contractors[3].company || '',
+      contractorName0: formData.contractors[0].name || '',
+      contractorName1: formData.contractors[1].name || '',
+      contractorName2: formData.contractors[2].name || '',
+      contractorName3: formData.contractors[3].name || '',
+      workItem0: formData.workItems[0].description || '',
+      workItem1: formData.workItems[1].description || '',
+
+      // 物理性危害
+      fallDrop: formData.hazards.physical.fallDrop ? '🗹' : '🗷', // 跌墜落
+      physicalInjury: formData.hazards.physical.physicalInjury ? '🗹' : '🗷', // 擦、刺、扭、壓、夾、碰撞、割傷
+      fallObject: formData.hazards.physical.fallObject ? '🗹' : '🗷', // 物體飛落
+      foreignObjectInEye: formData.hazards.physical.foreignObjectInEye ? '🗹' : '🗷', // 異物入眼
+      highTempContact: formData.hazards.physical.highTempContact ? '🗹' : '🗷', // 與高溫接觸
+      lowTempContact: formData.hazards.physical.lowTempContact ? '🗹' : '🗷', // 與低溫接觸
+      noise: formData.hazards.physical.noise ? '🗹' : '🗷', // 噪音
+      electric: formData.hazards.physical.electric ? '🗹' : '🗷', // 感電
+      collapse: formData.hazards.physical.collapse ? '🗹' : '🗷', // 塌陷
+      radiation: formData.hazards.physical.radiation ? '🗹' : '🗷', // 游離輻射
+
+      // 化學性危害
+      burn: formData.hazards.chemical.burn ? '🗹' : '🗷', // 化學性燒灼傷
+      inhalation: formData.hazards.chemical.inhalation ? '🗹' : '🗷', // 化學物吸入
+
+      // 火災危害
+      fire: formData.hazards.fire.fire ? '🗹' : '🗷', // 火災
+      explosion: formData.hazards.fire.explosion ? '🗹' : '🗷', // 爆炸
+
+      // 其他危害
+      noHazard: formData.hazards.other.none ? '🗹' : '🗷', // 無危害
+      oxygenDeficiency: formData.hazards.other.oxygenDeficiency ? '🗹' : '🗷', // 缺氧
+      biological: formData.hazards.other.biological ? '🗹' : '🗷', // 生物性危害
+      outdoorHighTemp: formData.hazards.other.outdoorHighTemp ? '🗹' : '🗷', // 戶外高溫
+      other: formData.hazards.other.other ? '🗹' : '🗷', // 其他危害
+      otherContent: formData.hazards.other.otherContent || '', // 其他危害內容
+
+      // 化學品及其附屬設備管線
+      noChemical: formData.hazards.chemicalArea.hasChemicals ? '🗷' : '🗹', // 無化學品
+      hasChemical: formData.hazards.chemicalArea.hasChemicals ? '🗹' : '🗷', // 有化學品
+      chemicalNames: formData.hazards.chemicalArea.chemicalNames || '', // 化學品名稱
+
+      // 氣體及其附屬設備管線
+      noGas: formData.hazards.gasArea.hasGas ? '🗷' : '🗹', // 無氣體
+      hasGas: formData.hazards.gasArea.hasGas ? '🗹' : '🗷', // 有氣體
+      gasNames: formData.hazards.gasArea.gasNames || '', // 氣體名稱
+
+      // 安全衛生措施-01頭部防護
+      headProtection: formData.safetyPrecautions.personalProtection.headProtection ? '🗹' : '🗷', // 頭部防護
+      workSiteHead: formData.safetyPrecautions.personalProtection.workSiteHead ? '🗹' : '🗷', // 工地用
+      electricianHead: formData.safetyPrecautions.personalProtection.electricianHead ? '🗹' : '🗷', // 電工用
+      helmetHead: formData.safetyPrecautions.personalProtection.helmetHead ? '🗹' : '🗷', // 膠盔
+
+      // 安全衛生措施-02眼部防護
+      eyeProtection: formData.safetyPrecautions.personalProtection.eyeProtection ? '🗹' : '🗷', // 眼部防護
+      mechanicalEyes: formData.safetyPrecautions.personalProtection.mechanicalEyes ? '🗹' : '🗷', // 防禦機械能傷害的安全眼鏡
+      radiationEyes: formData.safetyPrecautions.personalProtection.radiationEyes ? '🗹' : '🗷', // 防禦輻射能傷害的安全眼鏡
+
+      // 安全衛生措施-03耳部防護
+      earProtection: formData.safetyPrecautions.personalProtection.earProtection ? '🗹' : '🗷', // 耳部防護
+      earPlugs: formData.safetyPrecautions.personalProtection.earPlugs ? '🗹' : '🗷', // 耳塞
+      earMuffs: formData.safetyPrecautions.personalProtection.earMuffs ? '🗹' : '🗷', // 耳罩
+
+      // 安全衛生措施-04呼吸防護
+      breathProtection: formData.safetyPrecautions.personalProtection.breathProtection ? '🗹' : '🗷', // 呼吸防護
+      dustMask: formData.safetyPrecautions.personalProtection.dustMask ? '🗹' : '🗷', // 防塵
+      toxicMask: formData.safetyPrecautions.personalProtection.toxicMask ? '🗹' : '🗷', // 濾毒
+      scba: formData.safetyPrecautions.personalProtection.scba ? '🗹' : '🗷', // SCBA
+      papr: formData.safetyPrecautions.personalProtection.papr ? '🗹' : '🗷', // PAPR
+      airlineMask: formData.safetyPrecautions.personalProtection.airlineMask ? '🗹' : '🗷', // 輸氣管面罩
+
+      // 安全衛生措施-05手部防護
+      handProtection: formData.safetyPrecautions.personalProtection.handProtection ? '🗹' : '🗷', // 手部防護
+      cutResistantGloves: formData.safetyPrecautions.personalProtection.cutResistantGloves ? '🗹' : '🗷', // 耐切割
+      wearResistantGloves: formData.safetyPrecautions.personalProtection.wearResistantGloves ? '🗹' : '🗷', // 耐磨
+      heatResistantGloves: formData.safetyPrecautions.personalProtection.heatResistantGloves ? '🗹' : '🗷', // 耐熱
+      electricianGloves: formData.safetyPrecautions.personalProtection.electricianGloves ? '🗹' : '🗷', // 電工用
+      chemicalGloves: formData.safetyPrecautions.personalProtection.chemicalGloves ? '🗹' : '🗷', // 防化學
+
+      // 安全衛生措施-06足部防護
+      footProtection: formData.safetyPrecautions.personalProtection.footProtection ? '🗹' : '🗷', // 足部防護
+      safetyShoes: formData.safetyPrecautions.personalProtection.safetyShoes ? '🗹' : '🗷', // 一般安全鞋
+      chemicalShoes: formData.safetyPrecautions.personalProtection.chemicalShoes ? '🗹' : '🗷', // 防化學安全鞋
+
+      // 安全衛生措施-07身體防護
+      bodyProtection: formData.safetyPrecautions.personalProtection.bodyProtection ? '🗹' : '🗷', // 身體防護
+      backpackBelt: formData.safetyPrecautions.personalProtection.backpackBelt ? '🗹' : '🗷', // 背負式安全帶
+      weldingMask: formData.safetyPrecautions.personalProtection.weldingMask ? '🗹' : '🗷', // 電焊用防護面具
+      chemicalProtection: formData.safetyPrecautions.personalProtection.chemicalProtection ? '🗹' : '🗷', // 化學防護衣
+      reflectiveVest: formData.safetyPrecautions.personalProtection.reflectiveVest ? '🗹' : '🗷', // 反光背心
+
+      // 安全衛生措施-08墜落預防
+      fallPrevention: formData.safetyPrecautions.personalProtection.fallPrevention ? '🗹' : '🗷', // 墜落預防
+      ladder: formData.safetyPrecautions.personalProtection.ladder ? '🗹' : '🗷', // 合梯
+      mobileLadder: formData.safetyPrecautions.personalProtection.mobileLadder ? '🗹' : '🗷', // 移動式梯子
+      scaffolding: formData.safetyPrecautions.personalProtection.scaffold ? '🗹' : '🗷', // 腳手架
+      highWorkVehicle: formData.safetyPrecautions.personalProtection.highWorkVehicle ? '🗹' : '🗷', // 高空工作車
+      safetyLine: formData.safetyPrecautions.personalProtection.safetyLine ? '🗹' : '🗷', // 安全線
+      protectionCage: formData.safetyPrecautions.personalProtection.protectionCage ? '🗹' : '🗷', // 安全母索
+      guardrail: formData.safetyPrecautions.personalProtection.guardrail ? '🗹' : '🗷', // 護欄
+      protectionCover: formData.safetyPrecautions.personalProtection.protectionCover ? '🗹' : '🗷', // 護罩
+      safetyNet: formData.safetyPrecautions.personalProtection.safetyNet ? '🗹' : '🗷', // 安全網
+      warningBarrier: formData.safetyPrecautions.personalProtection.warningBarrier ? '🗹' : '🗷', // 警示圍籬
+      fallPreventer: formData.safetyPrecautions.personalProtection.fallPreventer ? '🗹' : '🗷', // 墜落防護器
+
+      // 安全衛生措施-09感電預防
+      electricPrevention: formData.safetyPrecautions.personalProtection.electricPrevention ? '🗹' : '🗷', // 感電預防
+      leakageBreaker: formData.safetyPrecautions.personalProtection.leakageBreaker ? '🗹' : '🗷', // 漏電斷路器
+      autoElectricPreventer: formData.safetyPrecautions.personalProtection.autoElectricPreventer ? '🗹' : '🗷', // 交流電焊機自動電擊防止裝置
+      voltageDetector: formData.safetyPrecautions.personalProtection.voltageDetector ? '🗹' : '🗷', // 檢電器
+
+      // 安全衛生措施-10火災預防
+      firePrevention: formData.safetyPrecautions.personalProtection.firePrevention ? '🗹' : '🗷', // 火災預防
+      fireExtinguisher: formData.safetyPrecautions.personalProtection.fireExtinguisher ? '🗹' : '🗷', // 滅火器
+      fireBlanket: formData.safetyPrecautions.personalProtection.fireBlanket ? '🗹' : '🗷', // 防火毯
+      oxyacetyleneFireback: formData.safetyPrecautions.personalProtection.oxyacetyleneFireback ? '🗹' : '🗷', // 氧乙炔防回火裝置
+
+      // 安全衛生措施-11缺氧預防
+      oxygenPrevention: formData.safetyPrecautions.personalProtection.oxygenPrevention ? '🗹' : '🗷', // 缺氧預防
+      ventilation: formData.safetyPrecautions.personalProtection.ventilation ? '🗹' : '🗷', // 通風
+      lifeDetector: formData.safetyPrecautions.personalProtection.lifeDetector ? '🗹' : '🗷', // 生命探測器
+      gasDetector: formData.safetyPrecautions.personalProtection.gasDetector ? '🗹' : '🗷', // 氣體探測器
+      liftingEquipment: formData.safetyPrecautions.personalProtection.liftingEquipment ? '🗹' : '🗷', // 起重機
+      rescueEquipment: formData.safetyPrecautions.personalProtection.rescueEquipment ? '🗹' : '🗷', // 搶救設備
       
+      // 安全衛生措施-12其他預防
+      otherPrevention: formData.safetyPrecautions.personalProtection.otherPrevention ? '🗹' : '🗷', // 其他預防
+      otherPreventionContent: formData.safetyPrecautions.personalProtection.otherContent || '', // 其他預防內容
+      
+      // 其他溝通/協議/宣導事項
+      communicationItems: formData.communicationItems || '',
+
+      // 四十個簽名
+      attendeeMainContractorSignatures0: formData.healthWarnings.attendeeMainContractorSignatures[0] || '',
+      attendeeMainContractorSignatures1: formData.healthWarnings.attendeeMainContractorSignatures[1] || '',
+      attendeeMainContractorSignatures2: formData.healthWarnings.attendeeMainContractorSignatures[2] || '',
+      attendeeMainContractorSignatures3: formData.healthWarnings.attendeeMainContractorSignatures[3] || '',
+      attendeeMainContractorSignatures4: formData.healthWarnings.attendeeMainContractorSignatures[4] || '',
+      attendeeMainContractorSignatures5: formData.healthWarnings.attendeeMainContractorSignatures[5] || '',
+      attendeeMainContractorSignatures6: formData.healthWarnings.attendeeMainContractorSignatures[6] || '',
+      attendeeMainContractorSignatures7: formData.healthWarnings.attendeeMainContractorSignatures[7] || '',
+      attendeeMainContractorSignatures8: formData.healthWarnings.attendeeMainContractorSignatures[8] || '',
+      attendeeMainContractorSignatures9: formData.healthWarnings.attendeeMainContractorSignatures[9] || '',
+      attendeeSubcontractor1Signatures0: formData.healthWarnings.attendeeSubcontractor1Signatures[0] || '',
+      attendeeSubcontractor1Signatures1: formData.healthWarnings.attendeeSubcontractor1Signatures[1] || '',
+      attendeeSubcontractor1Signatures2: formData.healthWarnings.attendeeSubcontractor1Signatures[2] || '',
+      attendeeSubcontractor1Signatures3: formData.healthWarnings.attendeeSubcontractor1Signatures[3] || '',
+      attendeeSubcontractor1Signatures4: formData.healthWarnings.attendeeSubcontractor1Signatures[4] || '',
+      attendeeSubcontractor1Signatures5: formData.healthWarnings.attendeeSubcontractor1Signatures[5] || '',
+      attendeeSubcontractor1Signatures6: formData.healthWarnings.attendeeSubcontractor1Signatures[6] || '',
+      attendeeSubcontractor1Signatures7: formData.healthWarnings.attendeeSubcontractor1Signatures[7] || '',
+      attendeeSubcontractor1Signatures8: formData.healthWarnings.attendeeSubcontractor1Signatures[8] || '',
+      attendeeSubcontractor1Signatures9: formData.healthWarnings.attendeeSubcontractor1Signatures[9] || '',
+      attendeeSubcontractor2Signatures0: formData.healthWarnings.attendeeSubcontractor2Signatures[0] || '',
+      attendeeSubcontractor2Signatures1: formData.healthWarnings.attendeeSubcontractor2Signatures[1] || '',
+      attendeeSubcontractor2Signatures2: formData.healthWarnings.attendeeSubcontractor2Signatures[2] || '',
+      attendeeSubcontractor2Signatures3: formData.healthWarnings.attendeeSubcontractor2Signatures[3] || '',
+      attendeeSubcontractor2Signatures4: formData.healthWarnings.attendeeSubcontractor2Signatures[4] || '',
+      attendeeSubcontractor2Signatures5: formData.healthWarnings.attendeeSubcontractor2Signatures[5] || '',
+      attendeeSubcontractor2Signatures6: formData.healthWarnings.attendeeSubcontractor2Signatures[6] || '',
+      attendeeSubcontractor2Signatures7: formData.healthWarnings.attendeeSubcontractor2Signatures[7] || '',
+      attendeeSubcontractor2Signatures8: formData.healthWarnings.attendeeSubcontractor2Signatures[8] || '',
+      attendeeSubcontractor2Signatures9: formData.healthWarnings.attendeeSubcontractor2Signatures[9] || '',
+      attendeeSubcontractor3Signatures0: formData.healthWarnings.attendeeSubcontractor3Signatures[0] || '',
+      attendeeSubcontractor3Signatures1: formData.healthWarnings.attendeeSubcontractor3Signatures[1] || '',
+      attendeeSubcontractor3Signatures2: formData.healthWarnings.attendeeSubcontractor3Signatures[2] || '',
+      attendeeSubcontractor3Signatures3: formData.healthWarnings.attendeeSubcontractor3Signatures[3] || '',
+      attendeeSubcontractor3Signatures4: formData.healthWarnings.attendeeSubcontractor3Signatures[4] || '',
+      attendeeSubcontractor3Signatures5: formData.healthWarnings.attendeeSubcontractor3Signatures[5] || '',
+      attendeeSubcontractor3Signatures6: formData.healthWarnings.attendeeSubcontractor3Signatures[6] || '',
+      attendeeSubcontractor3Signatures7: formData.healthWarnings.attendeeSubcontractor3Signatures[7] || '',
+      attendeeSubcontractor3Signatures8: formData.healthWarnings.attendeeSubcontractor3Signatures[8] || '',
+      attendeeSubcontractor3Signatures9: formData.healthWarnings.attendeeSubcontractor3Signatures[9] || '',
+
+
+      // 作業現場巡檢紀錄
+      checkBeforeStart1: formData.fieldCheckItems[0].checkBeforeStart ? '🗹' : '🗷',
+      checkBeforeStart2: formData.fieldCheckItems[1].checkBeforeStart ? '🗹' : '🗷',
+      checkBeforeStart3: formData.fieldCheckItems[2].checkBeforeStart ? '🗹' : '🗷',
+      checkBeforeStart4: formData.fieldCheckItems[3].checkBeforeStart ? '🗹' : '🗷',
+      checkBeforeStart5: formData.fieldCheckItems[4].checkBeforeStart ? '🗹' : '🗷',
+      checkDuring1: formData.fieldCheckItems[0].checkDuring ? '🗹' : '🗷',
+      checkDuring2: formData.fieldCheckItems[1].checkDuring ? '🗹' : '🗷',
+      checkDuring3: formData.fieldCheckItems[2].checkDuring ? '🗹' : '🗷',
+      checkDuring4: formData.fieldCheckItems[3].checkDuring ? '🗹' : '🗷',
+      checkDuring5: formData.fieldCheckItems[4].checkDuring ? '🗹' : '🗷',
+      checkBeforeEnd1: formData.fieldCheckItems[0].checkBeforeEnd ? '🗹' : '🗷',
+      checkBeforeEnd2: formData.fieldCheckItems[1].checkBeforeEnd ? '🗹' : '🗷',
+      checkBeforeEnd3: formData.fieldCheckItems[2].checkBeforeEnd ? '🗹' : '🗷',
+      checkBeforeEnd4: formData.fieldCheckItems[3].checkBeforeEnd ? '🗹' : '🗷',
+      checkBeforeEnd5: formData.fieldCheckItems[4].checkBeforeEnd ? '🗹' : '🗷',
+      checkAfter1: formData.fieldCheckItems[0].checkAfter ? '🗹' : '🗷',
+      checkAfter2: formData.fieldCheckItems[1].checkAfter ? '🗹' : '🗷',
+      checkAfter3: formData.fieldCheckItems[2].checkAfter ? '🗹' : '🗷',
+      checkAfter4: formData.fieldCheckItems[3].checkAfter ? '🗹' : '🗷',
+      checkAfter5: formData.fieldCheckItems[4].checkAfter ? '🗹' : '🗷',
+
+
+      noRemarks: formData.noRemarks ? '🗹' : '☐',
+      hasRemarks: formData.hasRemarks ? '🗹' : '☐',
+      remarks: formData.remarks || '',
+
       // 簽名圖片
-      leaderSignature: formData.leaderSignature || '',
+      beforeWorkSignature: formData.beforeWorkSignature || '',
+      duringWorkSignature: formData.duringWorkSignature || '',
+      afterWorkSignature: formData.afterWorkSignature || '',
       siteManagerSignature: formData.siteManagerSignature || '',
-      worker1Signature: formData.worker1Signature || '',
-      worker2Signature: formData.worker2Signature || '',
-      worker3Signature: formData.worker3Signature || ''
+      beforeWorkSignatureTime: formData.beforeWorkSignatureTime ? dayjs(formData.beforeWorkSignatureTime).format('YYYY/MM/DD HH:mm') : '',
+      duringWorkSignatureTime: formData.duringWorkSignatureTime ? dayjs(formData.duringWorkSignatureTime).format('YYYY/MM/DD HH:mm') : '',
+      afterWorkSignatureTime: formData.afterWorkSignatureTime ? dayjs(formData.afterWorkSignatureTime).format('YYYY/MM/DD HH:mm') : '',
+      siteManagerSignatureTime: formData.siteManagerSignatureTime ? dayjs(formData.siteManagerSignatureTime).format('YYYY/MM/DD HH:mm') : '',
     };
   }
 
@@ -365,7 +564,7 @@ export class DocxTemplateService {
   /**
    * 準備環安衛自主檢點表模板資料
    */
-  private prepareEnvironmentChecklistData(formData: any, currentSite: any): any {
+  private prepareEnvironmentChecklistData(formData: EnvironmentChecklistData, currentSite: any): any {
     const checkDate = dayjs(formData.checkDate);
 
     return {
@@ -551,7 +750,7 @@ export class DocxTemplateService {
   /**
    * 準備特殊作業工安自主檢點表模板資料
    */
-  private prepareSpecialWorkChecklistData(formData: any, currentSite: any): any {
+  private prepareSpecialWorkChecklistData(formData: SpecialWorkChecklistData, currentSite: any): any {
     const applyDate = dayjs(formData.applyDate);
 
     for (const key in formData.items) {

@@ -38,18 +38,23 @@ export interface ToolboxMeetingForm extends SiteForm {
   meetingTime: string; // 會議時間
   hostCompany: string; // 主持人單位
   hostPerson: string; // 主持人
-  contractors: Contractor[];
+  contractors: Contractor[]; // 與會人員
   workItems: WorkItem[];
   hazards: Hazards; // 危害
   safetyPrecautions: SafetyPrecautions; // 安全防護措施
   healthWarnings: HealthWarnings; // 健康危害告知
   fieldCheckItems: FieldCheckItem[]; // 現場檢查項目
   communicationItems?: string; // 其他溝通/協議/宣導事項
-  leaderSignature: string;
-  siteManagerSignature: string;
-  worker1Signature: string;
-  worker2Signature: string;
-  worker3Signature: string;
+  noRemarks: boolean; // 無其他及緊急情形
+  hasRemarks: boolean; // 異常及緊急情形說明
+  beforeWorkSignature: string; // 施工前巡檢簽名
+  duringWorkSignature: string; // 施工中巡檢簽名
+  afterWorkSignature: string; // 收工前巡檢簽名
+  siteManagerSignature: string; // 監工單位簽名
+  beforeWorkSignatureTime?: Date; // 施工前巡檢簽名時間
+  duringWorkSignatureTime?: Date; // 施工中巡檢簽名時間
+  afterWorkSignatureTime?: Date; // 收工前巡檢簽名時間
+  siteManagerSignatureTime?: Date; // 監工單位簽名時間
   status: string;
   remarks?: string;
   createdAt: Date;
@@ -57,11 +62,10 @@ export interface ToolboxMeetingForm extends SiteForm {
 
 // 簽名類型
 export enum SignatureType {
-  Leader = 'leader', // 主承攬商
-  SiteManager = 'siteManager', // 主承攬商
-  Worker1 = 'worker1', // 再承攬商 1
-  Worker2 = 'worker2', // 再承攬商 2
-  Worker3 = 'worker3', // 再承攬商 3
+  SiteManager = 'siteManager', // 監工單位
+  BeforeWork = 'beforeWork', // 施工前巡檢
+  DuringWork = 'duringWork', // 施工中巡檢
+  AfterWork = 'afterWork', // 收工前巡檢
 }
 
 interface Contractor {
@@ -79,34 +83,34 @@ interface WorkItem {
 interface Hazards {
   // 物理性危害
   physical: {
-    fallDrop: boolean; // 跌墜落
-    physicalInjury: boolean; // 擦、刺、扭、壓、夾、碰撞、割傷
-    fallObject: boolean; // 物體飛落
-    foreignObjectInEye: boolean; // 異物入眼
-    highTempContact: boolean; // 與高溫接觸
-    lowTempContact: boolean; // 與低溫接觸
-    noise: boolean; // 噪音
-    electric: boolean; // 感電
-    collapse: boolean; // 塌陷
-    radiation: boolean; // 游離輻射
+    fallDrop: TriStateValue; // 跌墜落
+    physicalInjury: TriStateValue; // 擦、刺、扭、壓、夾、碰撞、割傷
+    fallObject: TriStateValue; // 物體飛落
+    foreignObjectInEye: TriStateValue; // 異物入眼
+    highTempContact: TriStateValue; // 與高溫接觸
+    lowTempContact: TriStateValue; // 與低溫接觸
+    noise: TriStateValue; // 噪音
+    electric: TriStateValue; // 感電
+    collapse: TriStateValue; // 塌陷
+    radiation: TriStateValue; // 游離輻射
   };
   // 化學性危害
   chemical: {
-    burn: boolean;
-    inhalation: boolean;
+    burn: TriStateValue;
+    inhalation: TriStateValue;
   };
   // 火災危害
   fire: {
-    fire: boolean; // 火災
-    explosion: boolean; // 爆炸
+    fire: TriStateValue; // 火災
+    explosion: TriStateValue; // 爆炸
   };
   // 其他危害
   other: {
-    none: boolean; // 無
-    oxygenDeficiency: boolean; // 缺氧
-    biological: boolean; // 生物性危害
-    outdoorHighTemp: boolean; // 戶外高溫
-    other: boolean; // 其他
+    none: TriStateValue; // 無
+    oxygenDeficiency: TriStateValue; // 缺氧
+    biological: TriStateValue; // 生物性危害
+    outdoorHighTemp: TriStateValue; // 戶外高溫
+    other: TriStateValue; // 其他
     otherContent: string; // 其他內容
   };
   // 作業區域包含以下化學品及其附屬設備管線
@@ -121,24 +125,95 @@ interface Hazards {
   };
 }
 
+// 三狀態 checkbox 類型定義
+export type TriStateValue = null | true | false; // null=未選取, true=打勾, false=打叉
+
 interface SafetyPrecautions {
   // 依作業性質穿戴之安全防護具
   personalProtection: {
-    // 主類別checkbox
-    headProtection: boolean; // 01.□頭部防護
-    eyeProtection: boolean; // 02.□眼部防護
-    earProtection: boolean; // 03.□耳部防護
-    breathProtection: boolean; // 04.□呼吸防護
-    handProtection: boolean; // 05.□手部防護
-    footProtection: boolean; // 06.□足部防護
-    bodyProtection: boolean; // 07.□身體防護
-    fallPrevention: boolean; // 08.□墜落預防
-    electricPrevention: boolean; // 09.□感電預防
-    firePrevention: boolean; // 10.□火災預防
-    oxygenPrevention: boolean; // 11.□缺氧預防
-    otherPrevention: boolean; // 12.□其他預防
+    // 主類別 三狀態 checkbox
+    headProtection: TriStateValue; // 01.頭部防護
+    eyeProtection: TriStateValue; // 02.眼部防護
+    earProtection: TriStateValue; // 03.耳部防護
+    breathProtection: TriStateValue; // 04.呼吸防護
+    handProtection: TriStateValue; // 05.手部防護
+    footProtection: TriStateValue; // 06.足部防護
+    bodyProtection: TriStateValue; // 07.身體防護
+    fallPrevention: TriStateValue; // 08.墜落預防
+    electricPrevention: TriStateValue; // 09.感電預防
+    firePrevention: TriStateValue; // 10.火災預防
+    oxygenPrevention: TriStateValue; // 11.缺氧預防
+    otherPrevention: TriStateValue; // 12.其他預防
     
-    // 舊有的詳細項目保留給細項使用
+    // 詳細項目 - 三狀態
+    // 01. 頭部防護詳細項目
+    workSiteHead: TriStateValue; // 工地用
+    electricianHead: TriStateValue; // 電工用
+    helmetHead: TriStateValue; // 膠盔
+    
+    // 02. 眼部防護詳細項目
+    mechanicalEyes: TriStateValue; // 防禦機械能傷害的安全眼鏡
+    radiationEyes: TriStateValue; // 防禦輻射能傷害的安全眼鏡
+    
+    // 03. 耳部防護詳細項目
+    earPlugs: TriStateValue; // 耳塞
+    earMuffs: TriStateValue; // 耳罩
+    
+    // 04. 呼吸防護詳細項目
+    dustMask: TriStateValue; // 防塵
+    toxicMask: TriStateValue; // 濾毒
+    scba: TriStateValue; // SCBA
+    papr: TriStateValue; // PAPR
+    airlineMask: TriStateValue; // 輸氣管面罩
+    
+    // 05. 手部防護詳細項目
+    cutResistantGloves: TriStateValue; // 耐切割
+    wearResistantGloves: TriStateValue; // 耐磨
+    heatResistantGloves: TriStateValue; // 耐熱
+    electricianGloves: TriStateValue; // 電工用
+    chemicalGloves: TriStateValue; // 防化學
+    
+    // 06. 足部防護詳細項目
+    safetyShoes: TriStateValue; // 一般安全鞋
+    chemicalShoes: TriStateValue; // 防化學安全鞋
+    
+    // 07. 身體防護詳細項目
+    backpackBelt: TriStateValue; // 背負式安全帶
+    weldingMask: TriStateValue; // 電熲用防護面具
+    chemicalProtection: TriStateValue; // 化學防護衣
+    reflectiveVest: TriStateValue; // 反光背心
+    
+    // 08. 墜落預防詳細項目
+    ladder: TriStateValue; // 合梯
+    mobileLadder: TriStateValue; // 移動梯
+    scaffold: TriStateValue; // 施工架
+    highWorkVehicle: TriStateValue; // 高空工作車
+    safetyLine: TriStateValue; // 安全母索
+    protectionCage: TriStateValue; // 護籠
+    guardrail: TriStateValue; // 護欄
+    protectionCover: TriStateValue; // 護蓋
+    safetyNet: TriStateValue; // 安全網
+    warningBarrier: TriStateValue; // 警示圍籬
+    fallPreventer: TriStateValue; // 墜落防止器
+    
+    // 09. 感電預防詳細項目
+    leakageBreaker: TriStateValue; // 漏電斷路器
+    autoElectricPreventer: TriStateValue; // 交流電熲機自動電擊防止裝置
+    voltageDetector: TriStateValue; // 檢電器
+    
+    // 10. 火災預防詳細項目
+    fireExtinguisher: TriStateValue; // 滅火器
+    fireBlanket: TriStateValue; // 防火毯
+    oxyacetyleneFireback: TriStateValue; // 氧乙烷防回火裝置
+    
+    // 11. 缺氧預防詳細項目
+    ventilation: TriStateValue; // 通風設備
+    lifeDetector: TriStateValue; // 生命偵測裝置
+    gasDetector: TriStateValue; // 氣體偵測器
+    liftingEquipment: TriStateValue; // 吓升設備
+    rescueEquipment: TriStateValue; // 搶救設備
+    
+    // 舊有的詳細項目保留兼容性
     head: boolean; 
     eyes: boolean; 
     breath: boolean; 
@@ -218,31 +293,31 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     ],
     hazards: {
       physical: {
-        fallDrop: false, // 跌墜落
-        physicalInjury: false, // 擦、刺、扭、壓、夾、碰撞、割傷
-        fallObject: false, // 物體飛落
-        foreignObjectInEye: false, // 異物入眼
-        highTempContact: false, // 與高溫接觸
-        lowTempContact: false, // 與低溫接觸
-        noise: false, // 噪音
-        electric: false, // 感電
-        collapse: false, // 塌陷
-        radiation: false, // 游離輻射
+        fallDrop: null, // 跌墜落 - 三狀態
+        physicalInjury: null, // 擦、刺、扭、壓、夾、碰撞、割傷 - 三狀態
+        fallObject: null, // 物體飛落 - 三狀態
+        foreignObjectInEye: null, // 異物入眼 - 三狀態
+        highTempContact: null, // 與高溫接觸 - 三狀態
+        lowTempContact: null, // 與低溫接觸 - 三狀態
+        noise: null, // 噪音 - 三狀態
+        electric: null, // 感電 - 三狀態
+        collapse: null, // 塌陷 - 三狀態
+        radiation: null, // 游離輻射 - 三狀態
       },
       chemical: {
-        burn: false,
-        inhalation: false,
+        burn: null, // 化學性燒灼傷 - 三狀態
+        inhalation: null, // 化學物吸入 - 三狀態
       },
       fire: {
-        fire: false, // 火災
-        explosion: false, // 爆炸
+        fire: null, // 火災 - 三狀態
+        explosion: null, // 爆炸 - 三狀態
       },
       other: {
-        none: false, // 無
-        oxygenDeficiency: false, // 缺氧
-        biological: false, // 生物性危害
-        outdoorHighTemp: false, // 戶外高溫
-        other: false, // 其他
+        none: null, // 無 - 三狀態
+        oxygenDeficiency: null, // 缺氧 - 三狀態
+        biological: null, // 生物性危害 - 三狀態
+        outdoorHighTemp: null, // 戶外高溫 - 三狀態
+        other: null, // 其他 - 三狀態
         otherContent: '', // 其他內容
       },
       chemicalArea: {
@@ -256,21 +331,89 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     },
     safetyPrecautions: {
       personalProtection: {
-        // 主類別checkbox
-        headProtection: false, // 01.□頭部防護
-        eyeProtection: false, // 02.□眼部防護
-        earProtection: false, // 03.□耳部防護
-        breathProtection: false, // 04.□呼吸防護
-        handProtection: false, // 05.□手部防護
-        footProtection: false, // 06.□足部防護
-        bodyProtection: false, // 07.□身體防護
-        fallPrevention: false, // 08.□墜落預防
-        electricPrevention: false, // 09.□感電預防
-        firePrevention: false, // 10.□火災預防
-        oxygenPrevention: false, // 11.□缺氧預防
-        otherPrevention: false, // 12.□其他預防
+        // 主類別 三狀態 checkbox
+        headProtection: null, // 01.頭部防護
+        eyeProtection: null, // 02.眼部防護
+        earProtection: null, // 03.耳部防護
+        breathProtection: null, // 04.呼吸防護
+        handProtection: null, // 05.手部防護
+        footProtection: null, // 06.足部防護
+        bodyProtection: null, // 07.身體防護
+        fallPrevention: null, // 08.墜落預防
+        electricPrevention: null, // 09.感電預防
+        firePrevention: null, // 10.火災預防
+        oxygenPrevention: null, // 11.缺氧預防
+        otherPrevention: null, // 12.其他預防
         
-        // 舊有的詳細項目
+        // 詳細項目 - 三狀態
+        // 01. 頭部防護詳細項目
+        workSiteHead: null,
+        electricianHead: null,
+        helmetHead: null,
+        
+        // 02. 眼部防護詳細項目
+        mechanicalEyes: null,
+        radiationEyes: null,
+        
+        // 03. 耳部防護詳細項目
+        earPlugs: null,
+        earMuffs: null,
+        
+        // 04. 呼吸防護詳細項目
+        dustMask: null,
+        toxicMask: null,
+        scba: null,
+        papr: null,
+        airlineMask: null,
+        
+        // 05. 手部防護詳細項目
+        cutResistantGloves: null,
+        wearResistantGloves: null,
+        heatResistantGloves: null,
+        electricianGloves: null,
+        chemicalGloves: null,
+        
+        // 06. 足部防護詳細項目
+        safetyShoes: null,
+        chemicalShoes: null,
+        
+        // 07. 身體防護詳細項目
+        backpackBelt: null,
+        weldingMask: null,
+        chemicalProtection: null,
+        reflectiveVest: null,
+        
+        // 08. 墜落預防詳細項目
+        ladder: null,
+        mobileLadder: null,
+        scaffold: null,
+        highWorkVehicle: null,
+        safetyLine: null,
+        protectionCage: null,
+        guardrail: null,
+        protectionCover: null,
+        safetyNet: null,
+        warningBarrier: null,
+        fallPreventer: null,
+        
+        // 09. 感電預防詳細項目
+        leakageBreaker: null,
+        autoElectricPreventer: null,
+        voltageDetector: null,
+        
+        // 10. 火災預防詳細項目
+        fireExtinguisher: null,
+        fireBlanket: null,
+        oxyacetyleneFireback: null,
+        
+        // 11. 缺氧預防詳細項目
+        ventilation: null,
+        lifeDetector: null,
+        gasDetector: null,
+        liftingEquipment: null,
+        rescueEquipment: null,
+        
+        // 舊有的詳細項目保留兼容性
         head: false,
         eyes: false,
         breath: false,
@@ -378,23 +521,30 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
         checkAfter: false,
       },
     ],
-    leaderSignature: '',
-    siteManagerSignature: '',
-    worker1Signature: '',
-    worker2Signature: '',
-    worker3Signature: '',
+    noRemarks: false, // 無其他及緊急情形
+    hasRemarks: false, // 異常及緊急情形說明
+    beforeWorkSignature: '', // 施工前巡檢簽名
+    duringWorkSignature: '', // 施工中巡檢簽名
+    afterWorkSignature: '', // 收工前巡檢簽名
+    siteManagerSignature: '', // 監工單位簽名
+    beforeWorkSignatureTime: undefined, // 施工前巡檢簽名時間
+    duringWorkSignatureTime: undefined, // 施工中巡檢簽名時間
+    afterWorkSignatureTime: undefined, // 收工前巡檢簽名時間
+    siteManagerSignatureTime: undefined, // 監工單位簽名時間
     communicationItems: '', // 其他溝通/協議/宣導事項
     status: 'draft',
     createdAt: new Date(),
     createdBy: '',
   };
 
+  noRemarks: boolean = false; // 無其他及緊急情形
+  hasRemarks: boolean = false; // 異常及緊急情形說明
+
   // 簽名存儲
-  leaderSignature: string | null = null;
-  siteManagerSignature: string | null = null;
-  worker1Signature: string | null = null;
-  worker2Signature: string | null = null;
-  worker3Signature: string | null = null;
+  siteManagerSignature: string | null = null; // 監工單位簽名
+  beforeWorkSignature: string | null = null; // 施工前巡檢簽名
+  duringWorkSignature: string | null = null; // 施工中巡檢簽名
+  afterWorkSignature: string | null = null; // 收工前巡檢簽名
 
   // 專案工人和驗證相關屬性
   projectWorkers: ProjectWorker[] = [];
@@ -408,6 +558,138 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
 
   // 公開 SignatureType 枚舉給模板
   SignatureType = SignatureType;
+
+  // 三狀態 checkbox 處理方法（支援主類別、詳細項目和危害識別）
+  toggleTriState(field: string): void {
+    const currentValue = this.getFieldValue(field);
+    let newValue: TriStateValue;
+    
+    // 循環三個狀態: null -> true -> false -> null
+    if (currentValue === null) {
+      newValue = true;  // 未選取 -> 打勾
+    } else if (currentValue === true) {
+      newValue = false; // 打勾 -> 打叉
+    } else {
+      newValue = null;  // 打叉 -> 未選取
+    }
+    
+    this.setFieldValue(field, newValue);
+  }
+
+  // 取得欄位值（支援主類別、詳細項目和危害識別）
+  getFieldValue(field: string): TriStateValue {
+    // 檢查是否為 hazards 相關欄位
+    if (this.isHazardField(field)) {
+      return this.getHazardFieldValue(field);
+    }
+    // 否則為 safetyPrecautions.personalProtection 欄位
+    return (this.meetingData.safetyPrecautions.personalProtection as any)[field];
+  }
+
+  // 設定欄位值（支援主類別、詳細項目和危害識別）
+  private setFieldValue(field: string, value: TriStateValue): void {
+    // 檢查是否為 hazards 相關欄位
+    if (this.isHazardField(field)) {
+      this.setHazardFieldValue(field, value);
+    } else {
+      // 否則為 safetyPrecautions.personalProtection 欄位
+      (this.meetingData.safetyPrecautions.personalProtection as any)[field] = value;
+    }
+  }
+
+  // 檢查是否為危害識別欄位
+  private isHazardField(field: string): boolean {
+    const hazardFields = [
+      // 物理性危害
+      'fallDrop', 'physicalInjury', 'fallObject', 'foreignObjectInEye', 
+      'highTempContact', 'lowTempContact', 'noise', 'electric', 'collapse', 'radiation',
+      // 化學性危害
+      'burn', 'inhalation',
+      // 火災危害
+      'fire', 'explosion',
+      // 其他危害
+      'none', 'oxygenDeficiency', 'biological', 'outdoorHighTemp', 'other'
+    ];
+    return hazardFields.includes(field);
+  }
+
+  // 取得危害欄位值
+  private getHazardFieldValue(field: string): TriStateValue {
+    // 物理性危害
+    if (['fallDrop', 'physicalInjury', 'fallObject', 'foreignObjectInEye', 
+         'highTempContact', 'lowTempContact', 'noise', 'electric', 'collapse', 'radiation'].includes(field)) {
+      return (this.meetingData.hazards.physical as any)[field];
+    }
+    // 化學性危害
+    if (['burn', 'inhalation'].includes(field)) {
+      return (this.meetingData.hazards.chemical as any)[field];
+    }
+    // 火災危害
+    if (['fire', 'explosion'].includes(field)) {
+      return (this.meetingData.hazards.fire as any)[field];
+    }
+    // 其他危害
+    if (['none', 'oxygenDeficiency', 'biological', 'outdoorHighTemp', 'other'].includes(field)) {
+      return (this.meetingData.hazards.other as any)[field];
+    }
+    return null;
+  }
+
+  // 設定危害欄位值
+  private setHazardFieldValue(field: string, value: TriStateValue): void {
+    // 物理性危害
+    if (['fallDrop', 'physicalInjury', 'fallObject', 'foreignObjectInEye', 
+         'highTempContact', 'lowTempContact', 'noise', 'electric', 'collapse', 'radiation'].includes(field)) {
+      (this.meetingData.hazards.physical as any)[field] = value;
+    }
+    // 化學性危害
+    else if (['burn', 'inhalation'].includes(field)) {
+      (this.meetingData.hazards.chemical as any)[field] = value;
+    }
+    // 火災危害
+    else if (['fire', 'explosion'].includes(field)) {
+      (this.meetingData.hazards.fire as any)[field] = value;
+    }
+    // 其他危害
+    else if (['none', 'oxygenDeficiency', 'biological', 'outdoorHighTemp', 'other'].includes(field)) {
+      (this.meetingData.hazards.other as any)[field] = value;
+    }
+  }
+
+  // 取得三狀態 checkbox 的圖示 class
+  getTriStateIcon(field: string): string {
+    const value = this.getFieldValue(field);
+    if (value === true) {
+      return 'fa-check text-success'; // 打勾 - 綠色
+    } else if (value === false) {
+      return 'fa-times text-danger'; // 打叉 - 紅色
+    } else {
+      return 'fa-square text-muted'; // 未選取 - 隱藏圖示，由 CSS 顯示外框
+    }
+  }
+
+  // 取得三狀態 checkbox 容器的 CSS class
+  getTriStateContainerClass(field: string): string {
+    const value = this.getFieldValue(field);
+    
+    if (value === null || value === undefined) {
+      return 'tristate-checkbox me-2 tristate-unselected'; // 未選取狀態
+    } else {
+      return 'tristate-checkbox me-2'; // 已選取狀態（打勾或打叉）
+    }
+  }
+
+  // 取得三狀態 checkbox 的 title 提示
+  getTriStateTitle(field: string): string {
+    const value = this.getFieldValue(field);
+    if (value === true) {
+      return '已確認 (點擊切換為不適用)';
+    } else if (value === false) {
+      return '不適用 (點擊切換為未選取)';
+    } else {
+      return '未選取 (點擊切換為確認)';
+    }
+  }
 
   constructor(
     private mongodbService: MongodbService,
@@ -514,26 +796,27 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
       const signature = await this.signatureDialog.open();
       if (signature) {
         // 更新相應的簽名
+        const currentTime = new Date();
         switch (type) {
-          case SignatureType.Leader:
-            this.leaderSignature = signature;
-            this.meetingData.leaderSignature = signature;
-            break;
           case SignatureType.SiteManager:
             this.siteManagerSignature = signature;
             this.meetingData.siteManagerSignature = signature;
+            this.meetingData.siteManagerSignatureTime = currentTime;
             break;
-          case SignatureType.Worker1:
-            this.worker1Signature = signature;
-            this.meetingData.worker1Signature = signature;
+          case SignatureType.BeforeWork:
+            this.beforeWorkSignature = signature;
+            this.meetingData.beforeWorkSignature = signature;
+            this.meetingData.beforeWorkSignatureTime = currentTime;
             break;
-          case SignatureType.Worker2:
-            this.worker2Signature = signature;
-            this.meetingData.worker2Signature = signature;
+          case SignatureType.DuringWork:
+            this.duringWorkSignature = signature;
+            this.meetingData.duringWorkSignature = signature;
+            this.meetingData.duringWorkSignatureTime = currentTime;
             break;
-          case SignatureType.Worker3:
-            this.worker3Signature = signature;
-            this.meetingData.worker3Signature = signature;
+          case SignatureType.AfterWork:
+            this.afterWorkSignature = signature;
+            this.meetingData.afterWorkSignature = signature;
+            this.meetingData.afterWorkSignatureTime = currentTime;
             break;
         }
       }
@@ -757,11 +1040,10 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
         }
 
         // 更新簽名變數
-        this.leaderSignature = form.leaderSignature || null;
         this.siteManagerSignature = form.siteManagerSignature || null;
-        this.worker1Signature = form.worker1Signature || null;
-        this.worker2Signature = form.worker2Signature || null;
-        this.worker3Signature = form.worker3Signature || null;
+        this.beforeWorkSignature = form.beforeWorkSignature || null;
+        this.duringWorkSignature = form.duringWorkSignature || null;
+        this.afterWorkSignature = form.afterWorkSignature || null;
 
         // 重新檢查工人簽名狀態
         this.updateWorkerSignedStatus();
