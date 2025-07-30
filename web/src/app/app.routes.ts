@@ -139,6 +139,10 @@ export const routes: Routes = [
             loadComponent: () => import('./site-list/site-detail/site-progress/site-progress.component').then(m => m.SiteProgressComponent)
           },
           { 
+            path: 'new-schedule', 
+            loadComponent: () => import('./site-list/site-detail/new-schedule/new-schedule.component').then(m => m.NewScheduleComponent)
+          },
+          { 
             path: 'photos', 
             loadComponent: () => import('./site-list/site-detail/site-photos/site-photos.component').then(m => m.SitePhotosComponent)
           },

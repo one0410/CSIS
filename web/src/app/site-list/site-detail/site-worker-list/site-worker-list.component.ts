@@ -86,7 +86,7 @@ export class SiteWorkerListComponent implements OnInit {
       // 刷新 CurrentSiteService 的工人列表
       await this.currentSiteService.refreshWorkersList();
     } catch (error) {
-      console.error('載入工地資料時發生錯誤', error);
+      console.error('載入專案資料時發生錯誤', error);
     } finally {
       this.isLoading = false;
     }

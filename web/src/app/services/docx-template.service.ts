@@ -35,7 +35,7 @@ export class DocxTemplateService {
       const currentSite = this.currentSiteService.currentSite();
       
       if (!formData || !currentSite) {
-        throw new Error('無法獲取表單或工地資料');
+        throw new Error('無法獲取表單或專案資料');
       }
 
       // 載入模板檔案
@@ -444,7 +444,7 @@ export class DocxTemplateService {
       const currentSite = this.currentSiteService.currentSite();
       
       if (!formData || !currentSite) {
-        throw new Error('無法獲取表單或工地資料');
+        throw new Error('無法獲取表單或專案資料');
       }
 
       // 動態獲取模板路徑

@@ -56,18 +56,18 @@ export class CertificationTypeManager {
     },
     [CertificationType.O2]: { 
       code: 'o2', 
-      name: '缺氧(侷限)作業主管證照',
-      fullLabel: '缺氧(侷限)作業主管證照(o2)'
+      name: '缺氧(侷限)作業主管',
+      fullLabel: '缺氧(侷限)作業主管(o2)'
     },
     [CertificationType.OS]: { 
       code: 'os', 
-      name: '有機溶劑作業主管證照',
-      fullLabel: '有機溶劑作業主管證照(os)'
+      name: '有機溶劑作業主管',
+      fullLabel: '有機溶劑作業主管(os)'
     },
     [CertificationType.SA]: { 
       code: 'sa', 
-      name: '施工架組配作業主管證照',
-      fullLabel: '施工架組配作業主管證照(sa)'
+      name: '施工架組配作業主管',
+      fullLabel: '施工架組配作業主管(sa)'
     },
     [CertificationType.S]: { 
       code: 's', 

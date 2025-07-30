@@ -1901,7 +1901,34 @@ export class WorkerListComponent implements OnDestroy {
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
 
-      // 將工作表轉換為JSON
+      // 將工作表轉換為JSON，並處理表頭的換行符號問題
+      // 先獲取原始的表頭，處理換行符號
+      const range = XLSX.utils.decode_range(worksheet['!ref'] || '');
+      const headers: { [key: string]: string } = {};
+      
+      // 讀取第一行作為表頭，並處理換行符號
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: range.s.r, c: col });
+        const cell = worksheet[cellAddress];
+        if (cell && cell.v) {
+          const originalHeader = String(cell.v);
+          // 移除換行符號並清理空白字元
+          const cleanedHeader = originalHeader.replace(/[\r\n]/g, '').trim();
+          headers[cellAddress] = cleanedHeader;
+          // 更新工作表中的表頭
+          worksheet[cellAddress].v = cleanedHeader;
+        }
+        // w 欄位也要
+        if (cell && cell.w) {
+          const originalHeader = String(cell.w);
+          const cleanedHeader = originalHeader.replace(/[\r\n]/g, '').trim();
+          headers[cellAddress] = cleanedHeader;
+          worksheet[cellAddress].w = cleanedHeader;
+        }
+      }
+      
+      console.log('清理後的表頭：', Object.values(headers));
+      
       const jsonData = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
 
       this.processStatus = '正在檢查承攬公司欄位...';
@@ -1915,7 +1942,7 @@ export class WorkerListComponent implements OnDestroy {
 
       // 記錄實際使用的欄位名稱，方便除錯
       const sampleKeys = Object.keys(jsonData[0]).slice(0, 10).join(', ');
-      console.log('Excel欄位名稱樣本：', sampleKeys);
+      console.log('Excel欄位名稱樣本（已清理換行符號）：', sampleKeys);
 
       // 檢查錯誤
       const missingContractingCompany: string[] = [];
@@ -2192,10 +2219,10 @@ export class WorkerListComponent implements OnDestroy {
     // 檢查三組意外險資料
     for (let i = 1; i <= 3; i++) {
       const start = this.formatDate(
-        getFieldValue([`意外險有效期${i}\r\n(起始日)`])
+        getFieldValue([`意外險有效期${i}(起始日)`])
       );
       const end = this.formatDate(
-        getFieldValue([`意外險有效期${i}\r\n(截止日)`])
+        getFieldValue([`意外險有效期${i}(截止日)`])
       );
       const amount = getFieldValue([`保險金額${i}`]).toString();
       const signDate = this.formatDate(getFieldValue([`加保日期${i}`]));

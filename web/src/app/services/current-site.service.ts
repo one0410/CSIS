@@ -424,10 +424,10 @@ export class CurrentSiteService implements OnDestroy {
   }
 
   /**
-   * 將工地資料更新到資料庫並更新本地狀態
-   * @param siteId 工地 ID
-   * @param siteData 更新的工地資料
-   * @returns 更新後的工地資料
+   * 將專案資料更新到資料庫並更新本地狀態
+   * @param siteId 專案 ID
+   * @param siteData 更新的專案資料
+   * @returns 更新後的專案資料
    */
   async saveSiteChanges(siteId: string, siteData: any): Promise<Site | null> {
     try {
@@ -435,7 +435,7 @@ export class CurrentSiteService implements OnDestroy {
       const result = await this.mongodbService.put('site', siteId, siteData);
       
       if (result) {
-        // 獲取當前工地資訊
+        // 獲取當前專案資訊
         const currentSite = this.currentSiteSignal();
         
         // 合併更新後的資料
@@ -451,13 +451,13 @@ export class CurrentSiteService implements OnDestroy {
       
       return null;
     } catch (error) {
-      console.error('更新工地資料時發生錯誤:', error);
+      console.error('更新專案資料時發生錯誤:', error);
       throw error;
     }
   }
 
   /**
-   * 清除當前工地
+   * 清除當前專案
    */
   clearCurrentSite() {
     this.currentSiteSignal.set(null);
@@ -466,7 +466,7 @@ export class CurrentSiteService implements OnDestroy {
   }
 
   /**
-   * 嘗試從sessionStorage載入保存的工地
+   * 嘗試從sessionStorage載入保存的專案
    */
   private async loadSavedSite() {
     const savedSiteId = sessionStorage.getItem('currentSiteId');

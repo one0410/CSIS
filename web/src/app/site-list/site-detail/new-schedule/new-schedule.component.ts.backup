@@ -1,0 +1,976 @@
+import { Component, OnInit, computed, ElementRef, ViewChild, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { CurrentSiteService } from '../../../services/current-site.service';
+import { MongodbService } from '../../../services/mongodb.service';
+import dayjs from 'dayjs';
+import weekOfYear from 'dayjs/plugin/weekOfYear';
+import isoWeek from 'dayjs/plugin/isoWeek';
+import { ProjectTask } from '../site-progress/site-progress.component';
+
+// 擴展 Day.js 功能
+dayjs.extend(weekOfYear);
+dayjs.extend(isoWeek);
+
+interface ScheduleTask {
+  _id?: string;
+  wbs: string;
+  name: string;
+  days: number;
+  startDate: string;
+  endDate: string;
+  weight: number; // 權重
+  children?: ScheduleTask[];
+  parent?: string;
+  level: number;
+  isExpanded?: boolean;
+  dailyProgress?: { [date: string]: number };
+}
+
+type ViewMode = 'day' | 'week' | 'month';
+
+@Component({
+  selector: 'app-new-schedule',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './new-schedule.component.html',
+  styleUrl: './new-schedule.component.scss'
+})
+export class NewScheduleComponent implements OnInit {
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  
+  siteId: string = '';
+  site = computed(() => this.currentSiteService.currentSite());
+  
+  tasks: ScheduleTask[] = [];
+  flatTasks: ScheduleTask[] = []; // 扁平化的任務列表，用於顯示
+  viewMode: ViewMode = 'month';
+  
+  // 日期相關
+  startDate: Date = new Date();
+  endDate: Date = new Date();
+  dateColumns: string[] = [];
+  monthGroups: { month: string; span: number }[] = [];
+  
+  // 編輯相關
+  isEditing = false;
+  editingTask: ScheduleTask | null = null;
+  
+  private mongodbService = inject(MongodbService);
+
+  constructor(
+    private route: ActivatedRoute,
+    private currentSiteService: CurrentSiteService
+  ) {}
+
+  ngOnInit() {
+    // 載入保存的檢視模式
+    this.loadViewModeFromStorage();
+    
+    this.route.parent?.paramMap.subscribe(params => {
+      this.siteId = params.get('id') || '';
+      this.loadScheduleData();
+    });
+    
+    // 初始化日期範圍
+    this.initializeDateRange();
+  }
+
+  private initializeDateRange() {
+    // 先設定預設日期範圍 - 使用 Day.js
+    const now = dayjs();
+    this.startDate = now.startOf('month').toDate();
+    this.endDate = now.add(3, 'month').endOf('month').toDate();
+    
+    // 如果有任務資料，根據任務調整日期範圍
+    if (this.flatTasks.length > 0) {
+      this.calculateDateRangeFromTasks();
+    }
+    
+    this.generateDateColumns();
+  }
+
+  // 根據任務計算日期範圍
+  private calculateDateRangeFromTasks() {
+    if (this.flatTasks.length === 0) return;
+    
+    let earliestStart: dayjs.Dayjs | null = null;
+    let latestEnd: dayjs.Dayjs | null = null;
+    
+    // 找出所有任務的最早開始日和最晚結束日
+    this.flatTasks.forEach(task => {
+      if (task.startDate) {
+        const taskStart = dayjs(task.startDate);
+        if (!earliestStart || taskStart.isBefore(earliestStart)) {
+          earliestStart = taskStart;
+        }
+      }
+      
+      if (task.endDate) {
+        const taskEnd = dayjs(task.endDate);
+        if (!latestEnd || taskEnd.isAfter(latestEnd)) {
+          latestEnd = taskEnd;
+        }
+      }
+    });
+    
+    // 設定日期範圍，並加上一些緩衝時間
+    if (earliestStart) {
+      // 從最早開始日的前一個月開始
+      this.startDate = (earliestStart as dayjs.Dayjs).subtract(1, 'month').startOf('month').toDate();
+    }
+    
+    if (latestEnd) {
+      // 到最晚結束日的後一個月結束
+      this.endDate = (latestEnd as dayjs.Dayjs).add(1, 'month').endOf('month').toDate();
+    }
+    
+    console.log('根據任務計算的日期範圍:', {
+      earliestStart: earliestStart ? (earliestStart as dayjs.Dayjs).format('YYYY-MM-DD') : null,
+      latestEnd: latestEnd ? (latestEnd as dayjs.Dayjs).format('YYYY-MM-DD') : null,
+      startDate: dayjs(this.startDate).format('YYYY-MM-DD'),
+      endDate: dayjs(this.endDate).format('YYYY-MM-DD')
+    });
+  }
+
+  private generateDateColumns() {
+    this.dateColumns = [];
+    let current = dayjs(this.startDate);
+    const endDate = dayjs(this.endDate);
+    
+    while (current.isSameOrBefore(endDate)) {
+      switch (this.viewMode) {
+        case 'day':
+          // 使用完整的年/月/日格式以避免跨年問題
+          this.dateColumns.push(current.format('YYYY/M/D'));
+          current = current.add(1, 'day');
+          break;
+        case 'week':
+          // 使用 ISO 週數格式
+          this.dateColumns.push(`W${current.isoWeek()}`);
+          current = current.add(1, 'week');
+          break;
+        case 'month':
+          this.dateColumns.push(current.format('YYYY/MM'));
+          current = current.add(1, 'month');
+          break;
+      }
+    }
+    
+    // 生成月份分組
+    this.generateMonthGroups();
+  }
+
+  // 生成月份分組標題
+  private generateMonthGroups() {
+    this.monthGroups = [];
+    const monthMap = new Map<string, number>();
+    
+    this.dateColumns.forEach(dateCol => {
+      const monthKey = this.getMonthFromDateColumn(dateCol);
+      monthMap.set(monthKey, (monthMap.get(monthKey) || 0) + 1);
+    });
+    
+    monthMap.forEach((span, month) => {
+      this.monthGroups.push({ month, span });
+    });
+  }
+
+  // 從日期欄位獲取月份
+  private getMonthFromDateColumn(dateCol: string): string {
+    switch (this.viewMode) {
+      case 'day': {
+        const date = dayjs(dateCol, 'YYYY/M/D');
+        return date.format('YYYY/MM');
+      }
+      case 'week': {
+        // 週檢視需要根據週數推算月份
+        const weekNum = parseInt(dateCol.replace('W', ''));
+        const currentYear = dayjs().year();
+        const weekDate = dayjs().year(currentYear).isoWeek(weekNum);
+        return weekDate.format('YYYY/MM');
+      }
+      case 'month':
+        return dateCol; // 月檢視直接返回年/月
+      default:
+        return '';
+    }
+  }
+
+  // 獲取日期副標題
+  getDateSubtitle(dateCol: string): string {
+    switch (this.viewMode) {
+      case 'day':
+        const [, , day] = dateCol.split('/');
+        return day;
+      case 'week':
+        return dateCol; // 顯示週數
+      case 'month':
+        // 顯示月份的起始和結束日
+        const [year, month] = dateCol.split('/');
+        const monthStart = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const monthEnd = new Date(parseInt(year), parseInt(month), 0);
+        return `${monthStart.getDate()}-${monthEnd.getDate()}`;
+      default:
+        return dateCol;
+    }
+  }
+
+  // 獲取日期欄位的寬度
+  getDateColumnWidth(): string {
+    switch (this.viewMode) {
+      case 'day':
+        return '24px'; // 日檢視縮小
+      case 'week':
+        return '50px'; // 週檢視中等
+      case 'month':
+        return '80px'; // 月檢視較寬
+      default:
+        return '60px';
+    }
+  }
+
+  // 計算表格總寬度
+  getTableMinWidth(): string {
+    const fixedColumnsWidth = 540; // WBS(60) + 內容(180) + 天數(50) + 開始日(100) + 結束日(100) + 權重(50)
+    const dateColumnCount = this.dateColumns.length;
+    
+    let dateColumnWidth: number;
+    switch (this.viewMode) {
+      case 'day':
+        dateColumnWidth = 24; // 日檢視
+        break;
+      case 'week':
+        dateColumnWidth = 50; // 週檢視
+        break;
+      case 'month':
+        dateColumnWidth = 80; // 月檢視
+        break;
+      default:
+        dateColumnWidth = 60;
+    }
+    
+    const totalDateColumnsWidth = dateColumnCount * dateColumnWidth;
+    const totalWidth = fixedColumnsWidth + totalDateColumnsWidth;
+    
+    // 確保最小寬度不小於 800px
+    return `${Math.max(totalWidth, 800)}px`;
+  }
+
+  // 移除了舊的 formatDate 和 getWeekNumber 方法，使用 Day.js 替代
+
+  changeViewMode(mode: ViewMode) {
+    this.viewMode = mode;
+    // 儲存檢視模式到 localStorage
+    this.saveViewModeToStorage(mode);
+    // 重新計算日期範圍以適應新的檢視模式
+    if (this.flatTasks.length > 0) {
+      this.calculateDateRangeFromTasks();
+    }
+    this.generateDateColumns();
+  }
+
+  // 載入檢視模式從 localStorage
+  private loadViewModeFromStorage() {
+    try {
+      const savedViewMode = localStorage.getItem('schedule-view-mode');
+      if (savedViewMode && ['day', 'week', 'month'].includes(savedViewMode)) {
+        this.viewMode = savedViewMode as ViewMode;
+      }
+    } catch (error) {
+      console.warn('無法載入檢視模式設定:', error);
+      // 如果出錯，使用預設值
+      this.viewMode = 'month';
+    }
+  }
+
+  // 儲存檢視模式到 localStorage
+  private saveViewModeToStorage(mode: ViewMode) {
+    try {
+      localStorage.setItem('schedule-view-mode', mode);
+    } catch (error) {
+      console.warn('無法儲存檢視模式設定:', error);
+    }
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file && file.name.endsWith('.xml')) {
+      this.importXmlFile(file);
+    }
+  }
+
+  private async importXmlFile(file: File) {
+    try {
+      const text = await file.text();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(text, 'text/xml');
+      
+      const tasks = xmlDoc.getElementsByTagName('Task');
+      let updatedCount = 0;
+      let newCount = 0;
+      
+      for (let i = 0; i < tasks.length; i++) {
+        const task = tasks[i];
+        const wbs = task.getElementsByTagName('WBS')[0]?.textContent || '';
+        const name = task.getElementsByTagName('Name')[0]?.textContent || '';
+        const start = task.getElementsByTagName('Start')[0]?.textContent || '';
+        const finish = task.getElementsByTagName('Finish')[0]?.textContent || '';
+        const outlineLevel = parseInt(task.getElementsByTagName('OutlineLevel')[0]?.textContent || '0');
+        
+        if (name && wbs) {
+          const startDate = dayjs(start);
+          const endDate = dayjs(finish);
+          const days = Math.floor(endDate.diff(startDate, 'day')) + 1; // 包含開始日當天，確保為整數
+          
+          // 尋找現有的任務（以WBS為ID）
+          const existingTask = this.findTaskByWbs(wbs);
+          
+          if (existingTask) {
+            // 更新現有任務的內容、開始日期和結束日期
+            existingTask.name = name;
+            existingTask.startDate = startDate.format('YYYY-MM-DD');
+            existingTask.endDate = endDate.format('YYYY-MM-DD');
+            existingTask.days = days > 0 ? days : 1;
+            // 保持原有的權重值，不更新
+            updatedCount++;
+          } else {
+            // 如果找不到對應的WBS，創建新任務
+            const newTask: ScheduleTask = {
+              wbs,
+              name,
+              days: days > 0 ? days : 1,
+              startDate: startDate.format('YYYY-MM-DD'),
+              endDate: endDate.format('YYYY-MM-DD'),
+              weight: 0, // 新任務權重設為0
+              level: outlineLevel,
+              dailyProgress: {}
+            };
+            
+            // 將新任務加入到適當的位置
+            this.insertTaskInOrder(newTask);
+            newCount++;
+          }
+        }
+      }
+      
+      // 重新建立樹狀結構
+      this.rebuildTaskTree();
+      
+      // 重新計算父層任務的日期和權重
+      this.recalculateParentTasks();
+      
+      this.flattenTasks();
+      
+      // 重新計算日期範圍
+      this.calculateDateRangeFromTasks();
+      this.generateDateColumns();
+      
+      // 儲存更新後的資料
+      await this.saveScheduleData();
+      
+      // 顯示匯入結果
+      alert(`XML 匯入完成！\n更新任務：${updatedCount} 個\n新增任務：${newCount} 個`);
+      
+    } catch (error) {
+      console.error('XML 匯入失敗:', error);
+      alert('XML 檔案匯入失敗，請檢查檔案格式');
+    }
+  }
+
+  private formatDateForInput(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
+  private buildTaskTree(tasks: ScheduleTask[]): ScheduleTask[] {
+    const tree: ScheduleTask[] = [];
+    const taskMap = new Map<string, ScheduleTask>();
+    
+    // 先將所有任務加入 map
+    tasks.forEach(task => {
+      taskMap.set(task.wbs, { ...task, children: [], isExpanded: true });
+    });
+    
+    // 建立親子關係
+    tasks.forEach(task => {
+      const currentTask = taskMap.get(task.wbs)!;
+      
+      if (task.level === 0) {
+        tree.push(currentTask);
+      } else {
+        // 找到父任務
+        const parentWbs = this.findParentWbs(task.wbs, tasks);
+        const parent = taskMap.get(parentWbs);
+        if (parent) {
+          parent.children = parent.children || [];
+          parent.children.push(currentTask);
+          currentTask.parent = parentWbs;
+        }
+      }
+    });
+    
+    return tree;
+  }
+
+  private findParentWbs(currentWbs: string, tasks: ScheduleTask[]): string {
+    const currentLevel = tasks.find(t => t.wbs === currentWbs)?.level || 0;
+    const parentLevel = currentLevel - 1;
+    
+    // 在任務列表中往前找到同等級或更高等級的任務
+    const currentIndex = tasks.findIndex(t => t.wbs === currentWbs);
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      if (tasks[i].level === parentLevel) {
+        return tasks[i].wbs;
+      }
+    }
+    return '';
+  }
+
+  private flattenTasks() {
+    this.flatTasks = [];
+    this.flattenTasksRecursive(this.tasks);
+  }
+
+  private flattenTasksRecursive(tasks: ScheduleTask[]) {
+    tasks.forEach(task => {
+      this.flatTasks.push(task);
+      if (task.children && task.children.length > 0 && task.isExpanded) {
+        this.flattenTasksRecursive(task.children);
+      }
+    });
+  }
+
+  toggleTaskExpansion(task: ScheduleTask) {
+    task.isExpanded = !task.isExpanded;
+    this.flattenTasks();
+  }
+
+  isDateInRange(task: ScheduleTask, dateColumn: string): boolean {
+    // 將任務日期轉換為 Day.js 物件
+    const taskStart = dayjs(task.startDate).startOf('day');
+    const taskEnd = dayjs(task.endDate).endOf('day');
+    
+    switch (this.viewMode) {
+      case 'day': {
+        const checkDate = dayjs(dateColumn, 'YYYY/M/D');
+        return checkDate.isSameOrAfter(taskStart, 'day') && checkDate.isSameOrBefore(taskEnd, 'day');
+      }
+        
+      case 'week': {
+        const weekNum = parseInt(dateColumn.replace('W', ''));
+        const currentYear = taskStart.year();
+        const weekStart = dayjs().year(currentYear).isoWeek(weekNum).startOf('isoWeek');
+        const weekEnd = weekStart.endOf('isoWeek');
+        return !(taskEnd.isBefore(weekStart, 'day') || taskStart.isAfter(weekEnd, 'day'));
+      }
+        
+      case 'month': {
+        const monthDate = dayjs(dateColumn, 'YYYY/MM');
+        const monthStart = monthDate.startOf('month');
+        const monthEnd = monthDate.endOf('month');
+        return !(taskEnd.isBefore(monthStart, 'day') || taskStart.isAfter(monthEnd, 'day'));
+      }
+        
+      default:
+        return false;
+    }
+  }
+
+  getProgressForDate(task: ScheduleTask, dateColumn: string): number {
+    if (!task.dailyProgress) return 0;
+    
+    // 根據檢視模式轉換日期格式
+    let dateKey = '';
+    switch (this.viewMode) {
+      case 'day':
+        const date = dayjs(dateColumn, 'YYYY/M/D');
+        dateKey = date.format('YYYY-MM-DD');
+        break;
+      case 'month':
+        dateKey = dateColumn; // 直接使用月份字符串
+        break;
+    }
+    
+    return task.dailyProgress[dateKey] || 0;
+  }
+
+  updateProgress(task: ScheduleTask, dateColumn: string, progress: number) {
+    if (!task.dailyProgress) {
+      task.dailyProgress = {};
+    }
+    
+    let dateKey = '';
+    switch (this.viewMode) {
+      case 'day':
+        const date = dayjs(dateColumn, 'YYYY/M/D');
+        dateKey = date.format('YYYY-MM-DD');
+        break;
+      case 'month':
+        dateKey = dateColumn;
+        break;
+    }
+    
+    task.dailyProgress[dateKey] = Math.max(0, Math.min(100, progress));
+    this.saveScheduleData();
+  }
+
+  addNewTask() {
+    const today = dayjs();
+    const newTask: ScheduleTask = {
+      wbs: this.generateNewWbs(),
+      name: '新工作項目',
+      days: 1,
+      startDate: today.format('YYYY-MM-DD'),
+      endDate: today.format('YYYY-MM-DD'),
+      weight: 0,
+      level: 0,
+      dailyProgress: {}
+    };
+    
+    this.tasks.push(newTask);
+    
+    // 重新計算父層任務的日期和權重
+    this.recalculateParentTasks();
+    
+    this.flattenTasks();
+    
+    // 重新計算日期範圍
+    this.calculateDateRangeFromTasks();
+    this.generateDateColumns();
+  }
+
+  private generateNewWbs(): string {
+    const maxWbs = this.flatTasks.reduce((max, task) => {
+      const num = parseInt(task.wbs) || 0;
+      return Math.max(max, num);
+    }, 0);
+    return (maxWbs + 1).toString();
+  }
+
+  deleteTask(task: ScheduleTask) {
+    if (confirm(`確定要刪除工作項目「${task.name}」嗎？`)) {
+      this.removeTaskFromTree(this.tasks, task);
+      this.flattenTasks();
+      this.saveScheduleData();
+      
+      // 如果在編輯模式中刪除，關閉編輯對話框
+      if (this.isEditing && this.editingTask?.wbs === task.wbs) {
+        this.cancelEdit();
+      }
+    }
+  }
+
+  private removeTaskFromTree(tasks: ScheduleTask[], taskToRemove: ScheduleTask): boolean {
+    const index = tasks.findIndex(t => t.wbs === taskToRemove.wbs);
+    if (index !== -1) {
+      tasks.splice(index, 1);
+      return true;
+    }
+    
+    for (const task of tasks) {
+      if (task.children && this.removeTaskFromTree(task.children, taskToRemove)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  editTask(task: ScheduleTask) {
+    this.editingTask = { ...task };
+    this.isEditing = true;
+  }
+
+  saveEdit() {
+    if (this.editingTask) {
+      const original = this.findTaskByWbs(this.editingTask.wbs);
+      if (original) {
+        Object.assign(original, this.editingTask);
+        this.flattenTasks();
+        this.saveScheduleData();
+      }
+    }
+    this.cancelEdit();
+  }
+
+  cancelEdit() {
+    this.isEditing = false;
+    this.editingTask = null;
+  }
+
+  // 儲存單一欄位變更（帶欄位類型）
+  saveTaskFieldWithType(task: ScheduleTask, fieldType: 'days' | 'startDate' | 'endDate' | 'content' | 'weight') {
+    if (fieldType === 'days') {
+      // 如果修改天數，重新計算結束日期
+      if (task.startDate && task.days && task.days > 0) {
+        const startDate = dayjs(task.startDate);
+        const endDate = startDate.add(task.days - 1, 'day'); // 減1因為包含開始日當天
+        task.endDate = endDate.format('YYYY-MM-DD');
+      }
+    } else if (fieldType === 'startDate' || fieldType === 'endDate') {
+      // 如果修改開始日或結束日，重新計算天數
+      if (task.startDate && task.endDate) {
+        const startDate = dayjs(task.startDate);
+        const endDate = dayjs(task.endDate);
+        const days = Math.floor(endDate.diff(startDate, 'day')) + 1; // 包含開始日當天，確保為整數
+        if (days > 0) {
+          task.days = days;
+        } else {
+          // 如果結束日早於開始日，自動調整結束日
+          task.endDate = task.startDate;
+          task.days = 1;
+        }
+      }
+    }
+    
+    // 重新計算所有父層任務的日期和權重
+    this.recalculateParentTasks();
+    
+    // 重新扁平化任務以更新顯示
+    this.flattenTasks();
+    
+    // 重新計算日期範圍
+    this.calculateDateRangeFromTasks();
+    this.generateDateColumns();
+    
+    // 即時儲存到資料庫
+    this.saveScheduleData();
+  }
+
+  // 儲存單一欄位變更（保留原方法以兼容其他調用）
+  saveTaskField(task: ScheduleTask) {
+    this.saveTaskFieldWithType(task, 'content');
+  }
+
+  private findTaskByWbs(wbs: string): ScheduleTask | null {
+    return this.flatTasks.find(task => task.wbs === wbs) || null;
+  }
+
+  // 將新任務插入到適當的位置（按WBS排序）
+  private insertTaskInOrder(newTask: ScheduleTask) {
+    // 如果是頂層任務，直接加入
+    if (!newTask.wbs.includes('.')) {
+      this.tasks.push(newTask);
+      return;
+    }
+    
+    // 尋找父任務
+    const parentWbs = this.findParentWbsByLevel(newTask.wbs, this.flatTasks, newTask.level);
+    if (parentWbs) {
+      const parentTask = this.findTaskByWbs(parentWbs);
+      if (parentTask) {
+        if (!parentTask.children) {
+          parentTask.children = [];
+        }
+        parentTask.children.push(newTask);
+        newTask.parent = parentWbs; // 修正：應該是WBS字符串
+        return;
+      }
+    }
+    
+    // 如果找不到父任務，加入到頂層
+    this.tasks.push(newTask);
+  }
+
+  // 重新建立樹狀結構
+  private rebuildTaskTree() {
+    // 重新扁平化所有任務
+    this.flattenTasks();
+    
+    // 重新建立樹狀結構
+    const allTasks = [...this.flatTasks];
+    this.tasks = this.buildTaskTreeFromExisting(allTasks);
+  }
+
+  private async loadScheduleData() {
+    try {
+      console.log('開始載入進度表資料，siteId:', this.siteId);
+      
+      if (!this.siteId) {
+        console.error('siteId 為空，無法載入資料');
+        return;
+      }
+
+      // 使用與舊進度表相同的方式載入任務資料
+      const rawData = await this.mongodbService.get('task', {
+        siteId: this.siteId,
+      }) as ProjectTask[];
+      
+      console.log('從資料庫載入的原始資料:', rawData);
+
+      if (!Array.isArray(rawData)) {
+        console.error('從資料庫獲取的資料不是陣列格式');
+        return;
+      }
+
+      if (rawData.length === 0) {
+        console.warn('從資料庫獲取的任務清單為空');
+        return;
+      }
+
+      // 將MongoDB資料轉換為新進度表格式
+      const convertedTasks: ScheduleTask[] = rawData.map((task) => {
+        const startDate = task.start ? dayjs(task.start) : dayjs();
+        const endDate = task.end ? dayjs(task.end) : dayjs();
+        const days = Math.floor(endDate.diff(startDate, 'day')) + 1 || 1; // 確保為整數
+
+        return {
+          _id: task._id ? task._id.toString() : '',
+          wbs: task.wbs || '',
+          name: task.name || '未命名任務',
+          days: days,
+          startDate: startDate.format('YYYY-MM-DD'),
+          endDate: endDate.format('YYYY-MM-DD'),
+          weight: task.weight ?? task.progress ?? 0, // 優先使用weight，沒有則使用progress，都沒有則為0
+          level: this.calculateTaskLevel(task.wbs || ''),
+          dailyProgress: task.progressHistory ? this.convertProgressHistory(task.progressHistory) : {}
+        };
+      });
+
+      // 建立樹狀結構
+      this.tasks = this.buildTaskTreeFromExisting(convertedTasks);
+      
+      // 重新計算父層任務的日期和權重
+      this.recalculateParentTasks();
+      
+      this.flattenTasks();
+      
+      // 重新計算日期範圍
+      this.calculateDateRangeFromTasks();
+      this.generateDateColumns();
+      
+      console.log('成功載入並轉換任務資料，數量:', this.tasks.length);
+      
+    } catch (error) {
+      console.error('載入進度表資料失敗:', error);
+    }
+  }
+
+  private async saveScheduleData() {
+    try {
+      // 將新進度表格式轉換回舊格式並儲存到 task collection
+      for (const task of this.flatTasks) {
+        if (task._id) {
+          // 更新現有任務
+          const updateData = {
+            name: task.name,
+            wbs: task.wbs,
+            start: task.startDate,
+            end: task.endDate,
+            weight: task.weight, // 將權重保存到weight欄位
+            progressHistory: this.convertDailyProgressToHistory(task.dailyProgress || {})
+          };
+          
+          await this.mongodbService.patch('task', task._id, updateData);
+        } else {
+          // 新增任務
+          const newTaskData = {
+            name: task.name,
+            wbs: task.wbs,
+            start: task.startDate,
+            end: task.endDate,
+            weight: task.weight, // 將權重保存到weight欄位
+            siteId: this.siteId,
+            dependencies: '',
+            progressHistory: this.convertDailyProgressToHistory(task.dailyProgress || {})
+          };
+          
+          const result = await this.mongodbService.post('task', newTaskData);
+          if (result && result._id) {
+            task._id = result._id.toString();
+          }
+        }
+      }
+      
+      console.log('進度表資料儲存成功');
+    } catch (error) {
+      console.error('儲存進度表資料失敗:', error);
+    }
+  }
+
+  // 轉換每日進度為歷史記錄格式
+  private convertDailyProgressToHistory(dailyProgress: { [date: string]: number }): any[] {
+    const progressHistory: any[] = [];
+    Object.entries(dailyProgress).forEach(([date, progress]) => {
+      if (progress > 0) {
+        progressHistory.push({
+          date: date,
+          progress: progress,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+    return progressHistory;
+  }
+
+  getIndentClass(level: number): string {
+    return `ps-${Math.min(level * 2, 5)}`;
+  }
+
+  hasChildren(task: ScheduleTask): boolean {
+    return !!(task.children && task.children.length > 0);
+  }
+
+  // 獲取任務日期格子的CSS class
+  getTaskDateCellClass(task: ScheduleTask, dateCol: string): any {
+    const isInRange = this.isDateInRange(task, dateCol);
+    const isParent = this.hasChildren(task);
+    
+    return {
+      'bg-light': isInRange && isParent, // 父任務用淺色背景
+      'bg-primary': isInRange && !isParent, // 子任務用藍色背景
+      'bg-opacity-25': isInRange && isParent, // 父任務透明度
+    };
+  }
+
+  // 計算任務層級（根據WBS結構）
+  private calculateTaskLevel(wbs: string): number {
+    if (!wbs) return 0;
+    // 計算WBS中點號的數量來判斷層級
+    return (wbs.match(/\./g) || []).length;
+  }
+
+  // 轉換進度歷史記錄格式
+  private convertProgressHistory(progressHistory: any[]): { [date: string]: number } {
+    const dailyProgress: { [date: string]: number } = {};
+    if (Array.isArray(progressHistory)) {
+      progressHistory.forEach(record => {
+        if (record.date && record.progress !== undefined) {
+          dailyProgress[record.date] = record.progress;
+        }
+      });
+    }
+    return dailyProgress;
+  }
+
+  // 從現有任務建立樹狀結構
+  private buildTaskTreeFromExisting(tasks: ScheduleTask[]): ScheduleTask[] {
+    const tree: ScheduleTask[] = [];
+    const taskMap = new Map<string, ScheduleTask>();
+    
+    // 按WBS排序
+    tasks.sort((a, b) => (a.wbs || '').localeCompare(b.wbs || ''));
+    
+    // 先將所有任務加入 map
+    tasks.forEach(task => {
+      taskMap.set(task.wbs, { ...task, children: [], isExpanded: true });
+    });
+    
+    // 建立親子關係
+    tasks.forEach(task => {
+      const currentTask = taskMap.get(task.wbs)!;
+      
+      if (task.level === 0) {
+        tree.push(currentTask);
+      } else {
+        // 找到父任務WBS
+        const parentWbs = this.findParentWbsByLevel(task.wbs, tasks, task.level);
+        const parent = taskMap.get(parentWbs);
+        if (parent) {
+          parent.children = parent.children || [];
+          parent.children.push(currentTask);
+          currentTask.parent = parentWbs;
+        } else {
+          // 如果找不到父任務，放到根層級
+          tree.push(currentTask);
+        }
+      }
+    });
+    
+    return tree;
+  }
+
+  // 根據層級找到父任務WBS
+  private findParentWbsByLevel(currentWbs: string, tasks: ScheduleTask[], currentLevel: number): string {
+    const parentLevel = currentLevel - 1;
+    
+    // 在任務列表中往前找到同等級或更高等級的任務
+    const currentIndex = tasks.findIndex(t => t.wbs === currentWbs);
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      if (tasks[i].level === parentLevel) {
+        return tasks[i].wbs;
+      }
+    }
+    return '';
+  }
+
+  // 重新計算所有父層任務的日期和權重
+  private recalculateParentTasks() {
+    // 遞迴計算所有任務樹
+    this.recalculateTaskTree(this.tasks);
+  }
+
+  // 遞迴計算任務樹的日期和權重
+  private recalculateTaskTree(tasks: ScheduleTask[]) {
+    tasks.forEach(task => {
+      if (this.hasChildren(task) && task.children) {
+        // 先遞迴計算子任務
+        this.recalculateTaskTree(task.children);
+        
+        // 計算此父任務的日期和權重
+        this.calculateParentTaskDates(task);
+      }
+    });
+  }
+
+  // 計算父任務的開始日、結束日、天數和權重
+  private calculateParentTaskDates(parentTask: ScheduleTask) {
+    if (!parentTask.children || parentTask.children.length === 0) {
+      return;
+    }
+
+    let earliestStart: dayjs.Dayjs | null = null;
+    let latestEnd: dayjs.Dayjs | null = null;
+    let totalWeight = 0;
+    let childCount = 0;
+
+    // 找出所有子任務的最早開始日和最晚結束日
+    parentTask.children.forEach(child => {
+      if (child.startDate) {
+        const childStart = dayjs(child.startDate);
+        if (!earliestStart || childStart.isBefore(earliestStart)) {
+          earliestStart = childStart;
+        }
+      }
+
+      if (child.endDate) {
+        const childEnd = dayjs(child.endDate);
+        if (!latestEnd || childEnd.isAfter(latestEnd)) {
+          latestEnd = childEnd;
+        }
+      }
+
+      // 累加權重
+      totalWeight += child.weight || 0;
+      childCount++;
+    });
+
+    // 更新父任務的日期
+    if (earliestStart) {
+      parentTask.startDate = (earliestStart as dayjs.Dayjs).format('YYYY-MM-DD');
+    }
+
+    if (latestEnd) {
+      parentTask.endDate = (latestEnd as dayjs.Dayjs).format('YYYY-MM-DD');
+    }
+
+    // 計算天數（確保為整數）
+    if (earliestStart && latestEnd) {
+      const days = Math.floor((latestEnd as dayjs.Dayjs).diff(earliestStart as dayjs.Dayjs, 'day')) + 1; // 包含開始日當天，確保為整數
+      parentTask.days = days > 0 ? days : 1;
+    }
+
+    // 計算平均權重（精確到小數點第2位）
+    if (childCount > 0) {
+      parentTask.weight = Math.round((totalWeight / childCount) * 100) / 100;
+    }
+
+    console.log(`重新計算父任務 ${parentTask.name} (WBS: ${parentTask.wbs}):`, {
+      startDate: parentTask.startDate,
+      endDate: parentTask.endDate,
+      days: parentTask.days,
+      weight: parentTask.weight,
+      childCount: childCount
+    });
+  }
+} 

@@ -69,20 +69,20 @@ export class SiteDashboardPermitComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // 加載工地資料
+  // 加載專案資料
   async loadSiteData(): Promise<void> {
     try {
       this.site = await this.mongodbService.getById('site', this.siteId);
     } catch (error) {
-      console.error('加載工地資料時出錯:', error);
-      this.error = '無法載入工地資料';
+      console.error('加載專案資料時出錯:', error);
+      this.error = '無法載入專案資料';
     }
   }
 
   // 加載許可單資料
   async loadPermitData(): Promise<void> {
     if (!this.siteId) {
-      this.error = '工地ID不存在，無法獲取許可單資料';
+      this.error = '專案ID不存在，無法獲取許可單資料';
       this.loading = false;
       return;
     }
@@ -90,7 +90,7 @@ export class SiteDashboardPermitComponent implements OnInit, AfterViewInit {
     this.loading = true;
 
     try {
-      // 獲取該工地的所有許可單
+      // 獲取該專案的所有許可單
       this.permits = await this.mongodbService.get('siteForm', {
         formType: 'sitePermit',
         siteId: this.siteId

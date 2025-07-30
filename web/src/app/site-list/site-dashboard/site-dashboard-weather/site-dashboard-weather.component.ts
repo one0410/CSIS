@@ -40,20 +40,20 @@ export class SiteDashboardWeatherComponent implements OnInit {
     }
   }
 
-  // 加載工地資料
+  // 加載專案資料
   async loadSiteData(): Promise<void> {
     try {
       this.site = await this.mongodbService.getById('site', this.siteId);
     } catch (error) {
-      console.error('加載工地資料時出錯:', error);
-      this.error = '無法載入工地資料';
+      console.error('加載專案資料時出錯:', error);
+      this.error = '無法載入專案資料';
     }
   }
 
   // 加載天氣資料
   async loadWeatherData(): Promise<void> {
     if (!this.site || !this.site.county) {
-      this.error = '工地資料不完整，無法獲取天氣';
+      this.error = '專案資料不完整，無法獲取天氣';
       this.loading = false;
       return;
     }

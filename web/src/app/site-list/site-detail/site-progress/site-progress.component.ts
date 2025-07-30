@@ -29,13 +29,14 @@ interface ProgressRecord {
 }
 
 // 擴展Task接口，增加WBS和項目編號
-interface ProjectTask {
+export interface ProjectTask {
   _id?: string;
   id: string;
   name: string;
   start?: string;
   end?: string;
   progress: number;
+  weight?: number; // 權重（百分比），與進度不同
   dependencies: string;
   wbs?: string;
   type?: string;

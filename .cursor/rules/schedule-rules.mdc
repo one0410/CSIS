@@ -1,0 +1,114 @@
+---
+alwaysApply: false
+---
+
+
+之前進度表的頁面是使用 gantt chart 套件來顯示, 新的頁面，我想要手動實作 <table></table> 或是 一堆 div , 來達成類似甘特圖的效果。表格，左半邊, 由上而下表示每一個工作項目, 左而右會有 wbs/內容/天數/開始日/結束日/權重比的欄位, 表格右半邊, 每一格代表一天。
+
+以wbs作為每個項目的代碼, Wbs實為一個樹狀結構的概念, 最底層的wbs在表格顯示上會有2個row, 第一個 row 在右手邊的每一格會用顏色標記, 表示，開始及結束日期。父層則會依照子層自動計算開始及結束日。每一個最底層的wbs也可以填入權重, 父層則會依照子層自動加總權重。
+第二個 row 則可以在右手邊的格子內, 讓使用者輸入當天的進度。
+
+# 匯入功能
+
+表格右上角會有匯入按鈕, 可匯入 xml 檔案, xml 範例內容如下, 找出 Tasks 節點後, 每一個 <Task> 即為一個工作項目。
+
+```
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?> 
+- <Project xmlns="http://schemas.microsoft.com/project">
+  <SaveVersion>14</SaveVersion> 
+  <BuildNumber>16.0.14334.20136</BuildNumber> 
+  <Name>RST360K工程進度表NEW9.xml</Name> 
+  <GUID>5F1CEA09-2127-F011-9C84-6CF6DA12907F</GUID> 
+  <Title>忠哥看過的版本</Title> 
+  <CreationDate>2025-04-29T08:00:00</CreationDate> 
+  <LastSaved>2025-07-25T14:58:00</LastSaved> 
+  ...
+  <Tasks>
+    <Task>
+  <UID>0</UID> 
+  <GUID>601CEA09-2127-F011-9C84-6CF6DA12907F</GUID> 
+  <ID>0</ID> 
+  <Name>忠哥看過的版本</Name> 
+  <Active>1</Active> 
+  <Manual>0</Manual> 
+  <Type>1</Type> 
+  <IsNull>0</IsNull> 
+  <CreateDate>2025-04-29T13:59:00</CreateDate> 
+  <WBS>0</WBS> 
+  <OutlineNumber>0</OutlineNumber> 
+  <OutlineLevel>0</OutlineLevel> 
+  <Priority>500</Priority> 
+  <Start>2025-03-22T08:00:00</Start> 
+  <Finish>2025-08-15T17:00:00</Finish> 
+  <Duration>PT880H0M0S</Duration> 
+  <ManualStart>2025-03-22T08:00:00</ManualStart> 
+  <ManualFinish>2025-08-15T17:00:00</ManualFinish> 
+  <ManualDuration>PT880H0M0S</ManualDuration> 
+  <DurationFormat>21</DurationFormat> 
+  <FreeformDurationFormat>7</FreeformDurationFormat> 
+  <Work>PT0H0M0S</Work> 
+  <ResumeValid>0</ResumeValid> 
+  <EffortDriven>0</EffortDriven> 
+  <Recurring>0</Recurring> 
+  <OverAllocated>0</OverAllocated> 
+  <Estimated>0</Estimated> 
+  <Milestone>0</Milestone> 
+  <Summary>1</Summary> 
+  <DisplayAsSummary>0</DisplayAsSummary> 
+  <Critical>1</Critical> 
+  <IsSubproject>0</IsSubproject> 
+  <IsSubprojectReadOnly>0</IsSubprojectReadOnly> 
+  <ExternalTask>0</ExternalTask> 
+  <EarlyStart>2025-03-22T08:00:00</EarlyStart> 
+  <EarlyFinish>2025-08-15T17:00:00</EarlyFinish> 
+  <LateStart>2025-03-22T08:00:00</LateStart> 
+  <LateFinish>2025-08-15T17:00:00</LateFinish> 
+  <StartVariance>0</StartVariance> 
+  <FinishVariance>0</FinishVariance> 
+  <WorkVariance>0.00</WorkVariance> 
+  <FreeSlack>0</FreeSlack> 
+  <TotalSlack>0</TotalSlack> 
+  <StartSlack>0</StartSlack> 
+  <FinishSlack>0</FinishSlack> 
+  <FixedCost>0</FixedCost> 
+  <FixedCostAccrual>3</FixedCostAccrual> 
+  <PercentComplete>0</PercentComplete> 
+  <PercentWorkComplete>0</PercentWorkComplete> 
+  <Cost>0</Cost> 
+  <OvertimeCost>0</OvertimeCost> 
+  <OvertimeWork>PT0H0M0S</OvertimeWork> 
+  <ActualDuration>PT0H0M0S</ActualDuration> 
+  <ActualCost>0</ActualCost> 
+  <ActualOvertimeCost>0</ActualOvertimeCost> 
+  <ActualWork>PT0H0M0S</ActualWork> 
+  <ActualOvertimeWork>PT0H0M0S</ActualOvertimeWork> 
+  <RegularWork>PT0H0M0S</RegularWork> 
+  <RemainingDuration>PT880H0M0S</RemainingDuration> 
+  <RemainingCost>0</RemainingCost> 
+  <RemainingWork>PT0H0M0S</RemainingWork> 
+  <RemainingOvertimeCost>0</RemainingOvertimeCost> 
+  <RemainingOvertimeWork>PT0H0M0S</RemainingOvertimeWork> 
+  <ACWP>0.00</ACWP> 
+  <CV>0.00</CV> 
+  <ConstraintType>0</ConstraintType> 
+  <CalendarUID>-1</CalendarUID> 
+  <LevelAssignments>1</LevelAssignments> 
+  <LevelingCanSplit>1</LevelingCanSplit> 
+  <LevelingDelay>0</LevelingDelay> 
+  <LevelingDelayFormat>8</LevelingDelayFormat> 
+  <IgnoreResourceCalendar>0</IgnoreResourceCalendar> 
+  <HideBar>0</HideBar> 
+  <Rollup>0</Rollup> 
+  <BCWS>0.00</BCWS> 
+  <BCWP>0.00</BCWP> 
+  <PhysicalPercentComplete>0</PhysicalPercentComplete> 
+  <EarnedValueMethod>0</EarnedValueMethod> 
+  <IsPublished>0</IsPublished> 
+  <CommitmentType>0</CommitmentType> 
+  </Task>
+  </Tasks>
+```
+
+## 切換日周月
+
+表格右上角可以切換不同的日檢視/周檢視/月檢視

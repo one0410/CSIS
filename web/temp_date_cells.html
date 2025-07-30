@@ -1,0 +1,28 @@
+                  <!-- 日期欄位 - 所有日期都有輸入框，支援提早開始或延後結束 -->
+                  @for (dateCol of dateColumns; track dateCol) {
+                  <td [style.width]="getDateColumnWidth()" style="text-align: center; padding: 0.1rem; position: relative;"
+                    [ngClass]="getEnhancedTaskDateCellClass(task, dateCol)"
+                    [title]="getDateCellTooltip(task, dateCol)">
+                    @if (!hasChildren(task)) {
+                      <!-- 子任務：所有日期都有輸入框 -->
+                      <input type="number" class="form-control form-control-sm text-center border-0"
+                        [style.font-size]="viewMode === 'day' ? '8px' : '10px'"
+                        [style.width]="viewMode === 'day' ? '20px' : (viewMode === 'week' ? '46px' : '70px')"
+                        [style.background-color]="getInputBackgroundColor(task, dateCol)"
+                        style="height: 20px; position: relative; z-index: 2;" 
+                        min="0" max="100" 
+                        [value]="getProgressForDate(task, dateCol)"
+                        (input)="updateProgress(task, dateCol, +$any($event.target).value)" 
+                        placeholder="0">
+                    } @else {
+                      <!-- 父層任務：顯示區域但不可輸入 -->
+                      @if (isDateInRange(task, dateCol)) {
+                      <div style="width: 100%; height: 100%; background-color: rgba(108, 117, 125, 0.3); border-radius: 2px; min-height: 22px; display: flex; align-items: center; justify-content: center;">
+                        <small style="font-size: 0.6rem; color: #6c757d;">父層</small>
+                      </div>
+                      }
+                    }
+                  </td>
+                  }
+                </tr>
+                }

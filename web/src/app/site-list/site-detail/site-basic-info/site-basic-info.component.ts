@@ -171,14 +171,14 @@ export class SiteBasicInfoComponent implements OnInit, OnDestroy {
         
         if (updatedSite) {
           this.isEditMode = false;
-          console.log('工地資料更新成功');
+          console.log('專案資料更新成功');
           
           // 顯示成功訊息
-          this.toastService.info('工地資料已更新');
+          this.toastService.info('專案資料已更新');
         }
       }
     } catch (error) {
-      console.error('更新工地資料時發生錯誤:', error);
+      console.error('更新專案資料時發生錯誤:', error);
       // 顯示錯誤訊息
       this.toastService.error('更新失敗，請稍後再試');
     }

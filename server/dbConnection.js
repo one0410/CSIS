@@ -2,6 +2,56 @@ const mongoose = require('mongoose');
 const confighelper = require('./config');
 const logger = require('./logger');
 
+// 需要建立 siteId 索引的 collection 清單
+const SITE_COLLECTIONS = [
+    'task',          // 進度管理
+    'siteForm',      // 工地表單
+    'visitor',       // 訪客管理  
+    'workerCount',   // 工人計數
+    'accident',      // 意外事故
+    'equipment',     // 設備管理
+    'bulletin',      // 公告
+    'hazardNotice',  // 危險告知
+    'training',      // 教育訓練
+    'schedule',      // 排程
+    'progress',      // 進度
+    'photo'          // 照片
+];
+
+// 建立 siteId 索引的函數
+async function createSiteIdIndexes() {
+    try {
+        logger.info('開始檢查並建立 siteId 索引...');
+        
+        for (const collectionName of SITE_COLLECTIONS) {
+            try {
+                const collection = db.collection(collectionName);
+                
+                // 檢查是否已存在 siteId 索引
+                const indexes = await collection.indexes();
+                const hasSiteIdIndex = indexes.some(index => 
+                    index.key && index.key.siteId !== undefined
+                );
+                
+                if (!hasSiteIdIndex) {
+                    // 建立 siteId 索引
+                    await collection.createIndex({ siteId: 1 });
+                    logger.info(`已為 collection '${collectionName}' 建立 siteId 索引`);
+                } else {
+                    logger.info(`Collection '${collectionName}' 已存在 siteId 索引，跳過建立`);
+                }
+            } catch (error) {
+                // 如果 collection 不存在或其他錯誤，記錄但不中斷程序
+                logger.warn(`無法為 collection '${collectionName}' 建立 siteId 索引:`, error.message);
+            }
+        }
+        
+        logger.info('siteId 索引檢查完成');
+    } catch (error) {
+        logger.error('建立 siteId 索引時發生錯誤:', error);
+    }
+}
+
 // 設定資料庫
 const db = mongoose.connection;
 db.on('error', (err) => {
@@ -9,6 +59,9 @@ db.on('error', (err) => {
 });
 db.once('open', async () => {
     logger.info('Connected to MongoDB --> ', confighelper.get('mongodb'));
+
+    // 建立 siteId 索引
+    await createSiteIdIndexes();
 
     // 檢查使用者
     const userCollection = db.collection('user');

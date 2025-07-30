@@ -170,21 +170,21 @@ export class AccidentService {
   // 私有方法：獲取專案開始日期
   private async getProjectStartDate(siteId: string): Promise<Date> {
     try {
-      console.log('📅 查詢工地基本資料以獲取專案開始日期...');
+      console.log('📅 查詢專案基本資料以獲取專案開始日期...');
       
-      // 使用 MongodbService 查詢工地資料
+      // 使用 MongodbService 查詢專案資料
       const site = await this.mongodbService.getById('site', siteId);
       
       if (site && site.startDate) {
         const projectStartDate = new Date(site.startDate);
         if (!isNaN(projectStartDate.getTime())) {
-          console.log('✅ 使用工地專案開始日期:', projectStartDate.toLocaleString());
+          console.log('✅ 使用專案開始日期:', projectStartDate.toLocaleString());
           return projectStartDate;
         } else {
-          console.warn('⚠️ 工地開始日期格式無效:', site.startDate);
+          console.warn('⚠️ 專案開始日期格式無效:', site.startDate);
         }
       } else {
-        console.warn('⚠️ 工地資料中沒有設定開始日期');
+        console.warn('⚠️ 專案資料中沒有設定開始日期');
       }
       
       // 如果沒有有效的專案開始日期，使用當前日期
@@ -193,7 +193,7 @@ export class AccidentService {
       return fallbackDate;
       
     } catch (error) {
-      console.error('❌ 查詢工地基本資料失敗:', error);
+      console.error('❌ 查詢專案基本資料失敗:', error);
       const fallbackDate = new Date();
       console.warn('⚠️ 使用當前日期作為備用:', fallbackDate.toLocaleString());
       return fallbackDate;

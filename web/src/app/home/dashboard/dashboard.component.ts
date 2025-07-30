@@ -54,36 +54,36 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // 導航到工地詳細頁面
+  // 導航到專案詳細頁面
   navigateToSite(siteId: string): void {
     this.router.navigate(['/site', siteId, 'dashboard']);
   }
 
-  // 載入所有工地資料
+  // 載入所有專案資料
   async loadAllSitesData() {
     try {
       this.isLoading = true;
       
-      // 同時載入工地列表和整體進度資料
+      // 同時載入專案列表和整體進度資料
       await Promise.all([
         this.loadSitesList(),
       ]);
       
     } catch (error) {
-      console.error('載入工地資料失敗:', error);
+      console.error('載入專案資料失敗:', error);
     } finally {
       this.isLoading = false;
     }
   }
 
-  // 載入工地列表
+  // 載入專案列表
   async loadSitesList() {
     try {
       const sitesData: Site[] = await this.mongodbService.get('site', {});
       this.sites = sitesData || [];
-      console.log('載入工地列表完成:', this.sites.length, '個工地');
+      console.log('載入專案列表完成:', this.sites.length, '個專案');
     } catch (error) {
-      console.error('載入工地列表失敗:', error);
+      console.error('載入專案列表失敗:', error);
       this.sites = [];
     }
   }

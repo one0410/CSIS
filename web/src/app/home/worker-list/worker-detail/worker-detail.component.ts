@@ -67,6 +67,10 @@ export class WorkerDetailComponent implements OnInit {
 
   async ngOnInit() {
     this.workerId = this.route.snapshot.paramMap.get('id');
+
+    if (this.workerId === 'new') {
+      this.workerId = '';
+    }
     
     if (this.workerId) {
       try {

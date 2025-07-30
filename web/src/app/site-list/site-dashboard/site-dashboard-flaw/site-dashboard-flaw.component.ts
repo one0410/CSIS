@@ -69,20 +69,20 @@ export class SiteDashboardFlawComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // 加載工地資料
+  // 加載專案資料
   async loadSiteData(): Promise<void> {
     try {
       this.site = await this.mongodbService.getById('site', this.siteId);
     } catch (error) {
-      console.error('加載工地資料時出錯:', error);
-      this.error = '無法載入工地資料';
+      console.error('加載專案資料時出錯:', error);
+      this.error = '無法載入專案資料';
     }
   }
 
   // 加載缺失單資料
   async loadFlawData(): Promise<void> {
     if (!this.siteId) {
-      this.error = '工地ID不存在，無法獲取缺失單資料';
+      this.error = '專案ID不存在，無法獲取缺失單資料';
       this.loading = false;
       return;
     }
@@ -90,7 +90,7 @@ export class SiteDashboardFlawComponent implements OnInit, AfterViewInit {
     this.loading = true;
 
     try {
-      // 獲取該工地的所有缺失單
+      // 獲取該專案的所有缺失單
       this.flaws = await this.mongodbService.get('siteForm', {
         formType: 'siteFlaw',
         siteId: this.siteId
