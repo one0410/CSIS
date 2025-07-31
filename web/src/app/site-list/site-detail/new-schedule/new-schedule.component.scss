@@ -401,8 +401,8 @@ input[type="number"].form-control-sm {
   // 減少不必要的重繪
   contain: layout style;
   
-  // 空的單元格不顯示內容
-  &:empty {
+  // 只有真正空的且不在任務範圍內的單元格才透明
+  &:empty[data-in-range="false"] {
     background-color: transparent !important;
   }
   
