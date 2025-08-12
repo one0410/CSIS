@@ -190,8 +190,8 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
           this.formId = formId;
           this.loadIssueRecordData(formId);
         } else {
-          // 生成編號
-          this.generateRecordNumber();
+          // 生成編號, 20250813 說不用自動生成了
+          // this.generateRecordNumber();
         }
       }
     });
