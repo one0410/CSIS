@@ -77,6 +77,12 @@ export class SitePhotosComponent implements OnInit {
       color: '#ffffff',
       background: '#dc3545',
       isSystemTag: true
+    },
+    {
+      title: '危害告知',
+      color: '#ffffff',
+      background: '#0d6efd',
+      isSystemTag: true
     }
   ];
 

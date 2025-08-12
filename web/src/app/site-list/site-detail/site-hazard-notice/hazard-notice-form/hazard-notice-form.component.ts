@@ -18,6 +18,7 @@ import { CurrentSiteService } from '../../../../services/current-site.service';
 import { SignatureData } from '../../../../model/signatureData.model';
 import { SiteForm } from '../../../../model/siteForm.model';
 import { AuthService } from '../../../../services/auth.service';
+import { PhotoService } from '../../../../services/photo.service';
 
 // 導入 Bootstrap Modal 相關類型
 declare const bootstrap: {
@@ -42,6 +43,7 @@ export interface HazardNoticeForm extends SiteForm {
   status: 'draft' | 'published' | 'revoked';
   createdAt: Date;
   workerSignatures: SignatureData[];
+  noticePhotos?: { filename: string; title?: string; uploadedAt?: Date }[];
 }
 
 interface WorkItem {
@@ -109,6 +111,7 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
     createdAt: new Date(),    
     createdBy: '',
     workerSignatures: [],
+    noticePhotos: [],
   };
 
   workerName: string = '';
@@ -133,7 +136,8 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
     private router: Router,
     private signatureDialog: SignatureDialogService,
     private currentSiteService: CurrentSiteService,
-    private authService: AuthService
+    private authService: AuthService,
+    private photoService: PhotoService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -242,6 +246,11 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
 
       // 生成表單 QR Code URL
       this.generateFormQrCodeUrl();
+
+      // 兼容舊資料：確保有照片陣列
+      if (!this.formData.noticePhotos) {
+        this.formData.noticePhotos = [];
+      }
     } catch (error) {
       console.error('載入表單詳情失敗', error);
     }
@@ -504,5 +513,71 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
       // 工人簽名模式下，顯示提示或關閉視窗
       alert('簽名完成，請關閉此頁面');
     }
+  }
+
+  // 新增照片（比照機具管理流程，自動加上「危害告知」系統標籤）
+  async onPhotoSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files.length > 0 ? input.files[0] : null;
+    if (!file) return;
+
+    try {
+      const currentSite = this.site();
+      if (!currentSite) {
+        throw new Error('找不到工地資訊');
+      }
+
+      const result = await new Promise<any>((resolve, reject) => {
+        this.photoService
+          .uploadPhotoWithSystemTag(
+            file,
+            '危害告知',
+            currentSite._id!,
+            currentSite.projectNo
+          )
+          .subscribe({
+            next: (res) => resolve(res),
+            error: (err) => reject(err),
+          });
+      });
+
+      if (result && result.filename) {
+        // 通知照片統計更新
+        this.photoService.notifyPhotoStatsUpdated(currentSite._id!);
+
+        // 追加到表單底部的照片清單並嘗試保存
+        if (!this.formData.noticePhotos) {
+          this.formData.noticePhotos = [];
+        }
+        this.formData.noticePhotos.push({
+          filename: result.filename,
+          title: `危害告知 - ${file.name}`,
+          uploadedAt: new Date()
+        });
+
+        // 若已有表單ID則即時保存，否則等使用者保存整張表單
+        if (this.formId) {
+          try {
+            await this.mongodbService.patch('siteForm', this.formId, {
+              noticePhotos: this.formData.noticePhotos
+            });
+          } catch (e) {
+            console.warn('自動保存照片清單失敗，將於表單保存時一併提交');
+          }
+        }
+
+        alert('照片上傳成功，已自動加上「危害告知」標籤');
+      }
+    } catch (error) {
+      console.error('照片上傳失敗:', error);
+      alert('照片上傳失敗，請稍後再試');
+    } finally {
+      // 重置 input，避免同檔名無法再次觸發 change
+      (event.target as HTMLInputElement).value = '';
+    }
+  }
+
+  getPhotoUrl(filename: string): string {
+    return this.photoService.getPhotoThumbnailUrl(filename);
   }
 }

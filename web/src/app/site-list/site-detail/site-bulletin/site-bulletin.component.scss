@@ -36,7 +36,6 @@
   &.pinned {
     border-color: #28a745;
     background: linear-gradient(135deg, #f8fff9 0%, #ffffff 100%);
-    
     .card-header {
       background-color: rgba(40, 167, 69, 0.1);
     }
@@ -86,6 +85,8 @@
     isolation: isolate; // 創建新的stacking context
   }
 }
+
+// 已移除絕對定位的 pinned-badge，改為與 header 內徽章同行，避免高度誤差
 
 .dropdown-menu {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);

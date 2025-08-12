@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import { IssueRecord } from '../site-list/site-detail/site-form-list/safety-issue-record/safety-issue-record.component';
 import { SitePermitForm } from '../site-list/site-detail/site-form-list/site-permit-form/site-permit-form.component';
 import { ToolboxMeetingForm } from '../site-list/site-detail/site-form-list/toolbox-meeting-form/toolbox-meeting-form.component';
+import { TrainingForm } from '../site-list/site-detail/site-training/training-form/training-form.component';
 import { SpecialWorkChecklistData } from '../site-list/site-detail/site-form-list/special-work-checklist/special-work-checklist.component';
 import { EnvironmentChecklistData } from '../site-list/site-detail/site-form-list/environment-check-list/environment-check-list.component';
 
@@ -537,6 +538,67 @@ export class DocxTemplateService {
   }
 
   /**
+   * 生成教育訓練 DOCX
+   */
+  async generateTrainingDocx(formId: string): Promise<void> {
+    try {
+      const result = await this.generateTrainingDocxBlob(formId);
+      saveAs(result.blob, result.fileName);
+    } catch (error) {
+      console.error('生成教育訓練DOCX失敗:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 生成教育訓練 DOCX Blob
+   */
+  async generateTrainingDocxBlob(formId: string): Promise<{ blob: Blob, fileName: string }> {
+    return this.generateDocumentBlob(
+      formId,
+      '/template/qp-6201-07_教育訓練簽到表.docx',
+      (formData, currentSite) => this.prepareTrainingData(formData, currentSite),
+      (formData, currentSite) => `教育訓練簽到表_${currentSite.projectName || ''}_${formData.trainingDate || ''}.docx`
+    );
+  }
+
+  /**
+   * 準備教育訓練模板資料
+   */
+  private prepareTrainingData(formData: TrainingForm, currentSite: any): any {
+    const signatures = formData.workerSignatures || [];
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const rows = Array.from({ length: 25 }).map((_, i) => {
+      const s = signatures[i];
+      return {
+        no: pad(i + 1),
+        unit: s?.company || '',
+        empNo: s?.employeeNo || '',
+        name: s?.name || '',
+        sign: s?.signature || '',
+        remark: s?.remarks || ''
+      };
+    });
+
+    const time1 = dayjs().format('YYYY-MM-DD') + ' ' + formData.trainingTime;
+    const time2 = dayjs().format('YYYY-MM-DD') + ' ' + formData.trainingTimeEnd;
+    const duration = dayjs(time2).diff(dayjs(time1), 'hour');
+
+    return {
+      companyName: currentSite.companyName || '帆宣系統科技股份有限公司',
+      projectName: currentSite.projectName || '',
+      courseName: formData.courseName || '',
+      trainingDate: dayjs(formData.trainingDate).format('YYYY 年 MM 月 DD 日'),
+      trainingTime: formData.trainingTime || '',
+      trainingTimeEnd: formData.trainingTimeEnd || '',
+      trainingDuration: duration.toString(),
+      instructor: formData.instructor || '',
+      remarks: formData.remarks || '',
+      rows
+    };
+  }
+
+  /**
    * 生成環安衛自主檢點表 DOCX
    */
   async generateEnvironmentChecklistDocx(formId: string): Promise<void> {
@@ -899,6 +961,8 @@ export class DocxTemplateService {
         return this.generateToolboxMeetingDocx(formId);
       case 'environmentChecklist':
         return this.generateEnvironmentChecklistDocx(formId);
+      case 'training':
+        return this.generateTrainingDocx(formId);
       case 'specialWorkChecklist':
         return this.generateSpecialWorkChecklistDocx(formId);
       case 'safetyIssueRecord':
@@ -919,6 +983,8 @@ export class DocxTemplateService {
         return this.generateToolboxMeetingDocxBlob(formId);
       case 'environmentChecklist':
         return this.generateEnvironmentChecklistDocxBlob(formId);
+      case 'training':
+        return this.generateTrainingDocxBlob(formId);
       case 'specialWorkChecklist':
         return this.generateSpecialWorkChecklistDocxBlob(formId);
       case 'safetyIssueRecord':

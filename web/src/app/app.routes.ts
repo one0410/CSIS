@@ -15,12 +15,16 @@ export const routes: Routes = [
   
   // 工人簽名專用路由 - 不需要登入
   { 
-    path: 'site/:id/hazardNotice/:formId', 
+    path: 'hazardNotice/:formId', 
     loadComponent: () => import('./site-list/site-detail/site-hazard-notice/hazard-notice-form/hazard-notice-form.component').then(m => m.HazardNoticeFormComponent)
   },
   { 
-    path: 'site/:id/training/:formId', 
+    path: 'training/:formId', 
     loadComponent: () => import('./site-list/site-detail/site-training/training-form/training-form.component').then(m => m.TrainingFormComponent)
+  },
+  { 
+    path: 'toolbox-meeting/:formId', 
+    loadComponent: () => import('./site-list/site-detail/site-form-list/toolbox-meeting-form/toolbox-meeting-form.component').then(m => m.ToolboxMeetingFormComponent)
   },
 
   // 訪客危害告知專用路由 - 不需要登入
@@ -269,27 +273,28 @@ export const routes: Routes = [
       
       // 危險告知與教育訓練
       { 
-        path: 'site/:id/forms/create-hazard-notice', 
+        path: 'site/:id/hazardNotice/create', 
         loadComponent: () => import('./site-list/site-detail/site-hazard-notice/hazard-notice-form/hazard-notice-form.component').then(m => m.HazardNoticeFormComponent)
       },
       { 
-        path: 'site/:id/forms/hazard-notice/:formId', 
+        path: 'site/:id/hazardNotice/:formId', 
         loadComponent: () => import('./site-list/site-detail/site-hazard-notice/hazard-notice-form/hazard-notice-form.component').then(m => m.HazardNoticeFormComponent)
       },
       { 
-        path: 'site/:id/forms/hazard-notice/:formId/edit', 
+        path: 'site/:id/hazardNotice/:formId/edit', 
         loadComponent: () => import('./site-list/site-detail/site-hazard-notice/hazard-notice-form/hazard-notice-form.component').then(m => m.HazardNoticeFormComponent)
       },
+      // 教育訓練：建立新表單（與列表頁的「新增教育訓練」導航一致）
       { 
-        path: 'site/:id/forms/create-training', 
+        path: 'site/:id/training/create', 
         loadComponent: () => import('./site-list/site-detail/site-training/training-form/training-form.component').then(m => m.TrainingFormComponent)
       },
       { 
-        path: 'site/:id/forms/training/:formId', 
+        path: 'site/:id/training/:formId', 
         loadComponent: () => import('./site-list/site-detail/site-training/training-form/training-form.component').then(m => m.TrainingFormComponent)
       },
       { 
-        path: 'site/:id/forms/training/:formId/edit', 
+        path: 'site/:id/training/:formId/edit', 
         loadComponent: () => import('./site-list/site-detail/site-training/training-form/training-form.component').then(m => m.TrainingFormComponent)
       },
       

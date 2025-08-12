@@ -2,6 +2,7 @@ import { Component, computed, OnInit, AfterViewInit } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { SiteFormHeaderComponent } from '../site-form-header/site-form-header.component';
+import { QRCodeComponent } from 'angularx-qrcode';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
@@ -262,13 +263,17 @@ interface FieldCheckItem {
   templateUrl: './toolbox-meeting-form.component.html',
   styleUrls: ['./toolbox-meeting-form.component.scss'],
   standalone: true,
-  imports: [FormsModule, SiteFormHeaderComponent],
+  imports: [FormsModule, SiteFormHeaderComponent, QRCodeComponent],
 })
 export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
   siteId: string = '';
   site = computed(() => this.currentSiteService.currentSite());
   today = new Date();
   isGeneratingPdf: boolean = false; // 文檔生成狀態
+  isLoggedIn: boolean = false;
+  isWorkerSigningMode: boolean = false;
+  formQrCodeUrl: string = '';
+  qrCodeModal: any;
 
   // 模板驅動表單的數據模型
   meetingData: ToolboxMeetingForm = {
@@ -703,6 +708,8 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    // 檢查是否登入
+    this.isLoggedIn = !!this.authService.user();
     // 從路由參數獲取工地ID和表單ID
     this.route.paramMap.subscribe(async (params) => {
       const id = params.get('id');
@@ -721,6 +728,10 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
         // 如果有表單ID，載入現有表單
         if (formId) {
           await this.loadFormData(formId);
+          if (!this.isLoggedIn) {
+            this.isWorkerSigningMode = true;
+          }
+          this.generateToolboxQr();
         } else {
           // 新表單：載入公佈欄內容
           await this.loadBulletinContent(id);
@@ -761,6 +772,37 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
         workerVerificationModalElement
       );
     }
+    const qrCodeModalEl = document.getElementById('qrCodeModal');
+    if (qrCodeModalEl) {
+      this.qrCodeModal = new bootstrap.Modal(qrCodeModalEl);
+    }
+  }
+
+  // 生成表單 QR Code URL（提供給工人掃碼簽名）
+  private generateToolboxQr(): void {
+    const anyData: any = this.meetingData as any;
+    const formId = anyData._id;
+    if (formId) {
+      const baseUrl = window.location.origin;
+      this.formQrCodeUrl = `${baseUrl}/toolbox-meeting/${formId}`;
+    }
+  }
+
+  showQrCodeModal(): void {
+    if (this.qrCodeModal) {
+      this.qrCodeModal.show();
+    }
+  }
+
+  copyUrl(inputElement: HTMLInputElement): void {
+    inputElement.select();
+    inputElement.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(inputElement.value).then(() => {
+      alert('網址已複製到剪貼簿');
+    }).catch(() => {
+      document.execCommand('copy');
+      alert('網址已複製到剪貼簿');
+    });
   }
 
   // 參與廠商管理

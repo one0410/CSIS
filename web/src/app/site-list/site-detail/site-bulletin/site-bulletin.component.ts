@@ -1,4 +1,5 @@
 import { Component, computed, signal, inject, OnInit, effect } from '@angular/core';
+import { Dropdown } from 'bootstrap';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -64,6 +65,14 @@ export class SiteBulletinComponent implements OnInit {
   ngOnInit() {
     // Bootstrap 原生 dropdown 功能已經處理所有事件，不需要手動管理
     // 已移除自定義 dropdown 事件監聽器
+  }
+
+  toggleDropdown(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const button = event.currentTarget as HTMLElement;
+    const instance = Dropdown.getOrCreateInstance(button);
+    instance.toggle();
   }
 
   async loadBulletins() {

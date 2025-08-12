@@ -60,8 +60,11 @@ interface SiteForm {
   - 需要四重簽名流程: 申請人 → 申請主管 → 審核 → 核準
   - 包含作業類別選擇 (selectedCategories)
   - 在日曆中顯示簽名狀態圖示 (✅/❌)
+  - 表單中的監工單位為廠商名稱
+  - 表單中的監工為廠商監工人員
 - **顯示名稱**: "工地許可單" + 簽名狀態圖示
 - **路由**: `/site/{siteId}/forms/permit/{formId}`
+- **對映DOCX檔案**: 帆宣-ee-4404-01工作許可單.docx
 
 ### 2. 工具箱會議 (toolboxMeeting)
 - **目的**: 安全會議記錄
@@ -71,6 +74,7 @@ interface SiteForm {
   - 支援日期參數傳遞: `createToolboxMeeting(date)`
 - **顯示名稱**: "工具箱會議"
 - **路由**: `/site/{siteId}/forms/toolbox-meeting/{formId}`
+- **對映DOCX檔案**: 帆宣-ee-4411-15工具箱會議及巡檢紀錄.docx
 
 ### 3. 環安衛自主檢點表 (safetyChecklist/environmentChecklist)
 - **目的**: 每日環境安全衛生檢查
@@ -81,6 +85,7 @@ interface SiteForm {
   - 支援日期參數傳遞: `createEnvironmentCheckList(date)`
 - **顯示名稱**: "環安衛自檢表"
 - **路由**: `/site/{siteId}/forms/environment-check-list/{formId}`
+- **對映DOCX檔案**: 帆宣-ee-4404-02環安衛自主檢點表.docx
 
 ### 4. 特殊作業自主檢點表 (specialWorkChecklist)
 - **目的**: 特殊作業安全檢查
@@ -91,6 +96,19 @@ interface SiteForm {
   - 包含作業類型 (workType) 和許可單關聯 (permitId)
 - **顯示名稱**: "特殊作業自檢表-{workType}"
 - **路由**: `/site/{siteId}/forms/special-work-checklist/{formId}`
+- **對映DOCX檔案**: 
+| 作業類型 | 模板檔案 |
+|---------|---------|
+| 動火作業 | `ee-4404-03 特殊作業工安自主檢點表(動火作業) .doc` |
+| 高架作業 | `ee-4404-03 特殊作業工安自主檢點表(高架作業).doc` |
+| 局限空間作業 | `ee-4404-03 特殊作業工安自主檢點表(局限空間作業).doc` |
+| 電力作業 | `ee-4404-03 特殊作業工安自主檢點表(電力作業) .doc` |
+| 吊籠作業 | `ee-4404-03 特殊作業工安自主檢點表(吊籠作業) .doc` |
+| 起重吊掛作業 | `ee-4404-03 特殊作業工安自主檢點表(起重吊掛作業).doc` |
+| 施工架組裝作業 | `ee-4404-03 特殊作業工安自主檢點表(施工架組裝作業).doc` |
+| 管線拆裝作業 | `ee-4404-03 特殊作業工安自主檢點表(管線拆離作業).doc` |
+| 開口作業 | `ee-4404-03 特殊作業工安自主檢點表(開口作業) .doc` |
+| 化學作業 | `ee-4404-03 特殊作業工安自主檢點表(化學作業) .doc` |
 
 ### 5. 缺失記錄單 (safetyIssueRecord)
 - **目的**: 安全缺失記錄和追蹤
@@ -102,6 +120,7 @@ interface SiteForm {
   - 改善完成時顯示: "👌安全缺失紀錄單", 未完成時顯示: "❌安全缺失紀錄單"
 - **顯示名稱**: "(👌/❌)安全缺失記錄單"
 - **路由**: `/site/{siteId}/forms/safety-issue-record/{formId}`
+- **對映DOCX檔案**: ee-4411-06工安缺失紀錄表.docx
 
 ### 6. 工安巡迴檢查表 (safetyPatrolChecklist)
 - **目的**: 定期工安巡迴檢查
@@ -117,16 +136,18 @@ interface SiteForm {
   - 包含工程名稱 (workName)
   - 支援 QR Code 生成供訪客簽名
 - **顯示名稱**: "危害告知單-{workName}"
-- **路由**: `/site/{siteId}/forms/hazard-notice/{formId}`
+- **路由**: `/site/{siteId}/hazard-notice/{formId}`
+- **對映DOCX檔案**: 帆宣-施工作業安全暨危害因素告知單.docx
 
 ### 8. 教育訓練 (training)
 - **目的**: 教育訓練記錄
 - **特殊規則**:
   - 包含課程名稱 (courseName)
   - 支援 QR Code 生成供參與者簽名
-  - 參與者簽到表格式 (最多40人，分兩欄顯示)
+  - 參與者簽到表格式 (最多25人，由上而下顯示)
 - **顯示名稱**: "教育訓練-{courseName}"
 - **路由**: `/site/{siteId}/training/{formId}`
+- **對映DOCX檔案**: qp-6201-07_教育訓練簽到表.docx
 
 ## 表單顯示規則
 
@@ -217,6 +238,7 @@ interface SiteForm {
 ```
 /site/{siteId}/forms/{formType}/{formId}
 /site/{siteId}/training/{formId}  // 教育訓練特殊路由
+/site/{siteId}/hazardNotice/{formId}  // 危害告知表單
 ```
 
 ### 查詢參數支援

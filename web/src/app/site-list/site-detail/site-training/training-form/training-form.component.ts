@@ -14,11 +14,13 @@ import { SignatureDialogService } from '../../../../shared/signature-dialog.serv
 import dayjs from 'dayjs';
 import { Site } from '../../../site-list.component';
 import { QRCodeComponent  } from 'angularx-qrcode';
+import { SiteFormHeaderComponent } from '../../site-form-list/site-form-header/site-form-header.component';
 import { Worker } from '../../../../model/worker.model';
 import { CurrentSiteService } from '../../../../services/current-site.service';
 import { SignatureData } from '../../../../model/signatureData.model';
 import { SiteForm } from '../../../../model/siteForm.model';
 import { AuthService } from '../../../../services/auth.service';
+import { DocxTemplateService } from '../../../../services/docx-template.service';
 
 // 導入 Bootstrap Modal 相關類型
 declare const bootstrap: {
@@ -32,6 +34,7 @@ declare const bootstrap: {
 export interface TrainingForm extends SiteForm {
   trainingDate: string;
   trainingTime: string;
+  trainingTimeEnd: string;
   contractorName: string; // 主承商
   contactPerson: string; // 聯絡人
   contactPhone: string; // 聯絡人電話
@@ -43,14 +46,7 @@ export interface TrainingForm extends SiteForm {
   status: 'draft' | 'published' | 'revoked';
 }
 
-interface ParticipantSignature {
-  no: number; // 編號
-  contractorName: string; // 主承商
-  name: string; // 姓名
-  signatureData?: string; // 簽名
-  arrivalTime?: string; // 簽到時間
-  score?: number; // 分數
-}
+// 已改為直接使用 SignatureData 搭配輔助方法提供畫面顯示
 
 // 專案工人介面
 interface ProjectWorker {
@@ -66,11 +62,13 @@ interface ProjectWorker {
 @Component({
   selector: 'app-training-form',
   standalone: true,
-  imports: [FormsModule, QRCodeComponent],
+  imports: [FormsModule, QRCodeComponent, SiteFormHeaderComponent],
   templateUrl: './training-form.component.html',
   styleUrls: ['./training-form.component.scss'],
 })
 export class TrainingFormComponent implements OnInit, AfterViewInit {
+  // 最多簽名筆數（由上而下 25 筆）
+  readonly MAX_SIGNATURES: number = 25;
   siteId: string = '';
   site = computed(() => this.currentSiteService.currentSite());
   formId: string | null = null;
@@ -84,6 +82,7 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     formType: 'training',
     trainingDate: dayjs().format('YYYY-MM-DD'),
     trainingTime: '08:30',
+    trainingTimeEnd: '17:00',
     contractorName: '',
     contactPerson: '',
     contactPhone: '',
@@ -123,9 +122,10 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     private signatureDialog: SignatureDialogService,
     private currentSiteService: CurrentSiteService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private docxTemplateService: DocxTemplateService
   ) {
-    // 初始化40個空的參與者格子
+    // 初始化空的參與者資料（以 MAX_SIGNATURES 為上限）
     this.initializeParticipants();
   }
 
@@ -363,8 +363,8 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     try {
       const signature = await this.signatureDialog.open();
       if (signature && this.currentWorker) {
-        // 檢查 workerSignatures 陣列是否已經滿了（40個）
-        if (this.formData.workerSignatures.length >= 40) {
+        // 檢查 workerSignatures 陣列是否已經滿了
+        if (this.formData.workerSignatures.length >= this.MAX_SIGNATURES) {
           alert('簽到表已滿，無法再新增簽名');
           return;
         }
@@ -407,30 +407,23 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     this.formData.attendanceCount = this.formData.workerSignatures.length;
   }
 
-  // 動態取得或創建指定索引的參與者資料（基於 workerSignatures）
-  getParticipant(index: number): ParticipantSignature {
-    // 如果 workerSignatures 陣列中有對應的資料，轉換為 ParticipantSignature 格式
+  // 取得指定索引的簽名欄位值
+  getSignatureField(index: number, field: keyof SignatureData): string {
     if (index < this.formData.workerSignatures.length) {
-      const signature = this.formData.workerSignatures[index];
-      return {
-        no: index + 1,
-        contractorName: signature.company || '',
-        name: signature.name,
-        signatureData: signature.signature,
-        arrivalTime: signature.signedAt ? dayjs(signature.signedAt).format('HH:mm') : '',
-        score: 100 // 預設分數
-      };
+      const sig = this.formData.workerSignatures[index] as any;
+      return (sig?.[field] ?? '') as string;
     }
-    
-    // 如果沒有對應的簽名資料，返回空的參與者資料
-    return {
-      no: index + 1,
-      contractorName: '',
-      name: '',
-      signatureData: '',
-      arrivalTime: '',
-      score: 0
-    };
+    return '';
+  }
+
+  // 設定指定索引的簽名欄位值（僅在該筆簽名已存在時可寫入）
+  setSignatureField(index: number, field: keyof SignatureData, value: string): void {
+    if (index < this.formData.workerSignatures.length) {
+      // 僅允許特定欄位由畫面編輯
+      const editableFields: Array<keyof SignatureData> = ['company', 'employeeNo', 'name', 'remarks'];
+      if (!editableFields.includes(field)) return;
+      (this.formData.workerSignatures[index] as any)[field] = value ?? '';
+    }
   }
 
   showWorkerVerificationModal(): void {
@@ -463,7 +456,7 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     // 因為工人簽名現在直接通過 openWorkerSignatureDialog 處理
     if (this.currentParticipantIndex >= 0) {
       // 檢查是否已經達到簽名上限
-      if (this.formData.workerSignatures.length >= 40) {
+      if (this.formData.workerSignatures.length >= this.MAX_SIGNATURES) {
         alert('簽到表已滿，無法再新增簽名');
         return;
       }
@@ -562,6 +555,20 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
       this.qrCodeModal.show();
     } else if (!this.formQrCodeUrl) {
       alert('QR Code URL 尚未生成，請先儲存表單');
+    }
+  }
+
+  // 下載 Word
+  async generateDocx(): Promise<void> {
+    if (!this.formId) {
+      alert('無法生成Word：表單ID不存在');
+      return;
+    }
+    try {
+      await this.docxTemplateService.generateTrainingDocx(this.formId);
+    } catch (error) {
+      console.error('生成教育訓練Word失敗:', error);
+      alert('生成教育訓練Word失敗');
     }
   }
 

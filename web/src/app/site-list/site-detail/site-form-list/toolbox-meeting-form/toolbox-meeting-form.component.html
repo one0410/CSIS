@@ -1968,7 +1968,8 @@
           <small class="text-muted">EE-4411-15A</small>
         </div>
 
-        <!-- 按鈕區域 -->
+        <!-- 按鈕區域（工人簽名模式不顯示） -->
+        @if (!isWorkerSigningMode) {
         <div class="d-flex mt-4 pt-3">
           <button
             type="button"
@@ -1979,7 +1980,10 @@
           </button>
           
           @if (meetingData._id) {
-          <div class="mx-auto">
+          <div class="mx-auto d-flex gap-2">
+            <button type="button" class="btn btn-info px-4" (click)="showQrCodeModal()">
+              <i class="fas fa-qr-code me-1"></i>顯示 QR Code
+            </button>
             <button
               type="button"
               class="btn btn-success px-4"
@@ -2006,7 +2010,73 @@
             </button>
           </div>
         </div>
+        }
       </form>
+      
+      <!-- QR Code Modal -->
+      <div
+        class="modal fade"
+        id="qrCodeModal"
+        tabindex="-1"
+        aria-labelledby="qrCodeModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="qrCodeModalLabel">
+                <i class="fas fa-qr-code me-2"></i>
+                工具箱會議 QR Code
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+            </div>
+            <div class="modal-body text-center">
+              <div class="mb-3">
+                <h6 class="text-muted">請與會人員掃描後簽名。</h6>
+              </div>
+              @if (formQrCodeUrl) {
+              <div class="d-flex justify-content-center mb-4">
+                <div class="border rounded p-3 bg-light">
+                  <qrcode [qrdata]="formQrCodeUrl" [width]="256" [errorCorrectionLevel]="'M'" [elementType]="'canvas'" [margin]="4"></qrcode>
+                </div>
+              </div>
+              } @else {
+              <div class="text-center">
+                <p class="text-muted">QR Code 載入中...</p>
+              </div>
+              }
+              @if (formQrCodeUrl) {
+              <div class="mb-3">
+                <div class="input-group">
+                  <input 
+                    type="text" 
+                    class="form-control text-center" 
+                    [value]="formQrCodeUrl" 
+                    readonly
+                    #urlInput
+                  >
+                  <button 
+                    class="btn btn-outline-secondary" 
+                    type="button"
+                    (click)="copyUrl(urlInput)"
+                  >
+                    <i class="fas fa-copy"></i>
+                    複製
+                  </button>
+                </div>
+              </div>
+              }
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                掃描後將導向免登入簽名頁面。
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+          </div>
+        </div>
+      </div>
       </div>
     </div>
   </div>

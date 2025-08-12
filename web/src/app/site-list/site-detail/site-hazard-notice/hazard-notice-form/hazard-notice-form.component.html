@@ -923,7 +923,7 @@
         <!-- 底部按鈕區域 - 只在登入狀態或非工人簽名模式下顯示 -->
         @if (isLoggedIn && !isWorkerSigningMode) {
         <div class="d-flex justify-content-between mt-4 pt-3">
-          <div>
+          <div class="d-flex align-items-center gap-2">
             <button
               type="button"
               (click)="showWorkerVerificationModal()"
@@ -932,22 +932,29 @@
             >
               <i class="fas fa-plus-circle me-1"></i>新增簽名
             </button>
+            <!-- 新增照片：比照機具管理流程，上傳後自動加上「危害告知」標籤 -->
+            <label class="btn btn-outline-secondary btn-sm mb-0" title="新增照片">
+              <i class="fas fa-camera me-1"></i>新增照片
+              <input type="file" accept="image/*" class="d-none" (change)="onPhotoSelected($event)" />
+            </label>
           </div>
-          <div>
+          @if (formId) {
+          <div class="mx-auto">
+            <button class="btn btn-info btn-sm" (click)="showQrCodeModal()">
+              <i class="fas fa-qr-code me-1"></i>顯示 QR Code
+            </button>
+          </div>
+          }
+          <div class="ms-auto">
             <button
               class="btn btn-outline-secondary btn-sm me-2"
               (click)="cancel()"
             >
               <i class="fas fa-times-circle me-1"></i>取消
             </button>
-            <button class="btn btn-primary btn-sm me-2" (click)="saveForm()">
+            <button class="btn btn-primary btn-sm" (click)="saveForm()">
               <i class="fas fa-save me-1"></i>儲存
             </button>
-            @if (formId) {
-            <button class="btn btn-info btn-sm" (click)="showQrCodeModal()">
-              <i class="fas fa-qr-code me-1"></i>顯示 QR Code
-            </button>
-            }
           </div>
         </div>
         }
@@ -963,6 +970,26 @@
           >
             <i class="fas fa-pen me-2"></i>我要簽名
           </button>
+        </div>
+        }
+        
+        <!-- 上傳照片預覽（顯示於表單最下方） -->
+        @if (formData.noticePhotos && formData.noticePhotos.length > 0) {
+        <div class="mt-4">
+          <h5 class="fw-bold mb-2"><i class="fas fa-images me-2"></i>本次危害告知上傳照片</h5>
+          <div class="row g-3">
+            @for (p of formData.noticePhotos; track p.filename) {
+            <div class="col-6 col-md-4 col-lg-3">
+              <div class="card h-100">
+                <img class="card-img-top" [src]="getPhotoUrl(p.filename)" alt="危害告知照片" />
+                <div class="card-body p-2">
+                  <div class="small text-truncate" [title]="p.title || p.filename">{{ p.title || p.filename }}</div>
+                  <div class="text-muted small">{{ (p.uploadedAt || (formData.createdAt)) | date:'yyyy/MM/dd HH:mm' }}</div>
+                </div>
+              </div>
+            </div>
+            }
+          </div>
         </div>
         }
       </div>

@@ -42,14 +42,7 @@
               <div class="col-12 col-md-6 col-lg-4 mb-3">
                 <div class="card h-100 bulletin-card" 
                      [class.pinned]="bulletin.isPinned">
-                  <!-- 置頂標籤 -->
-                  @if (bulletin.isPinned) {
-                    <div class="position-absolute top-0 start-0 p-2">
-                      <span class="badge bg-success">
-                        <i class="fas fa-thumbtack me-1"></i>置頂
-                      </span>
-                    </div>
-                  }
+                  <!-- 置頂標籤：改為放在 header 內與其他徽章同列 -->
                   
                   <!-- 優先級標籤 -->
                   @if (bulletin.priority === 'urgent') {
@@ -62,6 +55,11 @@
 
                   <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex gap-2">
+                      @if (bulletin.isPinned) {
+                        <span class="badge bg-success">
+                          <i class="fas fa-thumbtack me-1"></i>置頂
+                        </span>
+                      }
                       <span class="badge {{ getCategoryBadgeClass(bulletin.category) }}">
                         {{ getCategoryText(bulletin.category) }}
                       </span>
@@ -72,9 +70,9 @@
                     @if (hasManagePermission()) {
                       <div class="dropdown">
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
-                                data-bs-toggle="dropdown" 
-                                data-bs-boundary="viewport"
-                                data-bs-placement="bottom-end"
+                                (click)="toggleDropdown($event)"
+                                data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside"
                                 aria-expanded="false">
                           <i class="fas fa-ellipsis-v"></i>
                         </button>

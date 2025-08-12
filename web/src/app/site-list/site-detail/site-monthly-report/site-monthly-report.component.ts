@@ -5,12 +5,13 @@ import { ActivatedRoute } from '@angular/router';
 import { MonthlyWorkerCountComponent } from './monthly-worker-count/monthly-worker-count.component';
 import { MonthlyDefectSummaryComponent } from './monthly-defect-summary/monthly-defect-summary.component';
 import { MonthlyExcellentContractorsComponent } from './monthly-excellent-contractors/monthly-excellent-contractors.component';
+import { MonthlyOrganizationChartComponent } from './monthly-organization-chart/monthly-organization-chart.component';
 import dayjs from 'dayjs';
 
 @Component({
   selector: 'app-site-monthly-report',
   standalone: true,
-  imports: [CommonModule, FormsModule, MonthlyWorkerCountComponent, MonthlyDefectSummaryComponent, MonthlyExcellentContractorsComponent],
+  imports: [CommonModule, FormsModule, MonthlyWorkerCountComponent, MonthlyDefectSummaryComponent, MonthlyExcellentContractorsComponent, MonthlyOrganizationChartComponent],
   templateUrl: './site-monthly-report.component.html',
   styleUrl: './site-monthly-report.component.scss'
 })
