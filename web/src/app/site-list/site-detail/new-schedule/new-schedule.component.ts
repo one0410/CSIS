@@ -937,20 +937,46 @@ export class NewScheduleComponent implements OnInit {
     await this.saveTaskAndParents(task);
   }
 
-  addNewTask() {
+  addNewTask(parentTask?: ScheduleTask) {
     const today = dayjs();
+    let newWbs: string;
+    let newLevel: number;
+    
+    if (parentTask) {
+      // 新增子任務
+      newWbs = this.generateChildWbs(parentTask.wbs);
+      newLevel = parentTask.level + 1;
+    } else {
+      // 新增頂層任務
+      newWbs = this.generateNewWbs();
+      newLevel = 0;
+    }
+    
     const newTask: ScheduleTask = {
-      wbs: this.generateNewWbs(),
+      wbs: newWbs,
       name: '新工作項目',
       days: 1,
       startDate: today.format('YYYY-MM-DD'),
       endDate: today.format('YYYY-MM-DD'),
       weight: 1,
-      level: 0,
+      level: newLevel,
       dailyProgress: {}
     };
     
-    this.tasks.push(newTask);
+    if (parentTask) {
+      // 將新任務加入父任務的子任務列表
+      if (!parentTask.children) {
+        parentTask.children = [];
+      }
+      parentTask.children.push(newTask);
+      newTask.parent = parentTask.wbs;
+      
+      // 確保父任務是展開狀態，這樣新任務才會顯示
+      parentTask.isExpanded = true;
+    } else {
+      // 加入頂層任務列表
+      this.tasks.push(newTask);
+    }
     
     // 重新計算父層任務的日期和權重
     this.recalculateParentTasks();
@@ -968,6 +994,35 @@ export class NewScheduleComponent implements OnInit {
       return Math.max(max, num);
     }, 0);
     return (maxWbs + 1).toString();
+  }
+
+  private generateChildWbs(parentWbs: string): string {
+    // 找出所有以 parentWbs 開頭的直接子任務（只差一層）
+    const directChildTasks = this.flatTasks.filter(task => {
+      const taskWbs = task.wbs;
+      if (!taskWbs.startsWith(parentWbs + '.')) {
+        return false;
+      }
+      
+      // 檢查是否為直接子任務（只有一個點號分隔）
+      const remainingPart = taskWbs.substring(parentWbs.length + 1);
+      return !remainingPart.includes('.');
+    });
+    
+    if (directChildTasks.length === 0) {
+      // 如果沒有子任務，生成第一個子任務的 WBS
+      return `${parentWbs}.1`;
+    }
+    
+    // 找出最大的子任務編號
+    const maxChildNum = directChildTasks.reduce((max, task) => {
+      const childWbs = task.wbs;
+      const childNumStr = childWbs.substring(parentWbs.length + 1); // 移除父 WBS 和點號
+      const childNum = parseInt(childNumStr) || 0;
+      return Math.max(max, childNum);
+    }, 0);
+    
+    return `${parentWbs}.${maxChildNum + 1}`;
   }
 
   deleteTask(task: ScheduleTask) {

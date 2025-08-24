@@ -431,4 +431,23 @@ input[type="number"].form-control-sm {
     opacity: 0.5;
     pointer-events: none;
   }
+}
+
+// 新增子任務按鈕樣式 - 只在懸停時顯示
+.add-child-btn {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: auto;
+  
+  &:hover {
+    opacity: 1 !important;
+    background-color: #007bff !important;
+    border-color: #007bff !important;
+    color: white !important;
+  }
+}
+
+// 當滑鼠懸停在 WBS 欄位時顯示新增子任務按鈕
+.table td[title="點擊編輯任務"]:hover .add-child-btn {
+  opacity: 1;
 } 
