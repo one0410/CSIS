@@ -9,6 +9,8 @@ export interface Equipment {
   maintenanceDate?: Date; // 維修日期
   inspectionDate?: Date; // 檢查日期
   isQualified?: boolean; // 是否合格
+  nextInspectionType?: 'weekly' | 'monthly' | 'quarterly' | 'biannual' | 'yearly' | 'custom'; // 下次檢查類型
+  nextInspectionDate?: Date; // 下次檢查日期
   status: 'available' | 'inUse' | 'maintenance' | 'retired'; // 設備狀態
   location?: string; // 設備位置
   description?: string;

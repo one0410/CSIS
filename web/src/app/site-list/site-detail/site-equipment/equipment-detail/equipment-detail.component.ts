@@ -301,4 +301,60 @@ export class EquipmentDetailComponent implements OnInit {
   goBack() {
     this.router.navigate(['/site', this.siteId, 'equipment']);
   }
+
+  getNextInspectionTypeText(type?: 'weekly' | 'monthly' | 'quarterly' | 'biannual' | 'yearly' | 'custom'): string {
+    switch (type) {
+      case 'weekly': return '每週';
+      case 'monthly': return '每月';
+      case 'quarterly': return '每季';
+      case 'biannual': return '每半年';
+      case 'yearly': return '每年';
+      case 'custom': return '自定義日期';
+      default: return '未設定';
+    }
+  }
+
+  onNextInspectionTypeChange() {
+    if (!this.editedEquipment) return;
+
+    const inspectionDate = this.editedEquipment.inspectionDate;
+    if (!inspectionDate) return;
+
+    const baseDate = new Date(inspectionDate);
+    let nextDate: Date;
+
+    switch (this.editedEquipment.nextInspectionType) {
+      case 'weekly':
+        nextDate = new Date(baseDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'monthly':
+        nextDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, baseDate.getDate());
+        break;
+      case 'quarterly':
+        nextDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 3, baseDate.getDate());
+        break;
+      case 'biannual':
+        nextDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 6, baseDate.getDate());
+        break;
+      case 'yearly':
+        nextDate = new Date(baseDate.getFullYear() + 1, baseDate.getMonth(), baseDate.getDate());
+        break;
+      case 'custom':
+        // 自定義日期不自動計算，保持現有值或清空
+        return;
+      default:
+        // 清除下次檢查日期
+        this.editedEquipment.nextInspectionDate = undefined;
+        return;
+    }
+
+    this.editedEquipment.nextInspectionDate = nextDate;
+  }
+
+  onInspectionDateChange() {
+    // 當檢查日期變更時，如果已經設定了下次檢查類型，重新計算下次檢查日期
+    if (this.editedEquipment && this.editedEquipment.nextInspectionType && this.editedEquipment.nextInspectionType !== 'custom') {
+      this.onNextInspectionTypeChange();
+    }
+  }
 }

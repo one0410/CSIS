@@ -44,6 +44,69 @@ export class CurrentSiteService implements OnDestroy {
     ).length;
   });
 
+  // 計算即將到期和已過期的檢查數量（到期前3天 + 已過期）
+  expiringInspectionCount = computed(() => {
+    const today = dayjs();
+    const threeDaysLater = today.add(3, 'day');
+    
+    return this.equipmentListSignal().filter(equipment => {
+      const nextInspectionDate = this.getNextInspectionDate(equipment);
+      if (!nextInspectionDate) return false;
+      
+      const nextDate = dayjs(nextInspectionDate);
+      // 包含已過期和即將到期（3天內）的檢查
+      return nextDate.isSameOrBefore(threeDaysLater);
+    }).length;
+  });
+
+  // 計算下次檢查日期（如果沒有設定但有意義的檢查類型，則自動計算）
+  private getNextInspectionDate(equipment: Equipment): Date | null {
+    // 如果有設定具體的下次檢查日期，直接返回
+    if (equipment.nextInspectionDate) {
+      return equipment.nextInspectionDate;
+    }
+    
+    // 如果有檢查日期和檢查類型，且不是自定義類型，則自動計算
+    if (equipment.inspectionDate && equipment.nextInspectionType && equipment.nextInspectionType !== 'custom') {
+      const baseDate = new Date(equipment.inspectionDate);
+      let nextDate: Date;
+
+      switch (equipment.nextInspectionType) {
+        case 'weekly':
+          nextDate = new Date(baseDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'monthly':
+          nextDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, baseDate.getDate());
+          break;
+        case 'quarterly':
+          nextDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 3, baseDate.getDate());
+          break;
+        case 'biannual':
+          nextDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 6, baseDate.getDate());
+          break;
+        case 'yearly':
+          nextDate = new Date(baseDate.getFullYear() + 1, baseDate.getMonth(), baseDate.getDate());
+          break;
+        default:
+          return null;
+      }
+
+      return nextDate;
+    }
+
+    // 如果是自定義類型但沒有設定具體日期，返回 null
+    if (equipment.nextInspectionType === 'custom' && !equipment.nextInspectionDate) {
+      return null;
+    }
+
+    return null;
+  }
+
+  // 計算機具管理的總警告數量（不合格 + 即將到期）
+  equipmentWarningCount = computed(() => {
+    return this.disqualifiedEquipmentCount() + this.expiringInspectionCount();
+  });
+
   // 計算沒有簽署危害告知的工人數量
   workersWithoutHazardNoticeCount = computed(() => {
     const workers = this.workersListSignal();

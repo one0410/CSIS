@@ -1,11 +1,16 @@
 <div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>
-      機具管理
-      @if (disqualifiedCount() > 0) {
+    <div>
+      <h2>
+        機具管理
+        @if (disqualifiedCount() > 0) {
         <span class="ms-2 badge bg-danger fs-6">不合格 {{ disqualifiedCount() }} 項</span>
-      }
-    </h2>
+        }
+        @if (expiringCount() > 0) {
+        <span class="ms-2 badge bg-warning text-dark fs-6">即將到期 {{ expiringCount() }} 項</span>
+        }
+      </h2>
+    </div>
     <button class="btn btn-primary" (click)="toggleAddForm()">
       新增設備
     </button>
@@ -31,6 +36,7 @@
           <th>型號</th>
           <th>序號</th>
           <th>檢查日期</th>
+          <th>下次檢查日期</th>
           <th>照片</th>
           <th>狀態</th>
           <th>操作</th>
@@ -47,11 +53,26 @@
             @if (equipment.inspectionDate) {
             {{ equipment.inspectionDate | date:'yyyy-MM-dd' }}
             @if (equipment.isQualified === undefined) {
-              <span class="badge bg-secondary">未檢查</span>
+            <span class="badge bg-secondary">未檢查</span>
             } @else if (equipment.isQualified) {
-              <span class="badge bg-success">合格</span>
+            <span class="badge bg-success">合格</span>
             } @else {
-              <span class="badge bg-danger">不合格</span>
+            <span class="badge bg-danger">不合格</span>
+            }
+            } @else {
+            -
+            }
+          </td>
+          <td>
+            @if (getNextInspectionDate(equipment)) {
+            <div class="d-flex align-items-center">
+              <span>{{ getNextInspectionDate(equipment) | date:'yyyy-MM-dd' }}</span>
+              @if (isInspectionExpiringSoon(equipment)) {
+                <i class="fas fa-exclamation-triangle text-warning ms-2" title="檢查即將到期"></i>
+              }
+            </div>
+            @if (equipment.nextInspectionType && equipment.nextInspectionType !== 'custom') {
+            <br><small class="text-muted">{{ getNextInspectionTypeText(equipment.nextInspectionType) }}</small>
             }
             } @else {
             -
@@ -76,10 +97,7 @@
             }
           </td>
           <td>
-            <button
-              class="btn btn-sm btn-danger"
-              (click)="deleteEquipment(equipment, $event)"
-            >
+            <button class="btn btn-sm btn-danger" (click)="deleteEquipment(equipment, $event)">
               刪除
             </button>
           </td>

@@ -189,6 +189,7 @@
                       id="inspectionDate" 
                       [(ngModel)]="editedEquipment!.inspectionDate" 
                       name="inspectionDate"
+                      (change)="onInspectionDateChange()"
                     >
                   } @else {
                     <input 
@@ -201,6 +202,65 @@
                   }
                 </div>
               </div>
+              <div class="row mb-3">
+                <label for="nextInspectionType" class="col-sm-3 col-form-label">下次檢查類型</label>
+                <div class="col-sm-9">
+                  @if (isEditing()) {
+                    <select 
+                      class="form-select" 
+                      id="nextInspectionType" 
+                      [(ngModel)]="editedEquipment!.nextInspectionType" 
+                      name="nextInspectionType"
+                      (change)="onNextInspectionTypeChange()"
+                    >
+                      <option [ngValue]="undefined">請選擇</option>
+                      <option value="weekly">每週</option>
+                      <option value="monthly">每月</option>
+                      <option value="quarterly">每季</option>
+                      <option value="biannual">每半年</option>
+                      <option value="yearly">每年</option>
+                      <option value="custom">自定義日期</option>
+                    </select>
+                  } @else {
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="nextInspectionType" 
+                      [ngModel]="getNextInspectionTypeText(equipment()!.nextInspectionType)" 
+                      name="nextInspectionType"
+                      readonly
+                    >
+                  }
+                </div>
+              </div>
+              @if (isEditing() && editedEquipment!.nextInspectionType === 'custom') {
+                <div class="row mb-3">
+                  <label for="nextInspectionDate" class="col-sm-3 col-form-label">下次檢查日期</label>
+                  <div class="col-sm-9">
+                    <input 
+                      type="date" 
+                      class="form-control" 
+                      id="nextInspectionDate" 
+                      [(ngModel)]="editedEquipment!.nextInspectionDate" 
+                      name="nextInspectionDate"
+                    >
+                  </div>
+                </div>
+              } @else if (!isEditing() && equipment()!.nextInspectionDate) {
+                <div class="row mb-3">
+                  <label for="nextInspectionDate" class="col-sm-3 col-form-label">下次檢查日期</label>
+                  <div class="col-sm-9">
+                    <input 
+                      type="date" 
+                      class="form-control" 
+                      id="nextInspectionDate" 
+                      [ngModel]="equipment()!.nextInspectionDate" 
+                      name="nextInspectionDate"
+                      readonly
+                    >
+                  </div>
+                </div>
+              }
               <div class="row mb-3">
                 <label for="isQualified" class="col-sm-3 col-form-label">合格狀態</label>
                 <div class="col-sm-9">

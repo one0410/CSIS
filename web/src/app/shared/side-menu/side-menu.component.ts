@@ -17,6 +17,7 @@ export class SideMenuComponent implements AfterViewInit {
   
   currentSite = computed(() => this.currentSiteService.currentSite());
   disqualifiedEquipmentCount = computed(() => this.currentSiteService.disqualifiedEquipmentCount());
+  equipmentWarningCount = computed(() => this.currentSiteService.equipmentWarningCount());
   pendingFormsCount = computed(() => this.currentSiteService.pendingFormsCount());
   workersWithoutHazardNoticeCount = computed(() => this.currentSiteService.workersWithoutHazardNoticeCount());
   

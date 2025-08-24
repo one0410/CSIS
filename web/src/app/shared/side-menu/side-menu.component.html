@@ -37,8 +37,8 @@
               <a class="nav-link py-2" [routerLink]="['/site', siteId, 'training']" routerLinkActive="active" (click)="onNavLinkClick()">教育訓練</a>
               <a class="nav-link py-2 d-flex justify-content-between align-items-center" [routerLink]="['/site', siteId, 'equipment']" routerLinkActive="active" (click)="onNavLinkClick()">
                 <span>機具管理</span>
-                @if (disqualifiedEquipmentCount() > 0) {
-                  <span class="badge bg-danger">{{ disqualifiedEquipmentCount() }}</span>
+                @if (equipmentWarningCount() > 0) {
+                  <span class="badge bg-danger">{{ equipmentWarningCount() }}</span>
                 }
               </a>
               <a class="nav-link py-2 d-flex justify-content-between align-items-center" [routerLink]="['/site', siteId, 'forms']" routerLinkActive="active" (click)="onNavLinkClick()">

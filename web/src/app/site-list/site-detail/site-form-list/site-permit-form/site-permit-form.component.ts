@@ -30,7 +30,7 @@ export interface SitePermitForm extends SiteForm {
   otherWork: boolean;
   otherWorkContent: string;
   status: string;
-  approvalSignature: SignatureData; // 核準簽名
+  approvalSignature: SignatureData; // 核准簽名
   reviewSignature: SignatureData; // 審核簽名
   departmentManagerSignature: SignatureData; // 申請主管簽名
   applicantSignature: SignatureData; // 申請人簽名
