@@ -48,6 +48,7 @@ interface ImportResult {
 })
 export class NewScheduleComponent implements OnInit {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('tableContainer') tableContainer!: ElementRef<HTMLDivElement>;
   
   siteId: string = '';
   site = computed(() => this.currentSiteService.currentSite());
@@ -1009,6 +1010,11 @@ export class NewScheduleComponent implements OnInit {
     // 重新計算日期範圍
     this.calculateDateRangeFromTasks();
     this.generateDateColumns();
+    
+    // 如果是新增頂層任務，滾動到表格底部
+    if (!parentTask) {
+      this.scrollToBottom();
+    }
   }
 
   private generateNewWbs(): string {
@@ -1046,6 +1052,37 @@ export class NewScheduleComponent implements OnInit {
     }, 0);
     
     return `${parentWbs}.${maxChildNum + 1}`;
+  }
+
+  // 滾動到表格底部
+  private scrollToBottom(): void {
+    // 使用 setTimeout 確保 DOM 更新完成後再滾動
+    setTimeout(() => {
+      if (this.tableContainer && this.tableContainer.nativeElement) {
+        const container = this.tableContainer.nativeElement;
+        container.scrollTop = container.scrollHeight;
+        
+        // 添加視覺反饋，讓使用者知道新增了任務
+        this.highlightNewTask();
+      }
+    }, 100);
+  }
+
+  // 高亮新任務（視覺反饋）
+  private highlightNewTask(): void {
+    // 找到最後一個任務（新新增的任務）
+    const lastTask = this.flatTasks[this.flatTasks.length - 1];
+    if (lastTask) {
+      // 可以添加一些視覺效果，比如臨時改變背景色
+      // 這裡我們使用 CSS 動畫來實現
+      const taskElement = document.querySelector(`[data-task-wbs="${lastTask.wbs}"]`);
+      if (taskElement) {
+        taskElement.classList.add('new-task-highlight');
+        setTimeout(() => {
+          taskElement.classList.remove('new-task-highlight');
+        }, 2000);
+      }
+    }
   }
 
   deleteTask(task: ScheduleTask) {

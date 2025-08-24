@@ -484,4 +484,26 @@ input[type="number"].form-control-sm {
 // 當滑鼠懸停在 WBS 欄位時顯示新增子任務按鈕
 .table td[title="點擊編輯任務"]:hover .add-child-btn {
   opacity: 1;
+}
+
+// 新任務高亮樣式
+.new-task-highlight {
+  animation: new-task-pulse 2s ease-in-out;
+  background-color: rgba(40, 167, 69, 0.2) !important;
+  border: 2px solid #28a745 !important;
+}
+
+@keyframes new-task-pulse {
+  0% {
+    background-color: rgba(40, 167, 69, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    background-color: rgba(40, 167, 69, 0.2);
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: rgba(40, 167, 69, 0.1);
+    transform: scale(1);
+  }
 } 
