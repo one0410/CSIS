@@ -7,7 +7,7 @@ import { AuthService } from '../../services/auth.service';
 export interface ProgressData {
   date: string;
   actualProgress?: number;
-  plannedProgress: number;
+  plannedProgress?: number;
   scheduledProgress?: number;
 }
 
@@ -162,8 +162,8 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
     const progressData: ProgressData[] = dateRange.map((date, index) => {
       const dateStr = date.toISOString().split('T')[0];
 
-      // 1. 合約進度：基於合約時程的線性進度
-      let plannedProgress = 0;
+      // 1. 合約進度：基於合約時程的線性進度，合約結束後不再顯示
+      let plannedProgress: number | undefined = undefined;
       if (date >= contractStartDate && date <= contractEndDate) {
         const contractDays = Math.max(1, Math.floor(
           (contractEndDate.getTime() - contractStartDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -172,9 +172,8 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
           (date.getTime() - contractStartDate.getTime()) / (1000 * 60 * 60 * 24)
         );
         plannedProgress = Math.min(100, Math.max(0, (daysFromContractStart / contractDays) * 100));
-      } else if (date > contractEndDate) {
-        plannedProgress = 100;
       }
+      // 合約結束日期後，plannedProgress 保持 undefined，這樣圖表就不會顯示延伸的線條
 
       // 2. 預期進度：基於任務權重和完成時間點的曲線
       let scheduledProgress: number | undefined = scheduledProgressCurve[index];
@@ -537,6 +536,7 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
         tension: 0.1,
         fill: false,
         pointRadius: 0,
+        spanGaps: true, // 跳過undefined值，合約結束後不再顯示延伸線條
       });
     }
 
@@ -655,6 +655,7 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
         tension: 0.1,
         fill: false,
         pointRadius: 0,
+        spanGaps: true, // 跳過undefined值，合約結束後不再顯示延伸線條
       });
     }
 
