@@ -6,55 +6,32 @@
         <div class="d-flex align-items-center flex-wrap">
           <!-- 快速選擇按鈕 -->
           <div class="btn-group me-3" role="group" aria-label="快速選擇月份">
-            <button 
-              type="button" 
-              class="btn btn-outline-secondary btn-sm"
-              (click)="selectMonth('previous')"
-              [class.active]="isMonthSelected('previous')"
-            >
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="selectMonth('previous')"
+              [class.active]="isMonthSelected('previous')">
               上月
             </button>
-            <button 
-              type="button" 
-              class="btn btn-outline-secondary btn-sm"
-              (click)="selectMonth('current')"
-              [class.active]="isMonthSelected('current')"
-            >
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="selectMonth('current')"
+              [class.active]="isMonthSelected('current')">
               本月
             </button>
           </div>
-          
+
           <!-- 月份選擇器 -->
           <div class="d-flex align-items-center">
             <label for="monthSelector" class="me-2 text-nowrap">選擇月份:</label>
             <div class="input-group" style="width: 280px;">
-              <button 
-                class="btn btn-outline-secondary" 
-                type="button"
-                (click)="previousMonth()"
-                title="前一月"
-              >
+              <button class="btn btn-outline-secondary" type="button" (click)="previousMonth()" title="前一月">
                 <i class="fas fa-chevron-left"></i>
               </button>
-              <input 
-                type="month" 
-                id="monthSelector"
-                class="form-control text-center"
-                [(ngModel)]="selectedMonthInput"
-                (change)="onMonthChange()"
-              >
-              <button 
-                class="btn btn-outline-secondary" 
-                type="button"
-                (click)="nextMonth()"
-                title="後一月"
-                [disabled]="isCurrentMonth()"
-              >
+              <input type="month" id="monthSelector" class="form-control text-center" [(ngModel)]="selectedMonthInput"
+                (change)="onMonthChange()">
+              <button class="btn btn-outline-secondary" type="button" (click)="nextMonth()" title="後一月"
+                [disabled]="isCurrentMonth()">
                 <i class="fas fa-chevron-right"></i>
               </button>
             </div>
           </div>
-          
+
           <!-- 月份顯示 -->
           <div class="ms-3">
             <small class="text-muted">
@@ -70,7 +47,7 @@
         <div class="col-lg-6 mb-3">
           <app-monthly-worker-count [selectedMonth]="selectedMonth()"></app-monthly-worker-count>
         </div>
-        
+
         <!-- 本月缺失累計 -->
         <div class="col-lg-6 mb-3">
           <app-monthly-defect-summary [selectedMonth]="selectedMonth()"></app-monthly-defect-summary>
@@ -94,22 +71,18 @@
             </div>
           </div>
         </div>
-        
+
         <div class="col-lg-6 mb-3">
           <app-monthly-excellent-contractors [selectedMonth]="selectedMonth()"></app-monthly-excellent-contractors>
         </div>
-      </div>
 
-      <!-- 組織圖 -->
-      <div class="row mb-4">
-        <div class="col-12">
+        <!-- 組織圖 -->
+        <div class="col-lg-6 mb-3">
           <app-monthly-organization-chart [selectedMonth]="selectedMonth()"></app-monthly-organization-chart>
         </div>
-      </div>
 
-      <!-- 組織章程 -->
-      <div class="row mb-4">
-        <div class="col-12">
+        <!-- 組織章程 -->
+        <div class="col-lg-6 mb-3">
           <div class="card h-100">
             <div class="card-header">
               <h6 class="mb-0">
@@ -128,7 +101,8 @@
                 <li>六、作業人員進場管制。</li>
                 <li>七、變更管理。</li>
                 <li>八、劃一危險性機械之操作信號、工作場所標識（示）、有害物空容器放置、警報、緊急避難方法及訓練等。</li>
-                <li>九、使用打樁機、拔樁機、電動機械、電動器具、軌道裝置、乙炔熔接裝置、氧乙炔熔接裝置、電弧熔接裝置、換氣裝置及沉箱、架設通道、上下設備、施工架、工作架台等機械、設備或構造物時，應協調使用上之安全措施。</li>
+                <li>九、使用打樁機、拔樁機、電動機械、電動器具、軌道裝置、乙炔熔接裝置、氧乙炔熔接裝置、電弧熔接裝置、換氣裝置及沉箱、架設通道、上下設備、施工架、工作架台等機械、設備或構造物時，應協調使用上之安全措施。
+                </li>
                 <li>十、其他認有必要之協調事項。</li>
               </ul>
             </div>
@@ -137,4 +111,4 @@
       </div>
     </div>
   </div>
-</div> 
+</div>
