@@ -798,6 +798,10 @@ export class SiteWorkerListComponent implements OnInit {
              font-weight: bold;
              width: 120px;
            }
+
+           .mic-table .value {
+            font-size: 1.3rem;
+           }
            
            .photo-cell {
              height: 60px;
@@ -870,21 +874,21 @@ export class SiteWorkerListComponent implements OnInit {
               <table class="mic-table">
                 <tr>
                   <td class="field-label">廠商名稱</td>
-                  <td>${worker.contractingCompanyName || ''}</td>
+                  <td class="value">${worker.contractingCompanyName || ''}</td>
                   <td class="field-label">姓名</td>
-                  <td>${worker.name || ''}</td>
+                  <td class="value">${worker.name || ''}</td>
                 </tr>
                 <tr>
                   <td class="field-label">血型</td>
-                  <td>${worker.bloodType || ''}</td>
+                  <td class="value">${worker.bloodType || ''}</td>
                   <td class="field-label">背心編號</td>
-                  <td>${worker.supplierIndustrialSafetyNumber || ''}</td>
+                  <td class="value">${worker.supplierIndustrialSafetyNumber || ''}</td>
                 </tr>
                 <tr>
                   <td class="field-label">緊急聯絡人</td>
-                  <td>${worker.liaison || ''}</td>
+                  <td class="value">${worker.liaison || ''}</td>
                   <td class="field-label">電話</td>
-                  <td>${worker.emergencyTel || ''}</td>
+                  <td class="value">${worker.emergencyTel || ''}</td>
                 </tr>
                 <tr style="height: 100px;">
                   <td class="field-label">證照</td>
@@ -968,20 +972,26 @@ export class SiteWorkerListComponent implements OnInit {
 
   // 獲取工作人員的教育訓練及危害告知圖片HTML
   private getWorkerTrainingAndHazardImages(worker: Worker): string {
-    const images: string[] = [];
+    const imageElements: string[] = [];
     
     // 檢查是否有教育訓練
     if (this.hasTraining(worker)) {
-      images.push('<img src="/certificate/六小時.png" alt="教育訓練" title="教育訓練">');
+      imageElements.push(`<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px;">
+        <img src="/certificate/六小時.png" alt="教育訓練" title="教育訓練">
+        <span style="font-size: 10px; text-align: center;">教育訓練</span>
+      </div>`);
     }
     
     // 檢查是否有危害告知
     if (this.hasHazardNotice(worker)) {
-      images.push('<img src="/certificate/已進行危害告知.png" alt="危害告知" title="危害告知">');
+      imageElements.push(`<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px;">
+        <img src="/certificate/已進行危害告知.png" alt="危害告知" title="危害告知">
+        <span style="font-size: 10px; text-align: center;">危害告知</span>
+      </div>`);
     }
     
-    if (images.length > 0) {
-      return `<div class="certification-images">${images.join('')}</div>`;
+    if (imageElements.length > 0) {
+      return `<div class="certification-images">${imageElements.join('')}</div>`;
     } else {
       return '<div class="certification-images"><span class="text-muted">未完成</span></div>';
     }
