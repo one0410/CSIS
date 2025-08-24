@@ -915,6 +915,29 @@ export class NewScheduleComponent implements OnInit {
     return progress.toString();
   }
 
+  // 判斷是否為當前日期/週/月
+  isCurrentDate(dateColumn: string): boolean {
+    const today = dayjs();
+    
+    switch (this.viewMode) {
+      case 'day': {
+        const checkDate = dayjs(dateColumn, 'YYYY/M/D');
+        return checkDate.isSame(today, 'day');
+      }
+      case 'week': {
+        const weekNum = parseInt(dateColumn.replace('W', ''));
+        const currentWeek = today.isoWeek();
+        return weekNum === currentWeek;
+      }
+      case 'month': {
+        const monthDate = dayjs(dateColumn, 'YYYY/MM');
+        return monthDate.isSame(today, 'month');
+      }
+      default:
+        return false;
+    }
+  }
+
   async updateProgress(task: ScheduleTask, dateColumn: string, progress: number) {
     if (!task.dailyProgress) {
       task.dailyProgress = {};

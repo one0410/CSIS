@@ -97,7 +97,8 @@
                   <!-- 日期欄位 - 日期/週數/日期範圍 -->
                   @for (dateCol of dateColumns; track dateCol) {
                   <th [style.width]="getDateColumnWidth()" [style.min-width]="getDateColumnWidth()"
-                    style="text-align: center; font-size: 0.75rem; border-top: none;">
+                    style="text-align: center; font-size: 0.75rem; border-top: none;"
+                    [ngClass]="{'current-date-highlight': isCurrentDate(dateCol)}">
                     <div>{{ getDateSubtitle(dateCol) }}</div>
                     @if (viewMode === 'week') {
                     <div style="font-size: 0.6rem; color: #6c757d; margin-top: 2px;">
@@ -222,6 +223,7 @@
                     <td [style.width]="getDateColumnWidth()" 
                         style="text-align: center; padding: 0.1rem;"
                         [class.task-date-cell]="true"
+                        [class.current-date-highlight]="isCurrentDate(dateCol)"
                         [attr.data-in-range]="isDateInRange(task, dateCol)"
                         [style.background-color]="getTaskDateCellBackgroundColor(task, dateCol)">
                       <!-- 只在非日檢視模式顯示進度指示器 -->
@@ -254,6 +256,7 @@
                     @for (dateCol of dateColumns; track dateCol + '_' + $index) {
                     <td [style.width]="getDateColumnWidth()" 
                         style="text-align: center; padding: 0.1rem; position: relative;"
+                        [class.current-date-highlight]="isCurrentDate(dateCol)"
                         [title]="getDateInputTooltip(task, dateCol)"
                         (click)="showProgressInput($event, task, dateCol)">
                       
