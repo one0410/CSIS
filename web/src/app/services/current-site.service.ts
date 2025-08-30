@@ -24,7 +24,7 @@ export class CurrentSiteService implements OnDestroy {
   private equipmentListSignal = signal<Equipment[]>([]);
   private formsListSignal = signal<SiteForm[]>([]);
   private workersListSignal = signal<Worker[]>([]);
-  
+
   // 提供一個computed signal來獲取當前工地
   currentSite = computed(() => this.currentSiteSignal());
 
@@ -39,7 +39,7 @@ export class CurrentSiteService implements OnDestroy {
 
   // 計算不合格機具的數量
   disqualifiedEquipmentCount = computed(() => {
-    return this.equipmentListSignal().filter(equipment => 
+    return this.equipmentListSignal().filter(equipment =>
       equipment.isQualified === false && equipment.inspectionDate !== undefined
     ).length;
   });
@@ -48,11 +48,11 @@ export class CurrentSiteService implements OnDestroy {
   expiringInspectionCount = computed(() => {
     const today = dayjs();
     const threeDaysLater = today.add(3, 'day');
-    
+
     return this.equipmentListSignal().filter(equipment => {
       const nextInspectionDate = this.getNextInspectionDate(equipment);
       if (!nextInspectionDate) return false;
-      
+
       const nextDate = dayjs(nextInspectionDate);
       // 包含已過期和即將到期（3天內）的檢查
       return nextDate.isSameOrBefore(threeDaysLater);
@@ -65,7 +65,7 @@ export class CurrentSiteService implements OnDestroy {
     if (equipment.nextInspectionDate) {
       return equipment.nextInspectionDate;
     }
-    
+
     // 如果有檢查日期和檢查類型，且不是自定義類型，則自動計算
     if (equipment.inspectionDate && equipment.nextInspectionType && equipment.nextInspectionType !== 'custom') {
       const baseDate = new Date(equipment.inspectionDate);
@@ -111,13 +111,13 @@ export class CurrentSiteService implements OnDestroy {
   workersWithoutHazardNoticeCount = computed(() => {
     const workers = this.workersListSignal();
     const forms = this.formsListSignal();
-    
+
     // 獲取所有危害告知表單
     const hazardNoticeForms = forms.filter(form => form.formType === 'hazardNotice');
-    
+
     // 收集所有已簽名的工人身份證號碼或電話號碼
     const signedWorkerIds = new Set<string>();
-    
+
     hazardNoticeForms.forEach((form: any) => {
       if (form.workerSignatures && form.workerSignatures.length > 0) {
         form.workerSignatures.forEach((signature: any) => {
@@ -130,14 +130,14 @@ export class CurrentSiteService implements OnDestroy {
         });
       }
     });
-    
+
     // 計算沒有簽署危害告知的工人數量
     const workersWithoutHazardNotice = workers.filter(worker => {
-      const hasHazardNotice = signedWorkerIds.has(worker.idno) || 
-                             (worker.tel ? signedWorkerIds.has(worker.tel) : false);
+      const hasHazardNotice = signedWorkerIds.has(worker.idno) ||
+        (worker.tel ? signedWorkerIds.has(worker.tel) : false);
       return !hasHazardNotice;
     });
-    
+
     return workersWithoutHazardNotice.length;
   });
 
@@ -155,20 +155,20 @@ export class CurrentSiteService implements OnDestroy {
     // 找出所有工地許可單
     const allPermits = forms.filter((form: any) => form.formType === 'sitePermit');
     console.log('工地許可單數量:', allPermits.length);
-    
+
     // 找出今天有效的許可單
     const activePermits = allPermits.filter((permit: any) => {
       if (!permit.workStartTime || !permit.workEndTime) return false;
-      
+
       const startDate = dayjs(permit.workStartTime);
       const endDate = dayjs(permit.workEndTime);
       const todayObj = dayjs(today);
-      
-      const isActive = todayObj.isSameOrAfter(startDate, 'day') && 
-             todayObj.isSameOrBefore(endDate, 'day');
-      
+
+      const isActive = todayObj.isSameOrAfter(startDate, 'day') &&
+        todayObj.isSameOrBefore(endDate, 'day');
+
       console.log(`許可單 ${permit._id}: ${startDate.format('YYYY-MM-DD')} 到 ${endDate.format('YYYY-MM-DD')}, 今天有效: ${isActive}`);
-      
+
       return isActive;
     });
 
@@ -178,21 +178,21 @@ export class CurrentSiteService implements OnDestroy {
     if (activePermits.length > 0) {
       const toolboxMeetings = forms.filter((form: any) => form.formType === 'toolboxMeeting');
       console.log('工具箱會議總數:', toolboxMeetings.length);
-      
+
       const hasToolboxMeeting = forms.some((form: any) => {
         const isToolboxMeeting = form.formType === 'toolboxMeeting';
         const meetingDate = dayjs(form.meetingDate || form.applyDate || form.createdAt).format('YYYY-MM-DD');
         const isToday = meetingDate === today;
-        
+
         if (isToolboxMeeting) {
           console.log(`工具箱會議: 日期=${meetingDate}, 是今天=${isToday}`);
         }
-        
+
         return isToolboxMeeting && isToday;
       });
-      
+
       console.log('今天是否有工具箱會議:', hasToolboxMeeting);
-      
+
       if (!hasToolboxMeeting) {
         pendingCount++;
         console.log('需要工具箱會議，待填數量+1');
@@ -203,16 +203,16 @@ export class CurrentSiteService implements OnDestroy {
         const isEnvironmentChecklist = form.formType === 'environmentChecklist';
         const checkDate = dayjs(form.checkDate || form.applyDate || form.createdAt).format('YYYY-MM-DD');
         const isToday = checkDate === today;
-        
+
         if (isEnvironmentChecklist) {
           console.log(`環安衛自主檢點表: 日期=${checkDate}, 是今天=${isToday}`);
         }
-        
+
         return isEnvironmentChecklist && isToday;
       });
-      
+
       console.log('今天是否有環安衛自主檢點表:', hasEnvironmentChecklist);
-      
+
       if (!hasEnvironmentChecklist) {
         pendingCount++;
         console.log('需要環安衛自主檢點表，待填數量+1');
@@ -223,14 +223,14 @@ export class CurrentSiteService implements OnDestroy {
         if (permit.selectedCategories && permit.selectedCategories.length > 0) {
           console.log(`許可單 ${permit._id} 的作業類別:`, permit.selectedCategories);
           permit.selectedCategories.forEach((category: string) => {
-            const hasCorrespondingChecklist = forms.some((form: any) => 
-              form.formType === 'specialWorkChecklist' && 
+            const hasCorrespondingChecklist = forms.some((form: any) =>
+              form.formType === 'specialWorkChecklist' &&
               form.workType === category &&
               dayjs(form.checkDate || form.applyDate || form.createdAt).format('YYYY-MM-DD') === today
             );
-            
+
             console.log(`作業類別 ${category} 今天是否有檢點表:`, hasCorrespondingChecklist);
-            
+
             if (!hasCorrespondingChecklist) {
               pendingCount++;
               console.log(`需要 ${category} 檢點表，待填數量+1`);
@@ -251,11 +251,11 @@ export class CurrentSiteService implements OnDestroy {
   private socketService = inject(SocketService);
   private authService = inject(AuthService);
   private _isWebSocketActive = signal<boolean>(false);
-  
+
   constructor(private mongodbService: MongodbService) {
     // 檢查sessionStorage中是否有保存的工地ID
     this.loadSavedSite();
-    
+
     // 監聽使用者變化，自動設定 WebSocket 監聽器
     effect(() => {
       const user = this.authService.user();
@@ -275,7 +275,7 @@ export class CurrentSiteService implements OnDestroy {
   async setCurrentSite(site: Site) {
     this.currentSiteSignal.set(site);
     this.loadedSiteId = site?._id || null;
-    
+
     // 保存到sessionStorage
     if (site && site._id) {
       sessionStorage.setItem('currentSiteId', site._id);
@@ -298,13 +298,13 @@ export class CurrentSiteService implements OnDestroy {
    */
   async setCurrentSiteById(siteId: string) {
     if (!siteId) return null;
-    
+
     try {
       // 如果已經載入相同 ID 的工地，直接返回緩存資料
       if (this.loadedSiteId === siteId && this.currentSiteSignal()) {
         return this.currentSiteSignal();
       }
-      
+
       const site = await this.mongodbService.getById('site', siteId);
       if (site) {
         await this.setCurrentSite(site);
@@ -328,6 +328,32 @@ export class CurrentSiteService implements OnDestroy {
     try {
       const equipment = await this.mongodbService.get('equipment', {
         siteId: siteId,
+      }, {
+        projection: {
+          _id: 1,
+          siteId: 1,
+          company: 1,
+          name: 1,
+          model: 1,
+          serialNumber: 1,
+          inspectionDate: 1,
+          isQualified: 1,
+          nextInspectionType: 1,
+          nextInspectionDate: 1,
+          status: 1,
+          location: 1,
+          // 排除大型或不常用欄位以減少傳輸量
+          photos: -1,
+          description: -1,
+          purchaseDate: -1,
+          maintenanceDate: -1,
+          createdAt: -1,
+          updatedAt: -1
+        }
+      });
+      console.log('📊 載入機具列表成功 (優化後):', {
+        total: (equipment || []).length,
+        '優化說明': '已排除大型欄位 (photos, description, purchaseDate, maintenanceDate, createdAt, updatedAt) 以減少傳輸量'
       });
       this.equipmentListSignal.set(equipment || []);
     } catch (error) {
@@ -367,8 +393,25 @@ export class CurrentSiteService implements OnDestroy {
               applyDate: { $gte: startDate, $lte: endDate }
             }
           ]
+        }, {
+          projection: {
+            _id: 1,
+            siteId: 1,
+            formType: 1,
+            applyDate: 1,
+            workStartTime: 1,
+            workEndTime: 1,
+            applicant: 1,
+            selectedCategories: 1,
+            status: 1,
+            // 排除大型欄位以減少傳輸量
+            workContent: -1,
+            remarks: -1,
+            signatures: -1,
+            attachments: -1
+          }
         }),
-        
+
         // 載入今天的其他表單類型
         this.mongodbService.get('siteForm', {
           siteId: siteId,
@@ -378,26 +421,53 @@ export class CurrentSiteService implements OnDestroy {
             { checkDate: { $gte: todayStr, $lte: todayStr } },
             { applyDate: { $gte: todayStr, $lte: todayStr } }
           ]
+        }, {
+          projection: {
+            _id: 1,
+            siteId: 1,
+            formType: 1,
+            applyDate: 1,
+            meetingDate: 1,
+            checkDate: 1,
+            status: 1,
+            // 排除大型欄位以減少傳輸量
+            signatures: -1,
+            attachments: -1,
+            remarks: -1
+          }
         }),
-        
+
         // 載入危害告知表單（用於計算工人簽署狀況，最近30天）
         this.mongodbService.get('siteForm', {
           siteId: siteId,
           formType: 'hazardNotice',
           applyDate: { $gte: today.subtract(30, 'day').format('YYYY-MM-DD') }
+        }, {
+          projection: {
+            _id: 1,
+            siteId: 1,
+            formType: 1,
+            applyDate: 1,
+            status: 1,
+            // 排除大型欄位以減少傳輸量
+            workerSignatures: -1,
+            attachments: -1,
+            remarks: -1
+          }
         })
       ]);
 
       // 合併所有表單
       const allForms = [...(permits || []), ...(todayForms || []), ...(hazardNotices || [])];
-      
-      console.log('載入表單列表成功 (優化後):', {
+
+      console.log('📊 載入表單列表成功 (優化後):', {
         permits: permits?.length || 0,
         todayForms: todayForms?.length || 0,
         hazardNotices: hazardNotices?.length || 0,
-        total: allForms.length
+        total: allForms.length,
+        '優化說明': '已排除大型欄位 (signatures, attachments, remarks, workContent) 以減少傳輸量'
       });
-      
+
       this.formsListSignal.set(allForms);
     } catch (error) {
       console.error('載入表單列表時發生錯誤', error);
@@ -417,15 +487,37 @@ export class CurrentSiteService implements OnDestroy {
     try {
       const workers = await this.mongodbService.get('worker', {
         belongSites: { $elemMatch: { siteId: siteId } }
+      }, {
+        projection: {
+          _id: 1,
+          name: 1,
+          tel: 1,
+          idno: 1,
+          contractingCompanyName: 1,
+          belongSites: 1,
+          // 排除大型欄位以減少傳輸量
+          profilePicture: -1,
+          idCardFrontPicture: -1,
+          idCardBackPicture: -1,
+          laborInsurancePicture: -1,
+          sixHourTrainingFrontPicture: -1,
+          sixHourTrainingBackPicture: -1,
+          medicalExamPictures: -1,
+          accidentInsurances: -1,
+          certifications: -1
+        }
       });
-      
+
       // 過濾掉訪客，只保留工作人員
       const filteredWorkers = (workers || []).filter((worker: Worker) => {
         const siteInfo = worker.belongSites?.find(site => site.siteId === siteId);
         return siteInfo && !siteInfo.isVisitor; // 排除訪客
       });
-      
-      console.log('載入工人列表成功:', filteredWorkers);
+
+      console.log('📊 載入工人列表成功 (優化後):', {
+        total: filteredWorkers.length,
+        '優化說明': '已排除大型欄位 (profilePicture, idCardPictures, laborInsurancePicture, trainingPictures, medicalExamPictures, accidentInsurances, certifications) 以減少傳輸量'
+      });
       this.workersListSignal.set(filteredWorkers);
     } catch (error) {
       console.error('載入工人列表時發生錯誤', error);
@@ -496,22 +588,22 @@ export class CurrentSiteService implements OnDestroy {
     try {
       // 更新資料庫
       const result = await this.mongodbService.put('site', siteId, siteData);
-      
+
       if (result) {
         // 獲取當前專案資訊
         const currentSite = this.currentSiteSignal();
-        
+
         // 合併更新後的資料
         if (currentSite) {
           const updatedSite = { ...currentSite, ...siteData };
-          
+
           // 更新本地狀態
           await this.setCurrentSite(updatedSite);
-          
+
           return updatedSite;
         }
       }
-      
+
       return null;
     } catch (error) {
       console.error('更新專案資料時發生錯誤:', error);
