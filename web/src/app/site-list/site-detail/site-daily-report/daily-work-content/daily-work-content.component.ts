@@ -254,41 +254,31 @@ export class DailyWorkContentComponent implements OnInit, OnChanges, OnDestroy {
       // 記錄當前載入的日期
       this.lastLoadedDate = this.selectedDate;
 
-      // 查詢當日的所有表單
-      const allForms = await this.mongodbService.get('siteForm', {
-        siteId: siteId
+      // 使用 MongoDB 查詢條件直接過濾當日的表單
+      // 參考 current-site.service.ts 的優化方式
+      const dailyForms = await this.mongodbService.get('siteForm', {
+        siteId: siteId,
+        $or: [
+          // 條件1: 工地許可單 - 工作期間包含選定日期
+          {
+            formType: 'sitePermit',
+            workStartTime: { $lte: this.selectedDate },
+            workEndTime: { $gte: this.selectedDate }
+          },
+          // 條件2: 申請日期等於選定日期
+          { applyDate: this.selectedDate },
+          // 條件3: 會議日期等於選定日期
+          { meetingDate: this.selectedDate },
+          // 條件4: 檢查日期等於選定日期
+          { checkDate: this.selectedDate },
+          // 條件5: 訓練日期等於選定日期
+          { trainingDate: this.selectedDate },
+          // 條件6: 建立日期等於選定日期（作為備用條件）
+          { createdAt: { $gte: this.selectedDate, $lt: dayjs(this.selectedDate).add(1, 'day').format('YYYY-MM-DD') } }
+        ]
       });
-
-      // 過濾當日的表單
-      const dailyForms = allForms.filter((form: any) => {
-        let formDate: dayjs.Dayjs | null = null;
-        
-        // 根據表單類型決定使用哪個日期欄位
-        if (form.formType === 'sitePermit' && form.workStartTime && form.workEndTime) {
-          // 工地許可單：檢查選定日期是否在工作期間內
-          const workStart = dayjs(form.workStartTime);
-          const workEnd = dayjs(form.workEndTime);
-          const selectedDateObj = dayjs(this.selectedDate);
-          return selectedDateObj.isSameOrAfter(workStart, 'day') && 
-                 selectedDateObj.isSameOrBefore(workEnd, 'day');
-        } else if (form.applyDate) {
-          formDate = dayjs(form.applyDate);
-        } else if (form.meetingDate) {
-          formDate = dayjs(form.meetingDate);
-        } else if (form.checkDate) {
-          formDate = dayjs(form.checkDate);
-        } else if (form.trainingDate) {
-          formDate = dayjs(form.trainingDate);
-        } else if (form.createdAt) {
-          formDate = dayjs(form.createdAt);
-        }
-        
-        if (formDate) {
-          return formDate.format('YYYY-MM-DD') === this.selectedDate;
-        }
-        
-        return false;
-      });
+      
+      console.log(`📊 當日工作內容查詢結果: 找到 ${dailyForms.length} 張當日表單`);
 
       // 轉換為 DailyWorkItem 格式
       const workItems: DailyWorkItem[] = [];

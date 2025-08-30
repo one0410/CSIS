@@ -203,27 +203,23 @@ export class DailyPermitContentComponent implements OnInit, OnChanges, OnDestroy
       // 記錄當前載入的日期
       this.lastLoadedDate = this.selectedDate;
 
-      // 只查詢工地許可單
-      const allPermits = await this.mongodbService.get('siteForm', {
+      // 使用 MongoDB 查詢條件直接過濾當日的工地許可單
+      // 參考 current-site.service.ts 的優化方式
+      const dailyPermits = await this.mongodbService.get('siteForm', {
         siteId: siteId,
-        formType: 'sitePermit'
+        formType: 'sitePermit',
+        $or: [
+          // 條件1: 工作期間包含選定日期
+          {
+            workStartTime: { $lte: this.selectedDate },
+            workEndTime: { $gte: this.selectedDate }
+          },
+          // 條件2: 申請日期等於選定日期（作為備用條件）
+          { applyDate: this.selectedDate }
+        ]
       });
-
-      // 過濾當日的工地許可單
-      const dailyPermits = allPermits.filter((permit: SitePermitForm) => {
-        if (permit.workStartTime && permit.workEndTime) {
-          // 檢查選定日期是否在工作期間內
-          const workStart = dayjs(permit.workStartTime);
-          const workEnd = dayjs(permit.workEndTime);
-          const selectedDateObj = dayjs(this.selectedDate);
-          return selectedDateObj.isSameOrAfter(workStart, 'day') && 
-                 selectedDateObj.isSameOrBefore(workEnd, 'day');
-        } else if (permit.applyDate) {
-          const formDate = dayjs(permit.applyDate);
-          return formDate.format('YYYY-MM-DD') === this.selectedDate;
-        }
-        return false;
-      });
+      
+      console.log(`📊 工地許可單查詢結果: 找到 ${dailyPermits.length} 張當日許可單`);
 
       // 轉換為 PermitWorkItem 格式
       const workItems: PermitWorkItem[] = dailyPermits.map((permit: SitePermitForm) => {
