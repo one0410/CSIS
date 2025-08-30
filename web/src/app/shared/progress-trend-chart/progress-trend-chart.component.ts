@@ -1,5 +1,6 @@
 import { Component, ElementRef, ViewChild, OnInit, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { Chart } from 'chart.js/auto';
+import annotationPlugin from 'chartjs-plugin-annotation';
 
 import { MongodbService } from '../../services/mongodb.service';
 import { AuthService } from '../../services/auth.service';
@@ -506,6 +507,9 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
       this.chart.destroy();
     }
 
+    // 註冊 annotation 插件
+    Chart.register(annotationPlugin);
+
     // 如果沒有資料，顯示空的圖表
     if (this.loadedProgressData.length === 0) {
       this.createEmptyChart();
@@ -522,6 +526,11 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
     const actualData = this.loadedProgressData.map(item => item.actualProgress);
     const plannedData = this.loadedProgressData.map(item => item.plannedProgress);
     const scheduledData = this.loadedProgressData.map(item => item.scheduledProgress);
+
+    // 計算今天的日期在圖表中的位置
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    const todayIndex = this.loadedProgressData.findIndex(item => item.date === todayStr);
 
     // 根據使用者角色決定要顯示的資料集
     const datasets = [];
@@ -566,7 +575,7 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
       }
     );
 
-    this.chart = new Chart(ctx, {
+        this.chart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: labels,
@@ -575,6 +584,53 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        plugins: {
+          annotation: {
+            annotations: {
+              todayLine: {
+                type: 'line',
+                xMin: todayIndex >= 0 ? todayIndex : undefined,
+                xMax: todayIndex >= 0 ? todayIndex : undefined,
+                borderColor: 'rgba(255, 77, 79, 0.6)',
+                borderWidth: 1,
+                label: {
+                  content: '今天',
+                  position: 'start',
+                  backgroundColor: 'rgba(255, 77, 79, 0.8)',
+                  color: '#ffffff',
+                  font: {
+                    size: 10
+                  },
+                  padding: 4
+                }
+              }
+            }
+          },
+          legend: {
+            labels: {
+              color: '#ffffff',
+              font: {
+                size: 12,
+              },
+            },
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+              label: function (context: any) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.y !== null) {
+                  label += context.parsed.y.toFixed(1) + '%';
+                }
+                return label;
+              },
+            },
+          },
+        },
         scales: {
           y: {
             beginAtZero: true,
@@ -607,32 +663,6 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
             },
           },
         },
-        plugins: {
-          legend: {
-            labels: {
-              color: '#ffffff',
-              font: {
-                size: 12,
-              },
-            },
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false,
-            callbacks: {
-              label: function (context) {
-                let label = context.dataset.label || '';
-                if (label) {
-                  label += ': ';
-                }
-                if (context.parsed.y !== null) {
-                  label += context.parsed.y.toFixed(1) + '%';
-                }
-                return label;
-              },
-            },
-          },
-        },
       },
     });
   }
@@ -641,6 +671,9 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
     if (!this.chartCanvas) return;
 
     const ctx = this.chartCanvas.nativeElement.getContext('2d');
+    
+    // 註冊 annotation 插件
+    Chart.register(annotationPlugin);
     
     // 根據使用者角色決定要顯示的資料集
     const datasets = [];
@@ -693,6 +726,46 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        plugins: {
+          annotation: {
+            annotations: {
+              todayLine: {
+                type: 'line',
+                xMin: 0,
+                xMax: 0,
+                borderColor: 'rgba(255, 77, 79, 0.6)',
+                borderWidth: 1,
+                label: {
+                  content: '今天',
+                  position: 'start',
+                  backgroundColor: 'rgba(255, 77, 79, 0.8)',
+                  color: '#ffffff',
+                  font: {
+                    size: 10
+                  },
+                  padding: 4
+                }
+              }
+            }
+          },
+          legend: {
+            labels: {
+              color: '#ffffff',
+              font: {
+                size: 12,
+              },
+            },
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+              label: function (context: any) {
+                return '無資料';
+              },
+            },
+          },
+        },
         scales: {
           y: {
             beginAtZero: true,
@@ -722,25 +795,6 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
             },
             grid: {
               color: 'rgba(255, 255, 255, 0.1)',
-            },
-          },
-        },
-        plugins: {
-          legend: {
-            labels: {
-              color: '#ffffff',
-              font: {
-                size: 12,
-              },
-            },
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false,
-            callbacks: {
-              label: function (context) {
-                return '無資料';
-              },
             },
           },
         },
