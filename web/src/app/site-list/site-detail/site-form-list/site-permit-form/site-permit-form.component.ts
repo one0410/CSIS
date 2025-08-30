@@ -36,6 +36,19 @@ export interface SitePermitForm extends SiteForm {
   applicantSignature: SignatureData; // 申請人簽名
   remarks?: string;
   createdAt: Date;
+  // JSA 表單新增欄位
+  workName?: string; // 作業名稱
+  contractor?: string; // 承攬商
+  maker?: string; // 製表人
+  makerDate?: string; // 製表日期
+  step?: string; // 步驟/節點
+  highRiskProject?: string; // 高風險項目
+  possibleHazardFactor?: string; // 可能危害因素(危害類型)
+  protectiveEquipment?: string; // 防護具
+  safetyProtectionMeasures?: string; // 安全防護措施
+  emergencyMeasures?: string; // 緊急/搶救措施
+  workDate?: string; // 施作日期
+  workPersonCount?: number; // 施作人數
 }
 
 // 簽名類型
@@ -103,6 +116,19 @@ export class SitePermitFormComponent implements OnInit {
     },
     createdAt: new Date(),
     createdBy: '',
+    // JSA 表單新增欄位預設值
+    workName: '',
+    contractor: '',
+    maker: '',
+    makerDate: dayjs().format('YYYY-MM-DD'),
+    step: '',
+    highRiskProject: '',
+    possibleHazardFactor: '',
+    protectiveEquipment: '',
+    safetyProtectionMeasures: '',
+    emergencyMeasures: '',
+    workDate: dayjs().format('YYYY-MM-DD'),
+    workPersonCount: 0,
   };
 
   // 簽名存儲
@@ -200,6 +226,19 @@ export class SitePermitFormComponent implements OnInit {
           reviewSignature: formData.reviewSignature || '',
           departmentManagerSignature: formData.departmentManagerSignature || '',
           applicantSignature: formData.applicantSignature || '',
+          // JSA 表單新增欄位
+          workName: formData.workName || '',
+          contractor: formData.contractor || '',
+          maker: formData.maker || '',
+          makerDate: formData.makerDate || this.permitData.makerDate,
+          step: formData.step || '',
+          highRiskProject: formData.highRiskProject || '',
+          possibleHazardFactor: formData.possibleHazardFactor || '',
+          protectiveEquipment: formData.protectiveEquipment || '',
+          safetyProtectionMeasures: formData.safetyProtectionMeasures || '',
+          emergencyMeasures: formData.emergencyMeasures || '',
+          workDate: formData.workDate || this.permitData.workDate,
+          workPersonCount: formData.workPersonCount || 0,
         };
 
         // 如果有簽名數據，顯示簽名

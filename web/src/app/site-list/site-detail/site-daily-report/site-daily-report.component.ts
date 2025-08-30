@@ -11,12 +11,13 @@ import { DailyWorkContentComponent } from './daily-work-content/daily-work-conte
 import { DailyPermitContentComponent } from './daily-permit-content/daily-permit-content.component';
 import { DailyPhotoStatsComponent } from './daily-photo-stats/daily-photo-stats.component';
 import { DailyFormStatsComponent } from './daily-form-stats/daily-form-stats.component';
+import { DailyJSAContentComponent } from './daily-jsa-content/daily-jsa-content.component';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-site-daily-report',
   standalone: true,
-  imports: [CommonModule, FormsModule, ContractorWorkerCountComponent, AccumulatedWorkPeriodComponent, FanshienWorkerCountComponent, DailyWorkContentComponent, DailyPermitContentComponent, DailyPhotoStatsComponent, DailyFormStatsComponent],
+  imports: [CommonModule, FormsModule, ContractorWorkerCountComponent, AccumulatedWorkPeriodComponent, FanshienWorkerCountComponent, DailyWorkContentComponent, DailyPermitContentComponent, DailyPhotoStatsComponent, DailyFormStatsComponent, DailyJSAContentComponent],
   templateUrl: './site-daily-report.component.html',
   styleUrls: ['./site-daily-report.component.scss']
 })

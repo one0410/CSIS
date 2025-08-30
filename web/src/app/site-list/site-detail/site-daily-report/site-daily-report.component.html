@@ -97,20 +97,8 @@
       </div>
 
       <div class="row mb-4">
-        <div class="col-lg-6 mb-3">
-          <div class="card h-100">
-            <div class="card-header">
-              <h6 class="mb-0">
-                <i class="fas fa-shield-alt me-2"></i>當日 JSA
-              </h6>
-            </div>
-            <div class="card-body">
-              <div class="alert alert-info mb-0">
-                <i class="fas fa-info-circle me-2"></i>
-                此功能尚未實作，將顯示作業安全分析記錄。
-              </div>
-            </div>
-          </div>
+        <div class="col-12 mb-3">
+          <app-daily-jsa-content [selectedDate]="selectedDate"></app-daily-jsa-content>
         </div>
         
         <div class="col-lg-6 mb-3">

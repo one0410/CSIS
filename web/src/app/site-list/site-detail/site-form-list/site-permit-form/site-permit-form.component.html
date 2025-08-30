@@ -4,9 +4,9 @@
     <div class="alert alert-warning d-flex align-items-start mb-3 py-2">
       <i class="fas fa-info-circle me-2 mt-1"></i>
       <div class="small lh-base">
-        監工單位為廠商<br/>
-        監工為廠商之監工<br/>
-        申請單位主管與申請人為廠商<br/>
+        監工單位為廠商<br />
+        監工為廠商之監工<br />
+        申請單位主管與申請人為廠商<br />
         審核與核准為帆宣
       </div>
     </div>
@@ -24,25 +24,19 @@
           @if (isViewMode) {
           <div class="alert alert-info mb-3">
             <div class="d-flex justify-content-between align-items-center">
-              <span
-                >您正在查看表單。此表單狀態為：{{
-                  permitData.status === "draft"
-                    ? "草稿"
-                    : permitData.status === "pending"
-                    ? "待審核"
-                    : permitData.status === "approved"
-                    ? "已核准"
-                    : permitData.status === "rejected"
-                    ? "已拒絕"
-                    : "未知"
-                }}</span
-              >
+              <span>您正在查看表單。此表單狀態為：{{
+                permitData.status === "draft"
+                ? "草稿"
+                : permitData.status === "pending"
+                ? "待審核"
+                : permitData.status === "approved"
+                ? "已核准"
+                : permitData.status === "rejected"
+                ? "已拒絕"
+                : "未知"
+                }}</span>
               <div class="d-flex gap-2">
-                <button
-                  type="button"
-                  class="btn btn-secondary"
-                  (click)="cancel()"
-                >
+                <button type="button" class="btn btn-secondary" (click)="cancel()">
                   <i class="fas fa-arrow-left me-1"></i>返回列表
                 </button>
               </div>
@@ -53,33 +47,14 @@
           <!-- 申請類型選項 -->
           <div class="mb-0 p-2">
             <div class="form-check form-check-inline">
-              <input
-                class="form-check-input"
-                type="radio"
-                id="firstApply"
-                name="applyType"
-                value="初次申請"
-                [(ngModel)]="permitData.applyType"
-                [disabled]="isViewMode"
-                checked
-              />
-              <label class="form-check-label fw-bold" for="firstApply"
-                >初次申請</label
-              >
+              <input class="form-check-input" type="radio" id="firstApply" name="applyType" value="初次申請"
+                [(ngModel)]="permitData.applyType" [disabled]="isViewMode" checked />
+              <label class="form-check-label fw-bold" for="firstApply">初次申請</label>
             </div>
             <div class="form-check form-check-inline ms-4">
-              <input
-                class="form-check-input"
-                type="radio"
-                id="changeApply"
-                name="applyType"
-                value="異動申請"
-                [(ngModel)]="permitData.applyType"
-                [disabled]="isViewMode"
-              />
-              <label class="form-check-label fw-bold" for="changeApply"
-                >異動申請</label
-              >
+              <input class="form-check-input" type="radio" id="changeApply" name="applyType" value="異動申請"
+                [(ngModel)]="permitData.applyType" [disabled]="isViewMode" />
+              <label class="form-check-label fw-bold" for="changeApply">異動申請</label>
             </div>
           </div>
 
@@ -95,17 +70,9 @@
                   </td>
                   <td colspan="3" class="py-2 px-2">
                     <div class="d-flex align-items-center">
-                      <input
-                        type="date"
-                        class="form-control table-input"
-                        id="applyDate"
-                        name="applyDate"
-                        [(ngModel)]="permitData.applyDate"
-                        required
-                        [readonly]="isViewMode"
-                        aria-label="申請日期"
-                        style="width: 200px"
-                      />
+                      <input type="date" class="form-control table-input" id="applyDate" name="applyDate"
+                        [(ngModel)]="permitData.applyDate" required [readonly]="isViewMode" aria-label="申請日期"
+                        style="width: 200px" />
                     </div>
                   </td>
                 </tr>
@@ -116,16 +83,9 @@
                     2.工作內容<span class="text-danger">*</span>：
                   </td>
                   <td colspan="3" class="py-2 px-2">
-                    <textarea
-                      class="form-control table-input"
-                      id="workContent"
-                      rows="2"
-                      name="workContent"
-                      [(ngModel)]="permitData.workContent"
-                      required
-                      [readonly]="isViewMode"
-                      aria-label="工作內容"
-                    ></textarea>
+                    <textarea class="form-control table-input" id="workContent" rows="2" name="workContent"
+                      [(ngModel)]="permitData.workContent" required [readonly]="isViewMode"
+                      aria-label="工作內容"></textarea>
                   </td>
                 </tr>
 
@@ -135,31 +95,15 @@
                     3.施工廠區<span class="text-danger">*</span>：
                   </td>
                   <td style="width: 35%" class="py-2 px-2">
-                    <input
-                      type="text"
-                      class="form-control table-input"
-                      id="workLocation"
-                      name="workLocation"
-                      [(ngModel)]="permitData.workLocation"
-                      required
-                      [readonly]="isViewMode"
-                      aria-label="施工廠區"
-                    />
+                    <input type="text" class="form-control table-input" id="workLocation" name="workLocation"
+                      [(ngModel)]="permitData.workLocation" required [readonly]="isViewMode" aria-label="施工廠區" />
                   </td>
                   <td class="bg-light fw-normal" style="width: 15%">
                     施工區域<span class="text-danger">*</span>：
                   </td>
                   <td style="width: 35%" class="py-2 px-2">
-                    <input
-                      type="text"
-                      class="form-control table-input"
-                      id="workArea"
-                      name="workArea"
-                      [(ngModel)]="permitData.workArea"
-                      required
-                      [readonly]="isViewMode"
-                      aria-label="施工區域"
-                    />
+                    <input type="text" class="form-control table-input" id="workArea" name="workArea"
+                      [(ngModel)]="permitData.workArea" required [readonly]="isViewMode" aria-label="施工區域" />
                   </td>
                 </tr>
 
@@ -170,27 +114,13 @@
                   </td>
                   <td colspan="3" class="py-2 px-2">
                     <div class="d-flex align-items-center flex-wrap gap-2">
-                      <input
-                        type="date"
-                        class="form-control table-input"
-                        name="workStartTime"
-                        [(ngModel)]="permitData.workStartTime"
-                        required
-                        [readonly]="isViewMode"
-                        aria-label="施工開始時間"
-                        style="width: 150px"
-                      />
+                      <input type="date" class="form-control table-input" name="workStartTime"
+                        [(ngModel)]="permitData.workStartTime" required [readonly]="isViewMode" aria-label="施工開始時間"
+                        style="width: 150px" />
                       <span>至</span>
-                      <input
-                        type="date"
-                        class="form-control table-input"
-                        name="workEndTime"
-                        [(ngModel)]="permitData.workEndTime"
-                        required
-                        [readonly]="isViewMode"
-                        aria-label="施工結束時間"
-                        style="width: 150px"
-                      />
+                      <input type="date" class="form-control table-input" name="workEndTime"
+                        [(ngModel)]="permitData.workEndTime" required [readonly]="isViewMode" aria-label="施工結束時間"
+                        style="width: 150px" />
                       <span>止。</span>
                     </div>
                   </td>
@@ -200,16 +130,9 @@
                 <tr>
                   <td class="bg-light fw-normal">5.監工單位：</td>
                   <td colspan="3" class="py-2 px-2">
-                    <input
-                      type="text"
-                      class="form-control table-input"
-                      id="supervisor"
-                      name="supervisor"
-                      [(ngModel)]="permitData.supervisor"
-                      [readonly]="isViewMode"
-                      aria-label="監工單位"
-                      style="width: 300px"
-                    />
+                    <input type="text" class="form-control table-input" id="supervisor" name="supervisor"
+                      [(ngModel)]="permitData.supervisor" [readonly]="isViewMode" aria-label="監工單位"
+                      style="width: 300px" />
                   </td>
                 </tr>
 
@@ -217,29 +140,15 @@
                 <tr>
                   <td class="bg-light fw-normal">6.監工：</td>
                   <td style="width: 35%" class="py-2 px-2">
-                    <input
-                      type="text"
-                      class="form-control table-input"
-                      id="supervisorContact"
-                      name="supervisorContact"
-                      [(ngModel)]="permitData.supervisorContact"
-                      [readonly]="isViewMode"
-                      aria-label="監工"
-                    />
+                    <input type="text" class="form-control table-input" id="supervisorContact" name="supervisorContact"
+                      [(ngModel)]="permitData.supervisorContact" [readonly]="isViewMode" aria-label="監工" />
                   </td>
                   <td class="bg-light fw-normal" style="width: 15%">
                     聯絡電話：
                   </td>
                   <td style="width: 35%" class="py-2 px-2">
-                    <input
-                      type="tel"
-                      class="form-control table-input"
-                      id="supervisorPhone"
-                      name="supervisorPhone"
-                      [(ngModel)]="permitData.supervisorPhone"
-                      [readonly]="isViewMode"
-                      aria-label="聯絡電話"
-                    />
+                    <input type="tel" class="form-control table-input" id="supervisorPhone" name="supervisorPhone"
+                      [(ngModel)]="permitData.supervisorPhone" [readonly]="isViewMode" aria-label="聯絡電話" />
                   </td>
                 </tr>
 
@@ -247,29 +156,15 @@
                 <tr>
                   <td class="bg-light fw-normal">7.專案編號：</td>
                   <td style="width: 35%" class="py-2 px-2">
-                    <input
-                      type="text"
-                      class="form-control table-input"
-                      id="projectNo"
-                      name="projectNo"
-                      [(ngModel)]="permitData.projectNo"
-                      [readonly]="isViewMode"
-                      aria-label="專案編號"
-                    />
+                    <input type="text" class="form-control table-input" id="projectNo" name="projectNo"
+                      [(ngModel)]="permitData.projectNo" [readonly]="isViewMode" aria-label="專案編號" />
                   </td>
                   <td class="bg-light fw-normal" style="width: 15%">
                     工程名稱：
                   </td>
                   <td style="width: 35%" class="py-2 px-2">
-                    <input
-                      type="text"
-                      class="form-control table-input"
-                      id="projectName"
-                      name="projectName"
-                      [(ngModel)]="permitData.projectName"
-                      [readonly]="isViewMode"
-                      aria-label="工程名稱"
-                    />
+                    <input type="text" class="form-control table-input" id="projectName" name="projectName"
+                      [(ngModel)]="permitData.projectName" [readonly]="isViewMode" aria-label="工程名稱" />
                   </td>
                 </tr>
               </tbody>
@@ -285,16 +180,10 @@
                 workCategories; track $index) {
                 <div class="col-md-4 mb-2">
                   <div class="form-check">
-                    <input
-                      class="form-check-input"
-                      type="checkbox"
-                      id="category{{ $index }}"
-                      (change)="onCategoryChange(category, $event)"
-                      [disabled]="isViewMode"
-                      [checked]="
+                    <input class="form-check-input" type="checkbox" id="category{{ $index }}"
+                      (change)="onCategoryChange(category, $event)" [disabled]="isViewMode" [checked]="
                         permitData.selectedCategories.includes(category)
-                      "
-                    />
+                      " />
                     <label class="form-check-label" for="category{{ $index }}">
                       {{ $index + 1 }}.{{ category }}
                     </label>
@@ -303,29 +192,17 @@
                 } }
                 <div class="col-md-4 mb-2">
                   <div class="form-check">
-                    <input
-                      class="form-check-input"
-                      type="checkbox"
-                      id="otherWork"
-                      [(ngModel)]="permitData.otherWork"
-                      name="otherWork"
-                      [disabled]="isViewMode"
-                    />
+                    <input class="form-check-input" type="checkbox" id="otherWork" [(ngModel)]="permitData.otherWork"
+                      name="otherWork" [disabled]="isViewMode" />
                     <label class="form-check-label" for="otherWork">
                       11.其他：
                     </label>
                   </div>
                 </div>
                 <div class="col-md-12">
-                  <input
-                    type="text"
-                    class="form-control border-bottom-only ps-3"
-                    name="otherWorkContent"
-                    [(ngModel)]="permitData.otherWorkContent"
-                    placeholder="請輸入其他作業內容"
-                    [disabled]="!permitData.otherWork || isViewMode"
-                    aria-label="其他作業內容"
-                  />
+                  <input type="text" class="form-control border-bottom-only ps-3" name="otherWorkContent"
+                    [(ngModel)]="permitData.otherWorkContent" placeholder="請輸入其他作業內容"
+                    [disabled]="!permitData.otherWork || isViewMode" aria-label="其他作業內容" />
                 </div>
               </div>
             </div>
@@ -354,15 +231,11 @@
 
               <div class="mb-2">
                 <span>4.夜間定義：</span>
-                <span class="ms-2"
-                  >當日17:30～隔日08:30；假日定義：為國定例假日。</span
-                >
+                <span class="ms-2">當日17:30～隔日08:30；假日定義：為國定例假日。</span>
               </div>
 
               <div>
-                <span
-                  >5.本表單正本由廠辦管理單位留存，副本分送工安環保及監工單位留存。</span
-                >
+                <span>5.本表單正本由廠辦管理單位留存，副本分送工安環保及監工單位留存。</span>
               </div>
             </div>
           </div>
@@ -387,82 +260,47 @@
               </tr>
               <!-- 簽名區 -->
               <tr>
-                <td
-                  class="text-center signature-area"
-                  (click)="openSignatureDialog(SignatureType.Approval)"
-                  style="height: 80px; cursor: pointer"
-                >
+                <td class="text-center signature-area" (click)="openSignatureDialog(SignatureType.Approval)"
+                  style="height: 80px; cursor: pointer">
                   @if (approvalSignature) {
-                  <img
-                    [src]="approvalSignature"
-                    alt="核准簽名"
-                    class="signature-image"
-                    style="max-height: 78px"
-                    title="{{ permitData.approvalSignature.name }} {{
+                  <img [src]="approvalSignature" alt="核准簽名" class="signature-image" style="max-height: 78px" title="{{ permitData.approvalSignature.name }} {{
                       permitData.approvalSignature.signedAt
                         | date : 'yyyy-MM-dd HH:mm:ss'
-                    }}"
-                  />
+                    }}" />
                   } @else {
                   <div class="signature-placeholder text-muted">點擊簽名</div>
                   }
                 </td>
-                <td
-                  class="text-center signature-area"
-                  (click)="openSignatureDialog(SignatureType.Review)"
-                  style="height: 80px; cursor: pointer"
-                >
+                <td class="text-center signature-area" (click)="openSignatureDialog(SignatureType.Review)"
+                  style="height: 80px; cursor: pointer">
                   @if (reviewSignature) {
-                  <img
-                    [src]="reviewSignature"
-                    alt="審核簽名"
-                    class="signature-image"
-                    style="max-height: 78px"
-                    title="{{ permitData.reviewSignature.name }} {{
+                  <img [src]="reviewSignature" alt="審核簽名" class="signature-image" style="max-height: 78px" title="{{ permitData.reviewSignature.name }} {{
                       permitData.reviewSignature.signedAt
                         | date : 'yyyy-MM-dd HH:mm:ss'
-                    }}"
-                  />
+                    }}" />
                   } @else {
                   <div class="signature-placeholder text-muted">點擊簽名</div>
                   }
                 </td>
-                <td
-                  class="text-center signature-area"
-                  (click)="openSignatureDialog(SignatureType.DepartmentManager)"
-                  style="height: 80px; cursor: pointer"
-                >
+                <td class="text-center signature-area" (click)="openSignatureDialog(SignatureType.DepartmentManager)"
+                  style="height: 80px; cursor: pointer">
                   @if (departmentManagerSignature) {
-                  <img
-                    [src]="departmentManagerSignature"
-                    alt="申請單位主管簽名"
-                    class="signature-image"
-                    style="max-height: 78px"
-                    title="{{ permitData.departmentManagerSignature.name }} {{
+                  <img [src]="departmentManagerSignature" alt="申請單位主管簽名" class="signature-image"
+                    style="max-height: 78px" title="{{ permitData.departmentManagerSignature.name }} {{
                       permitData.departmentManagerSignature.signedAt
                         | date : 'yyyy-MM-dd HH:mm:ss'
-                    }}"
-                  />
+                    }}" />
                   } @else {
                   <div class="signature-placeholder text-muted">點擊簽名</div>
                   }
                 </td>
-                <td
-                  class="text-center signature-area"
-                  (click)="openSignatureDialog(SignatureType.Applicant)"
-                  style="height: 80px; cursor: pointer"
-                >
+                <td class="text-center signature-area" (click)="openSignatureDialog(SignatureType.Applicant)"
+                  style="height: 80px; cursor: pointer">
                   @if (applicantSignature) {
-                  <img
-                    [src]="applicantSignature"
-                    alt="申請人簽名"
-                    class="signature-image"
-                    style="max-height: 78px"
-                    title="{{ permitData.applicantSignature.name }} {{
+                  <img [src]="applicantSignature" alt="申請人簽名" class="signature-image" style="max-height: 78px" title="{{ permitData.applicantSignature.name }} {{
                       permitData.applicantSignature.signedAt
                         | date : 'yyyy-MM-dd HH:mm:ss'
-                    }}"
-                  />
+                    }}" />
                   } @else {
                   <div class="signature-placeholder text-muted">點擊簽名</div>
                   }
@@ -476,46 +314,112 @@
             <small class="text-muted">EE-4404-01A</small>
           </div>
 
-          <!-- 按鈕區域 -->
-          <div class="d-flex mt-4 pt-3">
-            <button
-              type="button"
-              class="btn btn-outline-secondary px-4"
-              (click)="cancel()"
-            >
-              <i class="fas fa-times-circle me-1"></i>取消
-            </button>
-            
-            @if (permitData._id) {
-            <div class="mx-auto">
-              <button
-                type="button"
-                class="btn btn-success px-4"
-                (click)="generateDocx()"
-                [disabled]="isGeneratingPdf"
-              >
-                @if (isGeneratingPdf) {
-                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                  生成中...
-                } @else {
-                  <i class="fas fa-file-word me-1"></i>下載Word
-                }
-              </button>
-            </div>
-            }
-            
-            <div class="ms-auto">
-              <button
-                type="button"
-                class="btn btn-primary px-4"
-                (click)="savePermit()"
-              >
-                <i class="fas fa-save me-1"></i>儲存
-              </button>
-            </div>
-          </div>
         </form>
       </div>
+    </div>
+  </div>
+
+  <!-- JSA 表單 -->
+  <div class="card mt-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="fas fa-clipboard-list me-2"></i>工作安全分析 (JSA)
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <!-- 第一行 -->
+        <div class="col-md-6">
+          <label class="form-label fw-bold">作業名稱</label>
+          <input type="text" class="form-control" [(ngModel)]="permitData.workName" placeholder="請輸入作業名稱" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">承攬商</label>
+          <input type="text" class="form-control" [(ngModel)]="permitData.contractor" placeholder="請輸入承攬商名稱" />
+        </div>
+        
+        <!-- 第二行 -->
+        <div class="col-md-6">
+          <label class="form-label fw-bold">製表人</label>
+          <input type="text" class="form-control" [(ngModel)]="permitData.maker" placeholder="請輸入製表人姓名" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">製表日期</label>
+          <input type="date" class="form-control" [(ngModel)]="permitData.makerDate" />
+        </div>
+        
+        <!-- 第三行 -->
+        <div class="col-12">
+          <label class="form-label fw-bold">步驟/節點</label>
+          <textarea class="form-control" [(ngModel)]="permitData.step" rows="3" placeholder="請描述工作步驟或節點"></textarea>
+        </div>
+        
+        <!-- 第四行 -->
+        <div class="col-12">
+          <label class="form-label fw-bold">高風險項目</label>
+          <textarea class="form-control" [(ngModel)]="permitData.highRiskProject" rows="3" placeholder="請列出高風險項目"></textarea>
+        </div>
+        
+        <!-- 第五行 -->
+        <div class="col-12">
+          <label class="form-label fw-bold">可能危害因素(危害類型)</label>
+          <textarea class="form-control" [(ngModel)]="permitData.possibleHazardFactor" rows="3" placeholder="請描述可能的危害因素和危害類型"></textarea>
+        </div>
+        
+        <!-- 第六行 -->
+        <div class="col-12">
+          <label class="form-label fw-bold">防護具</label>
+          <textarea class="form-control" [(ngModel)]="permitData.protectiveEquipment" rows="3" placeholder="請列出所需的防護具"></textarea>
+        </div>
+        
+                 <!-- 第七行 -->
+         <div class="col-12">
+           <label class="form-label fw-bold">安全防護措施</label>
+           <textarea class="form-control" [(ngModel)]="permitData.safetyProtectionMeasures" rows="3" placeholder="請描述安全防護措施"></textarea>
+         </div>
+         
+         <!-- 第八行 -->
+         <div class="col-12">
+           <label class="form-label fw-bold">緊急/搶救措施</label>
+           <textarea class="form-control" [(ngModel)]="permitData.emergencyMeasures" rows="3" placeholder="請描述緊急情況的搶救措施"></textarea>
+         </div>
+        
+        <!-- 第九行 -->
+        <div class="col-md-6">
+          <label class="form-label fw-bold">施作日期</label>
+          <input type="date" class="form-control" [(ngModel)]="permitData.workDate" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">施作人數</label>
+          <input type="number" class="form-control" [(ngModel)]="permitData.workPersonCount" placeholder="請輸入施作人數" min="0" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 按鈕區域 -->
+  <div class="d-flex mt-4 pt-3">
+    <button type="button" class="btn btn-outline-secondary px-4" (click)="cancel()">
+      <i class="fas fa-times-circle me-1"></i>取消
+    </button>
+
+    @if (permitData._id) {
+    <div class="mx-auto">
+      <button type="button" class="btn btn-success px-4" (click)="generateDocx()" [disabled]="isGeneratingPdf">
+        @if (isGeneratingPdf) {
+        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        生成中...
+        } @else {
+        <i class="fas fa-file-word me-1"></i>下載Word
+        }
+      </button>
+    </div>
+    }
+
+    <div class="ms-auto">
+      <button type="button" class="btn btn-primary px-4" (click)="savePermit()">
+        <i class="fas fa-save me-1"></i>儲存
+      </button>
     </div>
   </div>
 </div>

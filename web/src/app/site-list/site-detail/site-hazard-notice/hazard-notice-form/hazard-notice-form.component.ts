@@ -19,6 +19,7 @@ import { SignatureData } from '../../../../model/signatureData.model';
 import { SiteForm } from '../../../../model/siteForm.model';
 import { AuthService } from '../../../../services/auth.service';
 import { PhotoService } from '../../../../services/photo.service';
+import { DocxTemplateService } from '../../../../services/docx-template.service';
 
 // 導入 Bootstrap Modal 相關類型
 declare const bootstrap: {
@@ -137,7 +138,8 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
     private signatureDialog: SignatureDialogService,
     private currentSiteService: CurrentSiteService,
     private authService: AuthService,
-    private photoService: PhotoService
+    private photoService: PhotoService,
+    private docxTemplateService: DocxTemplateService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -579,5 +581,19 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
 
   getPhotoUrl(filename: string): string {
     return this.photoService.getPhotoThumbnailUrl(filename);
+  }
+
+  // 下載 Word
+  async generateDocx(): Promise<void> {
+    if (!this.formId) {
+      alert('無法生成Word：表單ID不存在');
+      return;
+    }
+    try {
+      await this.docxTemplateService.generateHazardNoticeDocx(this.formId);
+    } catch (error) {
+      console.error('生成危害告知Word失敗:', error);
+      alert('生成危害告知Word失敗');
+    }
   }
 }

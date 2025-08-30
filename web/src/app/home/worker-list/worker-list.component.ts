@@ -1841,7 +1841,47 @@ export class WorkerListComponent implements OnDestroy {
 
     try {
       const zip = new JSZip();
-      const zipContent = await zip.loadAsync(file);
+      const zipContent = await zip.loadAsync(file, {
+        decodeFileName: (bytes: Uint8Array | string[]) => {
+          // 確保 bytes 是 Uint8Array 類型
+          let uint8Array: Uint8Array;
+          
+          if (Array.isArray(bytes)) {
+            // 如果是字符串陣列，轉換為 Uint8Array
+            uint8Array = new Uint8Array(bytes.map(char => char.charCodeAt(0)));
+          } else {
+            // 在瀏覽器環境中，bytes 應該是 Uint8Array 類型
+            uint8Array = bytes as Uint8Array;
+          }
+          
+          // 嘗試多種編碼方式來正確解碼中文檔名
+          const encodings = ['utf-8', 'big5', 'gb2312'];
+          
+          for (const encoding of encodings) {
+            try {
+              // 使用 TextDecoder 嘗試解碼
+              const decoder = new TextDecoder(encoding);
+              const decoded = decoder.decode(uint8Array);
+              
+              // 檢查解碼結果是否包含亂碼字符
+              if (!/[\uFFFD]/.test(decoded)) {
+                return decoded;
+              }
+            } catch (e) {
+              // 如果解碼失敗，繼續嘗試下一個編碼
+              continue;
+            }
+          }
+          
+          // 如果所有編碼都失敗，使用預設的 UTF-8
+          try {
+            return new TextDecoder('utf-8').decode(uint8Array);
+          } catch (e) {
+            // 最後的備用方案：將 bytes 轉換為字符串
+            return String.fromCharCode.apply(null, Array.from(uint8Array));
+          }
+        }
+      });
 
       // 檢查"人員入場資料"目錄
       const personDirPath = Object.keys(zipContent.files).find(

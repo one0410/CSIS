@@ -11,6 +11,7 @@ import { ToolboxMeetingForm } from '../site-list/site-detail/site-form-list/tool
 import { TrainingForm } from '../site-list/site-detail/site-training/training-form/training-form.component';
 import { SpecialWorkChecklistData } from '../site-list/site-detail/site-form-list/special-work-checklist/special-work-checklist.component';
 import { EnvironmentChecklistData } from '../site-list/site-detail/site-form-list/environment-check-list/environment-check-list.component';
+import { HazardNoticeForm } from '../site-list/site-detail/site-hazard-notice/hazard-notice-form/hazard-notice-form.component';
 
 
 @Injectable({
@@ -208,7 +209,21 @@ export class DocxTemplateService {
        approvalSignDate: formData.approvalSignature?.signedAt ? dayjs(formData.approvalSignature.signedAt).format('YYYY-MM-DD') : '',
        
        // 表單狀態
-       status: formData.status || 'draft'
+       status: formData.status || 'draft',
+       
+       // JSA 表單新增欄位
+       workName: formData.workName || '',
+       contractor: formData.contractor || '',
+       maker: formData.maker || '',
+       makerDate: formData.makerDate ? dayjs(formData.makerDate).format('YYYY-MM-DD') : '',
+       step: formData.step || '',
+       highRiskProject: formData.highRiskProject || '',
+       possibleHazardFactor: formData.possibleHazardFactor || '',
+       protectiveEquipment: formData.protectiveEquipment || '',
+       safetyProtectionMeasures: formData.safetyProtectionMeasures || '',
+       emergencyMeasures: formData.emergencyMeasures || '',
+       workDate: formData.workDate ? dayjs(formData.workDate).format('YYYY-MM-DD') : '',
+       workPersonCount: formData.workPersonCount ?? ''
     };
   }
 
@@ -884,6 +899,92 @@ export class DocxTemplateService {
   }
 
   /**
+   * 生成危害告知單 DOCX
+   */
+  async generateHazardNoticeDocx(formId: string): Promise<void> {
+    try {
+      const result = await this.generateHazardNoticeDocxBlob(formId);
+      saveAs(result.blob, result.fileName);
+    } catch (error) {
+      console.error('生成危害告知單DOCX失敗:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 生成危害告知單 DOCX Blob（用於批量下載）
+   */
+  async generateHazardNoticeDocxBlob(formId: string): Promise<{ blob: Blob, fileName: string }> {
+    return this.generateDocumentBlob(
+      formId,
+      '/template/帆宣-施工作業安全暨危害因素告知單.docx',
+      (formData, currentSite) => this.prepareHazardNoticeData(formData, currentSite),
+      (formData, currentSite) => `施工作業安全暨危害因素告知單_${currentSite.projectName || ''}_${formData.applyDate || ''}.docx`
+    );
+  }
+
+  /**
+   * 準備危害告知單的模板資料
+   */
+  private prepareHazardNoticeData(formData: HazardNoticeForm, currentSite: any): any {
+    // 確保作業項目數組存在且有足夠的項目
+    const workItems = formData.workItems || [];
+
+    // 動態處理工人簽名，只處理實際存在的簽名
+    const workerSignatures: any = {};
+    if (formData.workerSignatures && formData.workerSignatures.length > 0) {
+      formData.workerSignatures.forEach((signature, index) => {
+        if (signature && signature.signature) {
+          workerSignatures[`workerSignature${index + 1}`] = this.getValidSignatureImage(signature.signature);
+          workerSignatures[`workerName${index + 1}`] = signature.name || '';
+          workerSignatures[`workerCompany${index + 1}`] = signature.company || '';
+          workerSignatures[`workerSignDate${index + 1}`] = signature.signedAt ?
+            dayjs(signature.signedAt).format('YYYY-MM-DD HH:mm') : '';
+        }
+      });
+    }
+
+    return {
+      // 基本資訊
+      company: formData.company || '',
+      area: formData.area || '',
+      division: formData.division || '',
+      projectNo: formData.projectNo || '',
+      contractor: formData.contractor || '',
+      workLocation: formData.workLocation || '',
+      workName: formData.workName || '',
+      applyDate: dayjs(formData.applyDate).format('YYYY-MM-DD') || '',
+      siteSupervisor: formData.siteSupervisor || '',
+      safetyOfficer: formData.safetyOfficer || '',
+
+      // 作業項目勾選狀態（用於模板中的條件顯示）
+      workItem1: workItems[0]?.selected ? '🗹' : '□', // 局限空間作業
+      workItem2: workItems[1]?.selected ? '🗹' : '□', // 動火作業
+      workItem3: workItems[2]?.selected ? '🗹' : '□', // 高架作業
+      workItem4: workItems[3]?.selected ? '🗹' : '□', // 吊裝作業
+      workItem5: workItems[4]?.selected ? '🗹' : '□', // 電氣作業
+      workItem6: workItems[5]?.selected ? '🗹' : '□', // 管線拆離作業
+      workItem7: workItems[6]?.selected ? '🗹' : '□', // 化學作業
+      workItem8: workItems[7]?.selected ? '🗹' : '□', // 切割作業
+      workItem9: workItems[8]?.selected ? '🗹' : '□', // 拆除作業
+      workItem10: workItems[9]?.selected ? '🗹' : '□', // 裝修作業
+      workItem11: workItems[10]?.selected ? '🗹' : '□', // 油漆作業
+      workItem12: workItems[11]?.selected ? '🗹' : '□', // 垃圾清運作業
+      workItem13: workItems[12]?.selected ? '🗹' : '□', // 地面清潔作業
+      workItem14: workItems[13]?.selected ? '🗹' : '□', // 搬運作業
+      workItem15: workItems[14]?.selected ? '🗹' : '□', // 環境消毒作業
+      workItem16: workItems[15]?.selected ? '🗹' : '□', // 外牆修繕作業
+
+      // 工人簽名數據（動態生成，只處理實際存在的簽名）
+      ...workerSignatures,
+
+      // 工地資訊
+      siteName: currentSite?.projectName || '',
+      siteLocation: currentSite ? `${currentSite.county || ''} ${currentSite.town || ''}`.trim() : '',
+    };
+  }
+
+  /**
    * 準備工安缺失紀錄表的模板資料
    */
   private prepareSafetyIssueRecordData(formData: IssueRecord, currentSite: any): any {
@@ -963,6 +1064,8 @@ export class DocxTemplateService {
         return this.generateEnvironmentChecklistDocx(formId);
       case 'training':
         return this.generateTrainingDocx(formId);
+      case 'hazardNotice':
+        return this.generateHazardNoticeDocx(formId);
       case 'specialWorkChecklist':
         return this.generateSpecialWorkChecklistDocx(formId);
       case 'safetyIssueRecord':
@@ -985,6 +1088,8 @@ export class DocxTemplateService {
         return this.generateEnvironmentChecklistDocxBlob(formId);
       case 'training':
         return this.generateTrainingDocxBlob(formId);
+      case 'hazardNotice':
+        return this.generateHazardNoticeDocxBlob(formId);
       case 'specialWorkChecklist':
         return this.generateSpecialWorkChecklistDocxBlob(formId);
       case 'safetyIssueRecord':
