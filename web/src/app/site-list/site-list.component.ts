@@ -16,7 +16,8 @@ export class SiteListComponent {
   constructor(private mongodbService: MongodbService) {}
 
   async ngOnInit() {
-    this.sites = await this.mongodbService.get('site', {});
+    const sitesData = await this.mongodbService.getArray<Site>('site', {});
+    this.sites = sitesData;
 
   }
 

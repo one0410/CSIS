@@ -239,7 +239,8 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
 
   async loadFormDetails(formId: string): Promise<void> {
     try {
-      this.formData = await this.mongodbService.getById('siteForm', formId);
+      const formData = await this.mongodbService.getById('siteForm', formId) as HazardNoticeForm | null;
+      this.formData = formData || {} as HazardNoticeForm;
 
       // 確保從表單數據中獲取 siteId
       if (this.formData.siteId && !this.siteId) {
@@ -276,12 +277,12 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
   async loadProjectWorkers(siteId: string): Promise<void> {
     try {
       // 從資料庫獲取該專案的工人列表
-      this.projectWorkers = await this.mongodbService.get('worker', {
+      this.projectWorkers = await this.mongodbService.getArray('worker', {
         belongSites: { $elemMatch: { siteId: siteId } },
       });
 
       // 查詢該工地所有未作廢的危害告知單
-      const allActiveForms = await this.mongodbService.get('siteForm', {
+      const allActiveForms = await this.mongodbService.getArray('siteForm', {
         siteId: siteId,
         formType: 'hazardNotice',
         status: { $ne: 'revoked' }

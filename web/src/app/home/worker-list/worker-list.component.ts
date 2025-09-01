@@ -47,6 +47,13 @@ export class WorkerListComponent implements OnDestroy {
   workers: WorkerWithFlag[] = [];
   filteredWorkers: WorkerWithFlag[] = []; // 過濾後的工人資料
 
+  // 分頁相關屬性
+  currentPage = 1;
+  pageSize = 100; // 每頁顯示100筆
+  totalRecords = 0;
+  totalPages = 0;
+  isLoading = false;
+
   // 過濾器相關屬性
   selectedContractingCompany = ''; // 選中的承攬公司
   selectedCertificationTypes: string[] = []; // 選中的證照類型（多選）
@@ -919,6 +926,8 @@ export class WorkerListComponent implements OnDestroy {
       type: 'fitCellContents',
     },
     pagination: true,
+    paginationPageSize: 100,
+    paginationPageSizeSelector: [50, 100, 200, 500],
     defaultColDef: this.defaultColDef,
     columnDefs: this.columnDefs,
     rowHeight: 40,
@@ -929,6 +938,23 @@ export class WorkerListComponent implements OnDestroy {
         return 'selected-worker';
       }
       return '';
+    },
+    // 伺服器端分頁設定
+    paginationNumberFormatter: (params) => {
+      return '[' + params.value.toLocaleString() + ']';
+    },
+    onPaginationChanged: () => {
+      if (this.api && !this.isLoading) { // 避免在載入中時觸發
+        const agGridCurrentPage = this.api.paginationGetCurrentPage(); // ag-grid 是 0-indexed
+        const pageSize = this.api.paginationGetPageSize();
+        const newCurrentPage = agGridCurrentPage + 1; // 轉換為 1-indexed
+        
+        if (newCurrentPage !== this.currentPage || pageSize !== this.pageSize) {
+          this.currentPage = newCurrentPage;
+          this.pageSize = pageSize;
+          this.loadWorkersData();
+        }
+      }
     },
   };
 
@@ -946,46 +972,115 @@ export class WorkerListComponent implements OnDestroy {
   }
 
   async ngOnInit() {
-    this.workers = await this.mongodbService.get('worker', {});
+    await this.loadWorkersData();
+  }
 
-    if (this.workers.length === 0) {
-      // random 20 rows data
-      this.workers = Array.from({ length: 10 }, (_, index) =>
-        this.generateRandomWorker(index)
-      );
+  // 載入工人資料（支援分頁）
+  async loadWorkersData() {
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    try {
+      // 計算 skip 值
+      const skip = (this.currentPage - 1) * this.pageSize;
+      
+      // 構建查詢條件
+      const filter = this.buildFilterCondition();
+      
+      // 查詢資料
+      const result = await this.mongodbService.getArray('worker', filter, {
+        limit: this.pageSize,
+        skip: skip,
+        sort: { name: 1 } // 按姓名排序
+      });
 
-      for (const worker of this.workers) {
-        let result = await this.mongodbService.post('worker', worker);
-        if (result.insertedId) {
-          worker._id = result.insertedId;
+      // 處理返回結果
+      let workers: WorkerWithFlag[] = [];
+      let pagination: any = null;
+
+      if (result && typeof result === 'object' && 'data' in result && 'pagination' in result) {
+        // 新的分頁格式
+        workers = result.data as WorkerWithFlag[];
+        pagination = result.pagination;
+      } else {
+        // 舊格式，直接是陣列
+        workers = Array.isArray(result) ? result as WorkerWithFlag[] : [];
+      }
+
+      // 更新分頁資訊
+      if (pagination) {
+        this.totalRecords = pagination.count;
+        this.totalPages = Math.ceil(this.totalRecords / this.pageSize);
+      }
+
+      // 處理空資料的情況
+      if (workers.length === 0 && this.currentPage === 1) {
+        // 如果是第一頁且沒有資料，生成測試資料
+        workers = Array.from({ length: 10 }, (_, index) =>
+          this.generateRandomWorker(index)
+        );
+
+        for (const worker of workers) {
+          let result = await this.mongodbService.post('worker', worker);
+          if (result.insertedId) {
+            worker._id = result.insertedId;
+          }
         }
       }
-    } else {
+
       // 轉換普通 Worker 為 WorkerWithFlag
-      this.workers = this.workers.map((worker) => {
+      this.workers = workers.map((worker) => {
         const workerWithFlag = worker as unknown as WorkerWithFlag;
         workerWithFlag.isValid = signal(true);
         workerWithFlag.certifications =
           worker.certifications as CertificationWithFlag[];
         return workerWithFlag;
       });
+
+      console.log(`載入了第 ${this.currentPage} 頁，共 ${this.workers.length} 筆工人資料，總計 ${this.totalRecords} 筆`);
+
+      // 檢查意外險或證照是否過期
+      for (const worker of this.workers) {
+        this.checkWorkerValidity(worker);
+      }
+
+      // 初始化過濾器選項（只在第一頁時執行）
+      if (this.currentPage === 1) {
+        await this.initializeFilterOptions();
+      }
+
+      // 更新表格資料
+      this.filteredWorkers = [...this.workers];
+      if (this.api) {
+        this.api.setGridOption('rowData', this.filteredWorkers);
+        // 更新分頁資訊（避免觸發 onPaginationChanged 事件）
+        const agGridCurrentPage = this.currentPage - 1; // 轉換為 0-indexed
+        if (this.api.paginationGetCurrentPage() !== agGridCurrentPage) {
+          this.api.paginationGoToPage(agGridCurrentPage);
+        }
+      }
+    } catch (error) {
+      console.error('載入工人資料時發生錯誤:', error);
+    } finally {
+      this.isLoading = false;
     }
-    console.log(this.workers);
+  }
 
-    // 檢查意外險或證照是否過期
-    for (const worker of this.workers) {
-      this.checkWorkerValidity(worker);
+  // 構建查詢條件
+  private buildFilterCondition(): any {
+    const filter: any = {};
+    
+    // 承攬公司過濾
+    if (this.selectedContractingCompany) {
+      filter.contractingCompanyName = this.selectedContractingCompany;
     }
-
-    // 初始化過濾器選項
-    this.initializeFilterOptions();
-
-    // 初始化過濾後的資料
-    this.applyFilters();
-
-    if (this.api) {
-      this.api.setGridOption('rowData', this.filteredWorkers);
+    
+    // 證照類型過濾（這裡需要特殊處理，因為證照是陣列）
+    if (this.selectedCertificationTypes.length > 0) {
+      filter['certifications.type'] = { $in: this.selectedCertificationTypes };
     }
+    
+    return filter;
   }
 
   checkWorkerValidity(worker: WorkerWithFlag): WritableSignal<boolean> {
@@ -1129,70 +1224,78 @@ export class WorkerListComponent implements OnDestroy {
   }
 
   // 初始化過濾器選項
-  initializeFilterOptions() {
-    // 收集所有承攬公司
-    const companies = new Set<string>();
-    this.workers.forEach(worker => {
-      if (worker.contractingCompanyName) {
-        companies.add(worker.contractingCompanyName);
-      }
-    });
-    this.contractingCompanies = Array.from(companies).sort();
+  async initializeFilterOptions() {
+    try {
+      // 獲取所有承攬公司（不分頁）
+      const companiesResult = await this.mongodbService.getArray('worker', {}, {
+        projection: { contractingCompanyName: 1 },
+        limit: 10000 // 設定一個很大的數值來獲取所有資料
+      });
 
-    // 收集所有證照類型
-    const certTypes = new Set<CertificationType>();
-    this.workers.forEach(worker => {
-      if (worker.certifications) {
-        worker.certifications.forEach(cert => {
-          certTypes.add(cert.type);
-        });
+      let allWorkers: any[] = [];
+      if (companiesResult && typeof companiesResult === 'object' && 'data' in companiesResult && 'pagination' in companiesResult) {
+        allWorkers = companiesResult.data as any[];
+      } else {
+        allWorkers = Array.isArray(companiesResult) ? companiesResult : [];
       }
-    });
 
-    // 使用 CertificationTypeManager 來獲取證照類型的名稱
-    this.certificationTypes = Array.from(certTypes).map(type => ({
-      value: type,
-      label: CertificationTypeManager.getName(type)
-    })).sort((a, b) => a.label.localeCompare(b.label));
+      // 收集所有承攬公司
+      const companies = new Set<string>();
+      allWorkers.forEach(worker => {
+        if (worker.contractingCompanyName) {
+          companies.add(worker.contractingCompanyName);
+        }
+      });
+      this.contractingCompanies = Array.from(companies).sort();
+
+      // 獲取所有證照類型（不分頁）
+      const certsResult = await this.mongodbService.getArray('worker', {}, {
+        projection: { 'certifications.type': 1 },
+        limit: 10000 // 設定一個很大的數值來獲取所有資料
+      });
+
+      let allWorkersWithCerts: any[] = [];
+      if (certsResult && typeof certsResult === 'object' && 'data' in certsResult && 'pagination' in certsResult) {
+        allWorkersWithCerts = certsResult.data as any[];
+      } else {
+        allWorkersWithCerts = Array.isArray(certsResult) ? certsResult : [];
+      }
+
+      // 收集所有證照類型
+      const certTypes = new Set<CertificationType>();
+      allWorkersWithCerts.forEach(worker => {
+        if (worker.certifications) {
+          worker.certifications.forEach((cert: any) => {
+            certTypes.add(cert.type);
+          });
+        }
+      });
+
+      // 使用 CertificationTypeManager 來獲取證照類型的名稱
+      this.certificationTypes = Array.from(certTypes).map(type => ({
+        value: type,
+        label: CertificationTypeManager.getName(type)
+      })).sort((a, b) => a.label.localeCompare(b.label));
+    } catch (error) {
+      console.error('初始化過濾器選項時發生錯誤:', error);
+    }
   }
 
-  // 應用過濾器
+  // 應用過濾器（重新載入第一頁資料）
   applyFilters() {
-    this.filteredWorkers = this.workers.filter(worker => {
-      // 承攬公司過濾
-      if (this.selectedContractingCompany &&
-        worker.contractingCompanyName !== this.selectedContractingCompany) {
-        return false;
-      }
-
-      // 證照類型過濾（OR 條件）
-      if (this.selectedCertificationTypes.length > 0) {
-        if (!worker.certifications || worker.certifications.length === 0) {
-          return false;
-        }
-        // 檢查工人是否擁有任一選中的證照類型
-        const hasAnyCertType = worker.certifications.some(cert =>
-          this.selectedCertificationTypes.includes(cert.type)
-        );
-        if (!hasAnyCertType) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    // 更新 ag-grid 資料
-    if (this.api) {
-      this.api.setGridOption('rowData', this.filteredWorkers);
-    }
+    // 重置到第一頁
+    this.currentPage = 1;
+    // 重新載入資料
+    this.loadWorkersData();
   }
 
   // 清除所有過濾器
   clearFilters() {
     this.selectedContractingCompany = '';
     this.selectedCertificationTypes = [];
-    this.applyFilters();
+    // 重置到第一頁並重新載入資料
+    this.currentPage = 1;
+    this.loadWorkersData();
   }
 
   // 承攬公司變更事件
@@ -2600,7 +2703,17 @@ export class WorkerListComponent implements OnDestroy {
       // 先取得現有的工作人員資料，用於檢查是否有相同身份證的記錄
       this.processStatus = '正在檢查現有資料...';
       this.processProgress = 5;
-      const existingWorkers = await this.mongodbService.get('worker', {});
+      const existingWorkersResult = await this.mongodbService.getArray('worker', {}, {
+        limit: 10000 // 設定一個很大的數值來獲取所有資料
+      });
+
+      // 處理返回結果
+      let existingWorkers: Worker[] = [];
+      if (existingWorkersResult && typeof existingWorkersResult === 'object' && 'data' in existingWorkersResult && 'pagination' in existingWorkersResult) {
+        existingWorkers = existingWorkersResult.data as Worker[];
+      } else {
+        existingWorkers = Array.isArray(existingWorkersResult) ? existingWorkersResult as Worker[] : [];
+      }
 
       // 建立索引以快速查找
       const workerIndex = new Map<string, Worker>();
@@ -2696,28 +2809,12 @@ export class WorkerListComponent implements OnDestroy {
       this.processStatus = '正在重新載入資料...';
       this.processProgress = 90;
 
-      // 重新加載資料
-      this.workers = await this.mongodbService.get('worker', {});
-
-      // 轉換普通 Worker 為 WorkerWithFlag
-      this.workers = this.workers.map((worker) => {
-        const workerWithFlag = worker as unknown as WorkerWithFlag;
-        workerWithFlag.isValid = signal(true);
-        workerWithFlag.certifications =
-          worker.certifications as CertificationWithFlag[];
-        return workerWithFlag;
-      });
-
-      // 檢查意外險或證照是否過期
-      for (const worker of this.workers) {
-        this.checkWorkerValidity(worker);
-      }
+      // 重新加載資料（重置到第一頁）
+      this.currentPage = 1;
+      await this.loadWorkersData();
 
       // 重新初始化過濾器選項
-      this.initializeFilterOptions();
-
-      // 重新應用過濾器
-      this.applyFilters();
+      await this.initializeFilterOptions();
 
       if (this.api) {
         this.api.setGridOption('rowData', this.filteredWorkers);

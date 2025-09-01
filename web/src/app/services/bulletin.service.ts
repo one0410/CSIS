@@ -17,7 +17,7 @@ export class BulletinService {
       sort: { isPinned: -1, publishDate: -1 } // 置頂優先，然後按發布日期降序
     };
     
-    const bulletins = await this.mongodbService.get('bulletin', filter, options) as Bulletin[];
+    const bulletins = await this.mongodbService.getArray('bulletin', filter, options) as Bulletin[];
     
     // 過濾掉已過期的公告
     const now = new Date();

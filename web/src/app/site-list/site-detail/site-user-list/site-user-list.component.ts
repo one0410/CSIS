@@ -87,7 +87,7 @@ export class SiteUserListComponent implements OnInit {
       this.isLoading = true;
       
       // 獲取工地授權使用者
-      const siteUsers = await this.mongodbService.get('user', { belongSites: { $elemMatch: { siteId: this.siteId } } });
+      const siteUsers = await this.mongodbService.getArray('user', { belongSites: { $elemMatch: { siteId: this.siteId } } });
       
       if (siteUsers && siteUsers.length > 0) {
         this.siteUsers = siteUsers.map((user: User) => {
@@ -114,7 +114,7 @@ export class SiteUserListComponent implements OnInit {
 
   async loadAllUsers() {
     try {
-      this.allUsers = await this.mongodbService.get('user', {});
+      this.allUsers = await this.mongodbService.getAll('user', {});
     } catch (error) {
       console.error('載入所有使用者時發生錯誤', error);
     }

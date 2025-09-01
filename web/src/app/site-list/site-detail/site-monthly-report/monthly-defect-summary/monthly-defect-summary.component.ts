@@ -286,7 +286,7 @@ export class MonthlyDefectSummaryComponent implements OnInit, OnChanges, OnDestr
       console.log('查詢月報表缺失記錄:', query);
 
       // 查詢安全缺失記錄
-      const defectRecords = await this.mongodbService.get('siteForm', query);
+      const defectRecords = await this.mongodbService.getArray('siteForm', query);
 
       if (!defectRecords || !Array.isArray(defectRecords)) {
         console.warn('未找到缺失記錄資料或格式不正確');

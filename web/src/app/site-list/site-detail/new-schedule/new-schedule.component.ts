@@ -1415,7 +1415,7 @@ export class NewScheduleComponent implements OnInit {
       }
 
       // 使用與舊進度表相同的方式載入任務資料
-      const rawData = await this.mongodbService.get('task', {
+      const rawData = await this.mongodbService.getArray('task', {
         siteId: this.siteId,
       }) as ProjectTask[];
       

@@ -57,7 +57,7 @@ export class SitePermitComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    this.formVersions = await this.mongodbService.get('formVersion', {
+    this.formVersions = await this.mongodbService.getArray('formVersion', {
       type: 'sitePermit',
     });
     if (this.formVersions.length > 0) {

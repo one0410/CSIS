@@ -11,7 +11,7 @@ export class AccidentService {
 
   async getAccidentsBySite(siteId: string): Promise<Accident[]> {
     const filter = { siteId: siteId };
-    return await this.mongodbService.get('accident', filter) as Accident[];
+    return await this.mongodbService.getArray('accident', filter) as Accident[];
   }
 
   async createAccident(accident: Omit<Accident, '_id'>): Promise<any> {
@@ -47,7 +47,7 @@ export class AccidentService {
 
   async getLatestAccidentBySite(siteId: string): Promise<Accident | null> {
     try {
-      const accidents = await this.mongodbService.get('accident', 
+      const accidents = await this.mongodbService.getArray('accident', 
         { siteId: siteId }, 
         { 
           sort: { incidentDate: -1, incidentTime: -1 }, 
@@ -66,7 +66,7 @@ export class AccidentService {
       console.log('🔍 AccidentService: 查詢最新實際事故（排除虛驚事件）');
       
       // 排除虛驚事件，只查詢實際事故
-      const accidents = await this.mongodbService.get('accident', 
+      const accidents = await this.mongodbService.getArray('accident', 
         { 
           siteId: siteId,
           category: { $ne: 'near_miss' } // 排除虛驚事件

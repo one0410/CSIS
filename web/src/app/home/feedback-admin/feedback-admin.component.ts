@@ -123,13 +123,12 @@ export class FeedbackAdminComponent implements OnInit {
   async loadFeedbacks(): Promise<void> {
     this.loading.set(true);
     try {
-      const feedbackData = await this.mongodbService.get('feedback', {});
-      const feedbacks = feedbackData || [];
+      const feedbacks = await this.mongodbService.getArray('feedback', {});
       
       // 載入每個反饋的回覆
       for (const feedback of feedbacks) {
         try {
-          const replies = await this.mongodbService.get('feedbackReply', { feedbackId: feedback._id });
+          const replies = await this.mongodbService.getArray('feedbackReply', { feedbackId: feedback._id });
           feedback.replies = replies || [];
         } catch (error) {
           console.error(`載入回覆失敗 for feedback ${feedback._id}`, error);

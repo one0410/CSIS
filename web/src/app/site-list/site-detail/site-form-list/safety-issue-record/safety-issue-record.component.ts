@@ -208,7 +208,7 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
     // 這裡假設每個月從01開始遞增
     try {
       // 獲取本月所有缺失記錄單
-      const records = await this.mongodbService.get('siteForm', {
+      const records = await this.mongodbService.getArray('siteForm', {
         formType: 'safetyIssueRecord',
         siteId: this.siteId
       });

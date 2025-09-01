@@ -114,7 +114,7 @@ export class WorkerCountService {
 
       console.log('查詢出工人數:', query);
 
-      const toolboxMeetings = await this.mongodbService.get('siteForm', query);
+      const toolboxMeetings = await this.mongodbService.getArray('siteForm', query);
 
       if (!toolboxMeetings || !Array.isArray(toolboxMeetings)) {
         return [];

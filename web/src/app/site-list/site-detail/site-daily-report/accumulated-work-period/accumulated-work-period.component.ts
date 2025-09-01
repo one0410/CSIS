@@ -164,7 +164,7 @@ export class AccumulatedWorkPeriodComponent implements OnInit, OnChanges, OnDest
         }
       };
 
-      const toolboxMeetings = await this.mongodbService.get('siteForm', filter);
+      const toolboxMeetings = await this.mongodbService.getArray('siteForm', filter);
       
       // 按日期分組統計簽名人數
       const dailyCountMap = new Map<string, Set<string>>();

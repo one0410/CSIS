@@ -326,7 +326,7 @@ export class CurrentSiteService implements OnDestroy {
     }
 
     try {
-      const equipment = await this.mongodbService.get('equipment', {
+      const equipment = await this.mongodbService.getArray('equipment', {
         siteId: siteId,
       }, {
         projection: {
@@ -351,11 +351,21 @@ export class CurrentSiteService implements OnDestroy {
           updatedAt: -1
         }
       });
+      // 處理返回結果
+      let equipmentData: any[] = [];
+      if (equipment && typeof equipment === 'object' && 'data' in equipment && 'pagination' in equipment) {
+        // 新的分頁格式
+        equipmentData = equipment.data as any[];
+      } else {
+        // 舊格式，直接是陣列
+        equipmentData = Array.isArray(equipment) ? equipment : [];
+      }
+      
       console.log('📊 載入機具列表成功 (優化後):', {
-        total: (equipment || []).length,
+        total: equipmentData.length,
         '優化說明': '已排除大型欄位 (photos, description, purchaseDate, maintenanceDate, createdAt, updatedAt) 以減少傳輸量'
       });
-      this.equipmentListSignal.set(equipment || []);
+      this.equipmentListSignal.set(equipmentData);
     } catch (error) {
       console.error('載入機具列表時發生錯誤', error);
       this.equipmentListSignal.set([]);
@@ -381,7 +391,7 @@ export class CurrentSiteService implements OnDestroy {
       // 分別載入不同類型的表單以優化查詢
       const [permits, todayForms, hazardNotices] = await Promise.all([
         // 載入可能包含今天的工地許可單（過去7天到未來7天）
-        this.mongodbService.get('siteForm', {
+        this.mongodbService.getArray('siteForm', {
           siteId: siteId,
           formType: 'sitePermit',
           $or: [
@@ -413,7 +423,7 @@ export class CurrentSiteService implements OnDestroy {
         }),
 
         // 載入今天的其他表單類型
-        this.mongodbService.get('siteForm', {
+        this.mongodbService.getArray('siteForm', {
           siteId: siteId,
           formType: { $in: ['toolboxMeeting', 'environmentChecklist', 'specialWorkChecklist'] },
           $or: [
@@ -438,7 +448,7 @@ export class CurrentSiteService implements OnDestroy {
         }),
 
         // 載入危害告知表單（用於計算工人簽署狀況，最近30天）
-        this.mongodbService.get('siteForm', {
+        this.mongodbService.getArray('siteForm', {
           siteId: siteId,
           formType: 'hazardNotice',
           applyDate: { $gte: today.subtract(30, 'day').format('YYYY-MM-DD') }
@@ -457,13 +467,36 @@ export class CurrentSiteService implements OnDestroy {
         })
       ]);
 
+      // 處理返回結果
+      let permitsData: any[] = [];
+      let todayFormsData: any[] = [];
+      let hazardNoticesData: any[] = [];
+      
+      if (permits && typeof permits === 'object' && 'data' in permits && 'pagination' in permits) {
+        permitsData = permits.data as any[];
+      } else {
+        permitsData = Array.isArray(permits) ? permits : [];
+      }
+      
+      if (todayForms && typeof todayForms === 'object' && 'data' in todayForms && 'pagination' in todayForms) {
+        todayFormsData = todayForms.data as any[];
+      } else {
+        todayFormsData = Array.isArray(todayForms) ? todayForms : [];
+      }
+      
+      if (hazardNotices && typeof hazardNotices === 'object' && 'data' in hazardNotices && 'pagination' in hazardNotices) {
+        hazardNoticesData = hazardNotices.data as any[];
+      } else {
+        hazardNoticesData = Array.isArray(hazardNotices) ? hazardNotices : [];
+      }
+      
       // 合併所有表單
-      const allForms = [...(permits || []), ...(todayForms || []), ...(hazardNotices || [])];
+      const allForms = [...permitsData, ...todayFormsData, ...hazardNoticesData];
 
       console.log('📊 載入表單列表成功 (優化後):', {
-        permits: permits?.length || 0,
-        todayForms: todayForms?.length || 0,
-        hazardNotices: hazardNotices?.length || 0,
+        permits: permitsData.length,
+        todayForms: todayFormsData.length,
+        hazardNotices: hazardNoticesData.length,
         total: allForms.length,
         '優化說明': '已排除大型欄位 (signatures, attachments, remarks, workContent) 以減少傳輸量'
       });
@@ -485,7 +518,7 @@ export class CurrentSiteService implements OnDestroy {
     }
 
     try {
-      const workers = await this.mongodbService.get('worker', {
+      const workers = await this.mongodbService.getArray('worker', {
         belongSites: { $elemMatch: { siteId: siteId } }
       }, {
         projection: {
@@ -508,8 +541,18 @@ export class CurrentSiteService implements OnDestroy {
         }
       });
 
+      // 處理返回結果
+      let workersData: any[] = [];
+      if (workers && typeof workers === 'object' && 'data' in workers && 'pagination' in workers) {
+        // 新的分頁格式
+        workersData = workers.data as any[];
+      } else {
+        // 舊格式，直接是陣列
+        workersData = Array.isArray(workers) ? workers : [];
+      }
+      
       // 過濾掉訪客，只保留工作人員
-      const filteredWorkers = (workers || []).filter((worker: Worker) => {
+      const filteredWorkers = workersData.filter((worker: Worker) => {
         const siteInfo = worker.belongSites?.find(site => site.siteId === siteId);
         return siteInfo && !siteInfo.isVisitor; // 排除訪客
       });

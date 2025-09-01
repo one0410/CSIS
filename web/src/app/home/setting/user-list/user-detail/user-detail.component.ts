@@ -79,7 +79,7 @@ export class UserDetailComponent implements OnInit {
       this.errorMessage = null;
       
       // 使用身分證號碼查詢使用者
-      const users = await this.mongodbService.get('user', { idno: idno });
+      const users = await this.mongodbService.getArray('user', { idno: idno });
       if (users && users.length > 0) {
         this.user = users[0];
         if (this.user._id) {

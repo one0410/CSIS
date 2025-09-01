@@ -342,7 +342,7 @@ export class WeeklyImprovementPhotosComponent implements OnInit, OnChanges, OnDe
 
       console.log('查詢週報表缺失改善照片:', query);
 
-      const defectRecords = await this.mongodbService.get('siteForm', query);
+      const defectRecords = await this.mongodbService.getArray('siteForm', query);
 
       if (!defectRecords || !Array.isArray(defectRecords)) {
         this.improvementPhotos.set([]);

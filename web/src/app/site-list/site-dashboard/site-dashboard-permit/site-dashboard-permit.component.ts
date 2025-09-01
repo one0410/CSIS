@@ -91,7 +91,7 @@ export class SiteDashboardPermitComponent implements OnInit, AfterViewInit {
 
     try {
       // 獲取該專案的所有許可單
-      this.permits = await this.mongodbService.get('siteForm', {
+      this.permits = await this.mongodbService.getArray('siteForm', {
         formType: 'sitePermit',
         siteId: this.siteId
       });

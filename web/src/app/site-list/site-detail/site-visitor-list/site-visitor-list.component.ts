@@ -99,7 +99,7 @@ export class SiteVisitorListComponent implements OnInit {
         'siteId': currentSite._id
       };
 
-      const visitors = await this.mongodbService.get('visitor', filter) as Visitor[];
+      const visitors = await this.mongodbService.getArray('visitor', filter) as Visitor[];
       this.visitors.set(visitors);
 
     } catch (error) {
@@ -154,7 +154,7 @@ export class SiteVisitorListComponent implements OnInit {
       return;
     }
 
-    const existingVisitor = await this.mongodbService.get('visitor', {
+    const existingVisitor = await this.mongodbService.getArray('visitor', {
       name: visitor.name.trim(),
       siteId: currentSite._id
     });
@@ -323,7 +323,7 @@ export class SiteVisitorListComponent implements OnInit {
       };
 
       // 先查詢是否已有設定
-      const existingSettings = await this.mongodbService.get('setting',
+      const existingSettings = await this.mongodbService.getArray('setting',
         {
           type: 'visitorHazardNotice',
           siteId: currentSite._id
@@ -359,7 +359,7 @@ export class SiteVisitorListComponent implements OnInit {
       const currentSite = this.site();
       if (!currentSite?._id) return;
 
-      const settings = await this.mongodbService.get('setting',
+      const settings = await this.mongodbService.getArray('setting',
         {
           type: 'visitorHazardNotice',
           siteId: currentSite._id

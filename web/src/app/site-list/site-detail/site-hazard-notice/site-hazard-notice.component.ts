@@ -50,7 +50,7 @@ export class SiteHazardNoticeComponent implements OnInit {
 
   async loadForms(): Promise<void> {
     // 讀取各種表單
-    const allForms = await this.mongodbService.get('siteForm', {
+    const allForms = await this.mongodbService.getArray('siteForm', {
       siteId: this.siteId,
       formType: 'hazardNotice',
     });

@@ -233,7 +233,7 @@ export class DailyFormStatsComponent implements OnInit, OnChanges, OnDestroy {
 
       // 使用 MongoDB 查詢條件直接過濾當日的表單
       // 參考 current-site.service.ts 的優化方式
-      const dailyForms = await this.mongodbService.get('siteForm', {
+      const dailyForms = await this.mongodbService.getArray('siteForm', {
         siteId: siteId,
         $or: [
           // 條件1: 工地許可單 - 工作期間包含選定日期

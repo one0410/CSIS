@@ -259,12 +259,12 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
   async loadProjectWorkers(siteId: string): Promise<void> {
     try {
       // 從資料庫獲取該專案的工人列表
-      this.projectWorkers = await this.mongodbService.get('worker', {
+      this.projectWorkers = await this.mongodbService.getArray('worker', {
         belongSites: { $elemMatch: { siteId: siteId } },
       });
 
       // 查詢該工地所有未作廢的教育訓練表單
-      const allActiveForms = await this.mongodbService.get('siteForm', {
+      const allActiveForms = await this.mongodbService.getArray('siteForm', {
         siteId: siteId,
         formType: 'training',
         status: { $ne: 'revoked' }

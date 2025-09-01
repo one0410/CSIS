@@ -310,7 +310,7 @@ export class SiteFormListComponent implements AfterViewInit {
       
       if (needReload) {
         console.log('重新載入所有表單資料');
-        this.allSiteForms = await this.mongodbService.get('siteForm', {
+        this.allSiteForms = await this.mongodbService.getArray('siteForm', {
           siteId: this.siteId,
         });
         this.lastFormsLoadTime = now;

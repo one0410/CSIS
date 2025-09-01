@@ -36,7 +36,7 @@ export class ToolboxMeetingComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    this.formVersions = await this.mongodbService.get('formVersion', {
+    this.formVersions = await this.mongodbService.getArray('formVersion', {
       type: 'toolboxMeeting',
     });
     if (this.formVersions.length > 0) {

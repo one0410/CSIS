@@ -514,7 +514,7 @@ export class SiteProgressComponent
   async loadTasks(): Promise<ProjectTask[]> {
     try {
       try {
-        const rawData = await this.mongodbService.get('task', {
+        const rawData = await this.mongodbService.getArray('task', {
           siteId: this.siteId,
         });
         console.log('從數據庫獲取的原始數據:', rawData);

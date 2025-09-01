@@ -109,7 +109,7 @@ export class WorkerHistoryComponent implements OnInit {
       const records: HistoryRecord[] = [];
 
       // 1. 載入危害告知記錄 - 從 siteForm collection 中查找
-      const hazardForms = await this.mongodbService.get('siteForm', {
+      const hazardForms = await this.mongodbService.getArray('siteForm', {
         formType: 'hazardNotice'
       });
 
@@ -141,7 +141,7 @@ export class WorkerHistoryComponent implements OnInit {
       }
 
       // 2. 載入教育訓練記錄 - 從 siteForm collection 中查找
-      const trainingForms = await this.mongodbService.get('siteForm', {
+      const trainingForms = await this.mongodbService.getArray('siteForm', {
         formType: 'training'
       });
 
@@ -173,7 +173,7 @@ export class WorkerHistoryComponent implements OnInit {
       }
 
       // 3. 載入工具箱會議記錄 - 從 siteForm collection 中查找
-      const toolboxMeetingForms = await this.mongodbService.get('siteForm', {
+      const toolboxMeetingForms = await this.mongodbService.getArray('siteForm', {
         formType: 'toolboxMeeting'
       });
 

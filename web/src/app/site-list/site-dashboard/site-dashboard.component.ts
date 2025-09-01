@@ -141,7 +141,7 @@ export class SiteDashboardComponent implements OnInit {
     const today = new Date();
 
     // 獲取所有任務資料來計算規劃進度
-    const tasks = await this.mongodbService.get('task', {
+    const tasks = await this.mongodbService.getArray('task', {
       siteId: this.siteId,
     });
 
@@ -306,7 +306,7 @@ export class SiteDashboardComponent implements OnInit {
       const endDate = dayjs().format('YYYY-MM-DD');
       
       // 一次性查詢過去30天的所有缺失資料
-      const flawForms = await this.mongodbService.get('siteForm', {
+      const flawForms = await this.mongodbService.getArray('siteForm', {
         formType: 'siteFlaw',
         siteId: this.siteId,
         applyDate: { $gte: startDate, $lte: endDate }
@@ -493,7 +493,7 @@ export class SiteDashboardComponent implements OnInit {
       const today = dayjs().format('YYYY-MM-DD');
       
       // 獲取許可單，條件為：工作時間包含今天
-      const permits = await this.mongodbService.get('siteForm', {
+      const permits = await this.mongodbService.getArray('siteForm', {
         formType: 'sitePermit',
         siteId: this.siteId,
         $and: [
@@ -630,7 +630,7 @@ export class SiteDashboardComponent implements OnInit {
     if (!this.site) return;
 
     try {
-      const flawCount = await this.mongodbService.get('siteForm', {
+      const flawCount = await this.mongodbService.getArray('siteForm', {
         formType: 'siteFlaw',
         siteId: this.siteId,
         applyDate: dayjs().format('YYYY-MM-DD'),
@@ -646,7 +646,7 @@ export class SiteDashboardComponent implements OnInit {
 
     try {
       // 獲取所有任務資料
-      const tasks = await this.mongodbService.get('task', {
+      const tasks = await this.mongodbService.getArray('task', {
         siteId: this.siteId,
       });
 

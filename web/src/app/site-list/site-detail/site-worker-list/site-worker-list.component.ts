@@ -97,7 +97,7 @@ export class SiteWorkerListComponent implements OnInit {
     
     try {
       // 獲取工地工作人員, 找出belongSites包含this.siteId的工人
-      const siteWorkers = await this.mongodbService.get('worker', { belongSites: { $elemMatch: { siteId: this.siteId } } });
+      const siteWorkers = await this.mongodbService.getArray('worker', { belongSites: { $elemMatch: { siteId: this.siteId } } });
       
       if (siteWorkers && siteWorkers.length > 0) {
         // 過濾掉訪客，只保留工作人員
@@ -128,7 +128,7 @@ export class SiteWorkerListComponent implements OnInit {
       this.workerHazardNoticeStatus.clear();
       
       // 獲取該工地的所有危害告知表單
-      this.hazardNoticeForms = await this.mongodbService.get('siteForm', {
+      this.hazardNoticeForms = await this.mongodbService.getArray('siteForm', {
         siteId: this.siteId,
         formType: 'hazardNotice'
       });
@@ -188,7 +188,7 @@ export class SiteWorkerListComponent implements OnInit {
       this.workerTrainingStatus.clear();
       
       // 獲取該工地的所有教育訓練表單（排除已作廢的表單）
-      this.trainingForms = await this.mongodbService.get('siteForm', {
+      this.trainingForms = await this.mongodbService.getArray('siteForm', {
         siteId: this.siteId,
         formType: 'training',
         status: { $ne: 'revoked' }
@@ -253,7 +253,7 @@ export class SiteWorkerListComponent implements OnInit {
 
   async loadAllWorkers() {
     try {
-      this.allWorkers = await this.mongodbService.get('worker', {});
+      this.allWorkers = await this.mongodbService.getAll('worker', {});
     } catch (error) {
       console.error('載入所有工作人員時發生錯誤', error);
     }

@@ -1,6 +1,34 @@
 import { Injectable } from '@angular/core';
 import { EJSON, ObjectID, ObjectId } from 'bson';
 
+// 分頁資訊介面
+interface PaginationInfo {
+  count: number;
+  limit: number;
+  skip: number;
+}
+
+// 分頁查詢結果介面
+interface PaginatedResult<T> {
+  data: T[];
+  pagination: PaginationInfo;
+}
+
+// 查詢選項介面
+interface QueryOptions {
+  sort?: any;
+  projection?: any;
+  limit?: number;
+  skip?: number;
+}
+
+// 批次查詢選項介面
+interface BatchQueryOptions {
+  sort?: any;
+  projection?: any;
+  batchSize?: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -14,11 +42,11 @@ export class MongodbService {
     }
   }
 
-  async get(
+  async get<T = any>(
     collectionName: string,
     filter: any,
-    option?: { sort?: any; projection?: any; limit?: number }
-  ) {
+    option?: QueryOptions
+  ): Promise<T[] | PaginatedResult<T>> {
     let url = this.urlPrefix + '/api/mongodb/' + collectionName;
     url += '?filter=' + EJSON.stringify(filter);
     if (option?.sort) {
@@ -28,6 +56,9 @@ export class MongodbService {
       url += '&projection=' + EJSON.stringify(option.projection);
     }
     url += '&limit=' + (option?.limit || 500);
+    if (option?.skip) {
+      url += '&skip=' + option.skip;
+    }
 
     const response = await fetch(url, {
       method: 'GET',
@@ -37,15 +68,109 @@ export class MongodbService {
     });
     let result = await response.json();
     result = EJSON.parse(JSON.stringify(result));
-    return result;
+    
+    // 檢查是否有分頁資訊
+    const paginationHeader = response.headers.get('X-Pagination');
+    if (paginationHeader) {
+      try {
+        const pagination: PaginationInfo = JSON.parse(paginationHeader);
+        return {
+          data: result,
+          pagination: pagination
+        } as PaginatedResult<T>;
+      } catch (e) {
+        console.warn('解析分頁資訊失敗:', e);
+      }
+    }
+    
+    return result as T[];
   }
 
-  async getById(collectionName: string, id: string) {
-    let results = await this.get(collectionName, { _id: new ObjectID(id) });
-    if (results.length === 0) {
+  // 新增一個方法來獲取所有資料（自動處理分頁）
+  async getAll<T = any>(
+    collectionName: string,
+    filter: any,
+    option?: BatchQueryOptions
+  ): Promise<T[]> {
+    const batchSize = option?.batchSize || 500;
+    let allData: T[] = [];
+    let skip = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const result = await this.get<T>(collectionName, filter, {
+        ...option,
+        limit: batchSize,
+        skip: skip
+      });
+
+      // 檢查返回結果的格式
+      let data: T[];
+      let pagination: PaginationInfo | null = null;
+
+      if (result && typeof result === 'object' && 'data' in result && 'pagination' in result) {
+        // 新的分頁格式
+        const paginatedResult = result as PaginatedResult<T>;
+        data = paginatedResult.data;
+        pagination = paginatedResult.pagination;
+      } else {
+        // 舊格式，直接是陣列
+        data = Array.isArray(result) ? result : [];
+      }
+
+      allData = allData.concat(data);
+
+      if (pagination) {
+        // 使用分頁資訊判斷是否還有更多資料
+        hasMore = (skip + data.length) < pagination.count;
+        skip += batchSize;
+      } else {
+        // 如果沒有分頁資訊，根據返回的資料量判斷
+        hasMore = data.length === batchSize;
+        skip += batchSize;
+      }
+    }
+
+    return allData;
+  }
+
+  async getById<T = any>(collectionName: string, id: string): Promise<T | null> {
+    let results = await this.get<T>(collectionName, { _id: new ObjectID(id) });
+    
+    // 處理分頁結果格式
+    let data: T[];
+    if (results && typeof results === 'object' && 'data' in results && 'pagination' in results) {
+      const paginatedResult = results as PaginatedResult<T>;
+      data = paginatedResult.data;
+    } else {
+      data = Array.isArray(results) ? results : [];
+    }
+    
+    if (data.length === 0) {
       return null;
     }
-    return results[0];
+    return data[0];
+  }
+
+  // 輔助方法：處理分頁結果並返回陣列
+  private extractDataFromResult<T>(result: T[] | PaginatedResult<T>): T[] {
+    if (result && typeof result === 'object' && 'data' in result && 'pagination' in result) {
+      // 新的分頁格式
+      return (result as PaginatedResult<T>).data;
+    } else {
+      // 舊格式，直接是陣列
+      return Array.isArray(result) ? result : [];
+    }
+  }
+
+  // 簡化版本：直接返回陣列
+  async getArray<T = any>(
+    collectionName: string,
+    filter: any,
+    option?: QueryOptions
+  ): Promise<T[]> {
+    const result = await this.get<T>(collectionName, filter, option);
+    return this.extractDataFromResult(result);
   }
 
   async post(collectionName: string, data: any) {

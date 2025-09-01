@@ -43,7 +43,8 @@ export class SiteSelectorComponent {
     this.isLoading = true;
     try {
       // 獲取所有工地
-      this.sites = await this.mongodbService.get('site', {});
+      const sitesData = await this.mongodbService.getArray<Site>('site', {});
+      this.sites = sitesData;
 
       if (this.sites.length === 0) {
         // insert 3 demo sites
@@ -61,7 +62,7 @@ export class SiteSelectorComponent {
       }
       
       // 獲取使用者有權限的工地
-      const user: User = await this.mongodbService.getById('user', this.authService.user()?._id!);
+      const user = await this.mongodbService.getById('user', this.authService.user()?._id!) as User | null;
       
       if (user && user._id) {
         // 檢查是否有管理員角色，如果是，則可以訪問所有工地

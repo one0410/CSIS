@@ -48,7 +48,7 @@ export class SiteTrainingComponent implements OnInit {
 
   async loadForms(): Promise<void> {
     // 讀取教育訓練表單
-    const allForms = await this.mongodbService.get('siteForm', {
+    const allForms = await this.mongodbService.getArray('siteForm', {
       siteId: this.siteId,
       formType: 'training',
     });

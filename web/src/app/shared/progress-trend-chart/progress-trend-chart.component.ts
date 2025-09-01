@@ -92,7 +92,7 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
     const today = new Date();
 
     // 獲取任務資料
-    const tasks = await this.mongodbService.get('task', { siteId });
+    const tasks = await this.mongodbService.getArray('task', { siteId });
 
     // 計算任務的實際開始和結束日期範圍
     let taskStartDate: Date | null = null;

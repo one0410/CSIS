@@ -10,7 +10,7 @@ export class VisitorService {
 
   async getVisitorsBySite(siteId: string): Promise<Visitor[]> {
     const filter = { siteId: siteId };
-    return await this.mongodbService.get('visitor', filter) as Visitor[];
+    return await this.mongodbService.getArray('visitor', filter) as Visitor[];
   }
 
   async createVisitor(visitor: Omit<Visitor, '_id'>): Promise<any> {
@@ -35,7 +35,7 @@ export class VisitorService {
   }
 
   async checkVisitorExists(name: string, siteId: string): Promise<boolean> {
-    const existingVisitors = await this.mongodbService.get('visitor', {
+    const existingVisitors = await this.mongodbService.getArray('visitor', {
       name: name.trim(),
       siteId: siteId
     });

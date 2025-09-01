@@ -154,7 +154,7 @@ export class MonthlyOrganizationChartComponent implements OnInit, OnChanges, OnD
         applyDate: { $gte: startDate, $lte: endDate }
       } as const;
 
-      const permits = await this.mongodbService.get('siteForm', query);
+      const permits = await this.mongodbService.getArray('siteForm', query);
       if (!permits || !Array.isArray(permits)) {
         this.supervisorUnits.set([]);
         return;

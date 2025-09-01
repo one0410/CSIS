@@ -1,4 +1,4 @@
-import { Component, signal, computed, OnInit, inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, computed, OnInit, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -320,14 +320,7 @@ export class VisitorHazardNoticeComponent implements OnInit {
     this.signature.set('');
     this.existingVisitor.set(null);
     
-    // 除錯資訊
-    console.log('已切換到新增訪客模式');
-    console.log('isViewMode:', this.isViewMode());
-    console.log('isNewMode:', this.isNewMode());
-    console.log('showVisitorSelection:', this.showVisitorSelection());
-    console.log('showBrowserHistory:', this.showBrowserHistory());
-    console.log('completed:', this.completed());
-    console.log('currentSite:', this.currentSite());
+    // 已切換到新增訪客模式
   }
 
   // 載入危害告知設定
@@ -335,11 +328,21 @@ export class VisitorHazardNoticeComponent implements OnInit {
     try {
       if (!this.siteId()) return;
 
-      const settings = await this.mongodbService.get('setting',
+      const settingsResult = await this.mongodbService.getArray('setting',
         {
           type: 'visitorHazardNotice',
           siteId: this.siteId()
         });
+      
+      // 處理返回結果
+      let settings: any[] = [];
+      if (settingsResult && typeof settingsResult === 'object' && 'data' in settingsResult && 'pagination' in settingsResult) {
+        // 新的分頁格式
+        settings = settingsResult.data as any[];
+      } else {
+        // 舊格式，直接是陣列
+        settings = Array.isArray(settingsResult) ? settingsResult : [];
+      }
       
       if (settings && settings.length > 0) {
         this.hazardNoticeContent.set(settings[0].content);

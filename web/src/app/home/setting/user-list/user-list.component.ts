@@ -59,8 +59,8 @@ export class UserListComponent {
   async ngOnInit() {
     // 從 MongoDB 取得使用者資料
     try {
-      this.users = await this.mongodbService.get('user', {});
-      console.log(this.users);
+      this.users = await this.mongodbService.getAll('user', {});
+      console.log(`載入了 ${this.users.length} 筆使用者資料`);
       this.gridOptions.rowData = this.users;
       if (this.api) {
         this.api.setGridOption('rowData', this.users);

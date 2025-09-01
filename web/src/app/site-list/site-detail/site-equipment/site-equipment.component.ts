@@ -125,7 +125,7 @@ export class SiteEquipmentComponent implements OnInit {
     try {
       if (!this.siteId) return;
 
-      const data = await this.mongodbService.get('equipment', {
+      const data = await this.mongodbService.getArray('equipment', {
         siteId: this.siteId,
       });
       this.equipmentList.set(data);

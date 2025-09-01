@@ -214,7 +214,7 @@ export class WeeklyConstructionPermitsComponent implements OnInit, OnChanges, On
       console.log('查詢週報表施工申請數量:', query);
 
       // 查詢工地許可單記錄
-      const permits = await this.mongodbService.get('siteForm', query);
+      const permits = await this.mongodbService.getArray('siteForm', query);
 
       if (!permits || !Array.isArray(permits)) {
         console.warn('未找到工地許可單資料或格式不正確');

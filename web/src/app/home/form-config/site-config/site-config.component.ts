@@ -35,14 +35,14 @@ export class SiteConfigComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     // 找出未過期工地
-    this.sites = await this.mongodbService.get('site', {
+    this.sites = await this.mongodbService.getArray('site', {
       enabled: { $ne: false },
       endDate: { $gte: dayjs().format('YYYY-MM-DD') },
     });
 
-    this.siteConfigs = await this.mongodbService.get('siteFormConfig', {});
+    this.siteConfigs = await this.mongodbService.getArray('siteFormConfig', {});
 
-    const allForms = await this.mongodbService.get('formVersion', {}) as FormVersion[];
+    const allForms = await this.mongodbService.getArray('formVersion', {}) as FormVersion[];
     this.sitePermitVersions = allForms.filter(
       (form) => form.type === 'sitePermit'
     );

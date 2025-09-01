@@ -91,7 +91,7 @@ export class SiteDashboardFlawComponent implements OnInit, AfterViewInit {
 
     try {
       // 獲取該專案的所有缺失單
-      this.flaws = await this.mongodbService.get('siteForm', {
+      this.flaws = await this.mongodbService.getArray('siteForm', {
         formType: 'siteFlaw',
         siteId: this.siteId
       });

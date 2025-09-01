@@ -286,7 +286,7 @@ export class WeeklyChecklistStatsComponent implements OnInit, OnChanges, OnDestr
 
         console.log(`查詢 ${formType} 自檢表:`, query);
 
-        const forms = await this.mongodbService.get('siteForm', query);
+        const forms = await this.mongodbService.getArray('siteForm', query);
         
         if (forms && forms.length > 0) {
           const result = this.calculateChecklistStats(formType, config, forms);

@@ -258,7 +258,7 @@ export class DailyJSAContentComponent implements OnInit, OnChanges, OnDestroy {
 
             // 使用 MongoDB 查詢條件直接過濾當日的工作許可單
             // 參考 current-site.service.ts 的優化方式
-            const dailyPermits = await this.mongodbService.get('siteForm', {
+            const dailyPermits = await this.mongodbService.getArray('siteForm', {
                 formType: 'sitePermit',
                 siteId: siteId,
                 $or: [

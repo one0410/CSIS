@@ -14,7 +14,7 @@ export interface PhotoStats {
 })
 export class PhotoService {
   private page = signal<number>(1);
-  private pageSize = 10;
+  private pageSize = 20; // 增加每頁載入的照片數量
   private loading = signal<boolean>(false);
   private hasMore = signal<boolean>(true);
 
@@ -119,28 +119,51 @@ export class PhotoService {
   }
 
   nextPage(): void {
-    this.page.update(current => current + 1);
+    const newPage = this.page() + 1;
+    this.page.set(newPage);
+    console.log('頁碼更新:', newPage);
   }
 
   resetPagination(): void {
+    console.log('重置分頁狀態');
     this.page.set(1);
     this.hasMore.set(true);
+    console.log('分頁重置完成: page =', this.page(), 'hasMore =', this.hasMore());
   }
 
-  getPhotos(siteId: string): Observable<Photo[]> {
+  getPhotos(siteId: string, searchParams?: {
+    startDate?: string;
+    endDate?: string;
+    category?: string;
+  }): Observable<Photo[]> {
     if (!this.hasMore() || this.loading()) {
+      console.log('跳過載入：hasMore =', this.hasMore(), 'loading =', this.loading());
       return of([]);
     }
 
     this.loading.set(true);
     
-    // 如果有專案編號，使用它來過濾照片
+    // 構建查詢參數
     let path = `/api/photos?page=${this.page()}&pageSize=${this.pageSize}`;
     if (siteId) {
       path += `&siteId=${siteId}`;
     }
+    
+    // 添加搜尋條件
+    if (searchParams) {
+      if (searchParams.startDate) {
+        path += `&startDate=${searchParams.startDate}`;
+      }
+      if (searchParams.endDate) {
+        path += `&endDate=${searchParams.endDate}`;
+      }
+      if (searchParams.category) {
+        path += `&category=${encodeURIComponent(searchParams.category)}`;
+      }
+    }
 
     const url = this.getApiUrl(path);
+    console.log('請求照片 URL:', url);
 
     return from(
       fetch(url, {
@@ -157,18 +180,40 @@ export class PhotoService {
         .then(response => {
           this.loading.set(false);
           
+          console.log('API 回應原始資料:', response);
+          
+          // 處理不同的 API 回應格式
+          let photos: any[] = [];
+          
+          if (Array.isArray(response)) {
+            // 直接是陣列格式
+            photos = response;
+          } else if (response && Array.isArray(response.data)) {
+            // 包含 data 屬性的格式
+            photos = response.data;
+          } else if (response && response.files && Array.isArray(response.files)) {
+            // GridFS 格式
+            photos = response.files;
+          } else {
+            console.warn('未知的 API 回應格式:', response);
+            photos = [];
+          }
+          
+          console.log('處理後的照片資料:', photos.length, '張');
+          
           // 如果返回的照片數量小於頁面大小，表示沒有更多照片了
-          if (response.length < this.pageSize) {
+          if (photos.length < this.pageSize) {
+            console.log('沒有更多照片了，設定 hasMore = false');
             this.hasMore.set(false);
           }
           
           // 將API響應轉換為Photo對象
-          return response.map((item: any) => ({
-            id: item._id || item.id,
+          return photos.map((item: any) => ({
+            id: item._id || item.id || item.filename,
             url: this.getApiUrl(`/api/gridfs/${item.filename}`),
             title: item.metadata?.originalName || item.filename,
             date: item.metadata?.uploadDate || new Date().toISOString().split('T')[0],
-            metadata: item.metadata
+            metadata: item.metadata || {}
           }));
         })
         .catch(error => {

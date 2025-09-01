@@ -134,6 +134,19 @@
           <span class="d-md-none">搜尋照片</span>
         </button>
       </div>
+      
+      <!-- 測試載入更多按鈕 -->
+      <div class="col-md-1">
+        <button
+          class="btn btn-outline-secondary w-100"
+          (click)="loadMorePhotos()"
+          title="載入更多照片"
+        >
+          <i class="fas fa-plus me-1"></i>
+          <span class="d-none d-md-inline">更多</span>
+          <span class="d-md-none">更多</span>
+        </button>
+      </div>
     </div>
 
     <!-- 上傳進度 -->
@@ -244,11 +257,6 @@
       <div class="empty-state text-center p-5">
         <p class="mb-0">尚未上傳任何照片</p>
       </div>
-      } @if (isLoading()) {
-      <div class="loading">
-        <div class="loading-spinner"></div>
-        <p>載入中...</p>
-      </div>
       }
     </div>
 
@@ -258,6 +266,7 @@
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">載入中...</span>
       </div>
+      <p class="text-muted mt-2">正在載入更多照片...</p>
     </div>
     }
   </div>

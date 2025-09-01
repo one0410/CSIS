@@ -205,7 +205,7 @@ export class DailyPermitContentComponent implements OnInit, OnChanges, OnDestroy
 
       // 使用 MongoDB 查詢條件直接過濾當日的工地許可單
       // 參考 current-site.service.ts 的優化方式
-      const dailyPermits = await this.mongodbService.get('siteForm', {
+      const dailyPermits = await this.mongodbService.getArray('siteForm', {
         siteId: siteId,
         formType: 'sitePermit',
         $or: [
@@ -241,7 +241,7 @@ export class DailyPermitContentComponent implements OnInit, OnChanges, OnDestroy
         }
 
         return {
-          id: permit._id,
+          id: permit._id || '',
           contractor: permit.applicant || '',
           area: permit.workLocation || '',
           workItems: workItems,

@@ -79,7 +79,8 @@ export class DashboardComponent implements OnInit {
   // 載入專案列表
   async loadSitesList() {
     try {
-      const sitesData: Site[] = await this.mongodbService.get('site', {});
+      const sitesData = await this.mongodbService.getArray<Site>('site', {});
+      
       this.sites = sitesData || [];
       console.log('載入專案列表完成:', this.sites.length, '個專案');
     } catch (error) {
@@ -97,7 +98,8 @@ export class DashboardComponent implements OnInit {
       if (!site) return null;
 
       // 獲取工地的所有任務
-      const tasks = await this.mongodbService.get('task', { siteId: siteId });
+      const tasks = await this.mongodbService.getArray('task', { siteId: siteId });
+      
       if (!tasks || tasks.length === 0) return null;
 
       // 計算規劃進度（基於任務的實際開始和結束日期）

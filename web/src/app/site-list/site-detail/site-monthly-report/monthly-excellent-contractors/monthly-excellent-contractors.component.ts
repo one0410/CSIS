@@ -105,7 +105,7 @@ export class MonthlyExcellentContractorsComponent implements OnInit {
       }
 
       // 1. 讀取所有工人，取得主承攬商
-      const workers = await this.mongodbService.get('worker', {
+      const workers = await this.mongodbService.getArray('worker', {
         'belongSites.siteId': currentSite._id
       });
 
@@ -122,7 +122,7 @@ export class MonthlyExcellentContractorsComponent implements OnInit {
       const monthStart = dayjs(this.selectedMonth).startOf('month').format('YYYY-MM-DD');
       const monthEnd = dayjs(this.selectedMonth).endOf('month').format('YYYY-MM-DD');
 
-      const defects = await this.mongodbService.get('siteForm', {
+      const defects = await this.mongodbService.getArray('siteForm', {
         siteId: currentSite._id,
         formType: 'safetyIssueRecord',
         applyDate: {

@@ -234,7 +234,7 @@ export class FanshienWorkerCountComponent implements OnInit, OnChanges, OnDestro
       const currentSite = this.currentSiteService.currentSite();
       if (!currentSite?._id) return;
 
-      const existingRecords = await this.mongodbService.get('workerCount', {
+      const existingRecords = await this.mongodbService.getArray('workerCount', {
         siteId: currentSite._id,
         date: date
       });
@@ -277,7 +277,7 @@ export class FanshienWorkerCountComponent implements OnInit, OnChanges, OnDestro
       const siteId = currentSite._id;
       
       // 檢查該日期是否已有記錄
-      const existingRecords = await this.mongodbService.get('workerCount', {
+      const existingRecords = await this.mongodbService.getArray('workerCount', {
         siteId: siteId,
         date: selectedDate
       });
@@ -363,7 +363,7 @@ export class FanshienWorkerCountComponent implements OnInit, OnChanges, OnDestro
         }
       };
 
-      const workerCountRecords = await this.mongodbService.get('workerCount', filter);
+      const workerCountRecords = await this.mongodbService.getArray('workerCount', filter);
       
       // 建立日期對應的數據映射
       const dataMap = new Map<string, number>();
