@@ -17,17 +17,12 @@ interface PaginatedResult<T> {
 // 查詢選項介面
 interface QueryOptions {
   sort?: any;
-  projection?: any;
-  limit?: number;
+  projection?: any; // 投影，0 表示排除，1 表示包含
+  limit?: number; // 限制筆數，0 表示載入所有資料
   skip?: number;
 }
 
-// 批次查詢選項介面
-interface BatchQueryOptions {
-  sort?: any;
-  projection?: any;
-  batchSize?: number;
-}
+// 注意：要獲取所有資料，請在 get 方法中設定 limit: 0 或負數
 
 @Injectable({
   providedIn: 'root',
@@ -46,7 +41,7 @@ export class MongodbService {
     collectionName: string,
     filter: any,
     option?: QueryOptions
-  ): Promise<T[] | PaginatedResult<T>> {
+  ): Promise<PaginatedResult<T>> {
     let url = this.urlPrefix + '/api/mongodb/' + collectionName;
     url += '?filter=' + EJSON.stringify(filter);
     if (option?.sort) {
@@ -55,7 +50,10 @@ export class MongodbService {
     if (option?.projection) {
       url += '&projection=' + EJSON.stringify(option.projection);
     }
-    url += '&limit=' + (option?.limit || 500);
+    // 如果 limit 為 0 或未設定，則不加入 limit 參數（伺服器會載入所有資料）
+    if (option?.limit !== 0) {
+      url += '&limit=' + (option?.limit || 500);
+    }
     if (option?.skip) {
       url += '&skip=' + option.skip;
     }
@@ -83,68 +81,24 @@ export class MongodbService {
       }
     }
     
-    return result as T[];
+    // 如果沒有分頁資訊，創建一個預設的分頁結果
+    return {
+      data: result,
+      pagination: {
+        count: result.length,
+        limit: option?.limit || 500,
+        skip: option?.skip || 0
+      }
+    } as PaginatedResult<T>;
   }
 
-  // 新增一個方法來獲取所有資料（自動處理分頁）
-  async getAll<T = any>(
-    collectionName: string,
-    filter: any,
-    option?: BatchQueryOptions
-  ): Promise<T[]> {
-    const batchSize = option?.batchSize || 500;
-    let allData: T[] = [];
-    let skip = 0;
-    let hasMore = true;
-
-    while (hasMore) {
-      const result = await this.get<T>(collectionName, filter, {
-        ...option,
-        limit: batchSize,
-        skip: skip
-      });
-
-      // 檢查返回結果的格式
-      let data: T[];
-      let pagination: PaginationInfo | null = null;
-
-      if (result && typeof result === 'object' && 'data' in result && 'pagination' in result) {
-        // 新的分頁格式
-        const paginatedResult = result as PaginatedResult<T>;
-        data = paginatedResult.data;
-        pagination = paginatedResult.pagination;
-      } else {
-        // 舊格式，直接是陣列
-        data = Array.isArray(result) ? result : [];
-      }
-
-      allData = allData.concat(data);
-
-      if (pagination) {
-        // 使用分頁資訊判斷是否還有更多資料
-        hasMore = (skip + data.length) < pagination.count;
-        skip += batchSize;
-      } else {
-        // 如果沒有分頁資訊，根據返回的資料量判斷
-        hasMore = data.length === batchSize;
-        skip += batchSize;
-      }
-    }
-
-    return allData;
-  }
+  // 注意：要獲取所有資料，請在 get 方法中設定 limit: 0 或負數
 
   async getById<T = any>(collectionName: string, id: string): Promise<T | null> {
     let results = await this.get<T>(collectionName, { _id: new ObjectID(id) });
     
-    // 處理分頁結果格式
-    let data: T[];
-    if (results && typeof results === 'object' && 'data' in results && 'pagination' in results) {
-      const paginatedResult = results as PaginatedResult<T>;
-      data = paginatedResult.data;
-    } else {
-      data = Array.isArray(results) ? results : [];
-    }
+    // 現在 results 總是 PaginatedResult<T> 格式
+    const data = results.data;
     
     if (data.length === 0) {
       return null;
@@ -152,25 +106,14 @@ export class MongodbService {
     return data[0];
   }
 
-  // 輔助方法：處理分頁結果並返回陣列
-  private extractDataFromResult<T>(result: T[] | PaginatedResult<T>): T[] {
-    if (result && typeof result === 'object' && 'data' in result && 'pagination' in result) {
-      // 新的分頁格式
-      return (result as PaginatedResult<T>).data;
-    } else {
-      // 舊格式，直接是陣列
-      return Array.isArray(result) ? result : [];
-    }
-  }
-
-  // 簡化版本：直接返回陣列
+  // 簡化版本：直接返回陣列（為了向後兼容，但建議使用 get 方法）
   async getArray<T = any>(
     collectionName: string,
     filter: any,
     option?: QueryOptions
   ): Promise<T[]> {
     const result = await this.get<T>(collectionName, filter, option);
-    return this.extractDataFromResult(result);
+    return result.data;
   }
 
   async post(collectionName: string, data: any) {

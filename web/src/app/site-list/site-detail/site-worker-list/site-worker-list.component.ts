@@ -253,7 +253,8 @@ export class SiteWorkerListComponent implements OnInit {
 
   async loadAllWorkers() {
     try {
-      this.allWorkers = await this.mongodbService.getAll('worker', {});
+              const result = await this.mongodbService.get('worker', {}, { limit: 0 });
+        this.allWorkers = result.data;
     } catch (error) {
       console.error('載入所有工作人員時發生錯誤', error);
     }

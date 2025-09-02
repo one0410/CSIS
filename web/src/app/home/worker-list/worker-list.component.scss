@@ -18,6 +18,37 @@
   }
 }
 
+// 伺服器端分頁樣式
+.server-side-pagination {
+  .btn-group {
+    .btn {
+      &:hover {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        color: white;
+      }
+      
+      &.disabled {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+        opacity: 0.8;
+      }
+    }
+  }
+  
+  .alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+    font-size: 0.875rem;
+    
+    .fas {
+      color: #17a2b8;
+    }
+  }
+}
+
 // 過濾器容器樣式
 .filter-container {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);

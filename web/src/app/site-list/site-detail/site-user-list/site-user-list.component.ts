@@ -114,7 +114,8 @@ export class SiteUserListComponent implements OnInit {
 
   async loadAllUsers() {
     try {
-      this.allUsers = await this.mongodbService.getAll('user', {});
+              const result = await this.mongodbService.get('user', {}, { limit: 0 });
+        this.allUsers = result.data;
     } catch (error) {
       console.error('載入所有使用者時發生錯誤', error);
     }

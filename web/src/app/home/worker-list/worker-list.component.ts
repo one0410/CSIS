@@ -928,6 +928,8 @@ export class WorkerListComponent implements OnDestroy {
     pagination: true,
     paginationPageSize: 100,
     paginationPageSizeSelector: [50, 100, 200, 500],
+    // AG-Grid 34.x 伺服器端分頁設定
+    // 注意：伺服器端分頁需要特殊的資料結構和設定
     defaultColDef: this.defaultColDef,
     columnDefs: this.columnDefs,
     rowHeight: 40,
@@ -938,23 +940,6 @@ export class WorkerListComponent implements OnDestroy {
         return 'selected-worker';
       }
       return '';
-    },
-    // 伺服器端分頁設定
-    paginationNumberFormatter: (params) => {
-      return '[' + params.value.toLocaleString() + ']';
-    },
-    onPaginationChanged: () => {
-      if (this.api && !this.isLoading) { // 避免在載入中時觸發
-        const agGridCurrentPage = this.api.paginationGetCurrentPage(); // ag-grid 是 0-indexed
-        const pageSize = this.api.paginationGetPageSize();
-        const newCurrentPage = agGridCurrentPage + 1; // 轉換為 1-indexed
-        
-        if (newCurrentPage !== this.currentPage || pageSize !== this.pageSize) {
-          this.currentPage = newCurrentPage;
-          this.pageSize = pageSize;
-          this.loadWorkersData();
-        }
-      }
     },
   };
 
@@ -975,43 +960,47 @@ export class WorkerListComponent implements OnDestroy {
     await this.loadWorkersData();
   }
 
-  // 載入工人資料（支援分頁）
+  // 載入工人資料（一次載入所有資料，優化傳輸）
   async loadWorkersData() {
     if (this.isLoading) return;
     
     this.isLoading = true;
     try {
-      // 計算 skip 值
-      const skip = (this.currentPage - 1) * this.pageSize;
-      
       // 構建查詢條件
       const filter = this.buildFilterCondition();
       
-      // 查詢資料
-      const result = await this.mongodbService.getArray('worker', filter, {
-        limit: this.pageSize,
-        skip: skip,
-        sort: { name: 1 } // 按姓名排序
+      // 一次載入所有資料，但排除圖片欄位以減少傳輸大小
+      const result = await this.mongodbService.get('worker', filter, {
+        limit: 0, // 0 表示載入所有資料
+        sort: { name: 1 }, // 按姓名排序
+        projection: {
+          // 排除圖片欄位以減少傳輸大小
+          profilePicture: 0,
+          idCardFrontPicture: 0,
+          idCardBackPicture: 0,
+          laborInsurancePicture: 0,
+          sixHourTrainingFrontPicture: 0,
+          sixHourTrainingBackPicture: 0,
+          medicalExamPictures: 0,
+          // 排除證照圖片欄位
+          'certifications.frontPicture': 0,
+          'certifications.backPicture': 0
+        }
       });
 
-      // 處理返回結果
-      let workers: WorkerWithFlag[] = [];
-      let pagination: any = null;
+      // 現在 result 總是 PaginatedResult<T> 格式
+      let workers = result.data as WorkerWithFlag[];
+      const pagination = result.pagination;
 
-      if (result && typeof result === 'object' && 'data' in result && 'pagination' in result) {
-        // 新的分頁格式
-        workers = result.data as WorkerWithFlag[];
-        pagination = result.pagination;
-      } else {
-        // 舊格式，直接是陣列
-        workers = Array.isArray(result) ? result as WorkerWithFlag[] : [];
-      }
-
-      // 更新分頁資訊
-      if (pagination) {
-        this.totalRecords = pagination.count;
-        this.totalPages = Math.ceil(this.totalRecords / this.pageSize);
-      }
+      // 更新分頁資訊（基於實際載入的資料）
+      this.totalRecords = pagination.count;
+      this.totalPages = Math.ceil(this.totalRecords / this.pageSize);
+      console.log('資料載入完成:', { 
+        count: this.totalRecords, 
+        totalPages: this.totalPages, 
+        currentPage: this.currentPage,
+        actualDataSize: workers.length 
+      });
 
       // 處理空資料的情況
       if (workers.length === 0 && this.currentPage === 1) {
@@ -1051,13 +1040,31 @@ export class WorkerListComponent implements OnDestroy {
 
       // 更新表格資料
       this.filteredWorkers = [...this.workers];
+      
       if (this.api) {
+        // 設定 AG-Grid 的資料
         this.api.setGridOption('rowData', this.filteredWorkers);
-        // 更新分頁資訊（避免觸發 onPaginationChanged 事件）
-        const agGridCurrentPage = this.currentPage - 1; // 轉換為 0-indexed
-        if (this.api.paginationGetCurrentPage() !== agGridCurrentPage) {
-          this.api.paginationGoToPage(agGridCurrentPage);
-        }
+        
+        // 啟用 AG-Grid 的客戶端分頁（所有資料都在客戶端）
+        this.api.setGridOption('pagination', true);
+        console.log('啟用 AG-Grid 客戶端分頁:', { 
+          totalRecords: this.totalRecords, 
+          totalPages: this.totalPages,
+          actualDataSize: this.filteredWorkers.length 
+        });
+        
+        // 設定分頁大小
+        this.api.setGridOption('paginationPageSize', this.pageSize);
+        
+        // 重置到第一頁
+        this.api.paginationGoToPage(0);
+        
+        console.log('AG-Grid 客戶端分頁設定完成:', {
+          pageSize: this.pageSize,
+          totalRecords: this.totalRecords,
+          totalPages: this.totalPages,
+          rowCount: this.filteredWorkers.length
+        });
       }
     } catch (error) {
       console.error('載入工人資料時發生錯誤:', error);
@@ -1218,18 +1225,27 @@ export class WorkerListComponent implements OnDestroy {
 
   onGridReady(params: GridReadyEvent) {
     this.api = params.api;
+    console.log('AG-Grid 初始化完成');
+    
+    // 設定初始分頁狀態
+    if (this.totalPages > 1) {
+      this.api.setGridOption('pagination', true);
+      console.log('初始化時啟用分頁，總頁數:', this.totalPages);
+    }
+    
     if (this.filteredWorkers && this.filteredWorkers.length > 0) {
       this.api.setGridOption('rowData', this.filteredWorkers);
+      console.log('設定初始資料，行數:', this.filteredWorkers.length);
     }
   }
 
   // 初始化過濾器選項
   async initializeFilterOptions() {
     try {
-      // 獲取所有承攬公司（不分頁）
+      // 獲取所有承攬公司（不分頁，使用 projection 優化）
       const companiesResult = await this.mongodbService.getArray('worker', {}, {
         projection: { contractingCompanyName: 1 },
-        limit: 10000 // 設定一個很大的數值來獲取所有資料
+        limit: 0 // 0 表示載入所有資料
       });
 
       let allWorkers: any[] = [];
@@ -1248,10 +1264,10 @@ export class WorkerListComponent implements OnDestroy {
       });
       this.contractingCompanies = Array.from(companies).sort();
 
-      // 獲取所有證照類型（不分頁）
+      // 獲取所有證照類型（不分頁，使用 projection 優化）
       const certsResult = await this.mongodbService.getArray('worker', {}, {
         projection: { 'certifications.type': 1 },
-        limit: 10000 // 設定一個很大的數值來獲取所有資料
+        limit: 0 // 0 表示載入所有資料
       });
 
       let allWorkersWithCerts: any[] = [];
@@ -1283,19 +1299,31 @@ export class WorkerListComponent implements OnDestroy {
 
   // 應用過濾器（重新載入第一頁資料）
   applyFilters() {
+    console.log('應用過濾器，重置分頁到第一頁');
     // 重置到第一頁
     this.currentPage = 1;
     // 重新載入資料
     this.loadWorkersData();
+    
+    // 同步 AG-Grid 分頁狀態
+    if (this.api) {
+      this.api.paginationGoToPage(0); // 轉換為 0-indexed
+    }
   }
 
   // 清除所有過濾器
   clearFilters() {
+    console.log('清除所有過濾器，重置分頁到第一頁');
     this.selectedContractingCompany = '';
     this.selectedCertificationTypes = [];
     // 重置到第一頁並重新載入資料
     this.currentPage = 1;
     this.loadWorkersData();
+    
+    // 同步 AG-Grid 分頁狀態
+    if (this.api) {
+      this.api.paginationGoToPage(0); // 轉換為 0-indexed
+    }
   }
 
   // 承攬公司變更事件
@@ -1360,6 +1388,73 @@ export class WorkerListComponent implements OnDestroy {
   // 檢查是否有選中的工人
   hasSelectedWorkers(): boolean {
     return this.selectedWorkerIds.size > 0;
+  }
+
+  // 測試分頁功能
+  testPagination(): void {
+    console.log('=== 測試分頁功能 ===');
+    console.log('當前分頁狀態:', {
+      currentPage: this.currentPage,
+      pageSize: this.pageSize,
+      totalRecords: this.totalRecords,
+      totalPages: this.totalPages
+    });
+    
+    if (this.api) {
+      console.log('AG-Grid 分頁狀態:', {
+        currentPage: this.api.paginationGetCurrentPage(),
+        pageSize: this.api.paginationGetPageSize(),
+        totalPages: this.api.paginationGetTotalPages()
+      });
+      
+      // 強制刷新分頁控制項
+      if (this.api) {
+        this.api.setGridOption('pagination', false);
+        setTimeout(() => {
+          if (this.api) {
+            this.api.setGridOption('pagination', true);
+            console.log('分頁控制項已強制刷新');
+          }
+        }, 100);
+      }
+      
+      // 嘗試切換到第二頁
+      if (this.totalPages > 1) {
+        console.log('嘗試切換到第二頁');
+        this.currentPage = 2;
+        this.loadWorkersData();
+      } else {
+        console.log('沒有多頁資料，無法測試分頁');
+      }
+    } else {
+      console.log('AG-Grid API 未初始化');
+    }
+  }
+
+  // 手動切換到指定頁面
+  goToPage(page: number): void {
+    console.log('嘗試切換到第', page, '頁，當前狀態:', {
+      currentPage: this.currentPage,
+      totalPages: this.totalPages,
+      pageSize: this.pageSize,
+      totalRecords: this.totalRecords
+    });
+    
+    if (page < 1 || page > this.totalPages) {
+      console.log('無效的頁碼:', page, '，有效範圍: 1 -', this.totalPages);
+      return;
+    }
+    
+    console.log('手動切換到第', page, '頁');
+    this.currentPage = page;
+    this.loadWorkersData();
+    
+    // 同步 AG-Grid 分頁狀態
+    if (this.api) {
+      const agGridPage = page - 1; // 轉換為 0-indexed
+      this.api.paginationGoToPage(agGridPage);
+      console.log('AG-Grid 分頁已同步到:', agGridPage);
+    }
   }
 
   // 清除所有選中狀態
@@ -2704,7 +2799,14 @@ export class WorkerListComponent implements OnDestroy {
       this.processStatus = '正在檢查現有資料...';
       this.processProgress = 5;
       const existingWorkersResult = await this.mongodbService.getArray('worker', {}, {
-        limit: 10000 // 設定一個很大的數值來獲取所有資料
+        limit: 0, // 0 表示載入所有資料
+        projection: {
+          // 只載入必要的欄位，排除圖片以減少傳輸
+          _id: 1,
+          idno: 1,
+          contractingCompanyName: 1,
+          name: 1
+        }
       });
 
       // 處理返回結果

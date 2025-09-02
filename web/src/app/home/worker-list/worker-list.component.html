@@ -1,7 +1,7 @@
 <div class="d-flex flex-column w-100 h-100">
   <!-- 頂部按鈕列 -->
   <div class="d-flex justify-content-between m-2">
-    <div>
+    <div class="d-flex align-items-center gap-3">
       <!-- 
       一個說明的icon滑鼠移過去會跳出說明文字,
       同一個員工可以任職于不同的承攬公司。所以不同承攬公司的員工會顯示在不同的行。
@@ -54,8 +54,9 @@
         </button>
         }
 
-        <div class="text-muted small">
-          顯示 {{filteredWorkers.length}} / {{workers.length}} 筆
+        <div class="text-muted small" title="伺服器端分頁：只載入當前頁資料">
+          <i class="fas fa-database me-1"></i>
+          當前頁: {{filteredWorkers.length}} 筆 | 總計: {{totalRecords}} 筆
         </div>
       </div>
     </div>

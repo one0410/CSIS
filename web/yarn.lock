@@ -1729,25 +1729,25 @@ adler-32@~1.3.0:
   resolved "https://registry.yarnpkg.com/adler-32/-/adler-32-1.3.1.tgz#1dbf0b36dda0012189a32b3679061932df1821e2"
   integrity sha512-ynZ4w/nUUv5rrsR8UUGoe1VC9hZj6V5hU9Qw1HlMDJGEJw5S7TfTErWTjMys6M7vr0YWcPqs3qAr4ss0nDfP+A==
 
-ag-charts-types@11.3.2:
-  version "11.3.2"
-  resolved "https://registry.yarnpkg.com/ag-charts-types/-/ag-charts-types-11.3.2.tgz#b1b4e2d273911cdd6d78ce7b4a6c561fa22796bf"
-  integrity sha512-trPGqgGYiTeLgtf9nLuztDYOPOFOLbqHn1g2D99phf7QowcwdX0TPx0wfWG8Hm90LjB8IH+G2s3AZe2vrdAtMQ==
+ag-charts-types@12.1.2:
+  version "12.1.2"
+  resolved "https://registry.yarnpkg.com/ag-charts-types/-/ag-charts-types-12.1.2.tgz#a94d8c042792d2472998c3e783f674b37327b366"
+  integrity sha512-B5IEMzaDxpJRko9sREIBEZOn44tlMX353tMJ1RGYHZrjDFx4on/p6q3YxBvway3nViAM2POmFOS45+1fF9YC8g==
 
-ag-grid-angular@^33.3.2:
-  version "33.3.2"
-  resolved "https://registry.yarnpkg.com/ag-grid-angular/-/ag-grid-angular-33.3.2.tgz#9c648c7e72c49c00d8d602879b6133921f5f47b8"
-  integrity sha512-2IhpowEAW3zLK4hS2Lr8Hi0yJZdfmebYJb23iaBpl9rUSwy34Bz8qhdkT57Y3kwCRPECHqSOo/j7HWY2X2blgA==
+ag-grid-angular@^34.1.2:
+  version "34.1.2"
+  resolved "https://registry.yarnpkg.com/ag-grid-angular/-/ag-grid-angular-34.1.2.tgz#4922fe2f75948633629dc85952dbbcb3bf61ede9"
+  integrity sha512-40b/q2puFXLs4hWVX4f+/nFpGzjs4dk0C/KST2EBcH4WcXVyPJZ8xpuXEKXs0QXyKpjblO2gD0c9Sb3iBtiZvw==
   dependencies:
-    ag-grid-community "33.3.2"
+    ag-grid-community "34.1.2"
     tslib "^2.3.0"
 
-ag-grid-community@33.3.2, ag-grid-community@^33.3.2:
-  version "33.3.2"
-  resolved "https://registry.yarnpkg.com/ag-grid-community/-/ag-grid-community-33.3.2.tgz#bd3e41170958cb81da71a74a3021af66fc6ebdc1"
-  integrity sha512-9bx0e/+ykOyLvUxHqmdy0cRVANH6JAtv0yZdnBZEXYYqBAwN+G5a4NY+2I1KvoOCYzbk8SnStG7y4hCdVAAWOQ==
+ag-grid-community@34.1.2, ag-grid-community@^34.1.2:
+  version "34.1.2"
+  resolved "https://registry.yarnpkg.com/ag-grid-community/-/ag-grid-community-34.1.2.tgz#4ff755f5840b3e110fa4a6184bdb9eb4d826e93c"
+  integrity sha512-PN79zG/tigZaVKkQZXaithLO3j4JWp+9CjqEFth6kFUwMJ0E6OcNzNtn4NFEKM38fEdpGsr+k+gFk5KUE2h5fA==
   dependencies:
-    ag-charts-types "11.3.2"
+    ag-charts-types "12.1.2"
 
 agent-base@^7.1.0, agent-base@^7.1.2:
   version "7.1.3"
