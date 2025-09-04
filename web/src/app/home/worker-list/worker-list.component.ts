@@ -1002,20 +1002,18 @@ export class WorkerListComponent implements OnDestroy {
         actualDataSize: workers.length 
       });
 
-      // 處理空資料的情況 - 只有在查詢成功且確實沒有資料時才生成測試資料
+      // 處理空資料的情況 - 只有在查詢成功且完全沒有任何資料時才生成測試資料
       if (workers && workers.length === 0 && this.currentPage === 1 && this.totalRecords === 0) {
         console.log('查詢成功但沒有找到任何人員資料，檢查是否需要生成測試資料...');
         
         try {
-          // 檢查是否已經存在測試資料（Worker 1 到 Worker 10）
-          const existingTestWorkers = await this.mongodbService.getArray<Worker>('worker', {
-            name: { $regex: /^Worker [1-9]|^Worker 10$/ }
-          });
+          // 再次確認資料庫中完全沒有任何人員資料
+          const allWorkers = await this.mongodbService.getArray<Worker>('worker', {});
           
-          // 如果沒有測試資料，才生成新的測試資料
-          if (existingTestWorkers.length === 0) {
-            console.log('沒有找到測試資料，開始生成 10 筆測試人員資料...');
-            workers = Array.from({ length: 10 }, (_, index) =>
+          // 只有當資料庫中完全沒有任何人員資料時，才生成測試資料
+          if (allWorkers.length === 0) {
+            console.log('確認資料庫中完全沒有任何人員資料，開始生成 5 筆測試人員資料...');
+            workers = Array.from({ length: 5 }, (_, index) =>
               this.generateRandomWorker(index)
             );
 
@@ -1027,7 +1025,7 @@ export class WorkerListComponent implements OnDestroy {
             }
             console.log('測試人員資料生成完成');
           } else {
-            console.log(`已存在 ${existingTestWorkers.length} 筆測試資料，跳過生成`);
+            console.log(`資料庫中已存在 ${allWorkers.length} 筆人員資料，跳過生成測試資料`);
           }
         } catch (testDataError) {
           console.error('檢查或生成測試資料時發生錯誤:', testDataError);
