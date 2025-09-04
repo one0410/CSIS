@@ -1002,18 +1002,36 @@ export class WorkerListComponent implements OnDestroy {
         actualDataSize: workers.length 
       });
 
-      // 處理空資料的情況
-      if (workers.length === 0 && this.currentPage === 1) {
-        // 如果是第一頁且沒有資料，生成測試資料
-        workers = Array.from({ length: 10 }, (_, index) =>
-          this.generateRandomWorker(index)
-        );
+      // 處理空資料的情況 - 只有在查詢成功且確實沒有資料時才生成測試資料
+      if (workers && workers.length === 0 && this.currentPage === 1 && this.totalRecords === 0) {
+        console.log('查詢成功但沒有找到任何人員資料，檢查是否需要生成測試資料...');
+        
+        try {
+          // 檢查是否已經存在測試資料（Worker 1 到 Worker 10）
+          const existingTestWorkers = await this.mongodbService.getArray<Worker>('worker', {
+            name: { $regex: /^Worker [1-9]|^Worker 10$/ }
+          });
+          
+          // 如果沒有測試資料，才生成新的測試資料
+          if (existingTestWorkers.length === 0) {
+            console.log('沒有找到測試資料，開始生成 10 筆測試人員資料...');
+            workers = Array.from({ length: 10 }, (_, index) =>
+              this.generateRandomWorker(index)
+            );
 
-        for (const worker of workers) {
-          let result = await this.mongodbService.post('worker', worker);
-          if (result.insertedId) {
-            worker._id = result.insertedId;
+            for (const worker of workers) {
+              let result = await this.mongodbService.post('worker', worker);
+              if (result.insertedId) {
+                worker._id = result.insertedId;
+              }
+            }
+            console.log('測試人員資料生成完成');
+          } else {
+            console.log(`已存在 ${existingTestWorkers.length} 筆測試資料，跳過生成`);
           }
+        } catch (testDataError) {
+          console.error('檢查或生成測試資料時發生錯誤:', testDataError);
+          // 如果檢查測試資料失敗，不要生成新的測試資料
         }
       }
 
@@ -1068,6 +1086,16 @@ export class WorkerListComponent implements OnDestroy {
       }
     } catch (error) {
       console.error('載入工人資料時發生錯誤:', error);
+      // 查詢失敗時，設定空陣列避免後續處理錯誤
+      this.workers = [];
+      this.filteredWorkers = [];
+      this.totalRecords = 0;
+      this.totalPages = 0;
+      
+      // 更新表格資料
+      if (this.api) {
+        this.api.setGridOption('rowData', []);
+      }
     } finally {
       this.isLoading = false;
     }
