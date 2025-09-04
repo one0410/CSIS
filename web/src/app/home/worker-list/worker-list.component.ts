@@ -1443,12 +1443,14 @@ export class WorkerListComponent implements OnDestroy {
     this.filteredContractingCompanies = [...this.contractingCompaniesWithCount];
   }
 
-  // 遷移意外險資料：將舊的 picture 欄位移到 pictures 陣列
+  // 遷移意外險資料：將舊的 picture 欄位移到 pictures 陣列，並修正錯誤的資料分配
   private migrateAccidentInsuranceData(workers: WorkerWithFlag[]): WorkerWithFlag[] {
     let migrationCount = 0;
+    let correctionCount = 0;
     
     for (const worker of workers) {
       if (worker.accidentInsurances && worker.accidentInsurances.length > 0) {
+        // 先處理基本的 picture 到 pictures 遷移
         for (const accidentInsurance of worker.accidentInsurances) {
           // 檢查是否有舊的 picture 欄位且沒有 pictures 陣列
           if ((accidentInsurance as any).picture && !accidentInsurance.pictures) {
@@ -1460,11 +1462,59 @@ export class WorkerListComponent implements OnDestroy {
             console.log(`遷移工人 ${worker.name} 的意外險圖片資料`);
           }
         }
+        
+        // 修正錯誤的資料分配：如果第二筆或之後的保險沒有開始/結束日期但有圖片，應該移到第一筆
+        if (worker.accidentInsurances.length > 1) {
+          const firstInsurance = worker.accidentInsurances[0];
+          
+          for (let i = 1; i < worker.accidentInsurances.length; i++) {
+            const currentInsurance = worker.accidentInsurances[i];
+            
+            // 檢查是否沒有開始/結束日期但有圖片（表示是錯誤分配的資料）
+            const hasNoDates = (!currentInsurance.start || currentInsurance.start.trim() === '') && 
+                              (!currentInsurance.end || currentInsurance.end.trim() === '');
+            const hasPictures = (currentInsurance.pictures && currentInsurance.pictures.length > 0) || 
+                               (currentInsurance as any).picture;
+            
+            if (hasNoDates && hasPictures) {
+              // 將圖片移到第一筆保險
+              if (!firstInsurance.pictures) {
+                firstInsurance.pictures = [];
+              }
+              
+              // 移動 pictures 陣列中的圖片
+              if (currentInsurance.pictures && currentInsurance.pictures.length > 0) {
+                firstInsurance.pictures.push(...currentInsurance.pictures);
+                currentInsurance.pictures = [];
+              }
+              
+              // 移動單一 picture 欄位的圖片
+              if ((currentInsurance as any).picture) {
+                if (!firstInsurance.pictures.includes((currentInsurance as any).picture)) {
+                  firstInsurance.pictures.push((currentInsurance as any).picture);
+                }
+                (currentInsurance as any).picture = '';
+              }
+              
+              // 如果第一筆保險沒有 picture 欄位，設定為第一張圖片
+              if (!(firstInsurance as any).picture && firstInsurance.pictures.length > 0) {
+                (firstInsurance as any).picture = firstInsurance.pictures[0];
+              }
+              
+              correctionCount++;
+              console.log(`修正工人 ${worker.name} 的意外險資料分配：將第 ${i + 1} 筆的圖片移到第 1 筆`);
+            }
+          }
+        }
       }
     }
     
     if (migrationCount > 0) {
       console.log(`總共遷移了 ${migrationCount} 筆意外險圖片資料`);
+    }
+    
+    if (correctionCount > 0) {
+      console.log(`總共修正了 ${correctionCount} 筆錯誤的意外險資料分配`);
     }
     
     return workers;
