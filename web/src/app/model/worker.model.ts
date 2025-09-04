@@ -230,7 +230,8 @@ export interface Worker {
     amount: string; // 保額(萬元)
     signDate: string; // 簽約日期 yyyy-mm-dd
     companyName: string; // 保險公司
-    picture?: string; // 意外險證明圖片 (GridFS URL)
+    picture?: string; // 意外險證明圖片 (GridFS URL) - 舊格式，向後相容
+    pictures?: string[]; // 意外險證明圖片陣列 (GridFS URL) - 新格式
   }[];
   // 承攬公司
   contractingCompanyName: string;

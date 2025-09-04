@@ -698,16 +698,32 @@
   </div>
 
   <!-- 按鈕區域 -->
-  <div class="d-flex gap-2 justify-content-end mb-4">
-    <button type="button" class="btn btn-outline-secondary" (click)="navigateToList()"
-      aria-label="返回列表">
-      <i class="fas fa-arrow-left me-2"></i>返回
-    </button>
-    <button type="submit" class="btn btn-primary" [disabled]="!workerForm.form.valid || isSaving"
-      aria-label="儲存資料">
-      <i class="fas fa-save me-2"></i>
-      {{ isSaving ? '儲存中...' : '儲存' }}
-    </button>
+  <div class="d-flex gap-2 justify-content-between mb-4">
+    <!-- 左側：刪除按鈕（僅管理員可見） -->
+    <div>
+      @if (isAdmin() && workerId) {
+        <button type="button" class="btn btn-outline-danger" 
+          (click)="deleteWorker()" 
+          [disabled]="isDeleting"
+          aria-label="刪除工作人員">
+          <i class="fas fa-trash me-2"></i>
+          {{ isDeleting ? '刪除中...' : '刪除' }}
+        </button>
+      }
+    </div>
+    
+    <!-- 右側：返回和儲存按鈕 -->
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-outline-secondary" (click)="navigateToList()"
+        aria-label="返回列表">
+        <i class="fas fa-arrow-left me-2"></i>返回
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="!workerForm.form.valid || isSaving"
+        aria-label="儲存資料">
+        <i class="fas fa-save me-2"></i>
+        {{ isSaving ? '儲存中...' : '儲存' }}
+      </button>
+    </div>
   </div>
 </form>
 

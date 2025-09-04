@@ -1,12 +1,14 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs';
 import { MongodbService } from '../../../services/mongodb.service';
 import { GridFSService } from '../../../services/gridfs.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { Worker, CertificationType, CertificationTypeManager } from '../../../model/worker.model';
 import { CurrentSiteService } from '../../../services/current-site.service';
+import { AuthService } from '../../../services/auth.service';
 
 
 @Component({
@@ -55,14 +57,23 @@ export class WorkerDetailComponent implements OnInit {
   workerId: string | null = null;
   isSaving = false;
   showSaveSuccess = false;
+  isDeleting = false;
 
   private currentSiteService = inject(CurrentSiteService);
+  private authService = inject(AuthService);
+
+  // 檢查當前使用者是否為管理員
+  isAdmin = computed(() => {
+    const user = this.authService.user();
+    return user?.role === 'admin';
+  });
 
   constructor(
     private mongodbService: MongodbService,
     private gridFSService: GridFSService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private location: Location
   ) {}
 
   async ngOnInit() {
@@ -77,6 +88,10 @@ export class WorkerDetailComponent implements OnInit {
         const workerData = await this.mongodbService.getById('worker', this.workerId);
         if (workerData) {
           this.worker = workerData;
+          
+          // 處理舊資料遷移：將 picture 欄位移到 pictures 陣列
+          this.migrateAccidentInsuranceData();
+          
           if (this.worker.birthday) {
             this.calculateAge();
           }
@@ -95,6 +110,22 @@ export class WorkerDetailComponent implements OnInit {
     }
   }
 
+  // 遷移意外險資料：將舊的 picture 欄位移到 pictures 陣列
+  private migrateAccidentInsuranceData() {
+    if (this.worker.accidentInsurances && this.worker.accidentInsurances.length > 0) {
+      for (const accidentInsurance of this.worker.accidentInsurances) {
+        // 檢查是否有舊的 picture 欄位且沒有 pictures 陣列
+        if ((accidentInsurance as any).picture && !accidentInsurance.pictures) {
+          // 將 picture 內容移到 pictures 陣列
+          accidentInsurance.pictures = [(accidentInsurance as any).picture];
+          // 保留 picture 欄位以確保向後相容，但標記為已遷移
+          (accidentInsurance as any)._migrated = true;
+          console.log(`遷移工人 ${this.worker.name} 的意外險圖片資料`);
+        }
+      }
+    }
+  }
+
   addAccidentInsurance() {
     if (!this.worker.accidentInsurances) {
       this.worker.accidentInsurances = [];
@@ -104,7 +135,8 @@ export class WorkerDetailComponent implements OnInit {
       end: '',
       amount: '',
       signDate: '',
-      companyName: ''
+      companyName: '',
+      pictures: [] // 初始化圖片陣列
     });
   }
 
@@ -503,7 +535,7 @@ export class WorkerDetailComponent implements OnInit {
           this.showSaveSuccess = true;
           
           setTimeout(() => {
-            this.router.navigate(['/admin/worker']);
+            this.location.back();
           }, 2000);
           
         } catch (error) {
@@ -534,7 +566,8 @@ export class WorkerDetailComponent implements OnInit {
   }
 
   navigateToList() {
-    this.router.navigate(['/admin/worker']);
+    // 使用瀏覽器歷史記錄返回，這樣可以保持之前的篩選條件
+    this.location.back();
   }
 
   // 取得證照類型選項
@@ -587,5 +620,36 @@ export class WorkerDetailComponent implements OnInit {
   // 根據證照類型代碼獲取中文名稱
   getCertificationTypeName(typeCode: CertificationType): string {
     return CertificationTypeManager.getFullLabel(typeCode);
+  }
+
+  // 刪除工作人員
+  async deleteWorker() {
+    if (!this.workerId) {
+      alert('無法刪除：找不到工作人員 ID');
+      return;
+    }
+
+    // 確認刪除
+    const confirmMessage = `確定要刪除工作人員「${this.worker.name}」的資料嗎？\n\n此操作無法復原！`;
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    this.isDeleting = true;
+
+    try {
+      // 刪除資料庫中的記錄
+      await this.mongodbService.delete('worker', this.workerId);
+      
+      alert('工作人員資料已成功刪除！');
+      
+      // 返回列表頁面
+      this.location.back();
+    } catch (error) {
+      console.error('刪除工作人員時發生錯誤:', error);
+      alert('刪除失敗，請稍後再試或聯繫系統管理員。');
+    } finally {
+      this.isDeleting = false;
+    }
   }
 }

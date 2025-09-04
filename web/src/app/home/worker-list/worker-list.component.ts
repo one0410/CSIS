@@ -7,7 +7,7 @@ import {
   WritableSignal,
   signal,
 } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
   ColDef,
   GridApi,
@@ -58,6 +58,9 @@ export class WorkerListComponent implements OnDestroy {
   selectedContractingCompany = ''; // 選中的承攬公司
   selectedCertificationTypes: string[] = []; // 選中的證照類型（多選）
   contractingCompanies: string[] = []; // 所有承攬公司清單
+  contractingCompaniesWithCount: { name: string; count: number }[] = []; // 承攬公司清單含人數統計
+  filteredContractingCompanies: { name: string; count: number }[] = []; // 過濾後的承攬公司清單
+  companySearchText = ''; // 承攬公司搜尋文字
   certificationTypes: { value: string; label: string }[] = []; // 所有證照類型清單
   isFilterExpanded = false; // 過濾器展開狀態
 
@@ -947,6 +950,7 @@ export class WorkerListComponent implements OnDestroy {
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private mongodbService: MongodbService,
     private gridFSService: GridFSService
   ) { }
@@ -957,7 +961,48 @@ export class WorkerListComponent implements OnDestroy {
   }
 
   async ngOnInit() {
+    // 從 URL 參數讀取篩選條件
+    this.loadFiltersFromUrl();
     await this.loadWorkersData();
+  }
+
+  // 從 URL 參數讀取篩選條件
+  private loadFiltersFromUrl() {
+    this.route.queryParams.subscribe(params => {
+      // 讀取承攬公司篩選條件
+      if (params['company']) {
+        this.selectedContractingCompany = params['company'];
+      }
+
+      // 讀取證照類型篩選條件
+      if (params['cert']) {
+        // 支援多個證照類型，用逗號分隔
+        this.selectedCertificationTypes = params['cert'].split(',').filter((cert: string) => cert.trim());
+      }
+    });
+  }
+
+  // 將篩選條件同步到 URL 參數
+  private updateUrlWithFilters() {
+    const queryParams: any = {};
+
+    // 承攬公司篩選條件
+    if (this.selectedContractingCompany) {
+      queryParams['company'] = this.selectedContractingCompany;
+    }
+
+    // 證照類型篩選條件
+    if (this.selectedCertificationTypes.length > 0) {
+      queryParams['cert'] = this.selectedCertificationTypes.join(',');
+    }
+
+    // 更新 URL，但不觸發導航
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: queryParams,
+      queryParamsHandling: 'merge',
+      replaceUrl: true // 使用 replaceUrl 避免在瀏覽器歷史中產生多個記錄
+    });
   }
 
   // 載入工人資料（一次載入所有資料，優化傳輸）
@@ -991,6 +1036,9 @@ export class WorkerListComponent implements OnDestroy {
       // 現在 result 總是 PaginatedResult<T> 格式
       let workers = result.data as WorkerWithFlag[];
       const pagination = result.pagination;
+
+      // 處理舊資料遷移：將 picture 欄位移到 pictures 陣列
+      workers = this.migrateAccidentInsuranceData(workers);
 
       // 更新分頁資訊（基於實際載入的資料）
       this.totalRecords = pagination.count;
@@ -1281,14 +1329,25 @@ export class WorkerListComponent implements OnDestroy {
         allWorkers = Array.isArray(companiesResult) ? companiesResult : [];
       }
 
-      // 收集所有承攬公司
-      const companies = new Set<string>();
+      // 收集所有承攬公司並統計人數
+      const companyCountMap = new Map<string, number>();
       allWorkers.forEach(worker => {
         if (worker.contractingCompanyName) {
-          companies.add(worker.contractingCompanyName);
+          const count = companyCountMap.get(worker.contractingCompanyName) || 0;
+          companyCountMap.set(worker.contractingCompanyName, count + 1);
         }
       });
-      this.contractingCompanies = Array.from(companies).sort();
+      
+      // 轉換為陣列並排序
+      this.contractingCompaniesWithCount = Array.from(companyCountMap.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      
+      // 保持原有的字串陣列格式以相容現有程式碼
+      this.contractingCompanies = this.contractingCompaniesWithCount.map(item => item.name);
+      
+      // 初始化過濾後的清單
+      this.filteredContractingCompanies = [...this.contractingCompaniesWithCount];
 
       // 獲取所有證照類型（不分頁，使用 projection 優化）
       const certsResult = await this.mongodbService.getArray('worker', {}, {
@@ -1342,6 +1401,12 @@ export class WorkerListComponent implements OnDestroy {
     console.log('清除所有過濾器，重置分頁到第一頁');
     this.selectedContractingCompany = '';
     this.selectedCertificationTypes = [];
+    // 清除 URL 參數
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {},
+      replaceUrl: true
+    });
     // 重置到第一頁並重新載入資料
     this.currentPage = 1;
     this.loadWorkersData();
@@ -1354,7 +1419,55 @@ export class WorkerListComponent implements OnDestroy {
 
   // 承攬公司變更事件
   onContractingCompanyChange() {
+    this.updateUrlWithFilters();
     this.applyFilters();
+  }
+
+  // 承攬公司搜尋處理
+  onCompanySearchChange() {
+    if (!this.companySearchText.trim()) {
+      // 如果搜尋文字為空，顯示所有公司
+      this.filteredContractingCompanies = [...this.contractingCompaniesWithCount];
+    } else {
+      // 根據搜尋文字過濾公司清單
+      const searchText = this.companySearchText.toLowerCase().trim();
+      this.filteredContractingCompanies = this.contractingCompaniesWithCount.filter(company =>
+        company.name.toLowerCase().includes(searchText)
+      );
+    }
+  }
+
+  // 清除承攬公司搜尋
+  clearCompanySearch() {
+    this.companySearchText = '';
+    this.filteredContractingCompanies = [...this.contractingCompaniesWithCount];
+  }
+
+  // 遷移意外險資料：將舊的 picture 欄位移到 pictures 陣列
+  private migrateAccidentInsuranceData(workers: WorkerWithFlag[]): WorkerWithFlag[] {
+    let migrationCount = 0;
+    
+    for (const worker of workers) {
+      if (worker.accidentInsurances && worker.accidentInsurances.length > 0) {
+        for (const accidentInsurance of worker.accidentInsurances) {
+          // 檢查是否有舊的 picture 欄位且沒有 pictures 陣列
+          if ((accidentInsurance as any).picture && !accidentInsurance.pictures) {
+            // 將 picture 內容移到 pictures 陣列
+            accidentInsurance.pictures = [(accidentInsurance as any).picture];
+            // 保留 picture 欄位以確保向後相容，但標記為已遷移
+            (accidentInsurance as any)._migrated = true;
+            migrationCount++;
+            console.log(`遷移工人 ${worker.name} 的意外險圖片資料`);
+          }
+        }
+      }
+    }
+    
+    if (migrationCount > 0) {
+      console.log(`總共遷移了 ${migrationCount} 筆意外險圖片資料`);
+    }
+    
+    return workers;
   }
 
   // 證照類型變更事件（checkbox）
@@ -1369,6 +1482,7 @@ export class WorkerListComponent implements OnDestroy {
         this.selectedCertificationTypes.splice(index, 1);
       }
     }
+    this.updateUrlWithFilters();
     this.applyFilters();
   }
 
@@ -2382,20 +2496,26 @@ export class WorkerListComponent implements OnDestroy {
           '您可以參考系統提供的範例檔案: assets/人員入場清單.xlsx'
         );
       } else if (validWorkers.length > 0) {
+        // 對匯入資料進行去重處理，以身份證號+承攬公司為唯一鍵
+        const uniqueWorkers = this.deduplicateWorkers(validWorkers);
+        const duplicateCount = validWorkers.length - uniqueWorkers.length;
+
         // 檢查 ZIP 中的圖片檔案數量（不載入，只計算）
         const imageStats = await this.analyzeImagesInZip(
-          validWorkers,
+          uniqueWorkers,
           zipContent
         );
 
         this.importResult = {
           success: true,
-          message: `成功解析 ${validWorkers.length} 筆人員資料${imageStats.totalImages > 0
+          message: `成功解析 ${validWorkers.length} 筆人員資料${duplicateCount > 0 ? `（移除 ${duplicateCount} 筆重複資料）` : ''}${imageStats.totalImages > 0
             ? `，發現 ${imageStats.totalImages} 張圖片`
             : ''
             }，可以進行匯入`,
           details: [
-            `總共 ${validWorkers.length} 筆資料`,
+            `總共 ${validWorkers.length} 筆資料${duplicateCount > 0 ? `，移除 ${duplicateCount} 筆重複資料` : ''}`,
+            `實際匯入 ${uniqueWorkers.length} 筆資料`,
+            ...(duplicateCount > 0 ? [`重複資料已自動移除（以身份證號+承攬公司為唯一識別）`] : []),
             ...(imageStats.totalImages > 0
               ? [
                 `發現 ${imageStats.totalImages} 張圖片檔案`,
@@ -2410,7 +2530,7 @@ export class WorkerListComponent implements OnDestroy {
         };
 
         // 儲存有效的工作人員資料，以便稍後匯入
-        this.validWorkersToImport = validWorkers;
+        this.validWorkersToImport = uniqueWorkers;
       } else {
         this.importResult = {
           success: false,
@@ -2427,6 +2547,23 @@ export class WorkerListComponent implements OnDestroy {
     } finally {
       this.isProcessing = false;
     }
+  }
+
+  // 對工作人員資料進行去重處理
+  deduplicateWorkers(workers: Worker[]): Worker[] {
+    const uniqueMap = new Map<string, Worker>();
+    
+    for (const worker of workers) {
+      if (worker.idno && worker.contractingCompanyName) {
+        // 使用身份證號+承攬公司作為唯一鍵
+        const key = `${worker.idno}_${worker.contractingCompanyName}`;
+        
+        // 如果已存在相同的鍵，保留最後一筆資料（或可以根據需求調整策略）
+        uniqueMap.set(key, worker);
+      }
+    }
+    
+    return Array.from(uniqueMap.values());
   }
 
   // 找出承攬公司欄位（根據實際Excel檔案格式調整）
@@ -2998,6 +3135,7 @@ export class WorkerListComponent implements OnDestroy {
       P: { field: 'profilePicture', name: '大頭照' },
       '6F': { field: 'sixHourTrainingFrontPicture', name: '6小時證明正面' },
       '6R': { field: 'sixHourTrainingBackPicture', name: '6小時證明反面' },
+      // 注意：G1、G2、G3 等意外險圖片現在由專門的意外險處理邏輯處理
     };
 
     // 建立證照類型對照表
@@ -3064,8 +3202,8 @@ export class WorkerListComponent implements OnDestroy {
           const upperCode = code.toUpperCase();
           if (upperCode === 'H' || /^H\d+$/.test(upperCode)) {
             isMedicalExamImage = true;
-          } else if (/^G\d+$/.test(upperCode)) {
-            // 檢查是否為意外險圖片代碼 (格式: G+數字)
+          } else if (/^G\d+/.test(upperCode)) {
+            // 檢查是否為意外險圖片代碼 (格式: G+數字，支援 G1、G1-1、G11 等)
             isAccidentInsuranceImage = true;
           } else if (upperCode.endsWith('F') || upperCode.endsWith('R')) {
             // 檢查是否為證照圖片代碼 (格式: {type}F 或 {type}R)
@@ -3213,7 +3351,23 @@ export class WorkerListComponent implements OnDestroy {
 
           } else if (isAccidentInsuranceImage) {
             // 處理意外險圖片
-            const accidentIndex = parseInt(code.substring(1)) - 1; // G1=索引0, G2=索引1, G3=索引2
+            // 解析意外險索引：G1/G1-1/G11 等都視為第一個意外險 (索引0)
+            // G2/G2-1/G22 等都視為第二個意外險 (索引1)
+            let accidentIndex = 0;
+            if (code.startsWith('G1')) {
+              accidentIndex = 0; // 第一個意外險
+            } else if (code.startsWith('G2')) {
+              accidentIndex = 1; // 第二個意外險
+            } else if (code.startsWith('G3')) {
+              accidentIndex = 2; // 第三個意外險
+            } else {
+              // 其他 G 開頭的，嘗試解析數字
+              const match = code.match(/^G(\d+)/);
+              if (match) {
+                accidentIndex = parseInt(match[1]) - 1;
+              }
+            }
+            
             const imageName = `意外險證明-${accidentIndex + 1}`;
 
             // 更新進度回調
@@ -3231,7 +3385,8 @@ export class WorkerListComponent implements OnDestroy {
                 end: '',
                 amount: '',
                 signDate: '',
-                companyName: ''
+                companyName: '',
+                pictures: [] // 初始化圖片陣列
               });
               console.log(`為工人 ${worker.name} 新增意外險資料 #${worker.accidentInsurances.length}`);
             }
@@ -3248,11 +3403,12 @@ export class WorkerListComponent implements OnDestroy {
               uploadSource: 'zipImport',
             };
 
-            // 查詢舊的意外險圖片
+            // 查詢舊的意外險圖片（基於相同的檔名）
             const oldFiles = await this.gridFSService.getFiles({
               metadata: {
                 workerId: worker._id,
                 imageType: 'accidentInsurance',
+                accidentInsuranceIndex: accidentIndex,
                 originalFileName: fileName,
               }
             });
@@ -3267,9 +3423,23 @@ export class WorkerListComponent implements OnDestroy {
             const result = await this.gridFSService.uploadFile(file, metadata);
             const imageUrl = `/api/gridfs/${result.filename}`;
 
-            // 將 GridFS URL 加入到意外險資料中（這裡需要擴展 accidentInsurances 結構來包含圖片欄位）
-            // 由於目前的 accidentInsurances 結構沒有圖片欄位，我們需要擴展它
-            (worker.accidentInsurances[accidentIndex] as any).picture = imageUrl;
+            // 將 GridFS URL 加入到意外險資料中
+            const accidentInsurance = worker.accidentInsurances[accidentIndex];
+            
+            // 初始化 pictures 陣列（如果不存在）
+            if (!accidentInsurance.pictures) {
+              accidentInsurance.pictures = [];
+            }
+            
+            // 檢查是否已存在相同的圖片 URL，避免重複添加
+            if (!accidentInsurance.pictures.includes(imageUrl)) {
+              accidentInsurance.pictures.push(imageUrl);
+            }
+            
+            // 向後相容：如果沒有 picture 欄位，將第一張圖片設為 picture
+            if (!(accidentInsurance as any).picture && accidentInsurance.pictures.length === 1) {
+              (accidentInsurance as any).picture = imageUrl;
+            }
 
             uploadedCount++;
             console.log(
@@ -3368,6 +3538,7 @@ export class WorkerListComponent implements OnDestroy {
       P: 'profilePicture', // 大頭照
       '6F': 'sixHourTrainingFrontPicture', // 6小時證明正面
       '6R': 'sixHourTrainingBackPicture', // 6小時證明反面
+      // 注意：G1、G2、G3 等意外險圖片現在由專門的意外險處理邏輯處理
     };
 
     try {
@@ -3423,7 +3594,7 @@ export class WorkerListComponent implements OnDestroy {
         const fieldName = imageCodeMap[code.toUpperCase()];
         const upperCode = code.toUpperCase();
         const isMedicalExamImage = upperCode === 'H' || /^H\d+$/.test(upperCode);
-        const isAccidentInsuranceImage = /^G\d+$/.test(upperCode);
+        const isAccidentInsuranceImage = /^G\d+/.test(upperCode);
 
         if (!fieldName && !isMedicalExamImage && !isAccidentInsuranceImage) {
           console.warn(`未知的圖片代碼：${code}，檔案：${fileName}`);
