@@ -70,8 +70,8 @@ export class EnvironmentCheckListComponent implements OnInit {
   // 施工前檢點項目
   preWorkCheckPoints: CheckPoint[] = [
     { code: 'AA01', description: '進入施工區域已正確配戴安全帽並扣上帽帶。', category: '一、施工前' },
-    { code: 'AA02', description: '穿著及膚之長袖及覆膝之上衣。', category: '一、施工前' },
-    { code: 'AA03', description: '人員無嚼食吃檳榔、追逐嬉鬧、賭博、打架等行為。', category: '一、施工前' },
+    { code: 'AA02', description: '穿著及膝之長褲及覆肩之上衣。', category: '一、施工前' },
+    { code: 'AA03', description: '人員無嚼食檳榔、追逐嬉戲、賭博、打架等行為。', category: '一、施工前' },
     { code: 'AA04', description: '人員未攜帶或飲用含酒精性飲料。', category: '一、施工前' },
     { code: 'AA05', description: '未攜帶管制物品(如：照相機、NOTEBOOK、磁片、打火機…等)。', category: '一、施工前' },
     { code: 'AA06', description: '施工人員無酒醉、吸毒或精神不能集中等異常現象。', category: '一、施工前' },
@@ -83,8 +83,8 @@ export class EnvironmentCheckListComponent implements OnInit {
     { code: 'AA12', description: '於指定地點抽煙。', category: '一、施工前' },
     { code: 'AA13', description: '車輛持有通行證、依規定停放、未阻礙通道。', category: '一、施工前' },
     { code: 'AA14', description: '行車未超過速限/未逆向行駛。', category: '一、施工前' },
-    { code: 'AA15', description: '未任意拆除或挪用機電設備、警告標誌、防護設備、消防設施(含消防管或滅火器移做他用)….等。', category: '一、施工前' },
-    { code: 'AA16', description: '已申請拆除安全設施(如：安全網、平台護欄….等) 。', category: '一、施工前' },
+    { code: 'AA15', description: '未任意拆除或挪用機電設備、警告標誌、防護設備、消防設施(含消防管或滅火器移做他用)…等。', category: '一、施工前' },
+    { code: 'AA16', description: '已申請拆除安全設施(如：安全網、平台護欄…等) 。', category: '一、施工前' },
     { code: 'AA17', description: '施工現場已無其他方式須直接踐踏機台、管路等，且已事先向管理單位申請許可。', category: '一、施工前' },
     { code: 'AA18', description: '轉動任一管路之閥類開關或電氣開關前已通知相關負責人員。', category: '一、施工前' },
     { code: 'AA20', description: '現場作業時正確配帶個人防護具。', category: '一、施工前' },

@@ -103,9 +103,9 @@ export class SpecialWorkChecklistComponent implements OnInit {
   // 定義收工前通用檢查項目，用於分配給各作業類型
   private commonPostWorkItems: CheckItem[] = [
     { code: 'AA19', description: '下班收工後已將電氣設備、氣體鋼瓶關閉。', type: 'postWork' },
-    { code: 'AA22', description: '已恢復安全設施(如：安全網、平台護欄…等)。', type: 'postWork' },
+    { code: 'AA22', description: '已復原安全設施(如：安全網、平台護欄….等) 。', type: 'postWork' },
     { code: 'AB01', description: '每日工程收工前，整理現場、收拾工具，使之恢復正常狀況。', type: 'postWork' },
-    { code: 'AB02', description: '每日工作後，將台動具降機、A字梯、施工架等歸回定位。', type: 'postWork' },
+    { code: 'AB02', description: '每日工作後，將自動昇降機、A字梯、施工架等歸回定位。', type: 'postWork' },
     { code: 'AB03', description: '每日工作後，將作業平台上工具及施工物件、材料等收拾完成。', type: 'postWork' },
     { code: 'AB04', description: '庫存區、預置區、堆放區之機具、材料已分類、標示，廢棄物當日清除。', type: 'postWork' },
     { code: 'AB05', description: '每日收工前將物料、工具置於暫存區並將當日垃圾清理乾淨。', type: 'postWork' },
@@ -120,11 +120,11 @@ export class SpecialWorkChecklistComponent implements OnInit {
       { code: 'BA01', description: '作業現場備有正確、足夠之滅火器，且有效期限未過期。', type: 'preWork' },
       { code: 'BA02', description: '作業現場易燃物已移除或加以防護。', type: 'preWork' },
       { code: 'BA03', description: '氣體鋼瓶集中時，保持豎立，或使用專用手推車搬運氣體鋼瓶。', type: 'preWork' },
-      { code: 'BA04', description: '氣體鋼瓶使用鐵鏈、非彈性繩索固定，或每日作業後裝安全護套。', type: 'preWork' },
+      { code: 'BA04', description: '氣體鋼瓶使用鐵鍊、非彈性繩索固定，或每日作業後裝妥護蓋。', type: 'preWork' },
       { code: 'BA05', description: '焊接機具裝設有效之自動電擊防止裝置及漏電斷路器。', type: 'preWork' },
       { code: 'BA06', description: '氧氣鋼瓶裝有合乎規格之專用減壓調節器及防爆逆止閥。', type: 'preWork' },
-      { code: 'BA07', description: '高溫動火有以耐燃材料阻隔、收集、抑制火星四散或墜落。', type: 'preWork' },
-      { code: 'BA08', description: '焊接時使用絕緣良好之安全手把，配戴安全眼鏡及遮光護罩。', type: 'preWork' },
+      { code: 'BA07', description: '高處動火有以耐燃材料阻隔、收集、抑制火星四散或掉落。', type: 'preWork' },
+      { code: 'BA08', description: '焊接時使用絕緣良好之安全手把、配戴盔帽及遮光玻璃。', type: 'preWork' },
       { code: 'BA09', description: '焊接地線已儘可能接近焊接點，電流迴路無經其它設備而導致跳電之虞。', type: 'preWork' },
       // 收工前項目 - 將通用項目加入
       ...this.commonPostWorkItems
@@ -146,7 +146,7 @@ export class SpecialWorkChecklistComponent implements OnInit {
       { code: 'BB11', description: '高空工作車事先應視作業場所之狀況、工作台高度、伸臂長度及作業場所地形等，規定適當之行駛速率，操作人員應依規定操作。', type: 'preWork' },
       { code: 'BB12', description: '在工作台以外之處所操作工作台時，操作人員與工作台上之人員間應規定統一指揮信號，並依信號從事指揮作業。', type: 'preWork' },
       { code: 'BB13', description: '除乘坐席位及工作台外不得搭載人員，且作業時禁止非相關人員進入操作半徑內，或附近有危險之虞之場所。', type: 'preWork' },
-      { code: 'BB14', description: '應將其外伸撐座完全伸出，並採取防止地盤沉陷或崩塌等必要措施', type: 'preWork' },
+      { code: 'BB14', description: '應將其外伸撐座完全伸出，並採取防止地盤沉陷或崩塌等必要措施。', type: 'preWork' },
       { code: 'BB15', description: '高空工作車禁止停放斜坡，除非已採有安全措施。', type: 'preWork' },
       { code: 'BB16', description: '使用高空工作車從事作業時，工作台上的人員應佩帶背負式安全帶，工作台出入口處應有確保防止人員墜落的安全設施。', type: 'preWork' },
       { code: 'BB17', description: '工作車移動時，應將工作台下降至最低位置；若不使用時應確實使用制動裝置保持高空工作車於穩定狀態。', type: 'preWork' },
@@ -159,7 +159,7 @@ export class SpecialWorkChecklistComponent implements OnInit {
       // 施工前項目
       { 
         code: 'BC01', 
-        description: '已對局限空間進行氧氣含量及有害物濃度測試合格後才進入作業。（O₂濃度18-21%）',
+        description: '已對局限空間進行氧氣含量及有害物濃度測試合格後才進入作業。(O2濃度18~21%)',
         type: 'preWork'
       },
       { 

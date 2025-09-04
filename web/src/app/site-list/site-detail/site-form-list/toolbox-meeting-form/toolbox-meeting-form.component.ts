@@ -519,7 +519,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
       },
       {
         id: 5,
-        content: '收工前/施工地點恢復安全、時水電氣設施及防護設備/排洩便房。',
+        content: '收工前，施工地點應整理妥當，將水電氣設施及防護設備/措施復原。',
         checkBeforeStart: false,
         checkDuring: false,
         checkBeforeEnd: false,

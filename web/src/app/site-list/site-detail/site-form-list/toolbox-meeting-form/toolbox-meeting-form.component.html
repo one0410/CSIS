@@ -9,7 +9,7 @@
         <!-- 說明文字 -->
         <div class="mb-3 p-2 bg-light border rounded">
           <p class="mb-0 small">
-            工具箱會議及巡工事前安全衛生講題進行各知識討論(如最近發生的事故、作業場所的特殊危害、設備的安全操作、新的工作程序及人員相關的作業安全)，並請簽名。
+            工具箱會議由監工單位監工於施工前針對當天工作內容及安全衛生議題進行告知或討論/協議(如最近發生的事故、作業場所的特殊危害、設備的安全操作、新的工作程序或與人員相關的作業安全)，並確實紀錄。
           </p>
         </div>
 
@@ -144,7 +144,7 @@
           <!-- 危害識別說明 -->
           <div class="mt-4 mb-2">
             <p class="mb-1 fw-bold">
-              *本日作業區域/如作業現場可能潛在危害(請逐一確認，有請「V」，無請「X」；無該危害)
+              *本日作業區域/施作過程可能潛在危害(請逐一確認，有請「V」，無請「X」；□ 無特殊危害)
             </p>
           </div>
 
@@ -338,7 +338,7 @@
             <div class="d-flex border-bottom border-dark">
               <div style="width: 15%"
                 class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2 bg-light">
-                <span class="fw-bold">作業區域或包含以下化學品及其附屬設備管線</span>
+                <span class="fw-bold">作業區域包含以下化學品及其附屬設備管線</span>
               </div>
               <div style="width: 85%" class="py-2 px-2">
                 <div class="d-flex align-items-center gap-3">
@@ -363,7 +363,7 @@
             <div class="d-flex">
               <div style="width: 15%"
                 class="d-flex align-items-center justify-content-center border-end border-dark py-2 px-2 bg-light">
-                <span class="fw-bold">作業區域或包含以下氣體及其附屬設備管線</span>
+                <span class="fw-bold">作業區域包含以下氣體及其附屬設備管線</span>
               </div>
               <div style="width: 85%" class="py-2 px-2">
                 <div class="d-flex align-items-center gap-3">
@@ -402,7 +402,7 @@
                   writing-mode: vertical-lr;
                   text-orientation: upright;
                 ">
-                  依作業性質穿戴之安全防護具及措施
+                  依作業性質自備防護具及措施
                 </td>
               </tr>
               <!-- 01. 頭部防護 -->
@@ -1047,7 +1047,7 @@
             </p>
             <ol class="ps-3">
               <li>
-                已了解今日作業環境及作業內容的危害並願意使用防護具及遵守各項防範措施。
+                已了解今日作業環境及作業內容的危害並願意全程使用防護具及遵守各項防範措施。
               </li>
               <li>
                 已了解健康危害告知內容，本人如有上述疾病時，不會從事該項作業。
@@ -1266,14 +1266,14 @@
                   <div class="py-2 px-2">
                     <div class="d-flex gap-3">
                       <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="noRemarks" name="noRemarks" title="無其他及緊急情形"
-                          aria-label="無其他及緊急情形" [(ngModel)]="meetingData.noRemarks" />
-                        <label class="form-check-label" for="noRemarks">NA (無其他及緊急情形)</label>
+                        <input class="form-check-input" type="checkbox" id="noRemarks" name="noRemarks" title="無異常及改善情形"
+                          aria-label="無異常及改善情形" [(ngModel)]="meetingData.noRemarks" />
+                        <label class="form-check-label" for="noRemarks">NA (無異常及改善情形)</label>
                       </div>
                       <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="hasRemarks" name="hasRemarks"
-                          title="異常及緊急情形說明" aria-label="異常及緊急情形說明" [(ngModel)]="meetingData.hasRemarks" />
-                        <label class="form-check-label" for="hasRemarks">異常及緊急情形說明</label>
+                          title="異常及改善情形說明" aria-label="異常及改善情形說明" [(ngModel)]="meetingData.hasRemarks" />
+                        <label class="form-check-label" for="hasRemarks">異常及改善情形說明</label>
                       </div>
                     </div>
                   </div>
@@ -1355,7 +1355,7 @@
 
           <!-- 備註說明 -->
           <div class="text-start mt-2 mb-3">
-            <small class="text-muted">※主承攬商監工人員施工前/中/收工前各項巡檢一次，監工單位(監工人)施工天至少巡檢一次。</small>
+            <small class="text-muted">※主承攬商監工人員施工前/中/收工前各須巡檢一次，監工單位監工每天至少巡檢一次。</small>
           </div>
 
           <!-- 表單編號 -->
