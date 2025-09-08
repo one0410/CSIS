@@ -17,7 +17,6 @@ interface ChecklistItem {
 interface SafetyPatrolChecklistData extends SiteForm {
   formType: 'safetyPatrolChecklist';
   checkType: string; // 檢查種類：工地管理、一般作業、特殊作業
-  inspectionDate: string;
   inspectionUnit: string;
   inspector: string;
   inspectee: string;
@@ -261,7 +260,6 @@ export class SafetyPatrolChecklistComponent implements OnInit {
     formType: 'safetyPatrolChecklist',
     checkType: '一般作業',
     applyDate: dayjs().format('YYYY-MM-DD'),
-    inspectionDate: dayjs().format('YYYY-MM-DD'),
     inspectionUnit: '',
     inspector: '',
     inspectee: '',
@@ -402,7 +400,6 @@ export class SafetyPatrolChecklistComponent implements OnInit {
               const dateFromUrl = queryParams['date'];
               if (dateFromUrl && dateFromUrl.match(/^\d{4}-\d{2}-\d{2}$/)) {
                 this.checklistData.applyDate = dateFromUrl;
-                this.checklistData.inspectionDate = dateFromUrl;
               }
             }
           });
@@ -458,7 +455,7 @@ export class SafetyPatrolChecklistComponent implements OnInit {
     if (!this.checklistData.checkType) {
       missingFields.push('檢查種類');
     }
-    if (!this.checklistData.inspectionDate) {
+    if (!this.checklistData.applyDate) {
       missingFields.push('巡檢日期');
     }
     if (!this.checklistData.projectNo) {
