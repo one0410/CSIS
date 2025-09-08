@@ -17,7 +17,6 @@ interface ChecklistItem {
 
 export interface EnvironmentChecklistData extends SiteForm {
   formType: 'environmentChecklist';
-  checkDate: string;
   location: string;
   projectNo: string;
   factoryArea: string;
@@ -131,7 +130,6 @@ export class EnvironmentCheckListComponent implements OnInit {
     applyDate: dayjs().format('YYYY-MM-DD'),
     createdAt: dayjs().format('YYYY-MM-DD'),
     createdBy: '',
-    checkDate: new Date().toISOString().slice(0, 10),
     location: '',
     projectNo: '',
     factoryArea: '',
@@ -178,7 +176,7 @@ export class EnvironmentCheckListComponent implements OnInit {
             const dateFromUrl = queryParams['date'];
             if (dateFromUrl && dateFromUrl.match(/^\d{4}-\d{2}-\d{2}$/)) {
               // 如果日期格式正確 (YYYY-MM-DD)，則設置為 applyDate
-              this.checklistData.checkDate = dateFromUrl;
+              this.checklistData.applyDate = dateFromUrl;
             }
           }
         });

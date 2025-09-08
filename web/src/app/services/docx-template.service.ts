@@ -642,16 +642,16 @@ export class DocxTemplateService {
    * 準備環安衛自主檢點表模板資料
    */
   private prepareEnvironmentChecklistData(formData: EnvironmentChecklistData, currentSite: any): any {
-    const checkDate = dayjs(formData.checkDate);
+    const applyDate = dayjs(formData.applyDate);
 
     return {
       // 基本資訊
       projectNo: formData.projectNo || currentSite.projectNo || '',
       factoryArea: formData.factoryArea || '',
-      checkDate: formData.checkDate || '',
-      checkDateYear: checkDate.year().toString(),
-      checkDateMonth: (checkDate.month() + 1).toString().padStart(2, '0'),
-      checkDateDay: checkDate.date().toString().padStart(2, '0'),
+      checkDate: formData.applyDate || '',
+      checkDateYear: applyDate.format('YYYY'),
+      checkDateMonth: applyDate.format('MM'),
+      checkDateDay: applyDate.format('DD'),
       location: formData.location || '',
       
       // 檢點項目結果
