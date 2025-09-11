@@ -315,6 +315,25 @@
                     <p>{{ selectedPhoto()?.date | date : "yyyy-MM-dd" }}</p>
                   </div>
 
+                  <!-- 機具管理照片的設備連結 -->
+                  @if (selectedPhoto() && isEquipmentPhoto(selectedPhoto()!)) {
+                    <div class="mb-3">
+                      <label class="form-label">相關設備</label>
+                      <div class="d-flex align-items-center">
+                        <span class="me-2">{{ selectedPhoto()?.metadata?.equipmentName || '未知設備' }}</span>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary"
+                          (click)="navigateToEquipment(selectedPhoto()!)"
+                          title="查看設備詳情"
+                        >
+                          <i class="fas fa-external-link-alt me-1"></i>
+                          查看設備
+                        </button>
+                      </div>
+                    </div>
+                  }
+
                   <div class="mb-3">
                     <label class="form-label">標籤</label>
                     

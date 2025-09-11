@@ -167,7 +167,7 @@ export class EnvironmentCheckListComponent implements OnInit {
         await this.currentSiteService.setCurrentSiteById(id);
         this.checklistData.siteId = id;
         this.checklistData.location = (this.site()?.county || '') + (this.site()?.town || '');
-        this.checklistData.projectNo = this.site()?.projectNo || '';
+        this.checklistData.projectNo = ''; // this.site()?.projectNo || '';
 
         // 檢查 URL 查詢參數中是否有日期
         this.route.queryParams.subscribe(queryParams => {

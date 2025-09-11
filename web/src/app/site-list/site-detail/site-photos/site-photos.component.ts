@@ -2,7 +2,7 @@ import { Component, Input, OnInit, computed, signal } from '@angular/core';
 import { PhotoService } from '../../../services/photo.service';
 import { CommonModule } from '@angular/common';
 import dayjs from 'dayjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Site } from '../../../site-list/site-list.component';
 import { MongodbService } from '../../../services/mongodb.service';
 import { CurrentSiteService } from '../../../services/current-site.service';
@@ -115,6 +115,7 @@ export class SitePhotosComponent implements OnInit {
 
   constructor(private photoService: PhotoService,
     private route: ActivatedRoute,
+    private router: Router,
     private mongodbService: MongodbService,
     private currentSiteService: CurrentSiteService,
     private gridfsService: GridFSService,
@@ -915,6 +916,19 @@ export class SitePhotosComponent implements OnInit {
       this.systemTags.some(systemTag => systemTag.title === tag.title)
     );
   }
+
+  // 檢查照片是否為機具管理照片且包含設備ID
+  isEquipmentPhoto(photo: Photo): boolean {
+    return (photo.metadata.tags?.some(tag => tag.title === '機具管理') ?? false) && 
+           !!photo.metadata.equipmentId;
+  }
+
+  // 導航到設備詳情頁面
+  navigateToEquipment(photo: Photo): void {
+    if (!photo.metadata.equipmentId) return;
+    
+    this.router.navigate(['/site', this.siteId, 'equipment', photo.metadata.equipmentId]);
+  }
 }
 
 export interface PhotoGroup {
@@ -932,6 +946,8 @@ export interface Photo {
     tags?: PhotoTag[];
     description?: string;
     location?: string; // 新增地點欄位
+    equipmentId?: string; // 機具管理照片的設備ID
+    equipmentName?: string; // 機具管理照片的設備名稱
   };
 }
 

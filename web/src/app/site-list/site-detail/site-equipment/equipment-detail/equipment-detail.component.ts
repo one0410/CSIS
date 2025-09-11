@@ -26,8 +26,9 @@ export class EquipmentDetailComponent implements OnInit {
 
   // 照片上傳相關
   isUploading = signal(false);
-  selectedFile: File | null = null;
+  selectedFiles: File[] = [];
   photoCaption = '';
+  uploadProgress = { current: 0, total: 0 };
 
   constructor(
     private route: ActivatedRoute,
@@ -163,17 +164,41 @@ export class EquipmentDetailComponent implements OnInit {
     }
   }
 
-  onFileSelected(event: Event) {
+  onFilesSelected(event: Event) {
     const element = event.target as HTMLInputElement;
     if (element.files && element.files.length > 0) {
-      this.selectedFile = element.files[0];
+      // 將新選擇的檔案添加到現有列表中
+      const newFiles = Array.from(element.files);
+      this.selectedFiles = [...this.selectedFiles, ...newFiles];
     }
   }
 
-  async uploadPhoto() {
-    if (!this.selectedFile || !this.equipmentId) return;
+  removeSelectedFile(index: number) {
+    this.selectedFiles.splice(index, 1);
+  }
+
+  clearSelectedFiles() {
+    this.selectedFiles = [];
+    // 重置檔案選擇器
+    const fileInput = document.getElementById('photo-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  async uploadPhotos() {
+    if (this.selectedFiles.length === 0 || !this.equipmentId) return;
 
     this.isUploading.set(true);
+    this.uploadProgress = { current: 0, total: this.selectedFiles.length };
 
     try {
       const currentSite = await this.currentSiteService.currentSite();
@@ -181,38 +206,59 @@ export class EquipmentDetailComponent implements OnInit {
         throw new Error('找不到工地資訊');
       }
 
-      // 使用 PhotoService 的新方法上傳帶有"機具管理"系統標籤的照片
-      const uploadResult = await new Promise<any>((resolve, reject) => {
-        this.photoService.uploadPhotoWithSystemTag(
-          this.selectedFile!,
-          '機具管理',
-          this.siteId!,
-          currentSite.projectNo
-        ).subscribe({
-          next: (result) => resolve(result),
-          error: (error) => reject(error)
-        });
-      });
-      
-      if (!uploadResult || !uploadResult.filename) {
-        throw new Error('上傳照片失敗');
-      }
-           
-      // 然後將照片資訊添加到設備的照片列表中
-      const newPhoto: EquipmentPhoto = {
-        siteId: this.siteId!,
-        equipmentId: this.equipmentId,
-        filename: uploadResult.filename,
-        caption: this.photoCaption,
-        uploadDate: new Date(),
-      };
-      
       const currentEquipment = this.equipment();
       if (!currentEquipment) return;
+
+      const newPhotos: EquipmentPhoto[] = [];
+      const uploadPromises: Promise<any>[] = [];
+
+      // 為每張照片建立上傳Promise
+      for (let i = 0; i < this.selectedFiles.length; i++) {
+        const file = this.selectedFiles[i];
+        const uploadPromise = new Promise<any>((resolve, reject) => {
+          this.photoService.uploadPhotoWithSystemTag(
+            file,
+            '機具管理',
+            this.siteId!,
+            currentSite.projectNo,
+            {
+              equipmentId: this.equipmentId, // 加入設備ID到metadata中
+              equipmentName: currentEquipment.name // 同時加入設備名稱以便識別
+            }
+          ).subscribe({
+            next: (result) => {
+              this.uploadProgress.current = i + 1;
+              resolve(result);
+            },
+            error: (error) => reject(error)
+          });
+        });
+        uploadPromises.push(uploadPromise);
+      }
+
+      // 等待所有照片上傳完成
+      const uploadResults = await Promise.all(uploadPromises);
       
+      // 檢查上傳結果並建立照片資訊
+      for (const uploadResult of uploadResults) {
+        if (!uploadResult || !uploadResult.filename) {
+          throw new Error('部分照片上傳失敗');
+        }
+        
+        const newPhoto: EquipmentPhoto = {
+          siteId: this.siteId!,
+          equipmentId: this.equipmentId,
+          filename: uploadResult.filename,
+          caption: this.photoCaption,
+          uploadDate: new Date(),
+        };
+        newPhotos.push(newPhoto);
+      }
+      
+      // 更新設備照片列表
       const updatedEquipment = { 
         ...currentEquipment,
-        photos: [...(currentEquipment.photos || []), newPhoto]
+        photos: [...(currentEquipment.photos || []), ...newPhotos]
       };
       
       // 使用MongoDB服務更新設備資訊
@@ -228,20 +274,25 @@ export class EquipmentDetailComponent implements OnInit {
         
         // 通知照片服務統計更新
         this.photoService.notifyPhotoStatsUpdated(this.siteId!);
+        
+        alert(`成功上傳 ${newPhotos.length} 張照片`);
       } else {
         console.error('更新設備照片資訊失敗');
+        alert('照片上傳成功，但更新設備資訊失敗');
       }
     } catch (error) {
       console.error('上傳照片時發生錯誤:', error);
       alert('上傳照片失敗，請稍後重試');
     } finally {
       this.isUploading.set(false);
+      this.uploadProgress = { current: 0, total: 0 };
     }
   }
 
   resetPhotoForm() {
-    this.selectedFile = null;
+    this.selectedFiles = [];
     this.photoCaption = '';
+    this.uploadProgress = { current: 0, total: 0 };
     // 重置檔案選擇器
     const fileInput = document.getElementById(
       'photo-upload'

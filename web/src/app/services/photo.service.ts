@@ -272,7 +272,7 @@ export class PhotoService {
   }
 
   // 上傳帶有系統標籤的照片
-  uploadPhotoWithSystemTag(file: File, systemTagTitle: string, siteId: string, projectNo: string): Observable<any> {
+  uploadPhotoWithSystemTag(file: File, systemTagTitle: string, siteId: string, projectNo: string, additionalMetadata?: { [key: string]: any }): Observable<any> {
     // 找到對應的系統標籤
     const systemTag = this.systemTags.find(tag => tag.title === systemTagTitle);
     if (!systemTag) {
@@ -283,7 +283,8 @@ export class PhotoService {
       systemTagTitle,
       systemTag,
       siteId,
-      projectNo
+      projectNo,
+      additionalMetadata
     });
 
     // 準備包含系統標籤的元數據
@@ -291,7 +292,8 @@ export class PhotoService {
       projectNo: projectNo,
       siteId: siteId,
       tags: JSON.stringify([systemTag]), // 轉換為 JSON 字串以便傳輸
-      category: systemTagTitle // 向後兼容
+      category: systemTagTitle, // 向後兼容
+      ...additionalMetadata // 合併額外的元數據
     };
 
     return this.uploadPhoto(file, metadata);

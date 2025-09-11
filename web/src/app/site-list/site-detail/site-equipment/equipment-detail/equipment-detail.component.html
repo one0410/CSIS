@@ -376,38 +376,80 @@
               請先儲存設備基本資訊後，再上傳照片。
             </div>
             } @else {
-            <form class="mb-4" (ngSubmit)="uploadPhoto()">
+            <form class="mb-4" (ngSubmit)="uploadPhotos()">
               <div class="mb-3">
-                <label for="photo-upload" class="form-label">上傳新照片</label>
+                <label for="photo-upload" class="form-label">上傳新照片（可選擇多張）</label>
                 <input 
                   type="file" 
                   class="form-control" 
                   id="photo-upload" 
                   accept="image/*" 
-                  (change)="onFileSelected($event)"
+                  multiple
+                  (change)="onFilesSelected($event)"
                 >
+                <div class="form-text">可同時選擇多張照片進行上傳</div>
               </div>
               <div class="mb-3">
-                <label for="caption" class="form-label">照片說明</label>
+                <label for="caption" class="form-label">照片說明（套用到所有照片）</label>
                 <input 
                   type="text" 
                   class="form-control" 
                   id="caption" 
                   [(ngModel)]="photoCaption" 
                   name="caption"
+                  placeholder="為所有照片添加統一說明"
                 >
               </div>
-              <div class="d-flex justify-content-end">
+              
+              @if (selectedFiles.length > 0) {
+                <div class="mb-3">
+                  <label class="form-label">已選擇的照片 ({{ selectedFiles.length }} 張)</label>
+                  <div class="row row-cols-2 row-cols-md-3 g-2">
+                    @for (file of selectedFiles; track file.name; let i = $index) {
+                      <div class="col">
+                        <div class="card">
+                          <div class="card-body p-2">
+                            <div class="d-flex align-items-center">
+                              <i class="fas fa-image text-muted me-2 flex-shrink-0"></i>
+                              <div class="flex-grow-1 min-width-0 overflow-hidden">
+                                <small class="text-truncate d-block w-100" [title]="file.name" style="max-width: 100%;">{{ file.name }}</small>
+                                <small class="text-muted d-block">{{ formatFileSize(file.size) }}</small>
+                              </div>
+                              <button 
+                                type="button" 
+                                class="btn btn-sm btn-outline-danger ms-2 flex-shrink-0" 
+                                (click)="removeSelectedFile(i)"
+                              >
+                                <i class="fas fa-times"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+              
+              <div class="d-flex justify-content-between align-items-center">
+                <button 
+                  type="button" 
+                  class="btn btn-outline-secondary" 
+                  (click)="clearSelectedFiles()"
+                  [disabled]="selectedFiles.length === 0 || isUploading()"
+                >
+                  清除選擇
+                </button>
                 <button 
                   type="submit" 
                   class="btn btn-primary" 
-                  [disabled]="!selectedFile || isUploading()"
+                  [disabled]="selectedFiles.length === 0 || isUploading()"
                 >
                   @if (isUploading()) {
                     <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    上傳中...
+                    上傳中... ({{ uploadProgress.current }}/{{ uploadProgress.total }})
                   } @else {
-                    上傳照片
+                    上傳 {{ selectedFiles.length }} 張照片
                   }
                 </button>
               </div>
