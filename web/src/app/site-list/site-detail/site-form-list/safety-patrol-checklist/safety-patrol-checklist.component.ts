@@ -1,4 +1,4 @@
-import { Component, computed, OnInit } from '@angular/core';
+import { Component, computed, OnInit, signal } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import { SiteFormHeaderComponent } from '../site-form-header/site-form-header.component';
@@ -6,6 +6,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
 import { CurrentSiteService } from '../../../../services/current-site.service';
+import { DocxTemplateService } from '../../../../services/docx-template.service';
 import { SiteForm } from '../../../../model/siteForm.model';
 import dayjs from 'dayjs';
 import { AuthService } from '../../../../services/auth.service';
@@ -49,10 +50,14 @@ export class SafetyPatrolChecklistComponent implements OnInit {
   siteId: string = '';
   formId: string = '';
   site = computed(() => this.currentSiteService.currentSite());
+  currentUser = computed(() => this.authService.user());
   
   // 簽名數據
   faultyUnitSignature: string = '';
   micSupervisorSignature: string = '';
+  
+  // 文檔生成狀態
+  isGeneratingDocument = signal<boolean>(false);
   
   // 定義檢查種類
   checkTypes: string[] = [
@@ -363,6 +368,7 @@ export class SafetyPatrolChecklistComponent implements OnInit {
     private mongodbService: MongodbService,
     private signatureDialog: SignatureDialogService,
     private currentSiteService: CurrentSiteService,
+    private docxTemplateService: DocxTemplateService,
     private authService: AuthService
   ) { }
 
@@ -505,15 +511,42 @@ export class SafetyPatrolChecklistComponent implements OnInit {
           createdBy: this.authService.user()?.name || '',
         };
         result = await this.mongodbService.post('siteForm', newFormData);
+        
+        // 新建成功後設置 _id 以便後續可以下載Word
+        if (result && result.insertedId) {
+          this.checklistData._id = result.insertedId;
+          this.formId = result.insertedId;
+        }
       }
 
       if (result) {
         alert('工安巡迴檢查表保存成功');
-        this.router.navigate(['/site', this.siteId, 'forms']);
+        // 不導航，讓用戶可以下載Word
+        // this.router.navigate(['/site', this.siteId, 'forms']);
       }
     } catch (error) {
       console.error('保存檢查表失敗', error);
       alert('保存失敗，請稍後重試');
+    }
+  }
+
+  // Word生成方法
+  async generateDocx(): Promise<void> {
+    if (!this.checklistData._id) {
+      alert('無法生成Word：表單ID不存在');
+      return;
+    }
+
+    this.isGeneratingDocument.set(true);
+    try {
+      await this.docxTemplateService.generateFormDocx(this.checklistData._id, 'safetyPatrolChecklist');
+      
+    } catch (error) {
+      console.error('生成Word失敗:', error);
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      alert(`Word生成失敗: ${errorMessage}`);
+    } finally {
+      this.isGeneratingDocument.set(false);
     }
   }
 

@@ -303,6 +303,24 @@
           <i class="fas fa-times-circle me-1"></i>取消
         </button>
         
+        @if (checklistData._id) {
+        <div class="mx-auto">
+          <button
+            type="button"
+            class="btn btn-success px-4"
+            (click)="generateDocx()"
+            [disabled]="isGeneratingDocument()"
+          >
+            @if (isGeneratingDocument()) {
+              <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              生成中...
+            } @else {
+              <i class="fas fa-file-word me-1"></i>下載Word
+            }
+          </button>
+        </div>
+        }
+        
         <div class="ms-auto">
           <button
             type="button"

@@ -33,7 +33,6 @@
         <tr>
           <th>承攬公司</th>
           <th>設備名稱</th>
-          <th>型號</th>
           <th>序號</th>
           <th>檢查日期</th>
           <th>下次檢查日期</th>
@@ -47,7 +46,6 @@
         <tr class="cursor-pointer" (click)="navigateToDetail(equipment._id!)">
           <td>{{ equipment.company }}</td>
           <td>{{ equipment.name }}</td>
-          <td>{{ equipment.model || "-" }}</td>
           <td>{{ equipment.serialNumber || "-" }}</td>
           <td>
             @if (equipment.inspectionDate) {
