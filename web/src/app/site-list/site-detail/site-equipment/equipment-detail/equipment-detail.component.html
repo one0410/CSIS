@@ -90,28 +90,7 @@
                   }
                 </div>
               </div>
-              <div class="row mb-3">
-                <label for="model" class="col-sm-3 col-form-label">型號</label>
-                <div class="col-sm-9">
-                  @if (isEditing()) {
-                    <input 
-                      type="text" 
-                      class="form-control" 
-                      id="model" 
-                      [(ngModel)]="editedEquipment!.model" 
-                      name="model"
-                    >
-                  } @else {
-                    <input 
-                      type="text" 
-                      class="form-control" 
-                      [ngModel]="equipment()!.model" 
-                      name="model" 
-                      readonly
-                    >
-                  }
-                </div>
-              </div>
+
               <div class="row mb-3">
                 <label for="serialNumber" class="col-sm-3 col-form-label">序號</label>
                 <div class="col-sm-9">
@@ -135,28 +114,6 @@
                 </div>
               </div>
               
-              <div class="row mb-3">
-                <label for="purchaseDate" class="col-sm-3 col-form-label">購買日期</label>
-                <div class="col-sm-9">
-                  @if (isEditing()) {
-                    <input 
-                      type="date" 
-                      class="form-control" 
-                      id="purchaseDate" 
-                      [(ngModel)]="editedEquipment!.purchaseDate" 
-                      name="purchaseDate"
-                    >
-                  } @else {
-                    <input 
-                      type="date" 
-                      class="form-control" 
-                      [ngModel]="equipment()!.purchaseDate" 
-                      name="purchaseDate" 
-                      readonly
-                    >
-                  }
-                </div>
-              </div>
               <div class="row mb-3">
                 <label for="maintenanceDate" class="col-sm-3 col-form-label">最近維護日期</label>
                 <div class="col-sm-9">

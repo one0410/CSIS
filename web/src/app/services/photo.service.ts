@@ -211,9 +211,12 @@ export class PhotoService {
           return photos.map((item: any) => ({
             id: item._id || item.id || item.filename,
             url: this.getApiUrl(`/api/gridfs/${item.filename}`),
-            title: item.metadata?.originalName || item.filename,
             date: item.metadata?.uploadDate || new Date().toISOString().split('T')[0],
-            metadata: item.metadata || {}
+            metadata: {
+              ...item.metadata || {},
+              // 確保 title 有值，優先使用 metadata.title，其次 originalName，最後用 filename
+              title: item.metadata?.title || item.metadata?.originalName || item.filename
+            }
           }));
         })
         .catch(error => {
@@ -293,6 +296,8 @@ export class PhotoService {
       siteId: siteId,
       tags: JSON.stringify([systemTag]), // 轉換為 JSON 字串以便傳輸
       category: systemTagTitle, // 向後兼容
+      originalName: file.name, // 確保有原始檔名
+      title: file.name, // 預設使用檔名作為標題
       ...additionalMetadata // 合併額外的元數據
     };
 

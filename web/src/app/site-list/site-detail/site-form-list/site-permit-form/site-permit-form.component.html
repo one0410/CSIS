@@ -114,13 +114,19 @@
                   </td>
                   <td colspan="3" class="py-2 px-2">
                     <div class="d-flex align-items-center flex-wrap gap-2">
-                      <input type="date" class="form-control table-input" name="workStartTime"
-                        [(ngModel)]="permitData.workStartTime" required [readonly]="isViewMode" aria-label="施工開始時間"
+                      <input type="date" class="form-control table-input" name="workStartDate"
+                        [(ngModel)]="workStartDate" required [readonly]="isViewMode" aria-label="施工開始日期"
                         style="width: 150px" />
+                      <input type="time" class="form-control table-input" name="workStartTime"
+                        [(ngModel)]="workStartTimeOnly" required [readonly]="isViewMode" aria-label="施工開始時間"
+                        style="width: 120px" />
                       <span>至</span>
-                      <input type="date" class="form-control table-input" name="workEndTime"
-                        [(ngModel)]="permitData.workEndTime" required [readonly]="isViewMode" aria-label="施工結束時間"
+                      <input type="date" class="form-control table-input" name="workEndDate"
+                        [(ngModel)]="workEndDate" required [readonly]="isViewMode" aria-label="施工結束日期"
                         style="width: 150px" />
+                      <input type="time" class="form-control table-input" name="workEndTime"
+                        [(ngModel)]="workEndTimeOnly" required [readonly]="isViewMode" aria-label="施工結束時間"
+                        style="width: 120px" />
                       <span>止。</span>
                     </div>
                   </td>

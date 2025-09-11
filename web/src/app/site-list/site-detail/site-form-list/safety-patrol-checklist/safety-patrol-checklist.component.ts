@@ -81,29 +81,29 @@ export class SafetyPatrolChecklistComponent implements OnInit {
     
     // 一般作業檢查項目
     '一般作業': [
-      // AA類項目（安全管理AA）
-      { code: 'AA01', description: '進入施工區域已正確配戴安全帽並扣上帽帶。', groupName: '安全管理AA' },
-      { code: 'AA02', description: '穿著及膝之長褲及覆肩之上衣。', groupName: '安全管理AA' },
-      { code: 'AA03', description: '人員無嚼食檳榔、追逐嬉戲、賭博、打架等行為。', groupName: '安全管理AA' },
-      { code: 'AA04', description: '人員未攜帶或飲用含酒精性飲料。', groupName: '安全管理AA' },
-      { code: 'AA05', description: '未攜帶管制物品(如：照相機、NOTEBOOK、磁片、打火機…等)。', groupName: '安全管理AA' },
-      { code: 'AA06', description: '施工人員無酒醉、吸毒或精神不能集中等異常現象。', groupName: '安全管理AA' },
-      { code: 'AA07', description: '施工區、預置區、堆放區已設置圍籬及標示廠商名稱、連絡人及電話。', groupName: '安全管理AA' },
-      { code: 'AA08', description: '現場地面放置工具、物料已舖設塑膠布或不鏽鋼板。', groupName: '安全管理AA' },
-      { code: 'AA09', description: '未在樓梯、通道上、緊急疏散路線、沖身洗眼器、逃生門以及緊急應變用品櫃附近，堆放機具、材料者。', groupName: '安全管理AA' },
-      { code: 'AA10', description: '將工具、材料置於安全處。', groupName: '安全管理AA' },
-      { code: 'AA11', description: '於指定區域用餐、飲食、休息。', groupName: '安全管理AA' },
-      { code: 'AA12', description: '於指定地點抽煙。', groupName: '安全管理AA' },
-      { code: 'AA13', description: '車輛持有通行證、依規定停放、未阻礙通道。', groupName: '安全管理AA' },
-      { code: 'AA14', description: '行車未超過速限/未逆向行駛。', groupName: '安全管理AA' },
-      { code: 'AA15', description: '未任意拆除或挪用機電設備、警告標誌、防護設備、消防設施(含消防管或滅火器移做他用)….等。', groupName: '安全管理AA' },
-      { code: 'AA16', description: '已申請拆除安全設施(如：安全網、平台護欄….等) 。', groupName: '安全管理AA' },
-      { code: 'AA17', description: '施工現場已無其他方式須直接踐踏機台、管路等，且已事先向管理單位申請許可。', groupName: '安全管理AA' },
-      { code: 'AA18', description: '轉動任一管路之閥類開關或電氣開關前已通知相關負責人員。', groupName: '安全管理AA' },
-      { code: 'AA19', description: '下班收工後已將電氣設備、氣體鋼瓶關閉。', groupName: '安全管理AA' },
-      { code: 'AA20', description: '現場作業時正確配帶個人防護具。', groupName: '安全管理AA' },
-      { code: 'AA21', description: '未在廠內隨地便溺。', groupName: '安全管理AA' },
-      { code: 'AA22', description: '已復原安全設施(如：安全網、平台護欄….等) 。', groupName: '安全管理AA' },
+      // AA類項目（一般安全管理AA）
+      { code: 'AA01', description: '進入施工區域已正確配戴安全帽並扣上帽帶。', groupName: '一般安全管理AA' },
+      { code: 'AA02', description: '穿著及膝之長褲及覆肩之上衣。', groupName: '一般安全管理AA' },
+      { code: 'AA03', description: '人員無嚼食檳榔、追逐嬉戲、賭博、打架等行為。', groupName: '一般安全管理AA' },
+      { code: 'AA04', description: '人員未攜帶或飲用含酒精性飲料。', groupName: '一般安全管理AA' },
+      { code: 'AA05', description: '未攜帶管制物品(如：照相機、NOTEBOOK、磁片、打火機…等)。', groupName: '一般安全管理AA' },
+      { code: 'AA06', description: '施工人員無酒醉、吸毒或精神不能集中等異常現象。', groupName: '一般安全管理AA' },
+      { code: 'AA07', description: '施工區、預置區、堆放區已設置圍籬及標示廠商名稱、連絡人及電話。', groupName: '一般安全管理AA' },
+      { code: 'AA08', description: '現場地面放置工具、物料已舖設塑膚布或不鏽鋼板。', groupName: '一般安全管理AA' },
+      { code: 'AA09', description: '未在樓梯、通道上、緊急疏散路線、沖身洗眼器、逃生門以及緊急應變用品櫃附近，堆放機具、材料者。', groupName: '一般安全管理AA' },
+      { code: 'AA10', description: '將工具、材料置於安全處。', groupName: '一般安全管理AA' },
+      { code: 'AA11', description: '於指定區域用餐、飲食、休息。', groupName: '一般安全管理AA' },
+      { code: 'AA12', description: '於指定地點抽煙。', groupName: '一般安全管理AA' },
+      { code: 'AA13', description: '車輛持有通行證、依規定停放、未阻礙通道。', groupName: '一般安全管理AA' },
+      { code: 'AA14', description: '行車未超過速限/未逆向行駛。', groupName: '一般安全管理AA' },
+      { code: 'AA15', description: '未任意拆除或挪用機電設備、警告標誌、防護設備、消防設施(含消防管或滅火器移做他用)….等。', groupName: '一般安全管理AA' },
+      { code: 'AA16', description: '已申請拆除安全設施(如：安全網、平台護欄….等) 。', groupName: '一般安全管理AA' },
+      { code: 'AA17', description: '施工現場已無其他方式須直接踐踏機台、管路等，且已事先向管理單位申請許可。', groupName: '一般安全管理AA' },
+      { code: 'AA18', description: '轉動任一管路之閥類開關或電氣開關前已通知相關負責人員。', groupName: '一般安全管理AA' },
+      { code: 'AA19', description: '下班收工後已將電氣設備、氣體鋼瓶關閉。', groupName: '一般安全管理AA' },
+      { code: 'AA20', description: '現場作業時正確配帶個人防護具。', groupName: '一般安全管理AA' },
+      { code: 'AA21', description: '未在廠內隨地便溺。', groupName: '一般安全管理AA' },
+      { code: 'AA22', description: '已復原安全設施(如：安全網、平台護欄….等) 。', groupName: '一般安全管理AA' },
       
       // AB類項目（整理整頓AB）
       { code: 'AB01', description: '每日工程收工前，整理現場、收拾工具，使之恢復正常狀況。', groupName: '整理整頓AB' },
@@ -128,20 +128,20 @@ export class SafetyPatrolChecklistComponent implements OnInit {
       { code: 'AD07', description: '未於非緊急狀態違規打開或進出安全門。', groupName: '門禁管理AD' },
       { code: 'AD08', description: '未闖越簽到、讀卡、換證等門禁管制區域。', groupName: '門禁管理AD' },
       
-      // AE類項目（有害管理AE）
-      { code: 'AE01', description: '符合無塵室穿著規定。', groupName: '有害管理AE' },
-      { code: 'AE02', description: '設備材料機具進入無塵室，已擦拭乾淨及存放於規定區域。', groupName: '有害管理AE' },
-      { code: 'AE03', description: '於無塵室施工已做好潔淨措施。', groupName: '有害管理AE' },
-      { code: 'AE04', description: '施工時人員未直接坐於地面上。', groupName: '有害管理AE' },
-      { code: 'AE05', description: '未嚼食口香糖。', groupName: '有害管理AE' },
-      { code: 'AE06', description: '未攜帶管制物品(如：照相機、NOTEBOOK、磁片、鉛筆、非無塵紙、立可白、紙箱、行動電話、打火機…等)。', groupName: '有害管理AE' },
-      { code: 'AE07', description: '遵守其他無塵室相關規定。', groupName: '有害管理AE' },
+      // AE類項目（無塵室管理AE）
+      { code: 'AE01', description: '符合無塵室穿著規定。', groupName: '無塵室管理AE' },
+      { code: 'AE02', description: '設備材料機具進入無塵室，已擦拭乾淨及存放於規定區域。', groupName: '無塵室管理AE' },
+      { code: 'AE03', description: '於無塵室施工已做好潔淨措施。', groupName: '無塵室管理AE' },
+      { code: 'AE04', description: '施工時人員未直接坐於地面上。', groupName: '無塵室管理AE' },
+      { code: 'AE05', description: '未嚼食口香糖。', groupName: '無塵室管理AE' },
+      { code: 'AE06', description: '未攜帶管制物品(如：照相機、NOTEBOOK、磁片、鉛筆、非無塵紙、立可白、紙箱、行動電話、打火機…等)。', groupName: '無塵室管理AE' },
+      { code: 'AE07', description: '遵守其他無塵室相關規定。', groupName: '無塵室管理AE' },
       
-      // AF類項目（其他安全AF）
-      { code: 'AF01', description: '遵守每日出工人員簽到規定。', groupName: '其他安全AF' },
-      { code: 'AF02', description: '依規定繳交相關文件。', groupName: '其他安全AF' },
-      { code: 'AF03', description: '出席『供應商安全衛生會議』。', groupName: '其他安全AF' },
-      { code: 'AF04', description: '遵守其他安全、管理相關規定。', groupName: '其他安全AF' }
+      // AF類項目（其他管理AF）
+      { code: 'AF01', description: '遵守每日出工人員簽到規定。', groupName: '其他管理AF' },
+      { code: 'AF02', description: '依規定繳交相關文件。', groupName: '其他管理AF' },
+      { code: 'AF03', description: '出席『供應商安全衛生會議』。', groupName: '其他管理AF' },
+      { code: 'AF04', description: '遵守其他安全、管理相關規定。', groupName: '其他管理AF' }
     ],
     
     // 特殊作業檢查項目

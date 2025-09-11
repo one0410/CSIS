@@ -73,6 +73,12 @@ export class SitePermitFormComponent implements OnInit {
   isViewMode: boolean = false; // 是否處於查看模式
   isGeneratingPdf: boolean = false; // PDF生成狀態
 
+  // 臨時屬性用於分離日期和時間輸入
+  workStartDate: string = '';
+  workStartTimeOnly: string = '';
+  workEndDate: string = '';
+  workEndTimeOnly: string = '';
+
   // 定義表單模型
   permitData: SitePermitForm = {
     siteId: '',
@@ -153,6 +159,46 @@ export class SitePermitFormComponent implements OnInit {
 
     private docxTemplateService: DocxTemplateService
   ) {}
+
+  // 將 datetime-local 格式分離為日期和時間
+  private splitDateTime(dateTimeString: string): { date: string; time: string } {
+    if (!dateTimeString) return { date: '', time: '' };
+    
+    const dateTime = new Date(dateTimeString);
+    if (isNaN(dateTime.getTime())) return { date: '', time: '' };
+    
+    const date = dateTime.toISOString().split('T')[0]; // YYYY-MM-DD
+    const time = dateTime.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
+    
+    return { date, time };
+  }
+
+  // 將日期和時間組合為 datetime-local 格式
+  private combineDateTime(date: string, time: string): string {
+    if (!date || !time) return '';
+    return `${date}T${time}`;
+  }
+
+  // 載入資料時分離日期和時間
+  private loadDateTimeFields(): void {
+    if (this.permitData.workStartTime) {
+      const startDateTime = this.splitDateTime(this.permitData.workStartTime);
+      this.workStartDate = startDateTime.date;
+      this.workStartTimeOnly = startDateTime.time;
+    }
+    
+    if (this.permitData.workEndTime) {
+      const endDateTime = this.splitDateTime(this.permitData.workEndTime);
+      this.workEndDate = endDateTime.date;
+      this.workEndTimeOnly = endDateTime.time;
+    }
+  }
+
+  // 儲存時組合日期和時間
+  private saveDateTimeFields(): void {
+    this.permitData.workStartTime = this.combineDateTime(this.workStartDate, this.workStartTimeOnly);
+    this.permitData.workEndTime = this.combineDateTime(this.workEndDate, this.workEndTimeOnly);
+  }
 
   async ngOnInit(): Promise<void> {
     // 在這裡更新依賴 currentSiteService 的屬性
@@ -252,6 +298,9 @@ export class SitePermitFormComponent implements OnInit {
           this.applicantSignature = formData.applicantSignature.signature;
 
         this.isViewMode = true; // 設置為查看模式
+        
+        // 載入資料後分離日期和時間
+        this.loadDateTimeFields();
       }
     } catch (error) {
       console.error('載入表單數據失敗', error);
@@ -311,6 +360,9 @@ export class SitePermitFormComponent implements OnInit {
   }
 
   async savePermit(): Promise<void> {
+    // 儲存前組合日期和時間
+    this.saveDateTimeFields();
+    
     // 檢查必填欄位
     const requiredFields = {
       日期: this.permitData.applyDate,

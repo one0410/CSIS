@@ -212,8 +212,8 @@
           <div class="image-item" (click)="openPhotoDetail(image)">
             <img
               [src]="image.url"
-              [alt]="image.title || '工地照片'"
-              [title]="image.title || '工地照片'"
+              [alt]="image.metadata.title || '工地照片'"
+              [title]="image.metadata.title || '工地照片'"
               loading="lazy"
               (load)="onPhotoLoad($event)"
             />
@@ -247,7 +247,7 @@
                 >{{ tag.title }}</span>
                 }
               }
-              <span>{{ image.title }}</span>
+              <span>{{ image.metadata.title }}</span>
             </div>
           </div>
           }
@@ -287,7 +287,7 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">{{ selectedPhoto()?.title }}</h5>
+          <h5 class="modal-title">{{ selectedPhoto()?.metadata?.title }}</h5>
           <button
             type="button"
             class="btn-close"
@@ -300,8 +300,8 @@
             <div class="col-md-7">
               <img
                 [src]="selectedPhoto()?.url"
-                [alt]="selectedPhoto()?.title || '照片'"
-                [title]="selectedPhoto()?.title || '照片'"
+                [alt]="selectedPhoto()?.metadata?.title || '照片'"
+                [title]="selectedPhoto()?.metadata?.title || '照片'"
                 class="img-fluid mb-3"
               />
             </div>
@@ -415,8 +415,8 @@
                       id="photoTitle"
                       type="text"
                       class="form-control"
-                      [ngModel]="selectedPhoto()?.title || ''"
-                      (ngModelChange)="selectedPhoto() && (selectedPhoto()!.title = $event)"
+                      [ngModel]="selectedPhoto()?.metadata?.title || ''"
+                      (ngModelChange)="selectedPhoto() && (selectedPhoto()!.metadata.title = $event)"
                       (blur)="updatePhotoTitle()"
                       placeholder="輸入照片標題"
                       title="照片標題"

@@ -259,7 +259,7 @@ export interface Certification {
   type: CertificationType; // 證照類型
   name: string; // 證照名稱
   issue: string; // 發證日期
-  withdraw: string; // 撤銷日期
+  withdraw: string; // 到期日
   frontPicture: string; // 正面照片 (GridFS URL)
   backPicture: string; // 背面照片 (GridFS URL)
 }

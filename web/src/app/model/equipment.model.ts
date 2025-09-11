@@ -3,9 +3,7 @@ export interface Equipment {
   siteId: string; // 工地ID
   company?: string; // 承攬公司
   name: string; // 設備名稱
-  model?: string; // 型號
   serialNumber?: string; // 序號
-  purchaseDate?: Date; // 購買日期
   maintenanceDate?: Date; // 維修日期
   inspectionDate?: Date; // 檢查日期
   isQualified?: boolean; // 是否合格

@@ -570,13 +570,13 @@
                 </div>
               </div>
               <div class="col-md-6">
-                <label [for]="'certWithdraw' + i" class="form-label">撤銷日期</label>
+                <label [for]="'certWithdraw' + i" class="form-label">到期日</label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="fas fa-calendar-times"></i></span>
                   <input type="date" class="form-control" [id]="'certWithdraw' + i"
                     [name]="'certWithdraw' + i"
                     [(ngModel)]="cert.withdraw"
-                    [attr.aria-label]="'證照撤銷日期 #' + (i + 1)" [attr.title]="'請選擇證照 #' + (i + 1) + ' 的撤銷日期'">
+                    [attr.aria-label]="'證照到期日 #' + (i + 1)" [attr.title]="'請選擇證照 #' + (i + 1) + ' 的到期日'">
                 </div>
               </div>
             </div>

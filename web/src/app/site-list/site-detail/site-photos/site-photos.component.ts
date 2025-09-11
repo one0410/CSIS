@@ -389,7 +389,9 @@ export class SitePhotosComponent implements OnInit {
       const metadata = {
         projectNo: currentSite.projectNo,
         siteId: currentSite._id!,
-        tags: [] // 從這個組件上傳的照片沒有特定的系統標籤
+        tags: [], // 從這個組件上傳的照片沒有特定的系統標籤
+        originalName: file.name, // 確保有原始檔名
+        title: file.name // 預設使用檔名作為標題
       };
 
       console.log(`📤 正在上傳 ${file.name} 到 GridFS...`);
@@ -417,7 +419,9 @@ export class SitePhotosComponent implements OnInit {
       const metadata = {
         projectNo: currentSite.projectNo,
         siteId: currentSite._id!,
-        tags: [systemTag]
+        tags: [systemTag],
+        originalName: file.name, // 確保有原始檔名
+        title: file.name // 預設使用檔名作為標題
       };
 
       // 使用 GridFSService 上傳檔案
@@ -459,7 +463,7 @@ export class SitePhotosComponent implements OnInit {
       return;
     }
 
-    if (confirm('確定要刪除 ' + photo.title + ' 照片嗎？')) {
+    if (confirm('確定要刪除 ' + photo.metadata.title + ' 照片嗎？')) {
       this.deletePhotoByFilename(filename, photo.id);
     }
   }
@@ -536,7 +540,7 @@ export class SitePhotosComponent implements OnInit {
               photoClone.metadata.description = photoInfo.metadata.description;
             }
             if (photoInfo.metadata.title) {
-              photoClone.title = photoInfo.metadata.title;
+              photoClone.metadata.title = photoInfo.metadata.title;
             }
             if (photoInfo.metadata.location) {
               photoClone.metadata.location = photoInfo.metadata.location;
@@ -591,7 +595,7 @@ export class SitePhotosComponent implements OnInit {
 
   updatePhotoTitle() {
     // 此方法將在編輯標題後被呼叫
-    console.log('更新照片標題:', this.selectedPhoto()?.title);
+    console.log('更新照片標題:', this.selectedPhoto()?.metadata.title);
   }
 
   updatePhotoDescription() {
@@ -632,7 +636,7 @@ export class SitePhotosComponent implements OnInit {
 
       // 準備元數據
       const metadata = {
-        title: photo.title,
+        title: photo.metadata.title || photo.metadata.originalName || fileId,
         tags: photo.metadata.tags || [],
         description: photo.metadata.description,
         location: photo.metadata.location
@@ -940,14 +944,16 @@ export interface PhotoGroup {
 export interface Photo {
   id: number;
   url: string;
-  title: string;
+  // title: string;
   date: string;  // ISO 格式的日期字串 (YYYY-MM-DD)
   metadata: {
     tags?: PhotoTag[];
+    title: string;
     description?: string;
     location?: string; // 新增地點欄位
     equipmentId?: string; // 機具管理照片的設備ID
     equipmentName?: string; // 機具管理照片的設備名稱
+    originalName?: string; // 原始檔案名稱
   };
 }
 
