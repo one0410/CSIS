@@ -44,7 +44,7 @@ export class WorkerDetailComponent implements OnInit {
     certifications: [],
     reviewStaff: '',
     idno: '',
-    sixHourTrainingDate: '',
+    // sixHourTrainingDate: '',
     sixHourTrainingFrontPicture: '',
     sixHourTrainingBackPicture: '',
     generalSafetyTrainingDate: '',

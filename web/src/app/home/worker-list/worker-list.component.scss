@@ -93,13 +93,14 @@
     opacity: 0;
     transform: translateY(-10px);
     transition: all 0.3s ease-out;
-    
+
     &.expanded {
       max-height: 500px; // 足夠的高度容納內容
       opacity: 1;
       transform: translateY(0);
       transition: all 0.4s ease-in;
-      overflow: visible; // 展開時允許下拉選單超出容器
+      overflow: visible !important; // 展開時允許下拉選單超出容器
+      z-index: 10; // 提高層級
     }
     
     .filter-body {
@@ -125,13 +126,13 @@
       // 承攬公司下拉選單樣式
       .dropdown {
         position: relative;
-        z-index: 1050; // 確保下拉選單顯示在最上層
-        
+
         .dropdown-menu {
-          z-index: 1050 !important; // 強制設定 z-index
-          max-height: 300px; // 限制最大高度
-          overflow-y: auto; // 如果內容過多，允許滾動
-          box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); // 增強陰影效果
+          position: absolute !important;
+          z-index: 9999 !important;
+          max-height: 300px;
+          overflow-y: auto;
+          box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
           border: 1px solid rgba(0, 0, 0, 0.15);
           
           .dropdown-item {
@@ -419,7 +420,42 @@
   }
 }
 
+// ag-grid 容器樣式
+ag-grid-angular {
+  position: relative;
+  z-index: 1 !important; // 設定較低的 z-index
+  overflow: visible !important; // 允許內容超出
+}
+
+// 過濾器容器要在 ag-grid 之上
+.filter-container {
+  position: relative;
+  z-index: 100 !important; // 高於 ag-grid
+}
+
 :host ::ng-deep {
+  // ag-grid 內部元素的 z-index 調整
+  .ag-theme-quartz {
+    position: relative;
+    z-index: 1 !important;
+    overflow: visible !important;
+  }
+
+  .ag-root-wrapper {
+    z-index: 1 !important;
+    overflow: visible !important;
+  }
+
+  // ag-grid 的主要容器
+  .ag-root {
+    z-index: 1 !important;
+  }
+
+  // ag-grid 的滾動容器
+  .ag-body-viewport {
+    z-index: 1 !important;
+  }
+
   .wrap-header-cell {
     .ag-header-cell-label {
       white-space: pre-wrap !important;
@@ -427,17 +463,17 @@
       padding: 5px 0;
     }
   }
-  
+
   // 選中行的樣式
   .ag-row.selected-worker {
     background-color: rgba(0, 123, 255, 0.08) !important;
     transition: background-color 0.2s ease;
-    
+
     &:hover {
       background-color: rgba(0, 123, 255, 0.15) !important;
     }
   }
-  
+
   // 選取欄位的 hover 效果
   .ag-cell[col-id="selected"] {
     .ag-cell-wrapper {
@@ -446,7 +482,7 @@
       align-items: center;
       height: 100%;
     }
-    
+
     &:hover {
       background-color: rgba(0, 123, 255, 0.05);
     }

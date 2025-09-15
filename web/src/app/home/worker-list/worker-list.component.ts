@@ -964,12 +964,38 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     // 組件銷毀時清理 modal 狀態
     this.cleanupModalState();
 
+    // 清理 Bootstrap 組件實例
+    this.cleanupBootstrapComponents();
+
     // 清理搜尋相關的計時器和請求
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
     }
     if (this.currentSearchRequest) {
       this.currentSearchRequest = null;
+    }
+  }
+
+  // 清理 Bootstrap 組件實例
+  private cleanupBootstrapComponents() {
+    if (typeof (window as any).bootstrap !== 'undefined') {
+      // 清理 dropdown 實例
+      const dropdownElements = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+      dropdownElements.forEach(element => {
+        const existingDropdown = (window as any).bootstrap.Dropdown.getInstance(element);
+        if (existingDropdown) {
+          existingDropdown.dispose();
+        }
+      });
+
+      // 清理 tooltip 實例
+      const tooltipElements = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+      tooltipElements.forEach(element => {
+        const existingTooltip = (window as any).bootstrap.Tooltip.getInstance(element);
+        if (existingTooltip) {
+          existingTooltip.dispose();
+        }
+      });
     }
   }
 
@@ -982,6 +1008,11 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     // 初始化 Bootstrap dropdown
     this.initBootstrapDropdown();
+
+    // 延遲再次初始化，確保DOM完全載入
+    setTimeout(() => {
+      this.reinitializeBootstrapComponents();
+    }, 100);
   }
 
   private initBootstrapDropdown() {
@@ -990,11 +1021,84 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
       // 初始化所有的 dropdown
       const dropdownElements = document.querySelectorAll('[data-bs-toggle="dropdown"]');
       dropdownElements.forEach(element => {
-        new (window as any).bootstrap.Dropdown(element);
+        // 檢查是否已經初始化過，避免重複初始化
+        const existingDropdown = (window as any).bootstrap.Dropdown.getInstance(element);
+        if (!existingDropdown) {
+          const dropdown = new (window as any).bootstrap.Dropdown(element, {
+            boundary: 'window',
+            reference: 'toggle',
+            display: 'static',
+            popperConfig: {
+              modifiers: [
+                {
+                  name: 'preventOverflow',
+                  options: {
+                    boundary: 'window'
+                  }
+                },
+                {
+                  name: 'flip',
+                  options: {
+                    fallbackPlacements: ['top', 'bottom']
+                  }
+                }
+              ]
+            }
+          });
+        }
       });
     } else {
       // 如果 Bootstrap 還沒載入，稍後重試
       setTimeout(() => this.initBootstrapDropdown(), 100);
+    }
+  }
+
+  // 重新初始化 Bootstrap 組件的方法
+  private reinitializeBootstrapComponents() {
+    if (typeof (window as any).bootstrap !== 'undefined') {
+      // 銷毀現有的 dropdown 實例
+      const dropdownElements = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+      dropdownElements.forEach(element => {
+        const existingDropdown = (window as any).bootstrap.Dropdown.getInstance(element);
+        if (existingDropdown) {
+          existingDropdown.dispose();
+        }
+      });
+
+      // 重新初始化所有 dropdown，使用特殊配置
+      dropdownElements.forEach(element => {
+        const dropdown = new (window as any).bootstrap.Dropdown(element, {
+          boundary: 'window',
+          reference: 'toggle',
+          display: 'static',
+          popperConfig: {
+            modifiers: [
+              {
+                name: 'preventOverflow',
+                options: {
+                  boundary: 'window'
+                }
+              },
+              {
+                name: 'flip',
+                options: {
+                  fallbackPlacements: ['top', 'bottom']
+                }
+              }
+            ]
+          }
+        });
+      });
+
+      // 初始化 tooltips
+      const tooltipElements = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+      tooltipElements.forEach(element => {
+        const existingTooltip = (window as any).bootstrap.Tooltip.getInstance(element);
+        if (existingTooltip) {
+          existingTooltip.dispose();
+        }
+        new (window as any).bootstrap.Tooltip(element);
+      });
     }
   }
 
@@ -1016,6 +1120,11 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
         // 支援多個證照類型，用逗號分隔
         this.selectedCertificationTypes = params['cert'].split(',').filter((cert: string) => cert.trim());
       }
+
+      // 在參數變化後重新初始化 Bootstrap 組件
+      setTimeout(() => {
+        this.reinitializeBootstrapComponents();
+      }, 150);
     });
   }
 
@@ -1204,6 +1313,11 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
       if (this.currentSearchRequest === requestId) {
         this.isLoading = false;
         this.currentSearchRequest = null;
+
+        // 在資料載入完成後重新初始化 Bootstrap 組件
+        setTimeout(() => {
+          this.reinitializeBootstrapComponents();
+        }, 200);
       }
     }
   }
@@ -1321,9 +1435,9 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
       laborAssociationDate: dayjs('2024-01-01')
         .add(Math.floor(Math.random() * 365), 'days')
         .format('YYYY-MM-DD'),
-      sixHourTrainingDate: dayjs('2024-01-01')
-        .add(Math.floor(Math.random() * 365), 'days')
-        .format('YYYY-MM-DD'),
+      // sixHourTrainingDate: dayjs('2024-01-01')
+      //   .add(Math.floor(Math.random() * 365), 'days')
+      //   .format('YYYY-MM-DD'),
       sixHourTrainingFrontPicture: '',
       sixHourTrainingBackPicture: '',
       accidentInsurances: [],
@@ -1985,7 +2099,7 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
           worker.generalSafetyTrainingDueDate || '',
           worker.laborInsuranceApplyDate || '',
           worker.laborAssociationDate || '',
-          worker.sixHourTrainingDate || '',
+          // worker.sixHourTrainingDate || '',
 
           // 意外險相關
           latestAccidentInsurance?.start || '',
@@ -2944,7 +3058,7 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
           '工會申請日期',
         ])
       ),
-      sixHourTrainingDate: this.formatDate(getFieldValue(['6小時期效狀況'])),
+      // sixHourTrainingDate: this.formatDate(getFieldValue(['6小時期效狀況'])),
       sixHourTrainingFrontPicture: '',
       sixHourTrainingBackPicture: '',
       accidentInsurances: accidentInsurances,

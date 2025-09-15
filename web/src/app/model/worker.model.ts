@@ -217,7 +217,7 @@ export interface Worker {
   laborAssociationDate: string;
 
   // 6小時期效狀況
-  sixHourTrainingDate: string;
+  // sixHourTrainingDate: string;
   // 六小時證明正面圖片 (GridFS URL)
   sixHourTrainingFrontPicture: string; // GridFS 檔案 URL
   // 六小時證明反面圖片 (GridFS URL)

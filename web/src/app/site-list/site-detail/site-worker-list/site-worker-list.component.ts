@@ -937,7 +937,7 @@ export class SiteWorkerListComponent implements OnInit {
       'crane_operator': '吊掛人員.png',
       'fire_watch': '監火人員.png',
       'hazard_notice': '已進行危害告知.png',
-      'six_hour': '六小時.png'
+      'six_hour': '六小時.png'  // 六小時安全衛生教育訓練
     };
     
     return certificationImageMap[certificationType] || '';
@@ -974,7 +974,7 @@ export class SiteWorkerListComponent implements OnInit {
   // 獲取工作人員的教育訓練及危害告知圖片HTML
   private getWorkerTrainingAndHazardImages(worker: Worker): string {
     const imageElements: string[] = [];
-    
+
     // 檢查是否有教育訓練
     if (this.hasTraining(worker)) {
       imageElements.push(`<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px;">
@@ -982,7 +982,15 @@ export class SiteWorkerListComponent implements OnInit {
         <span style="font-size: 10px; text-align: center;">教育訓練</span>
       </div>`);
     }
-    
+
+    // 檢查六小時安全衛生教育訓練是否未到期
+    if (worker.generalSafetyTrainingDueDate && dayjs().isBefore(dayjs(worker.generalSafetyTrainingDueDate))) {
+      imageElements.push(`<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px;">
+        <img src="/certificate/六小時.png" alt="六小時安全訓練" title="六小時安全訓練">
+        <span style="font-size: 10px; text-align: center;">六小時</span>
+      </div>`);
+    }
+
     // 檢查是否有危害告知
     if (this.hasHazardNotice(worker)) {
       imageElements.push(`<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px;">
@@ -990,7 +998,7 @@ export class SiteWorkerListComponent implements OnInit {
         <span style="font-size: 10px; text-align: center;">危害告知</span>
       </div>`);
     }
-    
+
     if (imageElements.length > 0) {
       return `<div class="certification-images">${imageElements.join('')}</div>`;
     } else {
