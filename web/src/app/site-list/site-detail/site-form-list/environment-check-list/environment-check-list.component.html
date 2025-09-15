@@ -12,50 +12,25 @@
             <tr>
               <td class="bg-light fw-normal">作業單位：</td>
               <td class="py-2 px-2">
-                <input
-                  type="text"
-                  class="form-control table-input"
-                  id="projectNo"
-                  name="projectNo"
-                  [(ngModel)]="checklistData.projectNo"
-                  aria-label="作業單位"
-                />
+                <input type="text" class="form-control table-input" id="projectNo" name="projectNo"
+                  [(ngModel)]="checklistData.projectNo" aria-label="作業單位" />
               </td>
               <td class="bg-light fw-normal" style="width: 10%">廠區：</td>
               <td style="width: 15%" class="py-2 px-2">
-                <input
-                  type="text"
-                  class="form-control table-input"
-                  id="factoryArea"
-                  name="factoryArea"
-                  [(ngModel)]="checklistData.factoryArea"
-                  aria-label="廠區"
-                />
+                <input type="text" class="form-control table-input" id="factoryArea" name="factoryArea"
+                  [(ngModel)]="checklistData.factoryArea" aria-label="廠區" />
               </td>
             </tr>
             <tr>
-              <td class="bg-light fw-normal" style="width: 15%">檢查日期：</td>
-              <td style="width: 20%" class="py-2 px-2">
-                <input
-                  type="date"
-                  class="form-control table-input"
-                  id="applyDate"
-                  name="applyDate"
-                  [(ngModel)]="checklistData.applyDate"
-                  required
-                  aria-label="檢查日期"
-                />
-              </td>
               <td class="bg-light fw-normal" style="width: 15%">施工地點：</td>
               <td style="width: 25%" class="py-2 px-2">
-                <input
-                  type="text"
-                  class="form-control table-input"
-                  id="location"
-                  name="location"
-                  [(ngModel)]="checklistData.location"
-                  aria-label="施工地點"
-                />
+                <input type="text" class="form-control table-input" id="location" name="location"
+                  [(ngModel)]="checklistData.location" aria-label="施工地點" />
+              </td>
+              <td class="bg-light fw-normal" style="width: 15%">日期：</td>
+              <td style="width: 20%" class="py-2 px-2">
+                <input type="date" class="form-control table-input" id="applyDate" name="applyDate"
+                  [(ngModel)]="checklistData.applyDate" required aria-label="日期" />
               </td>
             </tr>
           </tbody>
@@ -87,11 +62,8 @@
             $first) {
             <tr>
               @if (isFirst) {
-              <td
-                [attr.rowspan]="preWorkCheckPoints.length"
-                class="align-middle text-center bg-light fw-bold"
-                style="writing-mode: vertical-lr; text-orientation: upright"
-              >
+              <td [attr.rowspan]="preWorkCheckPoints.length" class="align-middle text-center bg-light fw-bold"
+                style="writing-mode: vertical-lr; text-orientation: upright">
                 一、施工前
               </td>
               }
@@ -99,47 +71,21 @@
               <td>{{ item.description }}</td>
               <td class="d-flex justify-content-between border-0">
                 <div class="form-check form-check-inline m-0">
-                  <input
-                    class="form-check-input"
-                    type="radio"
-                    [(ngModel)]="checklistData.items[item.code]"
-                    [name]="item.code"
-                    [id]="item.code + '_normal'"
-                    value="normal"
-                    [title]="'選擇' + item.code + '狀態為正常'"
-                    [attr.aria-label]="'選擇' + item.code + '狀態為正常'"
-                  />
-                  <label class="form-check-label" [for]="item.code + '_normal'"
-                    >正常</label
-                  >
+                  <input class="form-check-input" type="radio" [(ngModel)]="checklistData.items[item.code]"
+                    [name]="item.code" [id]="item.code + '_normal'" value="normal" [title]="'選擇' + item.code + '狀態為正常'"
+                    [attr.aria-label]="'選擇' + item.code + '狀態為正常'" />
+                  <label class="form-check-label" [for]="item.code + '_normal'">正常</label>
                 </div>
                 <div class="form-check form-check-inline m-0">
-                  <input
-                    class="form-check-input"
-                    type="radio"
-                    [(ngModel)]="checklistData.items[item.code]"
-                    [name]="item.code"
-                    [id]="item.code + '_abnormal'"
-                    value="abnormal"
-                    [title]="'選擇' + item.code + '狀態為異常'"
-                    [attr.aria-label]="'選擇' + item.code + '狀態為異常'"
-                  />
-                  <label
-                    class="form-check-label"
-                    [for]="item.code + '_abnormal'"
-                    >異常</label
-                  >
+                  <input class="form-check-input" type="radio" [(ngModel)]="checklistData.items[item.code]"
+                    [name]="item.code" [id]="item.code + '_abnormal'" value="abnormal"
+                    [title]="'選擇' + item.code + '狀態為異常'" [attr.aria-label]="'選擇' + item.code + '狀態為異常'" />
+                  <label class="form-check-label" [for]="item.code + '_abnormal'">異常</label>
                 </div>
               </td>
               <td class="p-0">
-                <input
-                  type="text"
-                  class="form-control"
-                  [name]="item.code + '_fix'"
-                  [title]="item.code + '改善措施'"
-                  [(ngModel)]="checklistData.fixes[item.code]"
-                  placeholder="請輸入改善措施"
-                />
+                <input type="text" class="form-control" [name]="item.code + '_fix'" [title]="item.code + '改善措施'"
+                  [(ngModel)]="checklistData.fixes[item.code]" placeholder="請輸入改善措施" />
               </td>
             </tr>
             }
@@ -161,36 +107,20 @@
           </thead>
           <tbody>
             <tr>
-              <td
-                class="text-center signature-area"
-                (click)="openSignatureDialog(SignatureType.PreWorkSupervisor)"
-                style="height: 60px; cursor: pointer"
-              >
+              <td class="text-center signature-area" (click)="openSignatureDialog(SignatureType.PreWorkSupervisor)"
+                style="height: 60px; cursor: pointer">
                 @if (preWorkSupervisorSignature) {
-                <img
-                  [src]="preWorkSupervisorSignature"
-                  alt="監工簽名"
-                  class="signature-image"
-                  style="max-height: 58px"
-                />
+                <img [src]="preWorkSupervisorSignature" alt="監工簽名" class="signature-image" style="max-height: 58px" />
                 } @else {
                 <div class="signature-placeholder text-muted small">
                   點擊簽名
                 </div>
                 }
               </td>
-              <td
-                class="text-center signature-area"
-                (click)="openSignatureDialog(SignatureType.PreWorkWorker)"
-                style="height: 60px; cursor: pointer"
-              >
+              <td class="text-center signature-area" (click)="openSignatureDialog(SignatureType.PreWorkWorker)"
+                style="height: 60px; cursor: pointer">
                 @if (preWorkWorkerSignature) {
-                <img
-                  [src]="preWorkWorkerSignature"
-                  alt="作業人員簽名"
-                  class="signature-image"
-                  style="max-height: 58px"
-                />
+                <img [src]="preWorkWorkerSignature" alt="作業人員簽名" class="signature-image" style="max-height: 58px" />
                 } @else {
                 <div class="signature-placeholder text-muted small">
                   點擊簽名
@@ -198,14 +128,8 @@
                 }
               </td>
               <td class="py-2 px-2 align-middle">
-                <input
-                  type="datetime-local"
-                  class="form-control table-input"
-                  name="preWorkCheckTime"
-                  [(ngModel)]="checklistData.preWorkCheckTime"
-                  title="施工前檢點時間"
-                  aria-label="施工前檢點時間"
-                />
+                <input type="time" class="form-control table-input" name="preWorkCheckTime"
+                  [(ngModel)]="checklistData.preWorkCheckTime" title="施工前檢點時間" aria-label="施工前檢點時間" />
               </td>
             </tr>
           </tbody>
@@ -237,11 +161,8 @@
             $first) {
             <tr>
               @if (isFirst) {
-              <td
-                [attr.rowspan]="postWorkCheckPoints.length"
-                class="align-middle text-center bg-light fw-bold"
-                style="writing-mode: vertical-lr; text-orientation: upright"
-              >
+              <td [attr.rowspan]="postWorkCheckPoints.length" class="align-middle text-center bg-light fw-bold"
+                style="writing-mode: vertical-lr; text-orientation: upright">
                 二、收工前
               </td>
               }
@@ -249,47 +170,21 @@
               <td>{{ item.description }}</td>
               <td class="d-flex justify-content-between border-0">
                 <div class="form-check form-check-inline m-0">
-                  <input
-                    class="form-check-input"
-                    type="radio"
-                    [name]="item.code"
-                    value="normal"
-                    [title]="'選擇' + item.code + '狀態為正常'"
-                    [attr.aria-label]="'選擇' + item.code + '狀態為正常'"
-                    [(ngModel)]="checklistData.items[item.code]"
-                    [id]="item.code + '_normal'"
-                  />
-                  <label class="form-check-label" [for]="item.code + '_normal'"
-                    >正常</label
-                  >
+                  <input class="form-check-input" type="radio" [name]="item.code" value="normal"
+                    [title]="'選擇' + item.code + '狀態為正常'" [attr.aria-label]="'選擇' + item.code + '狀態為正常'"
+                    [(ngModel)]="checklistData.items[item.code]" [id]="item.code + '_normal'" />
+                  <label class="form-check-label" [for]="item.code + '_normal'">正常</label>
                 </div>
                 <div class="form-check form-check-inline m-0">
-                  <input
-                    class="form-check-input"
-                    type="radio"
-                    [name]="item.code"
-                    value="abnormal"
-                    [title]="'選擇' + item.code + '狀態為異常'"
-                    [attr.aria-label]="'選擇' + item.code + '狀態為異常'"
-                    [(ngModel)]="checklistData.items[item.code]"
-                    [id]="item.code + '_abnormal'"
-                  />
-                  <label
-                    class="form-check-label"
-                    [for]="item.code + '_abnormal'"
-                    >異常</label
-                  >
+                  <input class="form-check-input" type="radio" [name]="item.code" value="abnormal"
+                    [title]="'選擇' + item.code + '狀態為異常'" [attr.aria-label]="'選擇' + item.code + '狀態為異常'"
+                    [(ngModel)]="checklistData.items[item.code]" [id]="item.code + '_abnormal'" />
+                  <label class="form-check-label" [for]="item.code + '_abnormal'">異常</label>
                 </div>
               </td>
               <td class="p-0">
-                <input
-                  type="text"
-                  class="form-control"
-                  [name]="item.code + '_fix'"
-                  [title]="item.code + '改善措施'"
-                  [(ngModel)]="checklistData.fixes[item.code]"
-                  placeholder="請輸入改善措施"
-                />
+                <input type="text" class="form-control" [name]="item.code + '_fix'" [title]="item.code + '改善措施'"
+                  [(ngModel)]="checklistData.fixes[item.code]" placeholder="請輸入改善措施" />
               </td>
             </tr>
             }
@@ -305,42 +200,26 @@
                 作業人員
               </th>
               <th style="width: 30%" class="text-center fw-bold py-2">
-                檢查時間
+                檢點時間
               </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td
-                class="text-center signature-area"
-                (click)="openSignatureDialog(SignatureType.PostWorkSupervisor)"
-                style="height: 60px; cursor: pointer"
-              >
+              <td class="text-center signature-area" (click)="openSignatureDialog(SignatureType.PostWorkSupervisor)"
+                style="height: 60px; cursor: pointer">
                 @if (postWorkSupervisorSignature) {
-                <img
-                  [src]="postWorkSupervisorSignature"
-                  alt="監工簽名"
-                  class="signature-image"
-                  style="max-height: 58px"
-                />
+                <img [src]="postWorkSupervisorSignature" alt="監工簽名" class="signature-image" style="max-height: 58px" />
                 } @else {
                 <div class="signature-placeholder text-muted small">
                   點擊簽名
                 </div>
                 }
               </td>
-              <td
-                class="text-center signature-area"
-                (click)="openSignatureDialog(SignatureType.PostWorkWorker)"
-                style="height: 60px; cursor: pointer"
-              >
+              <td class="text-center signature-area" (click)="openSignatureDialog(SignatureType.PostWorkWorker)"
+                style="height: 60px; cursor: pointer">
                 @if (postWorkWorkerSignature) {
-                <img
-                  [src]="postWorkWorkerSignature"
-                  alt="作業人員簽名"
-                  class="signature-image"
-                  style="max-height: 58px"
-                />
+                <img [src]="postWorkWorkerSignature" alt="作業人員簽名" class="signature-image" style="max-height: 58px" />
                 } @else {
                 <div class="signature-placeholder text-muted small">
                   點擊簽名
@@ -348,14 +227,8 @@
                 }
               </td>
               <td class="py-2 px-2 align-middle">
-                <input
-                  type="datetime-local"
-                  class="form-control table-input"
-                  name="postWorkCheckTime"
-                  [(ngModel)]="checklistData.postWorkCheckTime"
-                  title="檢查時間"
-                  aria-label="檢查時間"
-                />
+                <input type="time" class="form-control table-input" name="postWorkCheckTime"
+                  [(ngModel)]="checklistData.postWorkCheckTime" title="檢點時間" aria-label="檢點時間" />
               </td>
             </tr>
           </tbody>
@@ -367,20 +240,16 @@
           <div class="p-2">
             <div class="small">
               <div class="mb-2">
-                <span class="fw-bold">1.使用時機：</span
-                >本表單應於每日作業前及收工前進行檢查；若分組作業時，各小組均應進行本表單之檢查並標示於明顯處。
+                <span class="fw-bold">1.使用時機：</span>本表單應於每日作業前及收工前進行檢查；若分組作業時，各小組均應進行本表單之檢查並標示於明顯處。
               </div>
               <div class="mb-2">
-                <span class="fw-bold">2.檢查方式：</span
-                >作業人員請將檢查結果於適合的欄位打"√"。
+                <span class="fw-bold">2.檢查方式：</span>作業人員請將檢查結果於適合的欄位打"√"。
               </div>
               <div class="mb-2">
-                <span class="fw-bold">3.歸檔：</span
-                >本表單應於每日作業檢查後，與工作許可單一併自存備查。
+                <span class="fw-bold">3.歸檔：</span>本表單應於每日作業檢查後，與工作許可單一併自存備查。
               </div>
               <div>
-                <span class="fw-bold">4.檢查項目：</span
-                >檢查內容不足時可自行填寫於空白處。
+                <span class="fw-bold">4.檢查項目：</span>檢查內容不足時可自行填寫於空白處。
               </div>
             </div>
           </div>
@@ -394,47 +263,31 @@
 
       <!-- 按鈕區域 -->
       <div class="d-flex mt-4 pt-3">
-        <button
-          type="button"
-          class="btn btn-outline-secondary px-4"
-          (click)="cancel()"
-        >
+        <button type="button" class="btn btn-outline-secondary px-4" (click)="cancel()">
           <i class="fas fa-times-circle me-1"></i>取消
         </button>
         @if (currentUser()?.role === 'admin' && formId) {
-        <button
-          type="button"
-          class="btn btn-outline-danger px-4 ms-2"
-          (click)="deleteChecklist()"
-        >
+        <button type="button" class="btn btn-outline-danger px-4 ms-2" (click)="deleteChecklist()">
           <i class="fas fa-trash me-1"></i>刪除
         </button>
         }
-        
+
         @if (checklistData._id) {
         <div class="mx-auto">
-          <button
-            type="button"
-            class="btn btn-success px-4"
-            (click)="generateDocx()"
-            [disabled]="isGeneratingDocument()"
-          >
+          <button type="button" class="btn btn-success px-4" (click)="generateDocx()"
+            [disabled]="isGeneratingDocument()">
             @if (isGeneratingDocument()) {
-              <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-              生成中...
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+            生成中...
             } @else {
-              <i class="fas fa-file-word me-1"></i>下載Word
+            <i class="fas fa-file-word me-1"></i>下載Word
             }
           </button>
         </div>
         }
-        
+
         <div class="ms-auto">
-          <button
-            type="button"
-            class="btn btn-primary px-4"
-            (click)="saveChecklist()"
-          >
+          <button type="button" class="btn btn-primary px-4" (click)="saveChecklist()">
             <i class="fas fa-save me-1"></i>儲存
           </button>
         </div>

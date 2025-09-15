@@ -139,8 +139,8 @@ export class EnvironmentCheckListComponent implements OnInit {
     preWorkWorkerSignature: '',
     postWorkSupervisorSignature: '',
     postWorkWorkerSignature: '',
-    preWorkCheckTime: dayjs().format('YYYY-MM-DDTHH:mm'),
-    postWorkCheckTime: dayjs().format('YYYY-MM-DDTHH:mm'),
+    preWorkCheckTime: dayjs().format('HH:mm'),
+    postWorkCheckTime: dayjs().format('HH:mm'),
     remarks: '',
     status: 'draft'
   };
