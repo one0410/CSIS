@@ -362,8 +362,8 @@ export class SpecialWorkChecklistComponent implements OnInit {
         this.siteId = id;
         await this.currentSiteService.setCurrentSiteById(id);
         this.checklistData.siteId = id;
-        this.checklistData.projectNo = this.site()?.projectNo || '';
-        this.checklistData.location = (this.site()?.county || '') + (this.site()?.town || '');
+        // this.checklistData.projectNo = this.site()?.projectNo || '';
+        // this.checklistData.location = (this.site()?.county || '') + (this.site()?.town || '');
 
         // 檢查是否有表單ID（編輯模式）
         const formId = params.get('formId');
