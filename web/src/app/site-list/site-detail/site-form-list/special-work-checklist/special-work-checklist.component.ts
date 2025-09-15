@@ -331,10 +331,10 @@ export class SpecialWorkChecklistComponent implements OnInit {
     itemInputs: {},
     preWorkSupervisorSignature: '',
     preWorkWorkerSignature: '',
-    preWorkCheckTime: dayjs().format('YYYY-MM-DD HH:mm'),
+    preWorkCheckTime: dayjs().format('HH:mm'),
     postWorkSupervisorSignature: '',
     postWorkWorkerSignature: '',
-    postWorkCheckTime: dayjs().format('YYYY-MM-DD HH:mm'),
+    postWorkCheckTime: dayjs().format('HH:mm'),
     remarks: '',
     status: 'draft',
     createdAt: new Date(),
@@ -526,7 +526,7 @@ export class SpecialWorkChecklistComponent implements OnInit {
       if (result) {
         alert('特殊作業自主檢點表保存成功');
         // 不導航，讓用戶可以下載Word
-        // this.router.navigate(['/site', this.siteId, 'forms']);
+        this.router.navigate(['/site', this.siteId, 'forms']);
       }
     } catch (error) {
       console.error('保存檢查表失敗', error);

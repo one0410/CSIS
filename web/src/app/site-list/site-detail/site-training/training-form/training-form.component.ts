@@ -35,10 +35,9 @@ export interface TrainingForm extends SiteForm {
   trainingDate: string;
   trainingTime: string;
   trainingTimeEnd: string;
-  contractorName: string; // 主承商
-  contactPerson: string; // 聯絡人
-  contactPhone: string; // 聯絡人電話
   courseName: string; // 課程名稱
+  // contactPerson: string; // 聯絡人
+  // contactPhone: string; // 聯絡人電話
   instructor: string; // 講師
   attendanceCount: number;
   workerSignatures: SignatureData[];
@@ -56,6 +55,18 @@ interface ProjectWorker {
   tel: string;
   contractingCompanyName: string;
   belongSites: any[];
+  hasSigned?: boolean;
+}
+
+// 專案使用者介面
+interface ProjectUser {
+  _id: string;
+  name: string;
+  employeeId?: string;
+  idno?: string;
+  cell: string;
+  department: string;
+  belongSites: { siteId: string; role: string }[];
   hasSigned?: boolean;
 }
 
@@ -83,9 +94,6 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     trainingDate: dayjs().format('YYYY-MM-DD'),
     trainingTime: '08:30',
     trainingTimeEnd: '17:00',
-    contractorName: '',
-    contactPerson: '',
-    contactPhone: '',
     courseName: '',
     instructor: '',
     attendanceCount: 0,
@@ -108,7 +116,9 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
   verificationIdOrPhone: string = '';
   verificationError: string = '';
   currentWorker: ProjectWorker | null = null;
+  currentUser: ProjectUser | null = null;
   projectWorkers: ProjectWorker[] = [];
+  projectUsers: ProjectUser[] = [];
   workerVerificationModal: any;
 
   // QR Code 相關
@@ -178,9 +188,10 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
           this.isViewMode = !isEditMode;
         }
 
-        // 載入專案工人列表（需要 siteId）
+        // 載入專案工人和使用者列表（需要 siteId）
         if (this.siteId && (this.isLoggedIn || this.isWorkerSigningMode)) {
           await this.loadProjectWorkers(this.siteId);
+          await this.loadProjectUsers(this.siteId);
         }
       } else if (id) {
         // 如果只有 id 沒有 formId（創建新表單的情況）
@@ -190,6 +201,7 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
         if (this.isLoggedIn) {
           await this.currentSiteService.setCurrentSiteById(id);
           await this.loadProjectWorkers(id);
+          await this.loadProjectUsers(id);
         }
       }
     });
@@ -284,12 +296,12 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
           // 清理工人的身分證號碼和電話號碼用於比對
           const workerIdno = worker.idno ? worker.idno.toString().trim().toUpperCase() : '';
           const workerTel = worker.tel ? worker.tel.toString().trim().replace(/\D/g, '') : '';
-          
+
           worker.hasSigned = allWorkerSignatures.some((sig) => {
             // 清理簽名中的身分證號碼和電話號碼
             const sigIdno = sig.idno ? sig.idno.toString().trim().toUpperCase() : '';
             const sigTel = sig.tel ? sig.tel.toString().trim().replace(/\D/g, '') : '';
-            
+
             return (workerIdno && sigIdno && workerIdno === sigIdno) ||
                    (workerTel && sigTel && workerTel === sigTel);
           });
@@ -300,62 +312,158 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     }
   }
 
+  async loadProjectUsers(siteId: string): Promise<void> {
+    try {
+      // 從資料庫獲取該專案的使用者列表
+      this.projectUsers = await this.mongodbService.getArray('user', {
+        belongSites: { $elemMatch: { siteId: siteId } },
+        enabled: true
+      });
+
+      // 查詢該工地所有未作廢的教育訓練表單
+      const allActiveForms = await this.mongodbService.getArray('siteForm', {
+        siteId: siteId,
+        formType: 'training',
+        status: { $ne: 'revoked' }
+      });
+
+      // 收集所有未作廢表單的工人簽名記錄
+      const allWorkerSignatures: SignatureData[] = [];
+      allActiveForms.forEach((form: TrainingForm) => {
+        if (form.workerSignatures && form.workerSignatures.length > 0) {
+          allWorkerSignatures.push(...form.workerSignatures);
+        }
+      });
+
+      // 標記已簽名的使用者
+      if (allWorkerSignatures.length > 0) {
+        this.projectUsers.forEach((user) => {
+          // 清理使用者的工號、身分證號碼和電話號碼用於比對
+          const userEmployeeId = user.employeeId ? user.employeeId.toString().trim() : '';
+          const userIdno = user.idno ? user.idno.toString().trim().toUpperCase() : '';
+          const userCell = user.cell ? user.cell.toString().trim().replace(/\D/g, '') : '';
+
+          user.hasSigned = allWorkerSignatures.some((sig) => {
+            // 清理簽名中的工號、身分證號碼和電話號碼
+            const sigEmployeeId = (sig as any).employeeNo ? (sig as any).employeeNo.toString().trim() : '';
+            const sigIdno = sig.idno ? sig.idno.toString().trim().toUpperCase() : '';
+            const sigTel = sig.tel ? sig.tel.toString().trim().replace(/\D/g, '') : '';
+
+            return (userEmployeeId && sigEmployeeId && userEmployeeId === sigEmployeeId) ||
+                   (userIdno && sigIdno && userIdno === sigIdno) ||
+                   (userCell && sigTel && userCell === sigTel);
+          });
+        });
+      }
+    } catch (error) {
+      console.error('載入專案使用者資料失敗', error);
+    }
+  }
+
   // 工人身份驗證
   verifyWorker() {
     // 重設錯誤訊息
     this.verificationError = '';
 
-    // 檢查是否有輸入身份證號碼或手機號碼
+    // 檢查是否有輸入
     if (!this.verificationIdOrPhone) {
-      this.verificationError = '請輸入身份證號碼或手機號碼';
+      this.verificationError = '請輸入工號、身份證號碼或手機號碼';
       return;
     }
 
-    // 清理輸入的身分證號碼或電話號碼
+    // 清理輸入的資料
     const cleanInput = this.verificationIdOrPhone.toString().trim();
     const cleanInputIdno = cleanInput.toUpperCase(); // 身分證號碼轉大寫
     const cleanInputTel = cleanInput.replace(/\D/g, ''); // 電話號碼只保留數字
-    
-    // 查找工人
+    const cleanInputEmployeeId = cleanInput; // 工號保持原樣
+
+    // 先查找專案使用者（工號、身分證號碼、手機號碼）
+    const user = this.projectUsers.find((u) => {
+      const userEmployeeId = u.employeeId ? u.employeeId.toString().trim() : '';
+      const userIdno = u.idno ? u.idno.toString().trim().toUpperCase() : '';
+      const userCell = u.cell ? u.cell.toString().trim().replace(/\D/g, '') : '';
+
+      return (userEmployeeId && userEmployeeId === cleanInputEmployeeId) ||
+             (userIdno && userIdno === cleanInputIdno) ||
+             (userCell && userCell === cleanInputTel);
+    });
+
+    // 如果找到使用者，處理使用者簽名
+    if (user) {
+      // 檢查使用者是否已簽名
+      const userEmployeeId = user.employeeId ? user.employeeId.toString().trim() : '';
+      const userIdno = user.idno ? user.idno.toString().trim().toUpperCase() : '';
+      const userCell = user.cell ? user.cell.toString().trim().replace(/\D/g, '') : '';
+
+      const alreadySigned = this.formData.workerSignatures.some((signature) => {
+        const sigEmployeeId = (signature as any).employeeNo ? (signature as any).employeeNo.toString().trim() : '';
+        const sigIdno = signature.idno ? signature.idno.toString().trim().toUpperCase() : '';
+        const sigTel = signature.tel ? signature.tel.toString().trim().replace(/\D/g, '') : '';
+
+        return (userEmployeeId && sigEmployeeId && userEmployeeId === sigEmployeeId) ||
+               (userIdno && sigIdno && userIdno === sigIdno) ||
+               (userCell && sigTel && userCell === sigTel);
+      });
+
+      if (alreadySigned) {
+        this.verificationError = `此使用者 (${user.name}) 已經簽名過`;
+        return;
+      }
+
+      // 設定當前使用者
+      this.currentUser = user;
+      this.currentWorker = null;
+
+      // 關閉驗證 Modal
+      this.workerVerificationModal.hide();
+
+      // 使用SignatureDialogService開啟簽名對話框
+      this.openUserSignatureDialog();
+      return;
+    }
+
+    // 如果沒有找到使用者，再查找工人（身分證號碼、手機號碼）
     const worker = this.projectWorkers.find((w) => {
       const workerIdno = w.idno ? w.idno.toString().trim().toUpperCase() : '';
       const workerTel = w.tel ? w.tel.toString().trim().replace(/\D/g, '') : '';
-      
+
       return (workerIdno && workerIdno === cleanInputIdno) ||
              (workerTel && workerTel === cleanInputTel);
     });
 
-    // 檢查工人是否存在
-    if (!worker) {
-      this.verificationError = '找不到此工人，請確認輸入資訊是否正確';
+    // 如果找到工人，處理工人簽名
+    if (worker) {
+      // 檢查工人是否已簽名（在 workerSignatures 中查找）
+      const workerIdno = worker.idno ? worker.idno.toString().trim().toUpperCase() : '';
+      const workerTel = worker.tel ? worker.tel.toString().trim().replace(/\D/g, '') : '';
+
+      const alreadySigned = this.formData.workerSignatures.some((signature) => {
+        const sigIdno = signature.idno ? signature.idno.toString().trim().toUpperCase() : '';
+        const sigTel = signature.tel ? signature.tel.toString().trim().replace(/\D/g, '') : '';
+
+        return (workerIdno && sigIdno && workerIdno === sigIdno) ||
+               (workerTel && sigTel && workerTel === sigTel);
+      });
+
+      if (alreadySigned) {
+        this.verificationError = `此工人 (${worker.name}) 已經簽名過`;
+        return;
+      }
+
+      // 設定當前工人
+      this.currentWorker = worker;
+      this.currentUser = null;
+
+      // 關閉驗證 Modal
+      this.workerVerificationModal.hide();
+
+      // 使用SignatureDialogService開啟簽名對話框
+      this.openWorkerSignatureDialog();
       return;
     }
 
-    // 檢查工人是否已簽名（在 workerSignatures 中查找）
-    const workerIdno = worker.idno ? worker.idno.toString().trim().toUpperCase() : '';
-    const workerTel = worker.tel ? worker.tel.toString().trim().replace(/\D/g, '') : '';
-    
-    const alreadySigned = this.formData.workerSignatures.some((signature) => {
-      const sigIdno = signature.idno ? signature.idno.toString().trim().toUpperCase() : '';
-      const sigTel = signature.tel ? signature.tel.toString().trim().replace(/\D/g, '') : '';
-      
-      return (workerIdno && sigIdno && workerIdno === sigIdno) ||
-             (workerTel && sigTel && workerTel === sigTel);
-    });
-
-    if (alreadySigned) {
-      this.verificationError = `此工人 (${worker.name}) 已經簽名過`;
-      return;
-    }
-
-    // 將當前工人設為已驗證的工人
-    this.currentWorker = worker;
-
-    // 關閉驗證 Modal
-    this.workerVerificationModal.hide();
-
-    // 使用SignatureDialogService開啟簽名對話框
-    this.openWorkerSignatureDialog();
+    // 如果都沒找到
+    this.verificationError = '找不到此人員，請確認輸入的工號、身份證號碼或手機號碼是否正確';
   }
 
   // 開啟工人簽名對話框
@@ -392,10 +500,55 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
           this.projectWorkers[workerIndex].hasSigned = true;
         }
 
-        // 保存表單
-        await this.saveForm();
-        
+        // 保存表單（工人簽名模式下不跳轉）
+        await this.saveFormSilently();
+
         console.log('工人簽名已加入 workerSignatures 陣列');
+      }
+    } catch (error) {
+      console.error('簽名對話框操作失敗', error);
+    }
+  }
+
+  // 開啟使用者簽名對話框
+  async openUserSignatureDialog(): Promise<void> {
+    try {
+      const signature = await this.signatureDialog.open();
+      if (signature && this.currentUser) {
+        // 檢查 workerSignatures 陣列是否已經滿了
+        if (this.formData.workerSignatures.length >= this.MAX_SIGNATURES) {
+          alert('簽到表已滿，無法再新增簽名');
+          return;
+        }
+
+        // 將使用者簽名資料加入 workerSignatures 陣列
+        const userSignature: SignatureData & { employeeNo?: string } = {
+          name: this.currentUser.name,
+          employeeNo: this.currentUser.employeeId, // 使用 employeeNo 欄位對應 employeeId
+          idno: this.currentUser.idno,
+          tel: this.currentUser.cell,
+          signature: signature,
+          signedAt: new Date(),
+          company: this.currentUser.department
+        };
+
+        this.formData.workerSignatures.push(userSignature);
+
+        // 更新實際簽到人數
+        this.updateAttendanceCount();
+
+        // 標記此使用者已簽名
+        const userIndex = this.projectUsers.findIndex(
+          (u) => u._id === this.currentUser!._id
+        );
+        if (userIndex !== -1) {
+          this.projectUsers[userIndex].hasSigned = true;
+        }
+
+        // 保存表單（使用者簽名模式下不跳轉）
+        await this.saveFormSilently();
+
+        console.log('使用者簽名已加入 workerSignatures 陣列');
       }
     } catch (error) {
       console.error('簽名對話框操作失敗', error);
@@ -430,6 +583,7 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     this.verificationIdOrPhone = '';
     this.verificationError = '';
     this.currentWorker = null;
+    this.currentUser = null;
     if (this.workerVerificationModal) {
       this.workerVerificationModal.show();
     }
@@ -494,19 +648,18 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
   async saveForm(): Promise<void> {
     // 當非工人簽名模式時，才進行欄位驗證
     if (!this.isWorkerSigningMode) {
-      if (!this.formData.trainingDate || 
-          !this.formData.trainingTime || 
-          !this.formData.contractorName?.trim() || 
+      if (!this.formData.trainingDate ||
+          !this.formData.trainingTime ||
           !this.formData.courseName?.trim()) {
-        alert('請填寫所有必填欄位：訓練日期、時間、主承商、講師、課程名稱');
+        alert('請填寫所有必填欄位：訓練日期、時間、課程名稱');
         return;
       }
     }
-    
+
     try {
       // 更新實際簽到人數
       this.updateAttendanceCount();
-      
+
       if (this.formId) {
         this.formData.updatedAt = new Date();
         this.formData.updatedBy = this.authService.user()?.name || '';
@@ -514,6 +667,8 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
         await this.mongodbService.patch('siteForm', this.formId, this.formData);
         if (!this.isWorkerSigningMode) {
           alert('教育訓練表單已更新');
+          // 跳轉回教育訓練列表頁面
+          this.router.navigate(['/site', this.siteId, 'training']);
         }
       } else {
         this.formData.createdAt = new Date();
@@ -523,17 +678,46 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
         this.formId = result.insertedId;
         if (!this.isWorkerSigningMode) {
           alert('教育訓練表單已建立');
+          // 跳轉回教育訓練列表頁面
+          this.router.navigate(['/site', this.siteId, 'training']);
         }
       }
-      
+
       // 產生 QR Code URL
       this.generateFormQrCodeUrl();
-      
+
     } catch (error) {
       console.error('儲存教育訓練表單失敗', error);
       if (!this.isWorkerSigningMode) {
         alert('儲存教育訓練表單失敗');
       }
+    }
+  }
+
+  // 靜默保存表單（不顯示訊息，不跳轉頁面）
+  async saveFormSilently(): Promise<void> {
+    try {
+      // 更新實際簽到人數
+      this.updateAttendanceCount();
+
+      if (this.formId) {
+        this.formData.updatedAt = new Date();
+        this.formData.updatedBy = this.authService.user()?.name || '';
+        // 更新現有表單
+        await this.mongodbService.patch('siteForm', this.formId, this.formData);
+      } else {
+        this.formData.createdAt = new Date();
+        this.formData.createdBy = this.authService.user()?.name || '';
+        // 新增表單
+        const result = await this.mongodbService.post('siteForm', this.formData);
+        this.formId = result.insertedId;
+      }
+
+      // 產生 QR Code URL
+      this.generateFormQrCodeUrl();
+
+    } catch (error) {
+      console.error('儲存教育訓練表單失敗', error);
     }
   }
 
@@ -578,6 +762,49 @@ export class TrainingFormComponent implements OnInit, AfterViewInit {
     } else {
       // 工人簽名模式下，顯示提示或關閉視窗
       alert('簽名完成，請關閉此頁面');
+    }
+  }
+
+  // 時間變更事件處理
+  onTimeChange(): void {
+    // 觸發變更檢測以重新計算訓練時數
+    this.cdr.detectChanges();
+  }
+
+  // 計算訓練時數
+  get trainingHours(): string {
+    if (!this.formData.trainingTime || !this.formData.trainingTimeEnd) {
+      return '';
+    }
+
+    try {
+      const startTime = dayjs(`2000-01-01 ${this.formData.trainingTime}`);
+      const endTime = dayjs(`2000-01-01 ${this.formData.trainingTimeEnd}`);
+
+      if (!startTime.isValid() || !endTime.isValid()) {
+        return '';
+      }
+
+      // 計算時數差異（分鐘）
+      let diffMinutes = endTime.diff(startTime, 'minute');
+
+      // 如果結束時間早於開始時間，視為跨日
+      if (diffMinutes < 0) {
+        diffMinutes = endTime.add(1, 'day').diff(startTime, 'minute');
+      }
+
+      // 轉換為小時
+      const hours = Math.floor(diffMinutes / 60);
+      const minutes = diffMinutes % 60;
+
+      if (minutes === 0) {
+        return hours.toString();
+      } else {
+        return (hours + minutes / 60).toFixed(1);
+      }
+    } catch (error) {
+      console.error('計算訓練時數錯誤:', error);
+      return '';
     }
   }
 

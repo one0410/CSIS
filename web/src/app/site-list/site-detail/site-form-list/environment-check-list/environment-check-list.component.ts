@@ -283,8 +283,8 @@ export class EnvironmentCheckListComponent implements OnInit {
 
       if (result) {
         alert('檢查表保存成功');
-        // 不導航，讓用戶可以下載Word
-        // this.router.navigate(['/site', this.siteId, 'forms']);
+        // 跳轉回表單列表頁面
+        this.router.navigate(['/site', this.siteId, 'forms']);
       }
     } catch (error) {
       console.error('保存檢查表失敗', error);

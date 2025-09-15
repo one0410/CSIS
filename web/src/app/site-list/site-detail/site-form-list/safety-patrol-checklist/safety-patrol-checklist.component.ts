@@ -522,7 +522,7 @@ export class SafetyPatrolChecklistComponent implements OnInit {
       if (result) {
         alert('工安巡迴檢查表保存成功');
         // 不導航，讓用戶可以下載Word
-        // this.router.navigate(['/site', this.siteId, 'forms']);
+        this.router.navigate(['/site', this.siteId, 'forms']);
       }
     } catch (error) {
       console.error('保存檢查表失敗', error);

@@ -33,11 +33,13 @@
                   <td class="bg-light">時　　間：</td>
                   <td>
                     <div class="d-flex align-items-center gap-2">
-                      <input type="time" class="form-control" style="max-width: 160px" [(ngModel)]="formData.trainingTime" [readonly]="isViewMode && !isWorkerSigningMode" aria-label="時間起" required />
+                      <input type="time" class="form-control" style="max-width: 160px" [(ngModel)]="formData.trainingTime" (ngModelChange)="onTimeChange()" [readonly]="isViewMode && !isWorkerSigningMode" aria-label="時間起" required />
                       <span class="mx-1">～</span>
-                      <input type="time" class="form-control" style="max-width: 160px" [(ngModel)]="formData.trainingTimeEnd" [readonly]="isViewMode && !isWorkerSigningMode" aria-label="時間迄" />
+                      <input type="time" class="form-control" style="max-width: 160px" [(ngModel)]="formData.trainingTimeEnd" (ngModelChange)="onTimeChange()" [readonly]="isViewMode && !isWorkerSigningMode" aria-label="時間迄" />
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
                       <span class="ms-2">共</span>
-                      <input type="text" class="form-control" style="max-width: 80px" [readonly]="true" aria-label="共小時" />
+                      <input type="text" class="form-control" style="max-width: 80px" [value]="trainingHours" [readonly]="true" aria-label="共小時" />
                       <span>小時</span>
                     </div>
                   </td>
@@ -141,6 +143,9 @@
                 aria-label="備註"
               ></textarea>
             </div>
+            <div class="text-end mb-3">
+              <small class="text-muted">QP-6201-07C</small>
+            </div>
           </div>
         </div>
 
@@ -213,7 +218,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="workerVerificationModalLabel">
-            工人身份驗證
+            員工或人才身份驗證
           </h5>
           <button
             type="button"
@@ -225,14 +230,14 @@
         <div class="modal-body">
           <div class="mb-3">
             <label for="verificationId" class="form-label"
-              >請輸入身份證號碼或手機號碼</label
+              >請輸入員工工號或人才身份證號碼、手機號碼</label
             >
             <input
               type="text"
               class="form-control"
               id="verificationId"
               [(ngModel)]="verificationIdOrPhone"
-              placeholder="身份證號碼或手機號碼"
+              placeholder="工號、身份證號碼或手機號碼"
             />
           </div>
           @if (verificationError) {
