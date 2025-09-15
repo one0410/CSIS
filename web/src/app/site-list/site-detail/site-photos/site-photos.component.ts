@@ -535,6 +535,15 @@ export class SitePhotosComponent implements OnInit {
             // 更新分類和描述
             if (photoInfo.metadata.tags) {
               photoClone.metadata.tags = [...photoInfo.metadata.tags];
+
+              // 如果 tags 中包含自定義標簽, 則將 isSystemTag 設為 false
+              // 系統標籤則維持 true
+              const customTags = this.getUserDefinedTags();
+              photoClone.metadata.tags.forEach(tag => {
+                if (customTags.some(customTag => customTag.title === tag.title)) {
+                  tag.isSystemTag = false;
+                }
+              });
             }
             if (photoInfo.metadata.description) {
               photoClone.metadata.description = photoInfo.metadata.description;
@@ -886,7 +895,7 @@ export class SitePhotosComponent implements OnInit {
         title: systemTags[i],
         color: this.presetColors[i].color,
         background: this.presetColors[i].background,
-        isSystemTag: true
+        isSystemTag: false
       });
     }
 
