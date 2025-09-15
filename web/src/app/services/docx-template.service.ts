@@ -12,6 +12,7 @@ import { TrainingForm } from '../site-list/site-detail/site-training/training-fo
 import { SpecialWorkChecklistData } from '../site-list/site-detail/site-form-list/special-work-checklist/special-work-checklist.component';
 import { EnvironmentChecklistData } from '../site-list/site-detail/site-form-list/environment-check-list/environment-check-list.component';
 import { HazardNoticeForm } from '../site-list/site-detail/site-hazard-notice/hazard-notice-form/hazard-notice-form.component';
+import { SafetyPatrolChecklistData } from '../site-list/site-detail/site-form-list/safety-patrol-checklist/safety-patrol-checklist.component';
 
 
 @Injectable({
@@ -35,7 +36,7 @@ export class DocxTemplateService {
       // 獲取表單資料
       const formData = await this.mongodbService.getById('siteForm', formId);
       const currentSite = this.currentSiteService.currentSite();
-      
+
       if (!formData || !currentSite) {
         throw new Error('無法獲取表單或專案資料');
       }
@@ -45,7 +46,7 @@ export class DocxTemplateService {
       if (!response.ok) {
         throw new Error(`無法載入模板檔案: ${response.status}`);
       }
-      
+
       const arrayBuffer = await response.arrayBuffer();
       const zip = new PizZip(arrayBuffer);
 
@@ -67,7 +68,7 @@ export class DocxTemplateService {
 
       // 創建 docxtemplater 實例
       const doc = new Docxtemplater().loadZip(zip);
-      
+
       // 添加模組
       if (modules.length > 0) {
         modules.forEach(module => doc.attachModule(module));
@@ -97,7 +98,7 @@ export class DocxTemplateService {
       doc.render(templateData);
 
       // 生成文檔
-      const blob = doc.getZip().generate({ 
+      const blob = doc.getZip().generate({
         type: 'blob',
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       });
@@ -167,63 +168,63 @@ export class DocxTemplateService {
       supervisorPhone: formData.supervisorPhone || '',
       projectNo: formData.projectNo || '',
       projectName: formData.projectName || currentSite?.name || '',
-      
+
       // 申請人資訊
       applicant: formData.applicant || '',
-      
+
       // 簡化的作業類別勾選
       workTypes: formData.selectedCategories || [],
 
-             // 作業類別勾選框
-       isNo1: (formData.selectedCategories || []).includes('動火作業'),
-       isNo2: (formData.selectedCategories || []).includes('高架作業'),
-       isNo3: (formData.selectedCategories || []).includes('局限空間作業'),
-       isNo4: (formData.selectedCategories || []).includes('電力作業'),
-       isNo5: (formData.selectedCategories || []).includes('吊籠作業'),
-       isNo6: (formData.selectedCategories || []).includes('起重吊掛作業'),
-       isNo7: (formData.selectedCategories || []).includes('施工架組裝作業'),
-       isNo8: (formData.selectedCategories || []).includes('管線拆離作業'),
-       isNo9: (formData.selectedCategories || []).includes('開口作業'),
-       isNo10: (formData.selectedCategories || []).includes('化學作業'),
-       isNo11: (formData.selectedCategories || []).includes('其他'),
+      // 作業類別勾選框
+      isNo1: (formData.selectedCategories || []).includes('動火作業'),
+      isNo2: (formData.selectedCategories || []).includes('高架作業'),
+      isNo3: (formData.selectedCategories || []).includes('局限空間作業'),
+      isNo4: (formData.selectedCategories || []).includes('電力作業'),
+      isNo5: (formData.selectedCategories || []).includes('吊籠作業'),
+      isNo6: (formData.selectedCategories || []).includes('起重吊掛作業'),
+      isNo7: (formData.selectedCategories || []).includes('施工架組裝作業'),
+      isNo8: (formData.selectedCategories || []).includes('管線拆離作業'),
+      isNo9: (formData.selectedCategories || []).includes('開口作業'),
+      isNo10: (formData.selectedCategories || []).includes('化學作業'),
+      isNo11: (formData.selectedCategories || []).includes('其他'),
 
-             // 備註
-       remarks: formData.remarks || '',
-       
-       // 簽名圖片 - 傳遞base64圖片數據給圖片模組
-       applicantSignatureImage: this.getValidSignatureImage(formData.applicantSignature?.signature),
-       departmentManagerSignatureImage: this.getValidSignatureImage(formData.departmentManagerSignature?.signature),
-       reviewSignatureImage: this.getValidSignatureImage(formData.reviewSignature?.signature),
-       approvalSignatureImage: this.getValidSignatureImage(formData.approvalSignature?.signature),
-       
-       // 簽名人姓名
-       applicantName: formData.applicantSignature?.name || '',
-       departmentManagerName: formData.departmentManagerSignature?.name || '',
-       reviewName: formData.reviewSignature?.name || '',
-       approvalName: formData.approvalSignature?.name || '',
-       
-       // 簽名日期 - 處理可能是Date物件或字串的情況
-       applicantSignDate: formData.applicantSignature?.signedAt ? dayjs(formData.applicantSignature.signedAt).format('YYYY-MM-DD') : '',
-       departmentManagerSignDate: formData.departmentManagerSignature?.signedAt ? dayjs(formData.departmentManagerSignature.signedAt).format('YYYY-MM-DD') : '',
-       reviewSignDate: formData.reviewSignature?.signedAt ? dayjs(formData.reviewSignature.signedAt).format('YYYY-MM-DD') : '',
-       approvalSignDate: formData.approvalSignature?.signedAt ? dayjs(formData.approvalSignature.signedAt).format('YYYY-MM-DD') : '',
-       
-       // 表單狀態
-       status: formData.status || 'draft',
-       
-       // JSA 表單新增欄位
-       workName: formData.workName || '',
-       contractor: formData.contractor || '',
-       maker: formData.maker || '',
-       makerDate: formData.makerDate ? dayjs(formData.makerDate).format('YYYY-MM-DD') : '',
-       step: formData.step || '',
-       highRiskProject: formData.highRiskProject || '',
-       possibleHazardFactor: formData.possibleHazardFactor || '',
-       protectiveEquipment: formData.protectiveEquipment || '',
-       safetyProtectionMeasures: formData.safetyProtectionMeasures || '',
-       emergencyMeasures: formData.emergencyMeasures || '',
-       workDate: formData.workDate ? dayjs(formData.workDate).format('YYYY-MM-DD') : '',
-       workPersonCount: formData.workPersonCount ?? ''
+      // 備註
+      remarks: formData.remarks || '',
+
+      // 簽名圖片 - 傳遞base64圖片數據給圖片模組
+      applicantSignatureImage: this.getValidSignatureImage(formData.applicantSignature?.signature),
+      departmentManagerSignatureImage: this.getValidSignatureImage(formData.departmentManagerSignature?.signature),
+      reviewSignatureImage: this.getValidSignatureImage(formData.reviewSignature?.signature),
+      approvalSignatureImage: this.getValidSignatureImage(formData.approvalSignature?.signature),
+
+      // 簽名人姓名
+      applicantName: formData.applicantSignature?.name || '',
+      departmentManagerName: formData.departmentManagerSignature?.name || '',
+      reviewName: formData.reviewSignature?.name || '',
+      approvalName: formData.approvalSignature?.name || '',
+
+      // 簽名日期 - 處理可能是Date物件或字串的情況
+      applicantSignDate: formData.applicantSignature?.signedAt ? dayjs(formData.applicantSignature.signedAt).format('YYYY-MM-DD') : '',
+      departmentManagerSignDate: formData.departmentManagerSignature?.signedAt ? dayjs(formData.departmentManagerSignature.signedAt).format('YYYY-MM-DD') : '',
+      reviewSignDate: formData.reviewSignature?.signedAt ? dayjs(formData.reviewSignature.signedAt).format('YYYY-MM-DD') : '',
+      approvalSignDate: formData.approvalSignature?.signedAt ? dayjs(formData.approvalSignature.signedAt).format('YYYY-MM-DD') : '',
+
+      // 表單狀態
+      status: formData.status || 'draft',
+
+      // JSA 表單新增欄位
+      workName: formData.workName || '',
+      contractor: formData.contractor || '',
+      maker: formData.maker || '',
+      makerDate: formData.makerDate ? dayjs(formData.makerDate).format('YYYY-MM-DD') : '',
+      step: formData.step || '',
+      highRiskProject: formData.highRiskProject || '',
+      possibleHazardFactor: formData.possibleHazardFactor || '',
+      protectiveEquipment: formData.protectiveEquipment || '',
+      safetyProtectionMeasures: formData.safetyProtectionMeasures || '',
+      emergencyMeasures: formData.emergencyMeasures || '',
+      workDate: formData.workDate ? dayjs(formData.workDate).format('YYYY-MM-DD') : '',
+      workPersonCount: formData.workPersonCount ?? ''
     };
   }
 
@@ -235,12 +236,12 @@ export class DocxTemplateService {
       console.log('簽名數據為空或undefined');
       return '';
     }
-    
+
     if (!signature.startsWith('data:image/')) {
       console.log('簽名數據格式不正確:', signature.substring(0, 50));
       return '';
     }
-    
+
     console.log('簽名數據有效，長度:', signature.length);
     return signature;
   }
@@ -251,24 +252,24 @@ export class DocxTemplateService {
   private getImageData(tagValue: string): ArrayBuffer {
     try {
       console.log('getImageData 收到的值:', tagValue);
-      
+
       // 如果是簽名圖片，tagValue會是base64格式的圖片數據
       if (tagValue && typeof tagValue === 'string' && tagValue.startsWith('data:image/')) {
         // 移除data:image/png;base64,前綴
         const base64Data = tagValue.split(',')[1];
-        
+
         // 將base64轉換為ArrayBuffer
         const binaryString = atob(base64Data);
         const len = binaryString.length;
         const bytes = new Uint8Array(len);
-        
+
         for (let i = 0; i < len; i++) {
           bytes[i] = binaryString.charCodeAt(i);
         }
-        
+
         return bytes.buffer;
       }
-      
+
       // 如果沒有簽名數據，返回透明的1x1像素PNG
       const emptyPng = new Uint8Array([
         0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
@@ -278,7 +279,7 @@ export class DocxTemplateService {
         0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49,
         0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
       ]);
-      
+
       return emptyPng.buffer;
     } catch (error) {
       console.warn('處理圖片數據失敗:', error);
@@ -462,11 +463,11 @@ export class DocxTemplateService {
       gasDetector: formData.safetyPrecautions.personalProtection.gasDetector ? '🗹' : '🗷', // 氣體探測器
       liftingEquipment: formData.safetyPrecautions.personalProtection.liftingEquipment ? '🗹' : '🗷', // 起重機
       rescueEquipment: formData.safetyPrecautions.personalProtection.rescueEquipment ? '🗹' : '🗷', // 搶救設備
-      
+
       // 安全衛生措施-12其他預防
       otherPrevention: formData.safetyPrecautions.personalProtection.otherPrevention ? '🗹' : '🗷', // 其他預防
       otherPreventionContent: formData.safetyPrecautions.personalProtection.otherContent || '', // 其他預防內容
-      
+
       // 其他溝通/協議/宣導事項
       communicationItems: formData.communicationItems || '',
 
@@ -644,6 +645,16 @@ export class DocxTemplateService {
   private prepareEnvironmentChecklistData(formData: EnvironmentChecklistData, currentSite: any): any {
     const applyDate = dayjs(formData.applyDate);
 
+    for (const key in formData.items) {
+      if (formData.items[key] == '正常') {
+        formData.items[key + 'Normal'] = 'V';
+      } else if (formData.items[key] == '異常') {
+        formData.items[key + 'Abnormal'] = 'V';
+      } else if (formData.items[key] == '不適用') {
+        formData.items[key + 'NotApplicable'] = 'N/A';
+      }
+    }
+
     return {
       // 基本資訊
       projectNo: formData.projectNo || currentSite.projectNo || '',
@@ -653,21 +664,21 @@ export class DocxTemplateService {
       checkDateMonth: applyDate.format('MM'),
       checkDateDay: applyDate.format('DD'),
       location: formData.location || '',
-      
+
       // 檢點項目結果
       items: formData.items || {},
       fixes: formData.fixes || {},
-      
+
       // 時間
       preWorkCheckTime: formData.preWorkCheckTime || '',
       postWorkCheckTime: formData.postWorkCheckTime || '',
-      
+
       // 簽名圖片
       preWorkSupervisorSignature: formData.preWorkSupervisorSignature || '',
       preWorkWorkerSignature: formData.preWorkWorkerSignature || '',
       postWorkSupervisorSignature: formData.postWorkSupervisorSignature || '',
       postWorkWorkerSignature: formData.postWorkWorkerSignature || '',
-      
+
       // 備註
       remarks: formData.remarks || ''
     };
@@ -718,7 +729,7 @@ export class DocxTemplateService {
       // 獲取表單資料
       const formData = await this.mongodbService.getById('siteForm', formId);
       const currentSite = this.currentSiteService.currentSite();
-      
+
       if (!formData || !currentSite) {
         throw new Error('無法獲取表單或專案資料');
       }
@@ -731,7 +742,7 @@ export class DocxTemplateService {
       if (!response.ok) {
         throw new Error(`無法載入模板檔案: ${response.status}`);
       }
-      
+
       const arrayBuffer = await response.arrayBuffer();
       const zip = new PizZip(arrayBuffer);
 
@@ -753,7 +764,7 @@ export class DocxTemplateService {
 
       // 創建 docxtemplater 實例
       const doc = new Docxtemplater().loadZip(zip);
-      
+
       // 添加模組
       if (modules.length > 0) {
         modules.forEach(module => doc.attachModule(module));
@@ -783,7 +794,7 @@ export class DocxTemplateService {
       doc.render(templateData);
 
       // 生成文檔
-      const blob = doc.getZip().generate({ 
+      const blob = doc.getZip().generate({
         type: 'blob',
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       });
@@ -850,22 +861,22 @@ export class DocxTemplateService {
       applyDateMonth: (applyDate.month() + 1).toString().padStart(2, '0'),
       applyDateDay: applyDate.date().toString().padStart(2, '0'),
       workType: formData.workType || '',
-      
+
       // 檢點項目結果
       items: formData.items || {},
       fixes: formData.fixes || {},
       itemInputs: formData.itemInputs || {},
-      
+
       // 時間
       preWorkCheckTime: formData.preWorkCheckTime || '',
       postWorkCheckTime: formData.postWorkCheckTime || '',
-      
+
       // 簽名圖片
       preWorkSupervisorSignature: formData.preWorkSupervisorSignature || '',
       preWorkWorkerSignature: formData.preWorkWorkerSignature || '',
       postWorkSupervisorSignature: formData.postWorkSupervisorSignature || '',
       postWorkWorkerSignature: formData.postWorkWorkerSignature || '',
-      
+
       // 備註
       remarks: formData.remarks || ''
     };
@@ -990,7 +1001,7 @@ export class DocxTemplateService {
   private prepareSafetyIssueRecordData(formData: IssueRecord, currentSite: any): any {
     // 處置措施轉換
     const remedyMeasuresText = formData.remedyMeasures?.map((measure: string) => {
-      switch(measure) {
+      switch (measure) {
         case 'immediateCorrection':
           return '立即完成改正';
         case 'improvementWithDeadline':
@@ -1015,39 +1026,137 @@ export class DocxTemplateService {
       factoryArea: formData.factoryArea || '',
       responsibleUnitName: formData.responsibleUnit === 'MIC' ? (formData.responsibleUnitName || '') : (formData.supplierName || ''),
       supplierName: formData.supplierName || '',
-      
+
       // 缺失說明
       issueDescription: formData.issueDescription || '',
-      
+
       // 缺失處置
       remedyMeasuresText: remedyMeasuresText,
       remedyMeasuresImmediate: formData.remedyMeasures.includes('immediate') ? '■' : '□',
       remedyMeasuresImprovementWithDeadline: formData.remedyMeasures.includes('improvementWithDeadline') ? '■' : '□',
       remedyMeasuresCorrectivePreventionReport: formData.remedyMeasures.includes('correctivePreventionReport') ? '■' : '□',
       improvementDeadline: dayjs(formData.improvementDeadline).format('YYYY 年 MM 月 DD 日') || '  年  月  日',
-      
+
       // 缺失評核
       deductionCode: formData.deductionCode || '',
       recordPoints: formData.recordPoints || '',
-      
+
       // 複查資訊
       reviewDate: dayjs(formData.reviewDate).format('YYYY 年 MM 月 DD 日') || '  年  月  日',
       reviewer: formData.reviewer || '',
-      reviewResult: formData.reviewResult === 'completed' ? '已完成改正' : 
-                   formData.reviewResult === 'incomplete' ? '未完成改正(要求改善，再次開立工安缺失紀錄表)' : '',
+      reviewResult: formData.reviewResult === 'completed' ? '已完成改正' :
+        formData.reviewResult === 'incomplete' ? '未完成改正(要求改善，再次開立工安缺失紀錄表)' : '',
       reviewResultCompleted: formData.reviewResult === 'completed' ? '■' : '□',
       reviewResultIncomplete: formData.reviewResult === 'incomplete' ? '■' : '□',
-      
+
       // 簽名圖片
       supervisorSignatureImage: formData.supervisorSignature || '',
       workerSignatureImage: formData.workerSignature || '',
-      
+
       // 工地資訊
       siteName: currentSite.projectName || '',
       siteLocation: `${currentSite.county || ''} ${currentSite.town || ''}`.trim(),
-      
+
       // 當前日期
       currentDate: dayjs().format('YYYY年MM月DD日')
+    };
+  }
+
+  /**
+   * 生成工安巡迴檢查表 DOCX
+   */
+  async generateSafetyPatrolChecklistDocx(formId: string): Promise<void> {
+    try {
+      const result = await this.generateSafetyPatrolChecklistDocxBlob(formId);
+      saveAs(result.blob, result.fileName);
+    } catch (error) {
+      console.error('無法生成工安巡迴檢查表 DOCX:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 生成工安巡迴檢查表 DOCX Blob（用於批量下載）
+   */
+  async generateSafetyPatrolChecklistDocxBlob(formId: string): Promise<{ blob: Blob, fileName: string }> {
+    return this.generateDocumentBlobWithDynamicTemplate(
+      formId,
+      (formData) => {
+        if (!formData.checkType) {
+          throw new Error('表單缺少檢查類型資訊');
+        }
+        return this.getSafetyPatrolChecklistTemplatePath(formData.checkType);
+      },
+      (formData, currentSite) => this.prepareSafetyPatrolChecklistData(formData, currentSite),
+      (formData, currentSite) => `工安巡迴檢查表_${formData.checkType}_${currentSite.projectName || ''}_${formData.applyDate || ''}.docx`
+    );
+  }
+
+  /**
+   * 根據檢查類型獲取對應的工安巡迴檢查表模板路徑
+   */
+  private getSafetyPatrolChecklistTemplatePath(checkType: string): string {
+    const templateMap: { [key: string]: string } = {
+      '工地管理': '/template/ee-4411-05工安巡迴檢查表(工地管理).docx',
+      '一般作業': '/template/ee-4411-05工安巡迴檢查表(一般作業).docx',
+      '特殊作業': '/template/ee-4411-05工安巡迴檢查表(特殊作業).docx'
+    };
+
+    const templatePath = templateMap[checkType];
+    if (!templatePath) {
+      throw new Error(`不支援的檢查類型: ${checkType}`);
+    }
+
+    return templatePath;
+  }
+
+  /**
+   * 準備工安巡迴檢查表模板資料
+   */
+  private prepareSafetyPatrolChecklistData(formData: SafetyPatrolChecklistData, currentSite: any): any {
+    const applyDate = dayjs(formData.applyDate);
+
+    for (const key in formData.items) {
+      if (formData.items[key] == '正常') {
+        formData.items[key + 'Normal'] = 'V';
+      } else if (formData.items[key] == '異常') {
+        formData.items[key + 'Abnormal'] = 'V';
+      } else if (formData.items[key] == '不適用') {
+        formData.items[key + 'NotApplicable'] = 'N/A';
+      }
+    }
+
+    for (const key in formData.itemRemarks) {
+      formData.itemRemarks[key] = formData.itemRemarks[key] || '';
+    }
+
+    return {
+      // 基本資訊
+      checkType: formData.checkType || '',
+      applyDate: formData.applyDate || '',
+      applyDateYear: applyDate.year().toString(),
+      applyDateMonth: (applyDate.month() + 1).toString().padStart(2, '0'),
+      applyDateDay: applyDate.date().toString().padStart(2, '0'),
+      projectNo: formData.projectNo || '',
+      factoryArea: `${currentSite?.county || ''}${currentSite?.town || ''}`,
+      inspectionUnit: formData.inspectionUnit || '',
+      inspector: formData.inspector || '',
+      inspectee: formData.inspectee || '',
+
+      // 檢查項目結果
+      items: formData.items || {},
+      itemRemarks: formData.itemRemarks || {},
+
+      // 簽名圖片
+      faultyUnitSignature: this.getValidSignatureImage(formData.faultyUnitSignature),
+      micSupervisorSignature: this.getValidSignatureImage(formData.micSupervisorSignature),
+
+      // 備註
+      remarks: formData.remarks || '',
+
+      // 工地資訊
+      siteName: currentSite?.projectName || '',
+      siteLocation: `${currentSite?.county || ''} ${currentSite?.town || ''}`.trim(),
     };
   }
 
@@ -1070,6 +1179,8 @@ export class DocxTemplateService {
         return this.generateSpecialWorkChecklistDocx(formId);
       case 'safetyIssueRecord':
         return this.generateSafetyIssueRecordDocx(formId);
+      case 'safetyPatrolChecklist':
+        return this.generateSafetyPatrolChecklistDocx(formId);
       default:
         throw new Error(`不支援的表單類型: ${formType}`);
     }
@@ -1094,6 +1205,8 @@ export class DocxTemplateService {
         return this.generateSpecialWorkChecklistDocxBlob(formId);
       case 'safetyIssueRecord':
         return this.generateSafetyIssueRecordDocxBlob(formId);
+      case 'safetyPatrolChecklist':
+        return this.generateSafetyPatrolChecklistDocxBlob(formId);
       default:
         throw new Error(`表單類型 ${formType} 尚未支援批量下載，請使用單個下載功能`);
     }

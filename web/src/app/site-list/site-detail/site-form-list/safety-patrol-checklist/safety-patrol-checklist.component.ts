@@ -15,7 +15,7 @@ interface ChecklistItem {
   [key: string]: string;
 }
 
-interface SafetyPatrolChecklistData extends SiteForm {
+export interface SafetyPatrolChecklistData extends SiteForm {
   formType: 'safetyPatrolChecklist';
   checkType: string; // 檢查種類：工地管理、一般作業、特殊作業
   inspectionUnit: string;
