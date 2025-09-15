@@ -2,7 +2,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   Component,
+  OnInit,
   OnDestroy,
+  AfterViewInit,
   Signal,
   WritableSignal,
   signal,
@@ -43,7 +45,7 @@ interface CertificationWithFlag extends Certification {
   templateUrl: './worker-list.component.html',
   styleUrl: './worker-list.component.scss',
 })
-export class WorkerListComponent implements OnDestroy {
+export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
   workers: WorkerWithFlag[] = [];
   filteredWorkers: WorkerWithFlag[] = []; // 過濾後的工人資料
 
@@ -61,6 +63,9 @@ export class WorkerListComponent implements OnDestroy {
   contractingCompaniesWithCount: { name: string; count: number }[] = []; // 承攬公司清單含人數統計
   filteredContractingCompanies: { name: string; count: number }[] = []; // 過濾後的承攬公司清單
   companySearchText = ''; // 承攬公司搜尋文字
+  workerSearchText = ''; // 人才搜尋文字（姓名、電話、身份證號）
+  private searchDebounceTimer: any = null; // 搜尋防抖計時器
+  private currentSearchRequest: any = null; // 當前搜尋請求
   certificationTypes: { value: string; label: string }[] = []; // 所有證照類型清單
   isFilterExpanded = false; // 過濾器展開狀態
 
@@ -958,6 +963,14 @@ export class WorkerListComponent implements OnDestroy {
   ngOnDestroy() {
     // 組件銷毀時清理 modal 狀態
     this.cleanupModalState();
+
+    // 清理搜尋相關的計時器和請求
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    if (this.currentSearchRequest) {
+      this.currentSearchRequest = null;
+    }
   }
 
   async ngOnInit() {
@@ -966,12 +979,36 @@ export class WorkerListComponent implements OnDestroy {
     await this.loadWorkersData();
   }
 
+  ngAfterViewInit() {
+    // 初始化 Bootstrap dropdown
+    this.initBootstrapDropdown();
+  }
+
+  private initBootstrapDropdown() {
+    // 確保 Bootstrap 可用
+    if (typeof (window as any).bootstrap !== 'undefined') {
+      // 初始化所有的 dropdown
+      const dropdownElements = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+      dropdownElements.forEach(element => {
+        new (window as any).bootstrap.Dropdown(element);
+      });
+    } else {
+      // 如果 Bootstrap 還沒載入，稍後重試
+      setTimeout(() => this.initBootstrapDropdown(), 100);
+    }
+  }
+
   // 從 URL 參數讀取篩選條件
   private loadFiltersFromUrl() {
     this.route.queryParams.subscribe(params => {
       // 讀取承攬公司篩選條件
       if (params['company']) {
         this.selectedContractingCompany = params['company'];
+      }
+
+      // 讀取人才搜尋條件
+      if (params['search']) {
+        this.workerSearchText = params['search'];
       }
 
       // 讀取證照類型篩選條件
@@ -991,6 +1028,11 @@ export class WorkerListComponent implements OnDestroy {
       queryParams['company'] = this.selectedContractingCompany;
     }
 
+    // 人才搜尋條件
+    if (this.workerSearchText.trim()) {
+      queryParams['search'] = this.workerSearchText.trim();
+    }
+
     // 證照類型篩選條件
     if (this.selectedCertificationTypes.length > 0) {
       queryParams['cert'] = this.selectedCertificationTypes.join(',');
@@ -1000,7 +1042,6 @@ export class WorkerListComponent implements OnDestroy {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: queryParams,
-      queryParamsHandling: 'merge',
       replaceUrl: true // 使用 replaceUrl 避免在瀏覽器歷史中產生多個記錄
     });
   }
@@ -1008,12 +1049,16 @@ export class WorkerListComponent implements OnDestroy {
   // 載入工人資料（一次載入所有資料，優化傳輸）
   async loadWorkersData() {
     if (this.isLoading) return;
-    
+
+    // 建立請求標識
+    const requestId = Symbol('request');
+    this.currentSearchRequest = requestId;
+
     this.isLoading = true;
     try {
       // 構建查詢條件
       const filter = this.buildFilterCondition();
-      
+
       // 一次載入所有資料，但排除圖片欄位以減少傳輸大小
       const result = await this.mongodbService.get('worker', filter, {
         limit: 0, // 0 表示載入所有資料
@@ -1130,8 +1175,20 @@ export class WorkerListComponent implements OnDestroy {
           rowCount: this.filteredWorkers.length
         });
       }
+
+      // 檢查這個請求是否還是最新的
+      if (this.currentSearchRequest !== requestId) {
+        console.log('請求已過時，忽略結果');
+        return;
+      }
     } catch (error) {
       console.error('載入工人資料時發生錯誤:', error);
+
+      // 檢查這個請求是否還是最新的
+      if (this.currentSearchRequest !== requestId) {
+        console.log('請求已過時，忽略結果');
+        return;
+      }
       // 查詢失敗時，設定空陣列避免後續處理錯誤
       this.workers = [];
       this.filteredWorkers = [];
@@ -1143,24 +1200,38 @@ export class WorkerListComponent implements OnDestroy {
         this.api.setGridOption('rowData', []);
       }
     } finally {
-      this.isLoading = false;
+      // 檢查這個請求是否還是最新的
+      if (this.currentSearchRequest === requestId) {
+        this.isLoading = false;
+        this.currentSearchRequest = null;
+      }
     }
   }
 
   // 構建查詢條件
   private buildFilterCondition(): any {
     const filter: any = {};
-    
+
     // 承攬公司過濾
     if (this.selectedContractingCompany) {
       filter.contractingCompanyName = this.selectedContractingCompany;
     }
-    
+
+    // 人才搜尋過濾（姓名、電話、身份證號）
+    if (this.workerSearchText.trim()) {
+      const searchText = this.workerSearchText.trim();
+      filter.$or = [
+        { name: { $regex: searchText, $options: 'i' } },           // 姓名（不區分大小寫）
+        { tel: { $regex: searchText, $options: 'i' } },            // 電話
+        { idno: { $regex: searchText, $options: 'i' } }            // 身份證號（不區分大小寫）
+      ];
+    }
+
     // 證照類型過濾（這裡需要特殊處理，因為證照是陣列）
     if (this.selectedCertificationTypes.length > 0) {
       filter['certifications.type'] = { $in: this.selectedCertificationTypes };
     }
-    
+
     return filter;
   }
 
@@ -1401,6 +1472,7 @@ export class WorkerListComponent implements OnDestroy {
     console.log('清除所有過濾器，重置分頁到第一頁');
     this.selectedContractingCompany = '';
     this.selectedCertificationTypes = [];
+    this.workerSearchText = '';
     // 清除 URL 參數
     this.router.navigate([], {
       relativeTo: this.route,
@@ -1441,6 +1513,44 @@ export class WorkerListComponent implements OnDestroy {
   clearCompanySearch() {
     this.companySearchText = '';
     this.filteredContractingCompanies = [...this.contractingCompaniesWithCount];
+  }
+
+  // 人才搜尋處理（加入防抖機制）
+  onWorkerSearchChange() {
+    // 清除之前的計時器
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+
+    // 設定新的計時器，300ms 後執行搜尋
+    this.searchDebounceTimer = setTimeout(() => {
+      this.performSearch();
+    }, 300);
+  }
+
+  // 執行實際搜尋
+  private performSearch() {
+    // 取消前一個搜尋請求
+    if (this.currentSearchRequest) {
+      this.currentSearchRequest = null;
+    }
+
+    // 觸發過濾器應用
+    this.updateUrlWithFilters();
+    this.applyFilters();
+  }
+
+  // 清除人才搜尋
+  clearWorkerSearch() {
+    // 清除計時器
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+
+    this.workerSearchText = '';
+    this.updateUrlWithFilters();
+    this.applyFilters();
   }
 
   // 遷移意外險資料：將舊的 picture 欄位移到 pictures 陣列，並修正錯誤的資料分配
@@ -1549,6 +1659,10 @@ export class WorkerListComponent implements OnDestroy {
   // 獲取過濾器狀態摘要
   getFilterSummary(): string {
     const summaryParts: string[] = [];
+
+    if (this.workerSearchText.trim()) {
+      summaryParts.push(`搜尋: ${this.workerSearchText.trim()}`);
+    }
 
     if (this.selectedContractingCompany) {
       summaryParts.push(`承攬公司: ${this.selectedContractingCompany}`);

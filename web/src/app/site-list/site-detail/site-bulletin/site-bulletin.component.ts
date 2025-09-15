@@ -37,19 +37,22 @@ export class SiteBulletinComponent implements OnInit {
   isEditing = computed(() => !!this.editingBulletin()._id);
   currentUser = computed(() => this.authService.user());
   
-  // 檢查當前使用者是否有管理權限 (專案經理/工地經理/專案秘書)
+  // 檢查當前使用者是否有管理權限 (專案經理/工地經理/專案秘書/環安主管/環安工程師/專案工程師)
   hasManagePermission = computed(() => {
     const user = this.currentUser();
     const currentSite = this.site();
     if (!user || !user.belongSites || !currentSite?._id) {
       return false;
     }
-    
+
     // 檢查使用者在此工地的角色
     const siteRole = user.belongSites.find(site => site.siteId === currentSite._id);
-    return siteRole?.role === 'manager' || 
-           siteRole?.role === 'projectManager' || 
-           siteRole?.role === 'secretary';
+    return siteRole?.role === 'manager' ||
+           siteRole?.role === 'projectManager' ||
+           siteRole?.role === 'secretary' ||
+           siteRole?.role === 'safetyManager' ||
+           siteRole?.role === 'safetyEngineer' ||
+           siteRole?.role === 'projectEngineer';
   });
 
   constructor() {
