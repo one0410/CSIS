@@ -3,6 +3,7 @@ import { CurrentSiteService } from './current-site.service';
 import { DocxTemplateService } from './docx-template.service';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import dayjs from 'dayjs';
 
 export interface DownloadProgress {
   current: number;
@@ -117,7 +118,7 @@ export class WordDownloadService {
 
       // 生成ZIP檔案名稱
       const siteName = currentSite.projectName || '未知工地';
-      const today = new Date().toISOString().split('T')[0];
+      const today = dayjs().format('YYYY-MM-DD');
       const zipFileName = `${siteName}_${today}_表單集合.zip`;
 
       // 下載ZIP檔案
@@ -164,7 +165,7 @@ export class WordDownloadService {
   private getFormFileName(formItem: any): string {
     const formTypeDisplay = this.getFormTypeDisplay(formItem.formType);
     const contractor = formItem.contractor || '未知廠商';
-    const date = new Date().toISOString().split('T')[0];
+    const date = dayjs().format('YYYY-MM-DD');
     const formId = formItem.id ? formItem.id.substring(0, 8) : '未知ID';
 
     return `${formTypeDisplay}_${contractor}_${date}_${formId}`;

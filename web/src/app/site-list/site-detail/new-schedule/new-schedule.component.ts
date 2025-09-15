@@ -751,10 +751,6 @@ export class NewScheduleComponent implements OnInit {
     }
   }
 
-  private formatDateForInput(date: Date): string {
-    return date.toISOString().split('T')[0];
-  }
-
   private buildTaskTree(tasks: ScheduleTask[]): ScheduleTask[] {
     const tree: ScheduleTask[] = [];
     const taskMap = new Map<string, ScheduleTask>();

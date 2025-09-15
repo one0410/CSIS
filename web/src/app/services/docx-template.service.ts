@@ -135,7 +135,7 @@ export class DocxTemplateService {
       formId,
       '/template/帆宣-ee-4404-01工作許可單.docx',
       (formData, currentSite) => this.prepareWorkPermitData(formData, currentSite),
-      (formData, currentSite) => `工作許可單_${formData.applyDate || new Date().toISOString().split('T')[0]}_${formData.projectNo || formId}.docx`
+      (formData, currentSite) => `工作許可單_${formData.applyDate || dayjs().format('YYYY-MM-DD')}_${formData.projectNo || formId}.docx`
     );
   }
 

@@ -19,6 +19,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Site } from '../../site-list.component';
 import { Modal } from 'bootstrap';
 import { CurrentSiteService } from '../../../services/current-site.service';
+import dayjs from 'dayjs';
 
 // 進度歷史記錄介面
 interface ProgressRecord {
@@ -46,7 +47,7 @@ export interface ProjectTask {
   custom_class?: string;
   progressHistory?: ProgressRecord[]; // 進度歷史記錄
   [key: string]: any;
-  
+
   // 新增：同步進度方法
   syncProgress?(): void;
 }
@@ -57,12 +58,12 @@ function syncTaskProgress(task: ProjectTask): void {
     // 如果沒有歷史記錄，保持原 progress 值
     return;
   }
-  
+
   // 按日期排序，取最新的進度
-  const sorted = [...task.progressHistory].sort((a, b) => 
+  const sorted = [...task.progressHistory].sort((a, b) =>
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
-  
+
   task.progress = sorted[0].progress;
 }
 
@@ -109,18 +110,18 @@ export class SiteProgressComponent
   // 進度輸入相關
   selectedTask: ProjectTask | null = null; // 選中的任務
   progressInput = {
-    date: new Date().toISOString().split('T')[0], // 預設今天
+    date: dayjs().format('YYYY-MM-DD'), // 預設今天
     progress: 0,
     note: ''
   };
-  currentViewDate: string = new Date().toISOString().split('T')[0]; // 當前查看的日期
+  currentViewDate: string = dayjs().format('YYYY-MM-DD'); // 當前查看的日期
   progressUpdateMessage: string = ''; // 進度更新成功訊息
 
   // 批量進度輸入相關
-  batchProgressDate: string = new Date().toISOString().split('T')[0]; // 批量輸入的日期
+  batchProgressDate: string = dayjs().format('YYYY-MM-DD'); // 批量輸入的日期
   batchProgressInputs: { [taskId: string]: number } = {}; // 存儲每個任務的進度輸入
   recentProgressDates: string[] = []; // 最近的進度日期
-  
+
   // 日期範圍選擇相關
   selectedDateRange: string = 'recent5'; // 選擇的日期範圍
   customDateRange = {
@@ -173,7 +174,7 @@ export class SiteProgressComponent
           console.log('開始載入資料...');
           await this.loadGridData();
           console.log('資料載入完成，任務數量:', this.tasks.length);
-          
+
           // 確保DOM已準備好
           setTimeout(() => {
             // 資料載入後再初始化甘特圖
@@ -196,11 +197,11 @@ export class SiteProgressComponent
   // 確保甘特圖DOM元素存在且可見
   ensureGanttDomElement() {
     console.log('檢查甘特圖DOM元素');
-    
+
     const ganttContainer = document.getElementById('gantt');
     if (!ganttContainer) {
       console.error('甘特圖容器元素不存在!');
-      
+
       // 嘗試創建甘特圖容器元素
       if (this.ganttScrollContainer) {
         const ganttScrollContainer = this.ganttScrollContainer.nativeElement;
@@ -224,18 +225,18 @@ export class SiteProgressComponent
       }
       return false;
     }
-    
+
     // 確保甘特圖容器有正確的尺寸
     if (ganttContainer.style.height === '' || ganttContainer.style.height === '0px') {
       ganttContainer.style.height = '500px';
       console.log('已設定甘特圖容器高度為500px');
     }
-    
+
     if (ganttContainer.style.width === '' || ganttContainer.style.width === '0px') {
       ganttContainer.style.width = '100%';
       console.log('已設定甘特圖容器寬度為100%');
     }
-    
+
     return true;
   }
 
@@ -254,7 +255,7 @@ export class SiteProgressComponent
     const progressModalElement = document.getElementById('progressModal');
     if (progressModalElement) {
       this.progressModal = new Modal(progressModalElement);
-      
+
       // 監聽進度Modal的顯示事件
       progressModalElement.addEventListener('shown.bs.modal', () => {
         this.loadBatchProgressData();
@@ -387,7 +388,7 @@ export class SiteProgressComponent
     console.log('changeGanttViewMode 被調用，模式:', mode);
     // 臨時調試：確認按鈕點擊事件有觸發
     // alert(`切換到 ${mode} 視圖`);
-    
+
     if (this.ganttChart) {
       try {
         console.log('切換甘特圖視圖模式:', mode);
@@ -413,10 +414,10 @@ export class SiteProgressComponent
           case 'Quarter':
             // 季視圖：主刻度顯示年季，子刻度顯示月份
             this.ganttChart.config.scales = [
-              { 
-                unit: 'quarter', 
-                step: 1, 
-                format: function(date: Date) {
+              {
+                unit: 'quarter',
+                step: 1,
+                format: function (date: Date) {
                   const year = date.getFullYear();
                   const quarter = Math.floor(date.getMonth() / 3) + 1;
                   return `${year}年Q${quarter}`;
@@ -528,7 +529,7 @@ export class SiteProgressComponent
           console.warn('從資料庫獲取的任務清單為空');
           return [];
         }
-        
+
         // 將MongoDB數據轉換為適用於甘特圖的格式
         const tasks: ProjectTask[] = rawData.map((task) => {
           try {
@@ -544,10 +545,10 @@ export class SiteProgressComponent
               siteId: this.siteId,
               progressHistory: task.progressHistory || [], // 載入進度歷史
             };
-            
+
             // 確保 progress 與 progressHistory 一致
             syncTaskProgress(taskObj);
-            
+
             return taskObj;
           } catch (itemError) {
             console.error('處理單個任務資料時出錯:', itemError, task);
@@ -575,11 +576,11 @@ export class SiteProgressComponent
             if (subTasks.length > 0) {
               task.type = 'project';
               task['open'] = true;
-              
+
               // 計算父項目的進度：子項目進度加總除以子項目個數
               const totalProgress = subTasks.reduce((sum, subTask) => sum + (subTask.progress || 0), 0);
               task.progress = Math.round(totalProgress / subTasks.length);
-              
+
               console.log(`重新計算父項目 ${task.name} (WBS: ${task.wbs}) 的進度: ${subTasks.length} 個子項目，平均進度 ${task.progress}%`);
 
               subTasks.forEach((subTask) => {
@@ -604,12 +605,12 @@ export class SiteProgressComponent
   // 將數據轉換為 dhtmlxGantt 需要的格式
   convertTasksForDhtmlxGantt(tasks: ProjectTask[]) {
     console.log('轉換任務格式，原始任務數:', tasks.length);
-    
+
     if (!tasks || tasks.length === 0) {
       console.warn('沒有任務資料可供轉換');
       return { tasks: [], links: [] };
     }
-    
+
     const ganttTasks = tasks.map((task) => {
       const ganttTask: any = {
         id: task._id,
@@ -625,19 +626,19 @@ export class SiteProgressComponent
       if (task.type === 'project') {
         ganttTask.type = 'project';
       }
-      
+
       // 只有當任務有開始和結束日期時才設置日期
       // 對於父項目（type: 'project'），如果沒有日期，讓 dhtmlx gantt 自動計算
       if (task.start && task.end) {
         ganttTask.start_date = new Date(task.start);
         ganttTask.end_date = new Date(task.end);
-        
+
         // 檢查日期是否有效
         if (isNaN(ganttTask.start_date.getTime())) {
           console.warn(`任務 ${task._id} 的開始日期無效:`, task.start);
           delete ganttTask.start_date;
         }
-        
+
         if (isNaN(ganttTask.end_date.getTime())) {
           console.warn(`任務 ${task._id} 的結束日期無效:`, task.end);
           delete ganttTask.end_date;
@@ -647,7 +648,7 @@ export class SiteProgressComponent
         ganttTask.start_date = new Date();
         ganttTask.end_date = new Date();
       }
-      
+
       return ganttTask;
     });
 
@@ -684,28 +685,28 @@ export class SiteProgressComponent
     }
 
     const scrollContainer = this.ganttScrollContainer.nativeElement;
-    
+
     // 清理現有元素
     while (scrollContainer.firstChild) {
       scrollContainer.removeChild(scrollContainer.firstChild);
     }
-    
+
     // 創建 iframe 元素
     const iframe = document.createElement('iframe');
     iframe.id = 'gantt-iframe';
     iframe.style.width = '100%';
     iframe.style.height = '600px';
     iframe.style.border = 'none';
-    
+
     scrollContainer.appendChild(iframe);
-    
+
     // 建立 iframe 內容
     const iframeDoc = iframe.contentWindow?.document;
     if (!iframeDoc) {
       console.error('無法獲取 iframe 文檔');
       return;
     }
-    
+
     // 建立一個完整的 HTML 文檔，包含甘特圖
     iframeDoc.open();
     iframeDoc.write(`
@@ -812,10 +813,10 @@ export class SiteProgressComponent
       </html>
     `);
     iframeDoc.close();
-    
+
     // 設置監聽 iframe 傳來的消息
     window.addEventListener('message', this.handleIframeMessage.bind(this));
-    
+
     // 等待 iframe 加載完成
     iframe.onload = () => {
       // 將任務資料轉換並傳送到 iframe
@@ -824,18 +825,18 @@ export class SiteProgressComponent
         data: tasks,
         links: links
       };
-      
+
       // 將資料發送到 iframe
       (iframe.contentWindow as any).initGantt(JSON.stringify(ganttData));
     };
   }
-  
+
   // 處理從 iframe 收到的消息
   handleIframeMessage(event: MessageEvent) {
     const data = event.data;
-    
+
     if (!data || !data.type) return;
-    
+
     switch (data.type) {
       case 'taskUpdate':
         this.updateTaskFromGantt(data.id, data.task);
@@ -851,7 +852,7 @@ export class SiteProgressComponent
         break;
     }
   }
-  
+
   // 初始化甘特圖
   initGantt() {
     if (!this.ganttScrollContainer) {
@@ -860,7 +861,7 @@ export class SiteProgressComponent
     }
 
     console.log('開始初始化甘特圖，重建 DOM 元素');
-    
+
     try {
       // 清理舊的甘特圖實例
       if (this.ganttChart) {
@@ -872,57 +873,57 @@ export class SiteProgressComponent
         }
         this.ganttChart = null;
       }
-      
+
       // 重建甘特圖容器
       const scrollContainer = this.ganttScrollContainer.nativeElement;
       const oldGantt = document.getElementById('gantt');
       if (oldGantt) {
         scrollContainer.removeChild(oldGantt);
       }
-      
+
       // 創建新的容器元素
       const ganttContainer = document.createElement('div');
       ganttContainer.id = 'gantt';
       ganttContainer.style.height = '500px';
       ganttContainer.style.width = '100%';
       scrollContainer.appendChild(ganttContainer);
-      
+
       // 強制重載 dhtmlxGantt 腳本
       const script = document.createElement('script');
       script.onload = () => {
         console.log('甘特圖腳本已重新載入');
-        
+
         // 使用全局作用域中的新 gantt 實例
         const freshGantt = (window as any).gantt;
         if (!freshGantt) {
           console.error('無法獲取新的 gantt 實例');
           return;
         }
-        
+
         // 設置甘特圖
         this.ganttChart = freshGantt;
-        
+
         this.ganttChart.plugins({ marker: true });
-        
+
         // 配置甘特圖
         this.ganttChart.config.xml_date = '%Y-%m-%d';
         this.ganttChart.config.autosize = 'y';
         this.ganttChart.config.fit_tasks = true;
         this.ganttChart.config.show_progress = true;
-        
+
         // 啟用自動調度功能，讓父項目自動計算子項目的時程範圍
         this.ganttChart.config.auto_scheduling = true;
         this.ganttChart.config.auto_scheduling_strict = true;
         this.ganttChart.config.auto_scheduling_initial = true;
-  
+
         this.ganttChart.config.lightbox.sections = [
           { name: 'description', height: 100, map_to: 'text', type: 'textarea' },
           { name: "time", type: "duration", map_to: "auto", time_format: ["%d", "%m", "%Y", "%H:%i"] },
         ];
-  
+
         // 設置本地化
         this.setGanttLocalization();
-        
+
         // 設置欄位
         this.ganttChart.config.columns = [
           { name: 'wbs', label: 'WBS', tree: true, width: 100 },
@@ -939,31 +940,31 @@ export class SiteProgressComponent
             },
           },
         ];
-  
+
         // 設置任務資料變更監聽
         this.setupGanttEventListeners();
-  
+
         console.log('正在初始化甘特圖...');
         // 初始化甘特圖
         this.ganttChart.init(ganttContainer);
         console.log('甘特圖初始化完成');
-        
+
         // 甘特圖初始化完成後再設置視圖模式
         this.changeGanttViewMode(this.ganttViewMode);
 
         // 載入任務數據
         this.loadDataToGantt();
       };
-      
+
       // 強制瀏覽器加載新腳本，使用時間戳防止緩存
       script.src = '//cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js?v=' + new Date().getTime();
       document.head.appendChild(script);
-      
+
     } catch (error) {
       console.error('初始化甘特圖失敗', error);
     }
   }
-  
+
   // 設置甘特圖事件監聽器
   setupGanttEventListeners() {
     // 設置任務資料變更監聽
@@ -984,7 +985,7 @@ export class SiteProgressComponent
       this.updateDependencyAfterDelete(link);
     });
   }
-  
+
   // 載入數據到甘特圖
   loadDataToGantt() {
     const { tasks, links } = this.convertTasksForDhtmlxGantt(this.tasks);
@@ -1001,7 +1002,7 @@ export class SiteProgressComponent
       console.log('已清除甘特圖資料');
       this.ganttChart.parse({ data: tasks, links: links });
       console.log('已載入資料到甘特圖');
-      
+
       // 設置今天的指示線
       this.ganttChart.addMarker({
         start_date: new Date(),
@@ -1013,7 +1014,7 @@ export class SiteProgressComponent
       console.error('在解析資料時發生錯誤:', parseError);
     }
   }
-  
+
   // 設置甘特圖本地化
   setGanttLocalization() {
     this.ganttChart.i18n.setLocale({
@@ -1091,8 +1092,8 @@ export class SiteProgressComponent
       // 更新本地任務資料
       const updatedTask = { ...this.tasks[taskIndex] };
       updatedTask.name = ganttTask.text;
-      updatedTask.start = this.formatDate(ganttTask.start_date);
-      updatedTask.end = this.formatDate(ganttTask.end_date);
+      updatedTask.start = dayjs(ganttTask.start_date).format('YYYY-MM-DD');
+      updatedTask.end = dayjs(ganttTask.end_date).format('YYYY-MM-DD');
       // 移除進度更新，進度只能通過專門的進度輸入 Modal 更新
       // updatedTask.progress = Math.round(ganttTask.progress * 100);
 
@@ -1149,19 +1150,6 @@ export class SiteProgressComponent
     }
   }
 
-  // 日期處理功能
-  formatDate(date: Date): string {
-    // 使用ISO日期格式並截取YYYY-MM-DD部分，以避免時區問題
-    return date.toISOString().split('T')[0];
-  }
-
-  parseDate(dateStr: string): Date {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    date.setHours(0, 0, 0, 0); // 重設時間部分
-    return date;
-  }
-
   // 保存任務
   async saveTask(task: ProjectTask) {
     try {
@@ -1210,22 +1198,22 @@ export class SiteProgressComponent
       // 檢查 WBS 是否已存在
       let existingTask: ProjectTask | undefined;
       if (this.newTask.wbs && this.newTask.wbs.trim()) {
-        existingTask = this.tasks.find(task => 
+        existingTask = this.tasks.find(task =>
           task.wbs && task.wbs.trim() === this.newTask.wbs!.trim()
         );
-        
+
         // 如果找到重複的 WBS，詢問使用者是否要覆蓋
         if (existingTask) {
           const confirmMessage = `已存在相同的 WBS「${this.newTask.wbs}」的工程項目：\n「${existingTask.name}」\n\n是否要覆蓋此項目？\n\n點選「確定」會覆蓋現有項目\n點選「取消」可回到編輯畫面修改 WBS`;
-          
+
           const userConfirmed = confirm(confirmMessage);
-          
+
           if (!userConfirmed) {
             // 使用者選擇不覆蓋，回到編輯畫面
             console.log('使用者取消覆蓋，保持在編輯畫面');
             return; // 直接返回，不關閉 modal，讓使用者可以繼續編修
           }
-          
+
           // 使用者確認覆蓋，繼續執行後續邏輯
           console.log('使用者確認覆蓋現有項目');
         }
@@ -1233,15 +1221,15 @@ export class SiteProgressComponent
 
       // 準備要儲存的任務資料
       const taskToSave = { ...this.newTask, siteId: this.siteId };
-      
+
       if (this.newTask.progress > 0) {
         // 建立今天的進度歷史記錄
         const todayProgressRecord: ProgressRecord = {
-          date: new Date().toISOString().split('T')[0], // 今天的日期
+          date: dayjs().format('YYYY-MM-DD'), // 今天的日期
           progress: this.newTask.progress,
           note: existingTask ? '更新項目時設定的進度' : '建立項目時設定的初始進度'
         };
-        
+
         if (existingTask && existingTask.progressHistory) {
           // 如果是更新現有項目，保留原有的進度歷史並加入新記錄
           taskToSave.progressHistory = [...existingTask.progressHistory, todayProgressRecord];
@@ -1261,7 +1249,7 @@ export class SiteProgressComponent
         // WBS 已存在，更新現有項目
         taskToSave._id = existingTask._id;
         taskToSave.id = existingTask.id; // 保持原有的 id
-        
+
         await this.mongodbService.put('task', existingTask._id, taskToSave);
         console.log('已更新現有工程項目 (WBS: ' + this.newTask.wbs + ')');
       } else {
@@ -1272,7 +1260,7 @@ export class SiteProgressComponent
 
       // 重新載入任務資料
       this.tasks = await this.loadTasks();
-      
+
       // 重新載入甘特圖
       this.refreshGantt();
 
@@ -1290,9 +1278,9 @@ export class SiteProgressComponent
 
       // 關閉Modal
       this.closeModal('task');
-      
+
       console.log('任務處理完成並刷新畫面');
-      
+
     } catch (error) {
       console.error('處理任務失敗', error);
       alert('處理任務時發生錯誤');
@@ -1337,11 +1325,11 @@ export class SiteProgressComponent
       // 如果只有一個任務沒有 WBS，將它排在後面
       if (!a.wbs) return 1;
       if (!b.wbs) return -1;
-      
+
       // 都有 WBS 的情況下，按 WBS 字母數字順序排序
-      return a.wbs.localeCompare(b.wbs, undefined, { 
-        numeric: true, 
-        sensitivity: 'base' 
+      return a.wbs.localeCompare(b.wbs, undefined, {
+        numeric: true,
+        sensitivity: 'base'
       });
     });
 
@@ -1373,9 +1361,7 @@ export class SiteProgressComponent
     // 使用預先建立的下載連結
     const link = this.downloadLink.nativeElement as HTMLAnchorElement;
     link.href = url;
-    link.download = `工程進度_${this.site()?.projectNo}_${this.formatDate(
-      new Date()
-    )}.csv`;
+    link.download = `工程進度_${this.site()?.projectNo}_${dayjs().format('YYYY-MM-DD')}.csv`;
     link.click();
 
     // 清理
@@ -1417,14 +1403,14 @@ export class SiteProgressComponent
       'wbs',
       '工程項目',
       '開始日期',
-      '結束日期', 
+      '結束日期',
       '進度',
       '相依項目'
     ];
 
     // 解析標題行
     const actualHeaders = headerLine.split(',').map(h => h.trim().toLowerCase());
-    
+
     // 檢查欄位數量
     if (actualHeaders.length < 4) {
       console.log('標題欄位數量不足，至少需要4個欄位');
@@ -1433,7 +1419,7 @@ export class SiteProgressComponent
 
     // 檢查關鍵欄位是否存在（允許不同的表達方式）
     const hasValidWbs = actualHeaders[0] ? (
-      actualHeaders[0].includes('wbs') || 
+      actualHeaders[0].includes('wbs') ||
       actualHeaders[0].includes('編號') ||
       actualHeaders[0].includes('項目編號')
     ) : false;
@@ -1463,7 +1449,7 @@ export class SiteProgressComponent
     console.log('標題驗證結果:', {
       headers: actualHeaders,
       hasValidWbs,
-      hasValidName, 
+      hasValidName,
       hasValidStart,
       hasValidEnd
     });
@@ -1533,11 +1519,11 @@ export class SiteProgressComponent
           // 如果是父WBS，清空開始和結束日期
           task.start = '';
           task.end = '';
-          
+
           // 計算父項目的進度：子項目進度加總除以子項目個數
           const totalProgress = subTasks.reduce((sum, subTask) => sum + (subTask.progress || 0), 0);
           task.progress = Math.round(totalProgress / subTasks.length);
-          
+
           console.log(`計算父項目 ${task.name} (WBS: ${task.wbs}) 的進度: ${subTasks.length} 個子項目，平均進度 ${task.progress}%`);
 
           subTasks.forEach((subTask) => {
@@ -1596,7 +1582,7 @@ export class SiteProgressComponent
     } catch (error) {
       console.error('匯入失敗', error);
       alert('匯入過程中發生錯誤');
-      
+
       // 即使發生錯誤也清空 file input
       if (this.fileInput?.nativeElement) {
         this.fileInput.nativeElement.value = '';
@@ -1616,7 +1602,7 @@ export class SiteProgressComponent
 
       // 使用loadTasks方法載入並驗證任務數據
       const loadedTasks = await this.loadTasks();
-      
+
       if (!loadedTasks || loadedTasks.length === 0) {
         console.warn('沒有載入到任何任務，可能是項目尚未設定任務或資料庫連線問題');
         this.tasks = [];
@@ -1649,7 +1635,7 @@ export class SiteProgressComponent
     }
 
     // 如果沒有找到精確日期，找最近的歷史記錄
-    const sortedHistory = [...task.progressHistory].sort((a, b) => 
+    const sortedHistory = [...task.progressHistory].sort((a, b) =>
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
@@ -1708,10 +1694,10 @@ export class SiteProgressComponent
       }
 
       // 排序並更新當前進度
-      parentTask.progressHistory.sort((a, b) => 
+      parentTask.progressHistory.sort((a, b) =>
         new Date(a.date).getTime() - new Date(b.date).getTime()
       );
-      
+
       parentTask.progress = averageProgress;
 
       // 儲存父項目
@@ -1788,7 +1774,7 @@ export class SiteProgressComponent
       }
 
       // 排序進度歷史（按日期，從舊到新）
-      this.selectedTask.progressHistory.sort((a, b) => 
+      this.selectedTask.progressHistory.sort((a, b) =>
         new Date(a.date).getTime() - new Date(b.date).getTime()
       );
 
@@ -1808,7 +1794,7 @@ export class SiteProgressComponent
 
       // 重置輸入表單
       this.progressInput = {
-        date: new Date().toISOString().split('T')[0],
+        date: dayjs().format('YYYY-MM-DD'),
         progress: 0,
         note: ''
       };
@@ -1879,7 +1865,7 @@ export class SiteProgressComponent
   loadBatchProgressData() {
     // 計算最近的進度日期（顯示在表格中）
     this.calculateRecentProgressDates();
-    
+
     // 載入選定日期的現有進度
     this.loadExistingProgressForDate();
   }
@@ -1887,7 +1873,7 @@ export class SiteProgressComponent
   // 計算最近的進度日期
   calculateRecentProgressDates() {
     const allDates = new Set<string>();
-    
+
     // 收集所有任務的所有進度日期
     this.tasks.forEach(task => {
       if (task.progressHistory) {
@@ -1899,10 +1885,10 @@ export class SiteProgressComponent
 
     // 根據選擇的範圍篩選日期
     let filteredDates = Array.from(allDates);
-    
+
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    
+    const todayStr = dayjs().format('YYYY-MM-DD');
+
     switch (this.selectedDateRange) {
       case 'recent5':
         // 排序並取最近的5個日期
@@ -1910,62 +1896,56 @@ export class SiteProgressComponent
           .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
           .slice(0, 5);
         break;
-        
+
       case 'recent10':
         // 排序並取最近的10個日期
         filteredDates = filteredDates
           .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
           .slice(0, 10);
         break;
-        
+
       case 'recent30':
         // 最近30天內的日期
-        const thirtyDaysAgo = new Date(today);
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-        
-        filteredDates = filteredDates.filter(date => 
+        const thirtyDaysAgoStr = dayjs().add(-30, 'day').format('YYYY-MM-DD');
+
+        filteredDates = filteredDates.filter(date =>
           date >= thirtyDaysAgoStr && date <= todayStr
         );
         break;
-        
+
       case 'thisMonth':
         // 本月的日期
-        const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-        const thisMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        const thisMonthStartStr = thisMonthStart.toISOString().split('T')[0];
-        const thisMonthEndStr = thisMonthEnd.toISOString().split('T')[0];
-        
-        filteredDates = filteredDates.filter(date => 
+        const thisMonthStartStr = dayjs().startOf('month').format('YYYY-MM-DD');
+        const thisMonthEndStr = dayjs().endOf('month').format('YYYY-MM-DD');
+
+        filteredDates = filteredDates.filter(date =>
           date >= thisMonthStartStr && date <= thisMonthEndStr
         );
         break;
-        
+
       case 'lastMonth':
         // 上個月的日期
-        const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-        const lastMonthStartStr = lastMonthStart.toISOString().split('T')[0];
-        const lastMonthEndStr = lastMonthEnd.toISOString().split('T')[0];
-        
-        filteredDates = filteredDates.filter(date => 
+        const lastMonthStartStr = dayjs().add(-1, 'month').startOf('month').format('YYYY-MM-DD');
+        const lastMonthEndStr = dayjs().add(-1, 'month').endOf('month').format('YYYY-MM-DD');
+
+        filteredDates = filteredDates.filter(date =>
           date >= lastMonthStartStr && date <= lastMonthEndStr
         );
         break;
-        
+
       case 'custom':
         // 自定義範圍
         if (this.customDateRange.start && this.customDateRange.end) {
-          filteredDates = filteredDates.filter(date => 
+          filteredDates = filteredDates.filter(date =>
             date >= this.customDateRange.start && date <= this.customDateRange.end
           );
         }
         break;
-        
+
       case 'all':
         // 全部日期，不篩選
         break;
-        
+
       default:
         // 預設為最近5個日期
         filteredDates = filteredDates
@@ -1982,52 +1962,44 @@ export class SiteProgressComponent
   onDateRangeChange() {
     if (this.selectedDateRange === 'custom') {
       // 設置預設的自定義範圍為最近30天
-      const today = new Date();
-      const thirtyDaysAgo = new Date(today);
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      this.customDateRange.start = thirtyDaysAgo.toISOString().split('T')[0];
-      this.customDateRange.end = today.toISOString().split('T')[0];
+      this.customDateRange.start = dayjs().add(-30, 'day').format('YYYY-MM-DD');
+      this.customDateRange.end = dayjs().format('YYYY-MM-DD');
     }
-    
+
     this.loadBatchProgressData();
   }
 
   // 設置快速日期範圍
   setQuickDateRange(range: string) {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    
+    const todayStr = dayjs().format('YYYY-MM-DD');
+
     switch (range) {
       case 'last7days':
-        const sevenDaysAgo = new Date(today);
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        this.customDateRange.start = sevenDaysAgo.toISOString().split('T')[0];
+        const sevenDaysAgo = dayjs().add(-7, 'day').format('YYYY-MM-DD');
+        this.customDateRange.start = dayjs(sevenDaysAgo).format('YYYY-MM-DD');
         this.customDateRange.end = todayStr;
         break;
-        
+
       case 'last30days':
-        const thirtyDaysAgo = new Date(today);
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        this.customDateRange.start = thirtyDaysAgo.toISOString().split('T')[0];
+        const thirtyDaysAgo = dayjs().add(-30, 'day').format('YYYY-MM-DD');
+        this.customDateRange.start = dayjs(thirtyDaysAgo).format('YYYY-MM-DD');
         this.customDateRange.end = todayStr;
         break;
-        
+
       case 'last90days':
-        const ninetyDaysAgo = new Date(today);
-        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-        this.customDateRange.start = ninetyDaysAgo.toISOString().split('T')[0];
+        const ninetyDaysAgo = dayjs().add(-90, 'day').format('YYYY-MM-DD');
+        this.customDateRange.start = dayjs(ninetyDaysAgo).format('YYYY-MM-DD');
         this.customDateRange.end = todayStr;
         break;
     }
-    
+
     this.loadBatchProgressData();
   }
 
   // 載入選定日期的現有進度
   loadExistingProgressForDate() {
     this.batchProgressInputs = {};
-    
+
     if (!this.batchProgressDate) return;
 
     this.getNonProjectTasks().forEach(task => {
@@ -2061,7 +2033,7 @@ export class SiteProgressComponent
       // 處理每個有輸入進度的任務
       for (const taskId in this.batchProgressInputs) {
         const progress = this.batchProgressInputs[taskId];
-        
+
         // 跳過空值或無效值
         if (progress === undefined || progress === null || progress < 0 || progress > 100) {
           continue;
@@ -2095,7 +2067,7 @@ export class SiteProgressComponent
         }
 
         // 排序進度歷史（按日期，從舊到新）
-        task.progressHistory.sort((a, b) => 
+        task.progressHistory.sort((a, b) =>
           new Date(a.date).getTime() - new Date(b.date).getTime()
         );
 

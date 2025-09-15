@@ -12,6 +12,7 @@ import { GridFSService } from '../../../../services/gridfs.service';
 import { PhotoService } from '../../../../services/photo.service';
 import { DocxTemplateService } from '../../../../services/docx-template.service';
 import { signal } from '@angular/core';
+import dayjs from 'dayjs';
 
 // 導入 Bootstrap Modal 相關類型
 declare const bootstrap: {
@@ -118,12 +119,12 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
   issueRecord: IssueRecord = {
     siteId: '',
     formType: 'safetyIssueRecord',
-    applyDate: new Date().toISOString().slice(0, 10),
+    applyDate: dayjs().format('YYYY-MM-DD'),
     recordNo: '', 
     establishUnit: '',
     establishPerson: '',
-    establishDate: new Date().toISOString().slice(0, 10),
-    issueDate: new Date().toISOString().slice(0, 10),
+    establishDate: dayjs().format('YYYY-MM-DD'),
+    issueDate: dayjs().format('YYYY-MM-DD'),
     factoryArea: '',
     responsibleUnit: '',
     responsibleUnitName: '',

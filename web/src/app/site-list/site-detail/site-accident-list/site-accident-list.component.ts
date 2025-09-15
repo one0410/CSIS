@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccidentService } from '../../../services/accident.service';
 import { Accident } from '../../../model/accident.model';
+import dayjs from 'dayjs';
 
 @Component({
   selector: 'app-site-accident-list',
@@ -61,9 +62,8 @@ export class SiteAccidentListComponent implements OnInit {
   }
 
   showAddAccidentModal() {
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const currentTime = now.toTimeString().slice(0, 5);
+    const today = dayjs().format('YYYY-MM-DD');
+    const currentTime = dayjs().format('HH:mm');
     
     this.editingAccident.set({
       title: '',
@@ -90,7 +90,7 @@ export class SiteAccidentListComponent implements OnInit {
   editAccident(accident: Accident) {
     this.editingAccident.set({ ...accident });
     // 轉換日期格式給input[type="date"]使用
-    this.accidentDateStr = new Date(accident.incidentDate).toISOString().split('T')[0];
+    this.accidentDateStr = dayjs(accident.incidentDate).format('YYYY-MM-DD');
     this.showModal.set(true);
   }
 

@@ -212,7 +212,6 @@ export class SiteDashboardComponent implements OnInit {
     const getActualProgressForDate = (date: Date): number | null => {
       if (!tasks || tasks.length === 0) return null;
       
-      const dateStr = date.toISOString().split('T')[0];
       let totalProgress = 0;
       let taskCount = 0;
       

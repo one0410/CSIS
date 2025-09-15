@@ -163,12 +163,12 @@ export class SitePermitFormComponent implements OnInit {
   // 將 datetime-local 格式分離為日期和時間
   private splitDateTime(dateTimeString: string): { date: string; time: string } {
     if (!dateTimeString) return { date: '', time: '' };
-    
+
     const dateTime = new Date(dateTimeString);
     if (isNaN(dateTime.getTime())) return { date: '', time: '' };
     
-    const date = dateTime.toISOString().split('T')[0]; // YYYY-MM-DD
-    const time = dateTime.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
+    const date = dayjs(dateTime).format('YYYY-MM-DD'); // YYYY-MM-DD
+    const time = dayjs(dateTime).format('HH:mm'); // HH:MM
     
     return { date, time };
   }

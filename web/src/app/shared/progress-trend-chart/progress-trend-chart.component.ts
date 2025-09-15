@@ -4,6 +4,7 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 
 import { MongodbService } from '../../services/mongodb.service';
 import { AuthService } from '../../services/auth.service';
+import dayjs from 'dayjs';
 
 export interface ProgressData {
   date: string;
@@ -161,7 +162,7 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
     
     // 計算每日進度資料
     const progressData: ProgressData[] = dateRange.map((date, index) => {
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = dayjs(date).format('YYYY-MM-DD');
 
       // 1. 合約進度：基於合約時程的線性進度，合約結束後不再顯示
       let plannedProgress: number | undefined = undefined;
@@ -267,7 +268,7 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
     });
     
     console.log('橘色線關鍵點數據:', completionPoints.map(p => ({
-      date: p.date.toISOString().split('T')[0],
+      date: dayjs(p.date).format('YYYY-MM-DD'),
       progress: p.cumulativeProgress
     })));
     
@@ -292,7 +293,7 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
     validTasks.forEach(task => {
       if (task.progressHistory && task.progressHistory.length > 0) {
         task.progressHistory.forEach((record: any) => {
-          allProgressDates.add(new Date(record.date).toISOString().split('T')[0]);
+          allProgressDates.add(dayjs(record.date).format('YYYY-MM-DD'));
         });
       }
     });
@@ -316,7 +317,7 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
     const lastDate = new Date(endDate);
     
     while (currentDate <= lastDate) {
-      const dateStr = currentDate.toISOString().split('T')[0];
+      const dateStr = dayjs(currentDate).format('YYYY-MM-DD');
       
       // 檢查當天是否有任何工項回報進度
       const hasProgressOnThisDate = validTasks.some(task => 
@@ -358,7 +359,7 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
     if (!task.progressHistory || task.progressHistory.length === 0) return false;
     
     return task.progressHistory.some((record: any) => {
-      const recordDate = new Date(record.date).toISOString().split('T')[0];
+      const recordDate = dayjs(record.date).format('YYYY-MM-DD');
       return recordDate === dateStr;
     });
   }
@@ -439,7 +440,7 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
     
     // 只有當有實際進度回報時才記錄日誌
     if (actualProgress > 0) {
-      console.log(`${date.toISOString().split('T')[0]} 實際進度計算:`, {
+      console.log(`${dayjs(date).format('YYYY-MM-DD')} 實際進度計算:`, {
         totalWeight,
         weightedProgress,
         actualProgress: actualProgress.toFixed(2) + '%',
@@ -528,8 +529,7 @@ export class ProgressTrendChartComponent implements OnInit, OnChanges {
     const scheduledData = this.loadedProgressData.map(item => item.scheduledProgress);
 
     // 計算今天的日期在圖表中的位置
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = dayjs().format('YYYY-MM-DD');
     const todayIndex = this.loadedProgressData.findIndex(item => item.date === todayStr);
 
     // 根據使用者角色決定要顯示的資料集
