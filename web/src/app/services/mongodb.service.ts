@@ -52,7 +52,7 @@ export class MongodbService {
     }
     // 如果 limit 為 0 或未設定，則不加入 limit 參數（伺服器會載入所有資料）
     if (option?.limit !== 0) {
-      url += '&limit=' + (option?.limit || 500);
+      url += '&limit=' + (option?.limit || 5000);
     }
     if (option?.skip) {
       url += '&skip=' + option.skip;

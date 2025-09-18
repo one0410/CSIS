@@ -419,7 +419,9 @@ export class CurrentSiteService implements OnDestroy {
             remarks: -1,
             signatures: -1,
             attachments: -1
-          }
+          },
+          limit: 5000, // 設定查詢上限
+          sort: { createdAt: -1 }
         }),
 
         // 載入今天的其他表單類型
@@ -440,11 +442,14 @@ export class CurrentSiteService implements OnDestroy {
             meetingDate: 1,
             checkDate: 1,
             status: 1,
+            workType: 1, // 特殊作業檢點表需要這個欄位
             // 排除大型欄位以減少傳輸量
             signatures: -1,
             attachments: -1,
             remarks: -1
-          }
+          },
+          limit: 200, // 設定查詢上限
+          sort: { createdAt: -1 }
         }),
 
         // 載入危害告知表單（用於計算工人簽署狀況，最近30天）
@@ -459,11 +464,13 @@ export class CurrentSiteService implements OnDestroy {
             formType: 1,
             applyDate: 1,
             status: 1,
+            workerSignatures: 1, // 計算工人簽署狀況需要這個欄位
             // 排除大型欄位以減少傳輸量
-            workerSignatures: -1,
             attachments: -1,
             remarks: -1
-          }
+          },
+          limit: 300, // 設定查詢上限
+          sort: { createdAt: -1 }
         })
       ]);
 

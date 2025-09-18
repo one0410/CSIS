@@ -309,10 +309,65 @@ export class SiteFormListComponent implements AfterViewInit {
       const needReload = !this.allSiteForms.length || (now - this.lastFormsLoadTime) > this.FORMS_CACHE_DURATION;
       
       if (needReload) {
-        console.log('重新載入所有表單資料');
-        this.allSiteForms = await this.mongodbService.getArray('siteForm', {
+        console.log('重新載入所有表單資料，日期範圍:', startDate, '到', endDate);
+        
+        // 構建查詢條件，限制日期範圍以減少查詢量
+        // 為了計算待填表單，我們需要稍微擴大查詢範圍
+        const expandedStartDate = dayjs(startDate).subtract(30, 'day').format('YYYY-MM-DD');
+        const expandedEndDate = dayjs(endDate).add(30, 'day').format('YYYY-MM-DD');
+        
+        const query: any = {
           siteId: this.siteId,
+          $or: [
+            // 工地許可單：檢查工作期間是否與擴展範圍重疊（用於待填表單計算）
+            {
+              formType: 'sitePermit',
+              $and: [
+                { workStartTime: { $lte: expandedEndDate } },
+                { workEndTime: { $gte: expandedStartDate } }
+              ]
+            },
+            // 工具箱會議、環安衛檢點表、特殊作業檢點表等（核心表單類型）
+            {
+              formType: { $in: ['toolboxMeeting', 'environmentChecklist', 'specialWorkChecklist', 'safetyPatrolChecklist'] },
+              $or: [
+                { applyDate: { $gte: expandedStartDate, $lte: expandedEndDate } },
+                { meetingDate: { $gte: expandedStartDate, $lte: expandedEndDate } },
+                { checkDate: { $gte: expandedStartDate, $lte: expandedEndDate } },
+                { createdAt: { $gte: expandedStartDate + 'T00:00:00.000Z', $lte: expandedEndDate + 'T23:59:59.999Z' } }
+              ]
+            },
+            // 危害告知表單（最近30天，用於工人簽署狀況計算）
+            {
+              formType: 'hazardNotice',
+              applyDate: { $gte: dayjs().subtract(30, 'day').format('YYYY-MM-DD') }
+            },
+            // 教育訓練表單（最近30天，用於工人訓練狀況計算）
+            {
+              formType: 'training',
+              $or: [
+                { trainingDate: { $gte: dayjs().subtract(30, 'day').format('YYYY-MM-DD') } },
+                { applyDate: { $gte: dayjs().subtract(30, 'day').format('YYYY-MM-DD') } },
+                { createdAt: { $gte: dayjs().subtract(30, 'day').format('YYYY-MM-DD') + 'T00:00:00.000Z' } }
+              ]
+            },
+            // 其他表單類型（在當前日期範圍內）
+            {
+              formType: { $in: ['defectRecord', 'safetyIssueRecord'] },
+              $or: [
+                { applyDate: { $gte: startDate, $lte: endDate } },
+                { createdAt: { $gte: startDate + 'T00:00:00.000Z', $lte: endDate + 'T23:59:59.999Z' } }
+              ]
+            }
+          ]
+        };
+        
+        this.allSiteForms = await this.mongodbService.getArray('siteForm', query, {
+          limit: 1000, // 設定查詢上限
+          sort: { createdAt: -1 } // 按建立時間倒序排列
         });
+        
+        console.log(`載入了 ${this.allSiteForms.length} 筆表單資料`);
         this.lastFormsLoadTime = now;
       } else {
         console.log('使用快取的表單資料');

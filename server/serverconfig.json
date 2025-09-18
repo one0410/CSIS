@@ -1,5 +1,5 @@
 {
-    "mongodb": "mongodb://server.emicro.tech:27017/csis2",
+    "mongodb": "mongodb://140.116.247.125:11127/csis",
     "httpPort": 3000,
     "httpsPort": 443
 }

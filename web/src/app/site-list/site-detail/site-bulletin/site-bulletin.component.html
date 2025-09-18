@@ -7,15 +7,15 @@
           <i class="fas fa-bullhorn me-2"></i>
           公佈欄
         </h4>
-        @if (hasManagePermission()) {
-          <div class="d-flex gap-2">
-            <button class="btn btn-primary" (click)="showAddBulletinModal()" [disabled]="loading()">
-              <i class="fas fa-plus-circle me-1"></i>
-              新增公告
-            </button>
-          </div>
-        }
         <div class="d-flex align-items-center">
+          @if (hasManagePermission()) {
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary" (click)="showAddBulletinModal()" [disabled]="loading()">
+                <i class="fas fa-plus-circle me-1"></i>
+                新增公告
+              </button>
+            </div>
+          }
           <i class="fas fa-info-circle text-muted ms-2"
              data-bs-toggle="tooltip"
              data-bs-placement="bottom"
