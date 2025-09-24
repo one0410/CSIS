@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, AfterViewInit, computed, signal } from '@angular/core';
+import { Component, Input, OnInit, AfterViewInit, OnDestroy, computed, signal } from '@angular/core';
 import { PhotoService } from '../../../services/photo.service';
 import { CommonModule } from '@angular/common';
 import dayjs from 'dayjs';
@@ -16,7 +16,7 @@ import { AuthService } from '../../../services/auth.service';
   templateUrl: './site-photos.component.html',
   styleUrls: ['./site-photos.component.scss']
 })
-export class SitePhotosComponent implements OnInit, AfterViewInit {
+export class SitePhotosComponent implements OnInit, AfterViewInit, OnDestroy {
   siteId = '';
   site = computed(() => this.currentSiteService.currentSite());
   photoCount = computed(() => {
@@ -135,8 +135,18 @@ export class SitePhotosComponent implements OnInit, AfterViewInit {
       await this.currentSiteService.loadSite(this.siteId);
 
       if (this.site()) {
+        // 清理舊的滾動監聽器
+        if (this.cleanupScrollListener) {
+          this.cleanupScrollListener();
+          this.cleanupScrollListener = undefined;
+        }
+
         // 重置分頁狀態，確保每次返回此元件時都從第一頁開始加載
         this.photoService.resetPagination();
+
+        // 清空現有照片
+        this.photoGroups.set([]);
+        this.allPhotos = [];
 
         // 載入照片統計資訊
         this.loadPhotoStats();
@@ -168,7 +178,10 @@ export class SitePhotosComponent implements OnInit, AfterViewInit {
           }
         });
 
-        this.setupScrollListener();
+        // 延遲設置滾動監聽器，確保 DOM 已準備好
+        setTimeout(() => {
+          this.setupScrollListener();
+        }, 300);
       }
     });
   }
@@ -182,9 +195,13 @@ export class SitePhotosComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     // 確保 DOM 已經準備好後再設置滾動監聽器
+    // 注意：這裡只是備用，主要的設置在構造函數中
     setTimeout(() => {
-      this.setupScrollListener();
-    }, 100);
+      // 如果還沒有設置監聽器，則設置
+      if (!this.cleanupScrollListener) {
+        this.setupScrollListener();
+      }
+    }, 500);
   }
 
   ngOnDestroy() {
@@ -208,14 +225,25 @@ export class SitePhotosComponent implements OnInit, AfterViewInit {
   }
 
   private setupScrollListener(): void {
+    // 先清理舊的監聽器
+    if (this.cleanupScrollListener) {
+      this.cleanupScrollListener();
+      this.cleanupScrollListener = undefined;
+    }
+
     // 等待 DOM 更新後再設置監聽器
     setTimeout(() => {
       // 尋找實際可滾動的父容器（右側內容區）
       const scrollContainer = document.querySelector('.flex-fill[style*="overflow-y: auto"]') as HTMLElement;
 
       if (!scrollContainer) {
+        console.log('找不到滾動容器，1秒後重試...');
+        // 如果找不到容器，稍後重試
+        setTimeout(() => this.setupScrollListener(), 1000);
         return;
       }
+
+      console.log('找到滾動容器，設置滾動監聽器');
 
       // 主要滾動處理函數
       const scrollHandler = () => {
@@ -247,6 +275,9 @@ export class SitePhotosComponent implements OnInit, AfterViewInit {
       this.cleanupScrollListener = () => {
         scrollContainer.removeEventListener('scroll', throttledScrollHandler);
       };
+
+      // 初次檢查是否需要載入更多
+      scrollHandler();
 
     }, 200);
   }
