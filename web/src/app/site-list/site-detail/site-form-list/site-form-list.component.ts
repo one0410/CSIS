@@ -43,9 +43,6 @@ export class SiteFormListComponent implements AfterViewInit {
   siteId: string = '';
   private readonly CALENDAR_VIEW_KEY = 'site_calendar_view';
   private formsLoaded = false;
-  private allSiteForms: any[] = []; // 快取所有表單資料
-  private lastFormsLoadTime: number = 0; // 記錄上次載入表單的時間
-  private readonly FORMS_CACHE_DURATION = 5 * 60 * 1000; // 5分鐘快取時間
   currentUser = computed(() => this.authService.user());
   
   // 在構造函數中獲取保存的視圖設定
@@ -63,12 +60,23 @@ export class SiteFormListComponent implements AfterViewInit {
     private currentSiteService: CurrentSiteService,
     private authService: AuthService
   ) {
-    // 讀取保存的視圖模式
+    // 讀取保存的視圖模式和日期
     let initialView = 'dayGridMonth'; // 默認視圖
+    let initialDate: Date | undefined;
     try {
-      const savedView = localStorage.getItem(this.CALENDAR_VIEW_KEY);
-      if (savedView) {
-          initialView = savedView;
+      const savedData = localStorage.getItem(this.CALENDAR_VIEW_KEY);
+      if (savedData) {
+        try {
+          // 嘗試解析為 JSON（新格式）
+          const parsed = JSON.parse(savedData);
+          initialView = parsed.viewType || 'dayGridMonth';
+          if (parsed.currentDate) {
+            initialDate = new Date(parsed.currentDate);
+          }
+        } catch {
+          // 如果解析失敗，可能是舊格式（只有視圖名稱）
+          initialView = savedData;
+        }
       }
     } catch (e) {
       console.error('讀取保存的視圖模式時出錯:', e);
@@ -80,6 +88,7 @@ export class SiteFormListComponent implements AfterViewInit {
       themeSystem: 'bootstrap5',
       plugins: [bootstrap5Plugin, interactionPlugin, dayGridPlugin],
       initialView: initialView, // 使用保存的視圖模式或默認視圖
+      initialDate: initialDate, // 使用保存的日期
       headerToolbar: {
         left: 'prev,next today',
         center: 'title',
@@ -157,8 +166,8 @@ export class SiteFormListComponent implements AfterViewInit {
       // 日曆視圖初始化後觸發
       datesSet: (dateInfo) => {
 
-        // 這裡也保存視圖模式，確保任何方式的視圖變更都能被捕獲
-        this.saveCalendarView(dateInfo.view.type);
+        // 保存視圖模式和當前日期，確保任何方式的視圖變更都能被捕獲
+        this.saveCalendarView(dateInfo.view.type, dateInfo.view.currentStart);
 
         // 當日曆日期範圍改變時，重新載入表單
         if (this.formsLoaded && this.siteId) {
@@ -229,29 +238,47 @@ export class SiteFormListComponent implements AfterViewInit {
     // 為月視圖按鈕添加事件監聽
     if (monthButton) {
       monthButton.addEventListener('click', () => {
-        this.saveCalendarView('dayGridMonth');
+        // 切換視圖時會觸發 datesSet 事件，自動保存
       });
     }
 
     // 為周視圖按鈕添加事件監聽
     if (weekButton) {
       weekButton.addEventListener('click', () => {
-        this.saveCalendarView('dayGridWeek');
+        // 切換視圖時會觸發 datesSet 事件，自動保存
       });
     }
 
     // 為日視圖按鈕添加事件監聽
     if (dayButton) {
       dayButton.addEventListener('click', () => {
-        this.saveCalendarView('dayGridDay');
+        // 切換視圖時會觸發 datesSet 事件，自動保存
       });
     }
   }
   
-  // 保存當前日曆視圖
-  private saveCalendarView(viewName: string): void {
+  // 保存當前日曆視圖和日期
+  private saveCalendarView(viewName?: string, currentDate?: Date): void {
     try {
-      localStorage.setItem(this.CALENDAR_VIEW_KEY, viewName);
+      // 如果有日曆元件，從中獲取當前狀態
+      if (this.calendarComponent) {
+        const calendarApi = this.calendarComponent.getApi();
+        const view = calendarApi.view;
+
+        const viewData = {
+          viewType: viewName || view.type,
+          currentDate: (currentDate || view.currentStart).toISOString()
+        };
+
+        localStorage.setItem(this.CALENDAR_VIEW_KEY, JSON.stringify(viewData));
+      } else if (viewName) {
+        // 如果日曆還未初始化，只保存視圖類型
+        const viewData = {
+          viewType: viewName,
+          currentDate: new Date().toISOString()
+        };
+        localStorage.setItem(this.CALENDAR_VIEW_KEY, JSON.stringify(viewData));
+      }
     } catch (error) {
       console.error('保存日曆視圖時發生錯誤:', error);
     }
@@ -275,113 +302,117 @@ export class SiteFormListComponent implements AfterViewInit {
         }
       }
 
+      // 直接根據視圖範圍查詢，確保資料即時性
+      const query: any = {
+        siteId: this.siteId,
+        $or: [
+          // 工地許可單：開始時間或結束時間在視圖範圍內，或整個工作期間包含視圖範圍
+          {
+            formType: 'sitePermit',
+            $or: [
+              // 工作開始時間在視圖範圍內
+              { workStartTime: { $gte: startDate, $lte: endDate } },
+              // 工作結束時間在視圖範圍內
+              { workEndTime: { $gte: startDate, $lte: endDate } },
+              // 工作期間完全包含視圖範圍（開始在視圖前，結束在視圖後）
+              { $and: [
+                { workStartTime: { $lte: startDate } },
+                { workEndTime: { $gte: endDate } }
+              ]}
+            ]
+          },
+          // 核心表單類型：使用實際視圖範圍
+          {
+            formType: { $in: ['toolboxMeeting', 'environmentChecklist', 'specialWorkChecklist', 'safetyPatrolChecklist'] },
+            $or: [
+              { applyDate: { $gte: startDate, $lte: endDate } },
+              { meetingDate: { $gte: startDate, $lte: endDate } },
+              { checkDate: { $gte: startDate, $lte: endDate } },
+              { createdAt: { $gte: startDate + 'T00:00:00.000Z', $lte: endDate + 'T23:59:59.999Z' } }
+            ]
+          },
+          // 其他表單類型：使用實際視圖範圍
+          {
+            formType: { $in: ['defectRecord', 'safetyIssueRecord', 'hazardNotice', 'training'] },
+            $or: [
+              { applyDate: { $gte: startDate, $lte: endDate } },
+              { trainingDate: { $gte: startDate, $lte: endDate } },
+              { createdAt: { $gte: startDate + 'T00:00:00.000Z', $lte: endDate + 'T23:59:59.999Z' } }
+            ]
+          }
+        ]
+      };
 
-      // 檢查是否需要重新載入所有表單資料（快取過期或首次載入）
-      const now = Date.now();
-      const needReload = !this.allSiteForms.length || (now - this.lastFormsLoadTime) > this.FORMS_CACHE_DURATION;
+      const allForms = await this.mongodbService.getArray('siteForm', query, {
+        limit: 3000, // 設定查詢上限
+        sort: { createdAt: -1 }, // 按建立時間倒序排列
+        projection: {
+          // 基本資訊
+          _id: 1,
+          formType: 1,
+          siteId: 1,
+          status: 1,
 
-      if (needReload) {
-        // 構建查詢條件，為了確保跨月份的工地許可單不會遺漏，我們需要擴大查詢範圍
-        // 特別是工地許可單可能跨越多個月份
-        const expandedStartDate = dayjs(startDate).subtract(60, 'day').format('YYYY-MM-DD');
-        const expandedEndDate = dayjs(endDate).add(60, 'day').format('YYYY-MM-DD');
-        
-        const query: any = {
-          siteId: this.siteId,
-          $or: [
-            // 工地許可單：檢查工作期間是否與擴展範圍重疊
-            // 使用擴展範圍確保跨月份的許可單不會遺漏
-            {
-              formType: 'sitePermit',
-              $and: [
-                { workStartTime: { $lte: expandedEndDate } },
-                { workEndTime: { $gte: expandedStartDate } }
-              ]
-            },
-            // 工具箱會議、環安衛檢點表、特殊作業檢點表等（核心表單類型）
-            {
-              formType: { $in: ['toolboxMeeting', 'environmentChecklist', 'specialWorkChecklist', 'safetyPatrolChecklist'] },
-              $or: [
-                { applyDate: { $gte: expandedStartDate, $lte: expandedEndDate } },
-                { meetingDate: { $gte: expandedStartDate, $lte: expandedEndDate } },
-                { checkDate: { $gte: expandedStartDate, $lte: expandedEndDate } },
-                { createdAt: { $gte: expandedStartDate + 'T00:00:00.000Z', $lte: expandedEndDate + 'T23:59:59.999Z' } }
-              ]
-            },
-            // 危害告知表單（最近90天，用於工人簽署狀況計算）
-            {
-              formType: 'hazardNotice',
-              applyDate: { $gte: dayjs().subtract(90, 'day').format('YYYY-MM-DD') }
-            },
-            // 教育訓練表單（最近90天，用於工人訓練狀況計算）
-            {
-              formType: 'training',
-              $or: [
-                { trainingDate: { $gte: dayjs().subtract(90, 'day').format('YYYY-MM-DD') } },
-                { applyDate: { $gte: dayjs().subtract(90, 'day').format('YYYY-MM-DD') } },
-                { createdAt: { $gte: dayjs().subtract(90, 'day').format('YYYY-MM-DD') + 'T00:00:00.000Z' } }
-              ]
-            },
-            // 其他表單類型（使用擴展範圍）
-            {
-              formType: { $in: ['defectRecord', 'safetyIssueRecord'] },
-              $or: [
-                { applyDate: { $gte: expandedStartDate, $lte: expandedEndDate } },
-                { createdAt: { $gte: expandedStartDate + 'T00:00:00.000Z', $lte: expandedEndDate + 'T23:59:59.999Z' } }
-              ]
-            }
-          ]
-        };
+          // 日期相關欄位（用於日曆顯示）
+          applyDate: 1,
+          meetingDate: 1,
+          checkDate: 1,
+          trainingDate: 1,
+          workStartTime: 1,
+          workEndTime: 1,
+          createdAt: 1,
+          updatedAt: 1,
 
-        this.allSiteForms = await this.mongodbService.getArray('siteForm', query, {
-          limit: 1000, // 設定查詢上限
-          sort: { createdAt: -1 } // 按建立時間倒序排列
-        });
+          // 顯示相關資訊
+          formNumber: 1,
+          permitType: 1,
+          workCategories: 1,
+          workLocation: 1,
+          projectName: 1,
+          contractorCompany: 1,
 
-        this.lastFormsLoadTime = now;
-      }
+          // 工地許可單簽名資訊（只載入姓名和時間，不載入 base64 簽名圖片）
+          'applicantSignature.name': 1,
+          'applicantSignature.signedAt': 1,
+          'departmentManagerSignature.name': 1,
+          'departmentManagerSignature.signedAt': 1,
+          'reviewSignature.name': 1,
+          'reviewSignature.signedAt': 1,
+          'approvalSignature.name': 1,
+          'approvalSignature.signedAt': 1,
 
-      // 在前端進行日期過濾，只顯示在當前視圖範圍內的表單
+          // 排除大型欄位
+          // signatures: 0,           // 排除簽名資料
+          // participantSignatures: 0, // 排除參與者簽名
+          // workerSignatures: 0,     // 排除工人簽名
+          // supervisorSignature: 0,  // 排除監督員簽名
+          // managerSignature: 0,     // 排除經理簽名
+          // safetyOfficerSignature: 0, // 排除安全官簽名
+          // photos: 0,               // 排除照片資料
+          // attachments: 0,          // 排除附件
+          // checkItems: 0,           // 排除檢查項目明細（通常很大）
+          // trainingContent: 0       // 排除訓練內容（可能很長）
+        }
+      });
+
+      console.log('讀取表單的日期範圍:', startDate, '到', endDate);
+      console.log('載入表單數量:', allForms.length);
+
+      // 直接使用查詢結果，不需要再進行前端過濾
+      // 因為查詢條件已經正確設定了日期範圍
       const viewStartDateObj = dayjs(startDate);
       const viewEndDateObj = dayjs(endDate);
 
-
-      const allForms = this.allSiteForms.filter((form: any) => {
-        // 根據表單類型決定使用哪個日期欄位進行過濾
+      // 過濾工地許可單，確保只顯示工作期間與視圖重疊的部分
+      const filteredForms = allForms.filter((form: any) => {
+        // 工地許可單需要檢查是否與視圖重疊
         if (form.formType === 'sitePermit' && form.workStartTime && form.workEndTime) {
-          // 工地許可單：檢查工作期間是否與視圖範圍重疊
           const workStart = dayjs(form.workStartTime);
           const workEnd = dayjs(form.workEndTime);
-          const isOverlap = workStart.isSameOrBefore(viewEndDateObj, 'day') && workEnd.isSameOrAfter(viewStartDateObj, 'day');
-
-
-          return isOverlap;
-        } else {
-          // 其他表單類型：檢查相關日期是否在視圖範圍內
-          let formDate: dayjs.Dayjs | null = null;
-
-          if (form.applyDate) {
-            formDate = dayjs(form.applyDate);
-          } else if (form.meetingDate) {
-            formDate = dayjs(form.meetingDate);
-          } else if (form.checkDate) {
-            formDate = dayjs(form.checkDate);
-          } else if (form.trainingDate) {
-            formDate = dayjs(form.trainingDate);
-          } else if (form.createdAt) {
-            formDate = dayjs(form.createdAt);
-          }
-
-          // 檢查日期是否在視圖範圍內
-          if (formDate) {
-            const isInRange = formDate.isSameOrAfter(viewStartDateObj, 'day') && formDate.isSameOrBefore(viewEndDateObj, 'day');
-
-
-            return isInRange;
-          }
-
-          return false;
+          return workStart.isSameOrBefore(viewEndDateObj, 'day') && workEnd.isSameOrAfter(viewStartDateObj, 'day');
         }
+        // 其他表單類型已經在查詢時過濾，直接返回true
+        return true;
       });
 
 
@@ -389,7 +420,7 @@ export class SiteFormListComponent implements AfterViewInit {
       const events = [];
 
       // 處理所有表單
-      for (const form of allForms) {
+      for (const form of filteredForms) {
         // 取得表單狀態對應的顏色
         const statusColor = this.getStatusColor(form.status);
         let displayOrder = 6; // 其他事件預設排第七
@@ -591,27 +622,37 @@ export class SiteFormListComponent implements AfterViewInit {
 
       // 更新日曆事件
       this.calendarOptions.events = events;
-      
-      // 同時更新 CurrentSiteService 中的表單列表
-      await this.currentSiteService.refreshFormsList();
     } catch (error) {
       console.error('載入表單時出錯:', error);
     }
   }
 
-  // 刷新表單快取（在新增或修改表單後調用）
-  async refreshFormsCache(): Promise<void> {
-    this.allSiteForms = [];
-    this.lastFormsLoadTime = 0;
-
+  // 刷新表單（在新增或修改表單後調用）
+  async refreshFormsCache(shouldUpdateTodaysForms: boolean = true): Promise<void> {
     if (this.calendarComponent) {
       const calendarApi = this.calendarComponent.getApi();
       const currentView = calendarApi.view;
       const startDate = dayjs(currentView.activeStart).format('YYYY-MM-DD');
       const endDate = dayjs(currentView.activeEnd).subtract(1, 'day').format('YYYY-MM-DD');
       await this.loadForms(startDate, endDate);
+
+      // 只在需要時更新今日的表單（例如新增、修改或刪除今日的表單）
+      if (shouldUpdateTodaysForms) {
+        const today = dayjs().format('YYYY-MM-DD');
+        const isViewIncludesToday = dayjs(today).isSameOrAfter(dayjs(startDate), 'day') &&
+                                     dayjs(today).isSameOrBefore(dayjs(endDate), 'day');
+
+        if (isViewIncludesToday) {
+          // 只有當前視圖包含今天時，才更新 CurrentSiteService
+          await this.currentSiteService.refreshFormsList();
+        }
+      }
     } else {
       await this.loadForms();
+      // 當沒有日曆元件時，預設更新今日表單
+      if (shouldUpdateTodaysForms) {
+        await this.currentSiteService.refreshFormsList();
+      }
     }
   }
 
@@ -619,18 +660,7 @@ export class SiteFormListComponent implements AfterViewInit {
   getFormTypeDisplay(form: SiteForm): string {
     switch(form.formType) {
       case 'sitePermit':
-        // 為工地許可單添加四個簽名狀態圖示
-        let title = '工地許可單';
-        
-        // 四個簽名狀態的圖示：✓(已簽) 或 ✗(未簽)
-        const anyForm = form as any; // 使用 any 型別避免型別檢查錯誤
-        const signature1 = anyForm.applicantSignature?.signature ? '✅' : '❌';
-        const signature2 = anyForm.departmentManagerSignature?.signature ? '✅' : '❌';
-        const signature3 = anyForm.reviewSignature?.signature ? '✅' : '❌';
-        const signature4 = anyForm.approvalSignature?.signature ? '✅' : '❌';
-        
-        // 不再在標題中包含圖標，改為在 eventContent 中處理
-        return title;
+        return '工地許可單';
       case 'toolboxMeeting':
         return '工具箱會議';
       case 'environmentChecklist':
@@ -833,10 +863,10 @@ export class SiteFormListComponent implements AfterViewInit {
       const permitData = anyProps.originalData || {};
       
       // 四個簽名狀態的圖示
-      const signature1 = permitData.applicantSignature?.signature ? '✅' : '❌';
-      const signature2 = permitData.departmentManagerSignature?.signature ? '✅' : '❌';
-      const signature3 = permitData.reviewSignature?.signature ? '✅' : '❌';
-      const signature4 = permitData.approvalSignature?.signature ? '✅' : '❌';
+      const signature1 = permitData.applicantSignature?.name ? '✅' : '❌';
+      const signature2 = permitData.departmentManagerSignature?.name ? '✅' : '❌';
+      const signature3 = permitData.reviewSignature?.name ? '✅' : '❌';
+      const signature4 = permitData.approvalSignature?.name ? '✅' : '❌';
       
       // 完全重寫布局方式，強制圖示在標題右側
       wrapper.innerHTML = `

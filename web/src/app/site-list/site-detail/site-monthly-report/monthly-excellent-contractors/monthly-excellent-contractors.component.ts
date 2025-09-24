@@ -1,4 +1,4 @@
-import { Component, Input, computed, signal, OnInit, effect } from '@angular/core';
+import { Component, Input, computed, signal, OnInit, OnChanges, SimpleChanges, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { CurrentSiteService } from '../../../../services/current-site.service';
@@ -20,23 +20,22 @@ interface ContractorStats {
   templateUrl: './monthly-excellent-contractors.component.html',
   styleUrls: ['./monthly-excellent-contractors.component.scss']
 })
-export class MonthlyExcellentContractorsComponent implements OnInit {
+export class MonthlyExcellentContractorsComponent implements OnInit, OnChanges {
   @Input() selectedMonth!: string;
 
   private contractorStats = signal<ContractorStats[]>([]);
   private loading = signal<boolean>(false);
-  private lastLoadedMonth = signal<string>('');
 
   // 計算屬性
-  excellentContractors = computed(() => 
+  excellentContractors = computed(() =>
     this.contractorStats().filter(contractor => !contractor.hasDefects)
   );
-  
+
   totalContractors = computed(() => this.contractorStats().length);
-  contractorsWithDefects = computed(() => 
+  contractorsWithDefects = computed(() =>
     this.contractorStats().filter(contractor => contractor.hasDefects).length
   );
-  
+
   excellentRate = computed(() => {
     const total = this.totalContractors();
     if (total === 0) return 0;
@@ -47,47 +46,46 @@ export class MonthlyExcellentContractorsComponent implements OnInit {
     private mongodbService: MongodbService,
     private currentSiteService: CurrentSiteService
   ) {
-    // 監聽工地變化和月份變化
+    // 監聽工地變化
     effect(() => {
       const currentSite = this.currentSiteService.currentSite();
-      
-      console.log('Effect 觸發:', {
-        currentSiteId: currentSite?._id,
-        selectedMonth: this.selectedMonth,
-        lastLoadedMonth: this.lastLoadedMonth()
-      });
-      
-      // 確保有工地ID、有選定月份，且月份有變化才載入
-      if (currentSite?._id && this.selectedMonth && 
-          this.selectedMonth !== this.lastLoadedMonth()) {
-        console.log('條件滿足，載入廠商統計...');
+
+      // 當工地變化時，重新載入資料
+      if (currentSite?._id && this.selectedMonth) {
+        console.log('工地變化，重新載入廠商統計');
         this.loadContractorStats();
-      } else {
-        console.log('條件不滿足，跳過載入');
       }
     });
   }
 
   ngOnInit() {
     console.log('MonthlyExcellentContractorsComponent ngOnInit');
-    
+
     // 如果 currentSite 已經存在，立即載入
     if (this.selectedMonth && this.currentSiteService.currentSite()?._id) {
-      console.log('立即載入廠商統計');
+      console.log('初始載入廠商統計');
       this.loadContractorStats();
-    } else {
-      console.log('等待 currentSite 載入...', {
-        selectedMonth: this.selectedMonth,
-        currentSite: this.currentSiteService.currentSite()?._id
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    // 當 selectedMonth 輸入屬性變化時，重新載入資料
+    if (changes['selectedMonth'] && !changes['selectedMonth'].firstChange) {
+      console.log('月份變化:', {
+        previousValue: changes['selectedMonth'].previousValue,
+        currentValue: changes['selectedMonth'].currentValue
       });
+
+      if (this.currentSiteService.currentSite()?._id) {
+        this.loadContractorStats();
+      }
     }
   }
 
   private async loadContractorStats() {
     if (!this.selectedMonth) return;
-    
+
     this.loading.set(true);
-    this.lastLoadedMonth.set(this.selectedMonth);
 
     try {
       // 從 currentSiteService 取得工地資訊
