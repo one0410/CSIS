@@ -131,6 +131,11 @@ export class PhotoService {
     console.log('分頁重置完成: page =', this.page(), 'hasMore =', this.hasMore());
   }
 
+  // 檢查是否還有更多照片可以載入
+  hasMorePhotos(): boolean {
+    return this.hasMore();
+  }
+
   getPhotos(siteId: string, searchParams?: {
     startDate?: string;
     endDate?: string;
@@ -210,7 +215,8 @@ export class PhotoService {
           // 將API響應轉換為Photo對象
           return photos.map((item: any) => ({
             id: item._id || item.id || item.filename,
-            url: this.getApiUrl(`/api/gridfs/${item.filename}`),
+            url: this.getApiUrl(`/api/gridfs/${item.filename}`), // 原始圖片 URL
+            thumbnailUrl: this.getApiUrl(`/api/gridfs/thumbnail/${item.filename}?width=400&quality=80`), // 縮圖 URL
             date: item.metadata?.uploadDate || dayjs().format('YYYY-MM-DD'),
             metadata: {
               ...item.metadata || {},

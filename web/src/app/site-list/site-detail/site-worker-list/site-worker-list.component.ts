@@ -1,6 +1,8 @@
-import { Component, computed, OnInit } from '@angular/core';
+import { Component, computed, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 
 import { MongodbService } from '../../../services/mongodb.service';
 import { Worker, CertificationTypeManager } from '../../../model/worker.model';
@@ -15,7 +17,7 @@ import dayjs from 'dayjs';
   templateUrl: './site-worker-list.component.html',
   styleUrls: ['./site-worker-list.component.scss']
 })
-export class SiteWorkerListComponent implements OnInit {
+export class SiteWorkerListComponent implements OnInit, OnDestroy {
   siteId: string | null = null;
   site = computed(() => this.currentSiteService.currentSite());
   currentUser = computed(() => this.authService.user());
@@ -41,6 +43,8 @@ export class SiteWorkerListComponent implements OnInit {
   searchQuery = '';
   searchResults: Worker[] = [];
   searchPerformed = false;
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
   
   // 模態框相關
   modalSearchQuery = '';
@@ -70,8 +74,22 @@ export class SiteWorkerListComponent implements OnInit {
       this.siteId = params.get('id');
       this.loadSiteData();
     });
-    
+
+    // 設定搜尋防抖動
+    this.searchSubject.pipe(
+      debounceTime(200), // 200ms 延遲
+      distinctUntilChanged(), // 只在值改變時觸發
+      takeUntil(this.destroy$)
+    ).subscribe(searchQuery => {
+      this.performSearch(searchQuery);
+    });
+
     await this.loadAllWorkers();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   async loadSiteData() {
@@ -253,8 +271,20 @@ export class SiteWorkerListComponent implements OnInit {
 
   async loadAllWorkers() {
     try {
-              const result = await this.mongodbService.get('worker', {}, { limit: 0 });
-        this.allWorkers = result.data;
+      // 只載入搜尋和顯示所需的欄位
+      const result = await this.mongodbService.get('worker', {}, {
+        limit: 0,
+        projection: {
+          _id: 1,
+          name: 1,
+          idno: 1,
+          contractingCompanyName: 1,
+          phone: 1,
+          belongSites: 1,
+          certifications: 1  // 如果需要顯示證照資訊
+        }
+      });
+      this.allWorkers = result.data;
     } catch (error) {
       console.error('載入所有工作人員時發生錯誤', error);
     }
@@ -276,23 +306,29 @@ export class SiteWorkerListComponent implements OnInit {
     this.companies = Array.from(companiesSet).sort();
   }
 
+  // 觸發搜尋（帶防抖動）
   searchWorkers() {
+    this.searchSubject.next(this.searchQuery);
+  }
+
+  // 實際執行搜尋
+  private performSearch(query: string) {
     this.searchPerformed = true;
-    
-    if (!this.searchQuery.trim()) {
+
+    if (!query.trim()) {
       this.searchResults = [];
       return;
     }
-    
-    const query = this.searchQuery.toLowerCase();
-    
+
+    const searchQuery = query.toLowerCase();
+
     // 過濾已經在工地工作人員中的人員
     const siteWorkerIds = this.siteWorkers.map(worker => worker._id);
-    
-    this.searchResults = this.allWorkers.filter(worker => 
-      (worker.name?.toLowerCase().includes(query) || 
-       worker.idno?.toLowerCase().includes(query) || 
-       worker.contractingCompanyName?.toLowerCase().includes(query)) && 
+
+    this.searchResults = this.allWorkers.filter(worker =>
+      (worker.name?.toLowerCase().includes(searchQuery) ||
+       worker.idno?.toLowerCase().includes(searchQuery) ||
+       worker.contractingCompanyName?.toLowerCase().includes(searchQuery)) &&
       !siteWorkerIds.includes(worker._id)
     );
   }

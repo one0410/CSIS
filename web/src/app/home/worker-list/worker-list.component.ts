@@ -8,6 +8,7 @@ import {
   Signal,
   WritableSignal,
   signal,
+  HostListener,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
@@ -64,7 +65,9 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
   filteredContractingCompanies: { name: string; count: number }[] = []; // 過濾後的承攬公司清單
   companySearchText = ''; // 承攬公司搜尋文字
   workerSearchText = ''; // 人才搜尋文字（姓名、電話、身份證號）
+  isCompanyDropdownOpen = false; // 承攬公司下拉選單開啟狀態
   private searchDebounceTimer: any = null; // 搜尋防抖計時器
+  isSearching = false; // 搜尋狀態指示
   private currentSearchRequest: any = null; // 當前搜尋請求
   certificationTypes: { value: string; label: string }[] = []; // 所有證照類型清單
   isFilterExpanded = false; // 過濾器展開狀態
@@ -979,15 +982,6 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
   // 清理 Bootstrap 組件實例
   private cleanupBootstrapComponents() {
     if (typeof (window as any).bootstrap !== 'undefined') {
-      // 清理 dropdown 實例
-      const dropdownElements = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-      dropdownElements.forEach(element => {
-        const existingDropdown = (window as any).bootstrap.Dropdown.getInstance(element);
-        if (existingDropdown) {
-          existingDropdown.dispose();
-        }
-      });
-
       // 清理 tooltip 實例
       const tooltipElements = document.querySelectorAll('[data-bs-toggle="tooltip"]');
       tooltipElements.forEach(element => {
@@ -1000,96 +994,22 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async ngOnInit() {
-    // 從 URL 參數讀取篩選條件
+    // 先載入所有人才資料
+    await this.loadAllWorkersData();
+    
+    // 然後從 URL 參數讀取篩選條件並應用本地篩選
     this.loadFiltersFromUrl();
-    await this.loadWorkersData();
+    this.applyLocalFilters();
   }
 
   ngAfterViewInit() {
-    // 初始化 Bootstrap dropdown
-    this.initBootstrapDropdown();
-
-    // 延遲再次初始化，確保DOM完全載入
-    setTimeout(() => {
-      this.reinitializeBootstrapComponents();
-    }, 100);
+    // 初始化 tooltips（保留 tooltip 功能）
+    this.initTooltips();
   }
 
-  private initBootstrapDropdown() {
+  private initTooltips() {
     // 確保 Bootstrap 可用
     if (typeof (window as any).bootstrap !== 'undefined') {
-      // 初始化所有的 dropdown
-      const dropdownElements = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-      dropdownElements.forEach(element => {
-        // 檢查是否已經初始化過，避免重複初始化
-        const existingDropdown = (window as any).bootstrap.Dropdown.getInstance(element);
-        if (!existingDropdown) {
-          const dropdown = new (window as any).bootstrap.Dropdown(element, {
-            boundary: 'window',
-            reference: 'toggle',
-            display: 'static',
-            popperConfig: {
-              modifiers: [
-                {
-                  name: 'preventOverflow',
-                  options: {
-                    boundary: 'window'
-                  }
-                },
-                {
-                  name: 'flip',
-                  options: {
-                    fallbackPlacements: ['top', 'bottom']
-                  }
-                }
-              ]
-            }
-          });
-        }
-      });
-    } else {
-      // 如果 Bootstrap 還沒載入，稍後重試
-      setTimeout(() => this.initBootstrapDropdown(), 100);
-    }
-  }
-
-  // 重新初始化 Bootstrap 組件的方法
-  private reinitializeBootstrapComponents() {
-    if (typeof (window as any).bootstrap !== 'undefined') {
-      // 銷毀現有的 dropdown 實例
-      const dropdownElements = document.querySelectorAll('[data-bs-toggle="dropdown"]');
-      dropdownElements.forEach(element => {
-        const existingDropdown = (window as any).bootstrap.Dropdown.getInstance(element);
-        if (existingDropdown) {
-          existingDropdown.dispose();
-        }
-      });
-
-      // 重新初始化所有 dropdown，使用特殊配置
-      dropdownElements.forEach(element => {
-        const dropdown = new (window as any).bootstrap.Dropdown(element, {
-          boundary: 'window',
-          reference: 'toggle',
-          display: 'static',
-          popperConfig: {
-            modifiers: [
-              {
-                name: 'preventOverflow',
-                options: {
-                  boundary: 'window'
-                }
-              },
-              {
-                name: 'flip',
-                options: {
-                  fallbackPlacements: ['top', 'bottom']
-                }
-              }
-            ]
-          }
-        });
-      });
-
       // 初始化 tooltips
       const tooltipElements = document.querySelectorAll('[data-bs-toggle="tooltip"]');
       tooltipElements.forEach(element => {
@@ -1097,9 +1017,21 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
         if (existingTooltip) {
           existingTooltip.dispose();
         }
-        new (window as any).bootstrap.Tooltip(element);
+        try {
+          new (window as any).bootstrap.Tooltip(element);
+        } catch (error) {
+          console.warn('Failed to initialize tooltip:', error);
+        }
       });
+    } else {
+      // 如果 Bootstrap 還沒載入，稍後重試
+      setTimeout(() => this.initTooltips(), 100);
     }
+  }
+
+  // 重新初始化 tooltips 的方法
+  private reinitializeTooltips() {
+    this.initTooltips();
   }
 
   // 從 URL 參數讀取篩選條件
@@ -1121,9 +1053,9 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.selectedCertificationTypes = params['cert'].split(',').filter((cert: string) => cert.trim());
       }
 
-      // 在參數變化後重新初始化 Bootstrap 組件
+      // 在參數變化後重新初始化 tooltips
       setTimeout(() => {
-        this.reinitializeBootstrapComponents();
+        this.reinitializeTooltips();
       }, 150);
     });
   }
@@ -1155,9 +1087,135 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // 載入工人資料（一次載入所有資料，優化傳輸）
+  // 載入所有工人資料（不帶任何篩選條件）
+  async loadAllWorkersData() {
+    // 如果正在載入，取消前一個請求並繼續新的請求
+    if (this.isLoading) {
+      console.log('取消前一個搜尋請求，開始新的搜尋');
+      if (this.currentSearchRequest) {
+        this.currentSearchRequest = null;
+      }
+    }
+
+    // 建立請求標識
+    const requestId = Symbol('request');
+    this.currentSearchRequest = requestId;
+
+    this.isLoading = true;
+    try {
+      // 不帶任何篩選條件，載入所有資料
+      const filter = {};
+      console.log('開始載入所有工人資料，無篩選條件');
+
+      // 一次載入所有資料，但排除圖片欄位以減少傳輸大小
+      const result = await this.mongodbService.get('worker', filter, {
+        limit: 0, // 0 表示載入所有資料
+        sort: { name: 1 }, // 按姓名排序
+        projection: {
+          // 排除圖片欄位以減少傳輸大小
+          profilePicture: 0,
+          idCardFrontPicture: 0,
+          idCardBackPicture: 0,
+          laborInsurancePicture: 0,
+          sixHourTrainingFrontPicture: 0,
+          sixHourTrainingBackPicture: 0,
+          medicalExamPictures: 0,
+          // 排除證照圖片欄位
+          'certifications.frontPicture': 0,
+          'certifications.backPicture': 0
+        }
+      });
+
+      // 檢查這個請求是否還是最新的
+      if (this.currentSearchRequest !== requestId) {
+        console.log('請求已過時，忽略結果');
+        return;
+      }
+
+      // 現在 result 總是 PaginatedResult<T> 格式
+      let workers = result.data as WorkerWithFlag[];
+      const pagination = result.pagination;
+
+      // 處理舊資料遷移：將 picture 欄位移到 pictures 陣列
+      workers = this.migrateAccidentInsuranceData(workers);
+
+      // 更新分頁資訊（基於實際載入的資料）
+      this.totalRecords = pagination.count;
+      this.totalPages = Math.ceil(this.totalRecords / this.pageSize);
+
+      // 轉換普通 Worker 為 WorkerWithFlag
+      this.workers = workers.map((worker) => {
+        const workerWithFlag = worker as unknown as WorkerWithFlag;
+        workerWithFlag.isValid = signal(true);
+        workerWithFlag.certifications =
+          worker.certifications as CertificationWithFlag[];
+        return workerWithFlag;
+      });
+
+      // 初始化過濾器選項（只在第一頁時執行）
+      if (this.currentPage === 1) {
+        await this.initializeFilterOptions();
+      }
+
+      // 更新表格資料（顯示所有資料）
+      this.filteredWorkers = [...this.workers];
+      console.log('載入完成，總筆數:', this.totalRecords, '實際載入筆數:', this.workers.length, '顯示筆數:', this.filteredWorkers.length);
+      
+      if (this.api) {
+        // 設定 AG-Grid 的資料
+        this.api.setGridOption('rowData', this.filteredWorkers);
+        
+        // 啟用 AG-Grid 的客戶端分頁（所有資料都在客戶端）
+        this.api.setGridOption('pagination', true);
+        console.log('啟用 AG-Grid 客戶端分頁:', { 
+          totalRecords: this.totalRecords, 
+          totalPages: this.totalPages,
+          currentPage: this.currentPage,
+          pageSize: this.pageSize
+        });
+      }
+
+    } catch (error) {
+      console.error('載入工人資料時發生錯誤:', error);
+      
+      // 檢查這個請求是否還是最新的
+      if (this.currentSearchRequest !== requestId) {
+        console.log('請求已過時，忽略結果');
+        return;
+      }
+      // 查詢失敗時，設定空陣列避免後續處理錯誤
+      this.workers = [];
+      this.filteredWorkers = [];
+      this.totalRecords = 0;
+      this.totalPages = 0;
+      
+      // 更新表格資料
+      if (this.api) {
+        this.api.setGridOption('rowData', []);
+      }
+    } finally {
+      // 檢查這個請求是否還是最新的
+      if (this.currentSearchRequest === requestId) {
+        this.isLoading = false;
+        this.currentSearchRequest = null;
+
+        // 在資料載入完成後重新初始化 tooltips
+        setTimeout(() => {
+          this.reinitializeTooltips();
+        }, 200);
+      }
+    }
+  }
+
+  // 載入工人資料（使用篩選條件，用於其他需要重新載入的場景）
   async loadWorkersData() {
-    if (this.isLoading) return;
+    // 如果正在載入，取消前一個請求並繼續新的請求
+    if (this.isLoading) {
+      console.log('取消前一個搜尋請求，開始新的搜尋');
+      if (this.currentSearchRequest) {
+        this.currentSearchRequest = null;
+      }
+    }
 
     // 建立請求標識
     const requestId = Symbol('request');
@@ -1167,6 +1225,7 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     try {
       // 構建查詢條件
       const filter = this.buildFilterCondition();
+      console.log('開始載入工人資料，篩選條件:', filter);
 
       // 一次載入所有資料，但排除圖片欄位以減少傳輸大小
       const result = await this.mongodbService.get('worker', filter, {
@@ -1258,6 +1317,7 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // 更新表格資料
       this.filteredWorkers = [...this.workers];
+      console.log('載入完成，總筆數:', this.totalRecords, '實際載入筆數:', this.workers.length, '顯示筆數:', this.filteredWorkers.length);
       
       if (this.api) {
         // 設定 AG-Grid 的資料
@@ -1314,9 +1374,9 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
         this.currentSearchRequest = null;
 
-        // 在資料載入完成後重新初始化 Bootstrap 組件
+        // 在資料載入完成後重新初始化 tooltips
         setTimeout(() => {
-          this.reinitializeBootstrapComponents();
+          this.reinitializeTooltips();
         }, 200);
       }
     }
@@ -1327,12 +1387,12 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     const filter: any = {};
 
     // 承攬公司過濾
-    if (this.selectedContractingCompany) {
+    if (this.selectedContractingCompany && this.selectedContractingCompany.trim()) {
       filter.contractingCompanyName = this.selectedContractingCompany;
     }
 
     // 人才搜尋過濾（姓名、電話、身份證號）
-    if (this.workerSearchText.trim()) {
+    if (this.workerSearchText && this.workerSearchText.trim()) {
       const searchText = this.workerSearchText.trim();
       filter.$or = [
         { name: { $regex: searchText, $options: 'i' } },           // 姓名（不區分大小寫）
@@ -1346,6 +1406,7 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
       filter['certifications.type'] = { $in: this.selectedCertificationTypes };
     }
 
+    console.log('構建篩選條件:', filter);
     return filter;
   }
 
@@ -1581,32 +1642,83 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  // 本地篩選（不重新載入資料）
+  private applyLocalFilters() {
+    console.log('執行本地篩選');
+    
+    // 從原始資料開始篩選
+    let filtered = [...this.workers];
+
+    // 人才搜尋篩選
+    if (this.workerSearchText && this.workerSearchText.trim()) {
+      const searchText = this.workerSearchText.toLowerCase().trim();
+      filtered = filtered.filter(worker => 
+        worker.name?.toLowerCase().includes(searchText) ||
+        worker.tel?.toString().toLowerCase().includes(searchText) ||
+        worker.idno?.toLowerCase().includes(searchText)
+      );
+    }
+
+    // 承攬公司篩選
+    if (this.selectedContractingCompany && this.selectedContractingCompany.trim()) {
+      filtered = filtered.filter(worker => 
+        worker.contractingCompanyName === this.selectedContractingCompany
+      );
+    }
+
+    // 證照類型篩選
+    if (this.selectedCertificationTypes.length > 0) {
+      filtered = filtered.filter(worker => {
+        if (!worker.certifications || worker.certifications.length === 0) {
+          return false;
+        }
+        return worker.certifications.some(cert => 
+          this.selectedCertificationTypes.includes(cert.type)
+        );
+      });
+    }
+
+    // 更新篩選後的資料
+    this.filteredWorkers = filtered;
+    
+    // 更新分頁資訊
+    this.totalRecords = filtered.length;
+    this.totalPages = Math.ceil(this.totalRecords / this.pageSize);
+    
+    // 重置到第一頁
+    this.currentPage = 1;
+
+    // 更新 AG-Grid 資料
+    if (this.api) {
+      this.api.setGridOption('rowData', this.filteredWorkers);
+      this.api.paginationGoToPage(0);
+    }
+
+    console.log('本地篩選完成，顯示筆數:', this.filteredWorkers.length);
+  }
+
   // 清除所有過濾器
   clearFilters() {
-    console.log('清除所有過濾器，重置分頁到第一頁');
+    console.log('清除所有過濾器');
     this.selectedContractingCompany = '';
     this.selectedCertificationTypes = [];
     this.workerSearchText = '';
+    
+    // 使用本地篩選而不是重新載入資料
+    this.applyLocalFilters();
+    
     // 清除 URL 參數
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {},
       replaceUrl: true
     });
-    // 重置到第一頁並重新載入資料
-    this.currentPage = 1;
-    this.loadWorkersData();
-    
-    // 同步 AG-Grid 分頁狀態
-    if (this.api) {
-      this.api.paginationGoToPage(0); // 轉換為 0-indexed
-    }
   }
 
   // 承攬公司變更事件
   onContractingCompanyChange() {
+    this.applyLocalFilters();
     this.updateUrlWithFilters();
-    this.applyFilters();
   }
 
   // 承攬公司搜尋處理
@@ -1629,33 +1741,75 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.filteredContractingCompanies = [...this.contractingCompaniesWithCount];
   }
 
-  // 人才搜尋處理（加入防抖機制）
+  // 切換承攬公司下拉選單
+  toggleCompanyDropdown() {
+    this.isCompanyDropdownOpen = !this.isCompanyDropdownOpen;
+  }
+
+  // 選擇承攬公司
+  selectCompany(companyName: string) {
+    this.selectedContractingCompany = companyName;
+    this.isCompanyDropdownOpen = false;
+    this.onContractingCompanyChange();
+  }
+
+  // 監聽點擊事件，點擊外部時關閉下拉選單
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) {
+    const target = event.target as HTMLElement;
+    const dropdownElement = target.closest('.position-relative');
+    
+    // 如果點擊的不是下拉選單區域，則關閉下拉選單
+    if (!dropdownElement && this.isCompanyDropdownOpen) {
+      this.isCompanyDropdownOpen = false;
+    }
+  }
+
+  // 人才搜尋處理（簡化版）
   onWorkerSearchChange() {
     // 清除之前的計時器
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
     }
 
-    // 設定新的計時器，300ms 後執行搜尋
-    this.searchDebounceTimer = setTimeout(() => {
-      this.performSearch();
-    }, 300);
-  }
+    // 設定搜尋狀態
+    this.isSearching = true;
 
-  // 執行實際搜尋
-  private performSearch() {
-    // 取消前一個搜尋請求
-    if (this.currentSearchRequest) {
-      this.currentSearchRequest = null;
+    // 如果搜尋文字為空，立即執行搜尋
+    if (!this.workerSearchText || !this.workerSearchText.trim()) {
+      console.log('搜尋文字為空，立即執行搜尋');
+      this.performSearch();
+      return;
     }
 
-    // 觸發過濾器應用
+    // 設定防抖計時器，100ms 後執行搜尋（提高響應速度）
+    this.searchDebounceTimer = setTimeout(() => {
+      this.performSearch();
+    }, 100);
+  }
+
+  // 執行實際搜尋（本地篩選）
+  private performSearch() {
+    console.log('執行本地搜尋，搜尋文字:', this.workerSearchText);
+    
+    // 清除計時器和搜尋狀態
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = null;
+    }
+    this.isSearching = false;
+
+    // 執行本地篩選
+    this.applyLocalFilters();
+    
+    // 更新 URL 參數
     this.updateUrlWithFilters();
-    this.applyFilters();
   }
 
   // 清除人才搜尋
   clearWorkerSearch() {
+    console.log('清除人才搜尋');
+    
     // 清除計時器
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
@@ -1663,8 +1817,11 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.workerSearchText = '';
+    this.isSearching = false;
+    
+    // 使用本地篩選而不是重新載入資料
+    this.applyLocalFilters();
     this.updateUrlWithFilters();
-    this.applyFilters();
   }
 
   // 遷移意外險資料：將舊的 picture 欄位移到 pictures 陣列，並修正錯誤的資料分配
@@ -1756,8 +1913,10 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.selectedCertificationTypes.splice(index, 1);
       }
     }
+    
+    // 使用本地篩選而不是重新載入資料
+    this.applyLocalFilters();
     this.updateUrlWithFilters();
-    this.applyFilters();
   }
 
   // 檢查證照類型是否被選中

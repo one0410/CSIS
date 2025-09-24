@@ -23,7 +23,10 @@
       <div class="card-body">
         <div class="row mb-3">
           <div class="col-md-6">
-            <label for="name" class="form-label">姓名 *</label>
+            <label for="name" class="form-label">
+              姓名
+              <span class="text-danger">*</span>
+            </label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-user"></i></span>
               <input type="text" class="form-control" id="name" name="name" [(ngModel)]="worker.name" required
@@ -35,7 +38,9 @@
           </div>
 
           <div class="col-md-6">
-            <label for="idno" class="form-label">身分證字號 *</label>
+            <label for="idno" class="form-label">身分證字號
+              <span class="text-danger">*</span>
+            </label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-credit-card"></i></span>
               <input type="text" class="form-control" id="idno" name="idno" [(ngModel)]="worker.idno" required
@@ -49,7 +54,7 @@
 
         <div class="row mb-3">
           <div class="col-md-4">
-            <label for="gender" class="form-label">性別 *</label>
+            <label for="gender" class="form-label">性別</label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-user"></i></span>
               <select class="form-select" id="gender" name="gender" [(ngModel)]="worker.gender" required
@@ -66,7 +71,9 @@
           </div>
 
           <div class="col-md-4">
-            <label for="birthday" class="form-label">生日 *</label>
+            <label for="birthday" class="form-label">生日
+              <span class="text-danger">*</span>
+            </label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-calendar-day"></i></span>
               <input type="date" class="form-control" id="birthday" name="birthday" [(ngModel)]="worker.birthday"
@@ -598,11 +605,14 @@
       <div class="card-body">
         <div class="row mb-3">
           <div class="col-md-6">
-            <label for="contractingCompanyName" class="form-label">承攬公司名稱</label>
+            <label for="contractingCompanyName" class="form-label">
+              承攬公司名稱
+              <span class="text-danger">*</span>
+            </label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-building"></i></span>
               <input type="text" class="form-control" id="contractingCompanyName" name="contractingCompanyName"
-                [(ngModel)]="worker.contractingCompanyName" aria-label="承攬公司名稱" title="請輸入承攬公司名稱">
+                [(ngModel)]="worker.contractingCompanyName" aria-label="承攬公司名稱" title="請輸入承攬公司名稱" required>
             </div>
           </div>
 

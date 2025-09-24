@@ -68,8 +68,7 @@ export class SiteFormListComponent implements AfterViewInit {
     try {
       const savedView = localStorage.getItem(this.CALENDAR_VIEW_KEY);
       if (savedView) {
-        console.log(`構造函數中讀取到保存的視圖模式: ${savedView}`);
-        initialView = savedView;
+          initialView = savedView;
       }
     } catch (e) {
       console.error('讀取保存的視圖模式時出錯:', e);
@@ -141,8 +140,7 @@ export class SiteFormListComponent implements AfterViewInit {
       
       // 視圖渲染完成後處理
       viewDidMount: (arg) => {
-        console.log('視圖已加載:', arg.view.type);
-        // 儲存當前視圖 (通過程式改變視圖時也會觸發這個事件)
+          // 儲存當前視圖 (通過程式改變視圖時也會觸發這個事件)
         this.saveCalendarView(arg.view.type);
         
         // 確保周視圖和日視圖顯示所有事件
@@ -150,7 +148,6 @@ export class SiteFormListComponent implements AfterViewInit {
           setTimeout(() => {
             const moreLinks = document.querySelectorAll('.fc-more-link');
             if (moreLinks.length > 0) {
-              console.log('發現顯示更多按鈕，重新渲染視圖');
               arg.view.calendar.changeView(arg.view.type);
             }
           }, 100);
@@ -159,16 +156,15 @@ export class SiteFormListComponent implements AfterViewInit {
       
       // 日曆視圖初始化後觸發
       datesSet: (dateInfo) => {
-        console.log('日曆日期已設置，當前視圖:', dateInfo.view.type);
+
         // 這裡也保存視圖模式，確保任何方式的視圖變更都能被捕獲
         this.saveCalendarView(dateInfo.view.type);
-        
+
         // 當日曆日期範圍改變時，重新載入表單
         if (this.formsLoaded && this.siteId) {
           const startDate = dayjs(dateInfo.start).format('YYYY-MM-DD');
           const endDate = dayjs(dateInfo.end).subtract(1, 'day').format('YYYY-MM-DD'); // FullCalendar的end是排除的，所以減一天
-          
-          console.log(`視圖日期範圍改變，重新載入表單: ${startDate} 到 ${endDate}`);
+
           this.loadForms(startDate, endDate);
         }
       }
@@ -192,20 +188,14 @@ export class SiteFormListComponent implements AfterViewInit {
           this.formsLoaded = true;
           // 讀取各種表單（會自動使用當前日曆視圖的日期範圍）
           await this.loadForms();
-          console.log('表單載入完成，已標記為已載入');
         }
       });
     }
   }
   
   ngAfterViewInit(): void {
-    console.log('ngAfterViewInit 被觸發');
     const calendarApi = this.calendarComponent.getApi();
     calendarApi.updateSize();
-    console.log('calendar rendered');
-    
-    // 打印當前視圖，確認是否與保存的視圖一致
-    console.log('當前視圖:', calendarApi.view.type);
 
     // 添加窗口大小變化監聽器，確保日曆能適應窗口大小變化
     window.addEventListener('resize', () => {
@@ -217,10 +207,8 @@ export class SiteFormListComponent implements AfterViewInit {
     // 如果有 siteId 且尚未載入表單，則在日曆初始化完成後載入表單
     if (this.siteId && !this.formsLoaded) {
       setTimeout(async () => {
-        console.log('日曆初始化完成，開始載入表單');
         this.formsLoaded = true;
         await this.loadForms();
-        console.log('表單載入完成');
       }, 100);
     }
     
@@ -233,53 +221,37 @@ export class SiteFormListComponent implements AfterViewInit {
   
   // 添加視圖切換按鈕的事件監聽
   private addViewButtonListeners(): void {
-    console.log('正在添加視圖切換按鈕的事件監聽');
-    
     // 獲取所有視圖切換按鈕
     const monthButton = document.querySelector('.fc-dayGridMonth-button');
     const weekButton = document.querySelector('.fc-dayGridWeek-button');
     const dayButton = document.querySelector('.fc-dayGridDay-button');
-    
+
     // 為月視圖按鈕添加事件監聽
     if (monthButton) {
-      console.log('找到月視圖按鈕，添加事件監聽');
       monthButton.addEventListener('click', () => {
-        console.log('用戶點擊切換到月視圖');
         this.saveCalendarView('dayGridMonth');
       });
-    } else {
-      console.warn('未找到月視圖按鈕');
     }
-    
+
     // 為周視圖按鈕添加事件監聽
     if (weekButton) {
-      console.log('找到周視圖按鈕，添加事件監聽');
       weekButton.addEventListener('click', () => {
-        console.log('用戶點擊切換到周視圖');
         this.saveCalendarView('dayGridWeek');
       });
-    } else {
-      console.warn('未找到周視圖按鈕');
     }
-    
+
     // 為日視圖按鈕添加事件監聽
     if (dayButton) {
-      console.log('找到日視圖按鈕，添加事件監聽');
       dayButton.addEventListener('click', () => {
-        console.log('用戶點擊切換到日視圖');
         this.saveCalendarView('dayGridDay');
       });
-    } else {
-      console.warn('未找到日視圖按鈕');
     }
   }
   
   // 保存當前日曆視圖
   private saveCalendarView(viewName: string): void {
-    console.log(`正在保存日曆視圖: ${viewName}`);
     try {
       localStorage.setItem(this.CALENDAR_VIEW_KEY, viewName);
-      console.log(`已成功保存日曆視圖: ${viewName}`);
     } catch (error) {
       console.error('保存日曆視圖時發生錯誤:', error);
     }
@@ -293,7 +265,8 @@ export class SiteFormListComponent implements AfterViewInit {
           const calendarApi = this.calendarComponent.getApi();
           const currentView = calendarApi.view;
           startDate = dayjs(currentView.activeStart).format('YYYY-MM-DD');
-          endDate = dayjs(currentView.activeEnd).format('YYYY-MM-DD');
+          // FullCalendar 的 activeEnd 是排除的，所以要減一天
+          endDate = dayjs(currentView.activeEnd).subtract(1, 'day').format('YYYY-MM-DD');
         } else {
           // 如果日曆還未初始化，使用當前月份作為預設範圍
           const now = dayjs();
@@ -302,24 +275,22 @@ export class SiteFormListComponent implements AfterViewInit {
         }
       }
 
-      console.log(`載入表單 - 日期範圍: ${startDate} 到 ${endDate}`);
 
       // 檢查是否需要重新載入所有表單資料（快取過期或首次載入）
       const now = Date.now();
       const needReload = !this.allSiteForms.length || (now - this.lastFormsLoadTime) > this.FORMS_CACHE_DURATION;
-      
+
       if (needReload) {
-        console.log('重新載入所有表單資料，日期範圍:', startDate, '到', endDate);
-        
-        // 構建查詢條件，限制日期範圍以減少查詢量
-        // 為了計算待填表單，我們需要稍微擴大查詢範圍
-        const expandedStartDate = dayjs(startDate).subtract(30, 'day').format('YYYY-MM-DD');
-        const expandedEndDate = dayjs(endDate).add(30, 'day').format('YYYY-MM-DD');
+        // 構建查詢條件，為了確保跨月份的工地許可單不會遺漏，我們需要擴大查詢範圍
+        // 特別是工地許可單可能跨越多個月份
+        const expandedStartDate = dayjs(startDate).subtract(60, 'day').format('YYYY-MM-DD');
+        const expandedEndDate = dayjs(endDate).add(60, 'day').format('YYYY-MM-DD');
         
         const query: any = {
           siteId: this.siteId,
           $or: [
-            // 工地許可單：檢查工作期間是否與擴展範圍重疊（用於待填表單計算）
+            // 工地許可單：檢查工作期間是否與擴展範圍重疊
+            // 使用擴展範圍確保跨月份的許可單不會遺漏
             {
               formType: 'sitePermit',
               $and: [
@@ -337,77 +308,82 @@ export class SiteFormListComponent implements AfterViewInit {
                 { createdAt: { $gte: expandedStartDate + 'T00:00:00.000Z', $lte: expandedEndDate + 'T23:59:59.999Z' } }
               ]
             },
-            // 危害告知表單（最近30天，用於工人簽署狀況計算）
+            // 危害告知表單（最近90天，用於工人簽署狀況計算）
             {
               formType: 'hazardNotice',
-              applyDate: { $gte: dayjs().subtract(30, 'day').format('YYYY-MM-DD') }
+              applyDate: { $gte: dayjs().subtract(90, 'day').format('YYYY-MM-DD') }
             },
-            // 教育訓練表單（最近30天，用於工人訓練狀況計算）
+            // 教育訓練表單（最近90天，用於工人訓練狀況計算）
             {
               formType: 'training',
               $or: [
-                { trainingDate: { $gte: dayjs().subtract(30, 'day').format('YYYY-MM-DD') } },
-                { applyDate: { $gte: dayjs().subtract(30, 'day').format('YYYY-MM-DD') } },
-                { createdAt: { $gte: dayjs().subtract(30, 'day').format('YYYY-MM-DD') + 'T00:00:00.000Z' } }
+                { trainingDate: { $gte: dayjs().subtract(90, 'day').format('YYYY-MM-DD') } },
+                { applyDate: { $gte: dayjs().subtract(90, 'day').format('YYYY-MM-DD') } },
+                { createdAt: { $gte: dayjs().subtract(90, 'day').format('YYYY-MM-DD') + 'T00:00:00.000Z' } }
               ]
             },
-            // 其他表單類型（在當前日期範圍內）
+            // 其他表單類型（使用擴展範圍）
             {
               formType: { $in: ['defectRecord', 'safetyIssueRecord'] },
               $or: [
-                { applyDate: { $gte: startDate, $lte: endDate } },
-                { createdAt: { $gte: startDate + 'T00:00:00.000Z', $lte: endDate + 'T23:59:59.999Z' } }
+                { applyDate: { $gte: expandedStartDate, $lte: expandedEndDate } },
+                { createdAt: { $gte: expandedStartDate + 'T00:00:00.000Z', $lte: expandedEndDate + 'T23:59:59.999Z' } }
               ]
             }
           ]
         };
-        
+
         this.allSiteForms = await this.mongodbService.getArray('siteForm', query, {
           limit: 1000, // 設定查詢上限
           sort: { createdAt: -1 } // 按建立時間倒序排列
         });
-        
-        console.log(`載入了 ${this.allSiteForms.length} 筆表單資料`);
+
         this.lastFormsLoadTime = now;
-      } else {
-        console.log('使用快取的表單資料');
       }
 
-      // 在前端進行日期過濾
-      const startDateObj = dayjs(startDate);
-      const endDateObj = dayjs(endDate);
-      
+      // 在前端進行日期過濾，只顯示在當前視圖範圍內的表單
+      const viewStartDateObj = dayjs(startDate);
+      const viewEndDateObj = dayjs(endDate);
+
+
       const allForms = this.allSiteForms.filter((form: any) => {
-        // 取得表單的相關日期
-        let formDate: dayjs.Dayjs | null = null;
-        
-        // 根據表單類型決定使用哪個日期欄位
+        // 根據表單類型決定使用哪個日期欄位進行過濾
         if (form.formType === 'sitePermit' && form.workStartTime && form.workEndTime) {
-          // 工地許可單：檢查工作期間是否與查詢範圍重疊
+          // 工地許可單：檢查工作期間是否與視圖範圍重疊
           const workStart = dayjs(form.workStartTime);
           const workEnd = dayjs(form.workEndTime);
-          return workStart.isSameOrBefore(endDateObj, 'day') && workEnd.isSameOrAfter(startDateObj, 'day');
-        } else if (form.applyDate) {
-          formDate = dayjs(form.applyDate);
-        } else if (form.meetingDate) {
-          formDate = dayjs(form.meetingDate);
-        } else if (form.checkDate) {
-          formDate = dayjs(form.checkDate);
-        } else if (form.trainingDate) {
-          formDate = dayjs(form.trainingDate);
-        } else if (form.createdAt) {
-          formDate = dayjs(form.createdAt);
+          const isOverlap = workStart.isSameOrBefore(viewEndDateObj, 'day') && workEnd.isSameOrAfter(viewStartDateObj, 'day');
+
+
+          return isOverlap;
+        } else {
+          // 其他表單類型：檢查相關日期是否在視圖範圍內
+          let formDate: dayjs.Dayjs | null = null;
+
+          if (form.applyDate) {
+            formDate = dayjs(form.applyDate);
+          } else if (form.meetingDate) {
+            formDate = dayjs(form.meetingDate);
+          } else if (form.checkDate) {
+            formDate = dayjs(form.checkDate);
+          } else if (form.trainingDate) {
+            formDate = dayjs(form.trainingDate);
+          } else if (form.createdAt) {
+            formDate = dayjs(form.createdAt);
+          }
+
+          // 檢查日期是否在視圖範圍內
+          if (formDate) {
+            const isInRange = formDate.isSameOrAfter(viewStartDateObj, 'day') && formDate.isSameOrBefore(viewEndDateObj, 'day');
+
+
+            return isInRange;
+          }
+
+          return false;
         }
-        
-        // 檢查日期是否在範圍內
-        if (formDate) {
-          return formDate.isSameOrAfter(startDateObj, 'day') && formDate.isSameOrBefore(endDateObj, 'day');
-        }
-        
-        return false;
       });
 
-      console.log('載入的表單數據:', allForms);
 
       // 將表單轉換為日曆事件
       const events = [];
@@ -428,19 +404,15 @@ export class SiteFormListComponent implements AfterViewInit {
         if (form.formType === 'sitePermit' && form.workStartTime && form.workEndTime) {
           try {
             // 日期格式化 (確保我們有正確的日期字符串格式)
-            console.log(`處理工地許可單 ID:${form._id}, 開始時間:${form.workStartTime}, 結束時間:${form.workEndTime}`);
-
-            // 解析開始和結束日期 - 直接使用字符串格式處理
+            // 解析開始和結束日期
             const startDate = dayjs(form.workStartTime);
             const endDate = dayjs(form.workEndTime);
-            
+
             // 檢查日期是否有效
             if (startDate.isValid() && endDate.isValid()) {
               const startDateStr = startDate.format('YYYY-MM-DD');
               const endDateStr = endDate.add(1, 'day').format('YYYY-MM-DD'); // 結束日期加一天，因為FullCalendar的結束日期是排除的
-              
-              console.log(`處理跨天事件日期: ${startDateStr} 到 ${endDateStr}`);
-              
+
               // 建立跨天事件
               const event = {
                 id: form._id,
@@ -459,9 +431,8 @@ export class SiteFormListComponent implements AfterViewInit {
                   originalData: form
                 }
               };
-              
+
               events.push(event);
-              console.log(`添加跨天事件:`, event);
             } else {
               console.error(`無效的日期範圍: 開始=${form.workStartTime}, 結束=${form.workEndTime}`);
             }
@@ -517,7 +488,6 @@ export class SiteFormListComponent implements AfterViewInit {
         }
       });
       
-      console.log('需要檢查的日期:', Array.from(datesToCheck));
       
       // 對每個日期進行檢查
       datesToCheck.forEach(checkDate => {
@@ -618,7 +588,6 @@ export class SiteFormListComponent implements AfterViewInit {
         });
       });
 
-      console.log('最終生成的事件列表:', events);
 
       // 更新日曆事件
       this.calendarOptions.events = events;
@@ -632,10 +601,9 @@ export class SiteFormListComponent implements AfterViewInit {
 
   // 刷新表單快取（在新增或修改表單後調用）
   async refreshFormsCache(): Promise<void> {
-    console.log('刷新表單快取');
     this.allSiteForms = [];
     this.lastFormsLoadTime = 0;
-    
+
     if (this.calendarComponent) {
       const calendarApi = this.calendarComponent.getApi();
       const currentView = calendarApi.view;

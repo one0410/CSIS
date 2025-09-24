@@ -36,10 +36,10 @@
       <div class="d-flex align-items-center gap-3">
         <button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
           (click)="toggleFilterExpansion()" [attr.aria-expanded]="isFilterExpanded" aria-controls="filterContent">
-          <i class="bi" [class.bi-search]="!isFilterExpanded" [class.bi-funnel]="isFilterExpanded"></i>
+          <i class="fas" [class.fa-search]="!isFilterExpanded" [class.fa-filter]="isFilterExpanded"></i>
           <span>{{isFilterExpanded ? '收起篩選' : '展開篩選'}}</span>
-          <i class="bi transition-rotate" [class.bi-chevron-down]="!isFilterExpanded"
-            [class.bi-chevron-up]="isFilterExpanded"></i>
+          <i class="fas transition-rotate" [class.fa-chevron-down]="!isFilterExpanded"
+            [class.fa-chevron-up]="isFilterExpanded"></i>
         </button>
 
         <div class="filter-summary text-muted small">
@@ -72,9 +72,13 @@
               <input type="text" class="form-control" id="workerSearchInput"
                 placeholder="輸入姓名、電話或身份證號..."
                 [(ngModel)]="workerSearchText"
-                (input)="onWorkerSearchChange()"
-                (compositionend)="onWorkerSearchChange()">
-              @if (workerSearchText) {
+                (ngModelChange)="onWorkerSearchChange()">
+              @if (isSearching) {
+              <span class="input-group-text">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              </span>
+              }
+              @if (workerSearchText && !isSearching) {
               <button class="btn btn-outline-secondary" type="button" (click)="clearWorkerSearch()" title="清除搜尋">
                 <i class="fas fa-times"></i>
               </button>
@@ -87,15 +91,17 @@
         <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
           <div class="d-flex align-items-center gap-2 flex-shrink-0">
             <label for="contractingCompanySelect" class="form-label mb-0 fw-bold text-nowrap">承攬公司：</label>
-            <div class="dropdown" style="min-width: 200px;">
-              <button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100 text-start" type="button"
-                id="contractingCompanyDropdown" data-bs-toggle="dropdown" data-bs-boundary="viewport"
-                data-bs-auto-close="true" aria-expanded="false">
-                {{ selectedContractingCompany || '全部' }}
+            <div class="position-relative" style="min-width: 200px;">
+              <button class="btn btn-outline-secondary btn-sm w-100 text-start d-flex justify-content-between align-items-center" 
+                type="button" (click)="toggleCompanyDropdown()" [attr.aria-expanded]="isCompanyDropdownOpen">
+                <span>{{ selectedContractingCompany || '全部' }}</span>
+                <i class="fas" [class.fa-chevron-down]="!isCompanyDropdownOpen" [class.fa-chevron-up]="isCompanyDropdownOpen"></i>
               </button>
-              <ul class="dropdown-menu w-100" aria-labelledby="contractingCompanyDropdown">
+              
+              @if (isCompanyDropdownOpen) {
+              <div class="dropdown-menu show w-100 position-absolute" style="top: 100%; left: 0; z-index: 1000;">
                 <!-- 搜尋輸入框 -->
-                <li class="px-3 py-2 border-bottom">
+                <div class="px-3 py-2 border-bottom">
                   <div class="input-group input-group-sm">
                     <input type="text" class="form-control" placeholder="搜尋公司名稱..."
                       [(ngModel)]="companySearchText" (input)="onCompanySearchChange()" (compositionend)="onCompanySearchChange()">
@@ -105,29 +111,26 @@
                     </button>
                     }
                   </div>
-                </li>
+                </div>
                 <!-- 全部選項 -->
-                <li>
-                  <a class="dropdown-item" href="#" (click)="selectedContractingCompany = ''; onContractingCompanyChange(); $event.preventDefault()">
-                    全部
-                  </a>
-                </li>
+                <div class="dropdown-item" role="button" (click)="selectCompany('')">
+                  全部
+                </div>
                 <!-- 公司清單 -->
                 @for (company of filteredContractingCompanies; track company.name) {
-                <li>
-                  <a class="dropdown-item" href="#" 
-                    (click)="selectedContractingCompany = company.name; onContractingCompanyChange(); $event.preventDefault()"
-                    [class.active]="selectedContractingCompany === company.name">
-                    {{ company.name }} <span class="text-muted">({{ company.count }}人)</span>
-                  </a>
-                </li>
+                <div class="dropdown-item" role="button" 
+                  (click)="selectCompany(company.name)"
+                  [class.active]="selectedContractingCompany === company.name">
+                  {{ company.name }} <span class="text-muted">({{ company.count }}人)</span>
+                </div>
                 }
                 @if (filteredContractingCompanies.length === 0 && companySearchText) {
-                <li class="px-3 py-2 text-muted text-center">
+                <div class="px-3 py-2 text-muted text-center">
                   找不到符合條件的公司
-                </li>
+                </div>
                 }
-              </ul>
+              </div>
+              }
             </div>
           </div>
 

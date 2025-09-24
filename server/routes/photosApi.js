@@ -2,6 +2,7 @@ const express = require('express');
 const { GridFSBucket } = require('mongodb');
 const db = require('../dbConnection');
 const logger = require('../logger');
+const dayjs = require('dayjs');
 
 const app = express.Router();
 
@@ -25,8 +26,11 @@ app.get('/api/photos', async (req, res) => {
         const pageSize = parseInt(req.query.pageSize) || 10;
         const skip = (page - 1) * pageSize;
         const siteId = req.query.siteId;
-        
-        logger.info('獲取照片列表', { page, pageSize, siteId, skip });
+        const startDate = req.query.startDate;
+        const endDate = req.query.endDate;
+        const category = req.query.category;
+
+        logger.info('獲取照片列表', { page, pageSize, siteId, skip, startDate, endDate, category });
 
         if (!db) {
             logger.error('MongoDB 連接不可用');
@@ -35,18 +39,36 @@ app.get('/api/photos', async (req, res) => {
                 message: 'MongoDB 連接不可用'
             });
         }
-        
+
         const bucket = new GridFSBucket(db);
-        
+
         // 構建查詢條件
         const query = {};
         if (siteId) {
             query['metadata.siteId'] = siteId;
         }
-        
+
+        // 日期範圍篩選
+        if (startDate || endDate) {
+            query['uploadDate'] = {};
+            if (startDate) {
+                // 使用 dayjs 處理開始日期（當天 00:00:00）
+                query['uploadDate']['$gte'] = dayjs(startDate).startOf('day').toDate();
+            }
+            if (endDate) {
+                // 使用 dayjs 處理結束日期（當天 23:59:59.999）
+                query['uploadDate']['$lte'] = dayjs(endDate).endOf('day').toDate();
+            }
+        }
+
+        // 標籤篩選
+        if (category) {
+            query['metadata.tags.title'] = category;
+        }
+
         // 只獲取圖片類型的文件
         query['contentType'] = { $regex: '^image/' };
-        
+
         logger.info('照片查詢條件', query);
         
         // 查詢文件

@@ -99,7 +99,7 @@ export class SiteVisitorListComponent implements OnInit {
         'siteId': currentSite._id
       };
 
-      const visitors = await this.mongodbService.getArray('visitor', filter) as Visitor[];
+      const visitors = await this.mongodbService.getArray('visitor', filter, { sort: { createdDate: -1, _id: -1 } }) as Visitor[];
       this.visitors.set(visitors);
 
     } catch (error) {

@@ -2,6 +2,7 @@ const express = require('express');
 const { GridFSBucket } = require('mongodb');
 const { EJSON } = require('bson');
 const multer = require('multer');
+const sharp = require('sharp');
 const db = require('../dbConnection');
 const logger = require('../logger');
 
@@ -49,6 +50,72 @@ app.get('/api/gridfs/:filename', async (req, res) => {
         const downloadStream = bucket.openDownloadStreamByName(filename);
         downloadStream.on('error', (error) => handleGridFSError(error, res));
         downloadStream.pipe(res);
+    } catch (error) {
+        handleGridFSError(error, res);
+    }
+});
+
+// 獲取縮圖 - 新增端點
+app.get('/api/gridfs/thumbnail/:filename', async (req, res) => {
+    try {
+        const bucket = new GridFSBucket(db);
+        const filename = req.params.filename;
+        const width = parseInt(req.query.width) || 400; // 預設寬度 400px
+        const quality = parseInt(req.query.quality) || 80; // 預設品質 80
+
+        const files = await bucket.find({ filename: filename }).toArray();
+        if (!files.length) {
+            return res.status(404).json({
+                success: false,
+                message: '文件不存在'
+            });
+        }
+
+        // 檢查是否為圖片類型
+        if (!files[0].contentType || !files[0].contentType.startsWith('image/')) {
+            return res.status(400).json({
+                success: false,
+                message: '此文件不是圖片'
+            });
+        }
+
+        // 設置回應標頭
+        res.set('Content-Type', 'image/jpeg'); // 縮圖統一輸出為 JPEG
+        res.set('Cache-Control', 'public, max-age=86400'); // 快取 24 小時
+
+        const downloadStream = bucket.openDownloadStreamByName(filename);
+        const chunks = [];
+
+        downloadStream.on('data', (chunk) => {
+            chunks.push(chunk);
+        });
+
+        downloadStream.on('end', async () => {
+            try {
+                const buffer = Buffer.concat(chunks);
+
+                // 使用 Sharp 生成縮圖
+                const thumbnail = await sharp(buffer)
+                    .resize(width, null, { // 保持長寬比，只設定寬度
+                        withoutEnlargement: true, // 不放大小圖
+                        fit: 'inside'
+                    })
+                    .jpeg({ quality: quality }) // 轉換為 JPEG 並設定品質
+                    .toBuffer();
+
+                res.send(thumbnail);
+            } catch (error) {
+                logger.error('生成縮圖失敗:', error);
+                res.status(500).json({
+                    success: false,
+                    message: '生成縮圖失敗'
+                });
+            }
+        });
+
+        downloadStream.on('error', (error) => {
+            handleGridFSError(error, res);
+        });
     } catch (error) {
         handleGridFSError(error, res);
     }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, computed, signal } from '@angular/core';
+import { Component, Input, OnInit, AfterViewInit, computed, signal } from '@angular/core';
 import { PhotoService } from '../../../services/photo.service';
 import { CommonModule } from '@angular/common';
 import dayjs from 'dayjs';
@@ -16,10 +16,17 @@ import { AuthService } from '../../../services/auth.service';
   templateUrl: './site-photos.component.html',
   styleUrls: ['./site-photos.component.scss']
 })
-export class SitePhotosComponent implements OnInit {
+export class SitePhotosComponent implements OnInit, AfterViewInit {
   siteId = '';
   site = computed(() => this.currentSiteService.currentSite());
-  photoCount = computed(() => this.photoGroups().reduce((acc, group) => acc + group.photos.length, 0));
+  photoCount = computed(() => {
+    // 如果有總數資訊，顯示總數，否則顯示已載入的數量
+    const total = this.totalPhotoCount();
+    if (total > 0) {
+      return total;
+    }
+    return this.photoGroups().reduce((acc, group) => acc + group.photos.length, 0);
+  });
 
   photoGroups = signal<PhotoGroup[]>([]);
   photoCategories = signal<string[]>([]);
@@ -28,6 +35,7 @@ export class SitePhotosComponent implements OnInit {
   uploadProgress = signal<number>(0);
   uploadingFiles = signal<boolean>(false);
   selectedPhoto = signal<Photo | null>(null);
+  totalPhotoCount = signal<number>(0); // 儲存總照片數量
 
   // 搜尋相關屬性
   searchStartDate: string = '';
@@ -130,6 +138,9 @@ export class SitePhotosComponent implements OnInit {
         // 重置分頁狀態，確保每次返回此元件時都從第一頁開始加載
         this.photoService.resetPagination();
 
+        // 載入照片統計資訊
+        this.loadPhotoStats();
+
         // 處理查詢參數
         this.route.queryParamMap.subscribe(queryParams => {
           const startDate = queryParams.get('startDate');
@@ -165,6 +176,15 @@ export class SitePhotosComponent implements OnInit {
   ngOnInit() {
     // 確保在初始化時也重置分頁狀態
     this.photoService.resetPagination();
+    // 載入照片統計資訊
+    this.loadPhotoStats();
+  }
+
+  ngAfterViewInit() {
+    // 確保 DOM 已經準備好後再設置滾動監聽器
+    setTimeout(() => {
+      this.setupScrollListener();
+    }, 100);
   }
 
   ngOnDestroy() {
@@ -174,56 +194,86 @@ export class SitePhotosComponent implements OnInit {
     }
   }
 
-  private setupScrollListener(): void {
-    console.log('設置滾動監聽器');
-    
-    // 使用節流函數來避免過於頻繁的滾動事件
-    let scrollTimeout: number;
-    
-    const throttledScrollHandler = () => {
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout);
+  // 載入照片統計資訊
+  async loadPhotoStats() {
+    const currentSite = this.site();
+    if (currentSite && currentSite._id) {
+      try {
+        const stats = await this.photoService.getPhotoStats(currentSite._id);
+        this.totalPhotoCount.set(stats.count);
+      } catch (error) {
+        console.error('載入照片統計失敗:', error);
       }
-      scrollTimeout = window.setTimeout(() => {
-        this.checkScrollPosition();
-      }, 100);
-    };
+    }
+  }
 
-    window.addEventListener('scroll', throttledScrollHandler, { passive: true });
-    
-    // 儲存清理函數以便後續使用
-    this.cleanupScrollListener = () => {
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout);
+  private setupScrollListener(): void {
+    // 等待 DOM 更新後再設置監聽器
+    setTimeout(() => {
+      // 尋找實際可滾動的父容器（右側內容區）
+      const scrollContainer = document.querySelector('.flex-fill[style*="overflow-y: auto"]') as HTMLElement;
+
+      if (!scrollContainer) {
+        return;
       }
-      window.removeEventListener('scroll', throttledScrollHandler);
-    };
-    
-    console.log('滾動監聽器設置完成');
+
+      // 主要滾動處理函數
+      const scrollHandler = () => {
+        const scrollTop = scrollContainer.scrollTop;
+        const clientHeight = scrollContainer.clientHeight;
+        const scrollHeight = scrollContainer.scrollHeight;
+
+        // 當距離底部小於 200px 時開始載入
+        if (scrollHeight - (scrollTop + clientHeight) < 200) {
+          this.loadMorePhotos();
+        }
+      };
+
+      // 添加節流的滾動監聽器
+      let ticking = false;
+      const throttledScrollHandler = () => {
+        if (!ticking) {
+          requestAnimationFrame(() => {
+            scrollHandler();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+
+      scrollContainer.addEventListener('scroll', throttledScrollHandler, { passive: true });
+
+      // 儲存清理函數
+      this.cleanupScrollListener = () => {
+        scrollContainer.removeEventListener('scroll', throttledScrollHandler);
+      };
+
+    }, 200);
   }
 
   private checkScrollPosition(): void {
     if (this.isLoading()) {
-      console.log('正在載入中，跳過滾動檢測');
+      return;
+    }
+
+    // 檢查是否還有更多照片可以載入
+    if (!this.photoService.hasMorePhotos()) {
       return;
     }
 
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
-    const scrollTop = window.scrollY;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop;
+    const scrollBottom = scrollTop + windowHeight;
+
+    // 計算距離底部的距離
+    const distanceFromBottom = documentHeight - scrollBottom;
+
+    // 使用百分比作為額外檢查
     const scrollPercentage = (scrollTop + windowHeight) / documentHeight;
 
-    console.log('滾動檢測:', {
-      windowHeight,
-      documentHeight,
-      scrollTop,
-      scrollPercentage,
-      threshold: this.scrollThreshold
-    });
-
-    // 當滾動到頁面底部 80% 時觸發載入
-    if (scrollPercentage >= 0.8) {
-      console.log('觸發載入更多照片');
+    // 當距離底部小於 200px 或滾動超過 85% 時觸發載入
+    if (distanceFromBottom < this.scrollThreshold || scrollPercentage >= 0.85) {
       this.loadPhotos();
     }
   }
@@ -232,33 +282,28 @@ export class SitePhotosComponent implements OnInit {
     const currentSite = this.site();
     if (!currentSite) return;
 
-    console.log('開始載入照片，當前頁碼:', this.photoService.getCurrentPage());
-
     this.isLoading.set(true);
-    
+
     // 準備搜尋參數
     const searchParams = {
       startDate: this.searchStartDate || undefined,
       endDate: this.searchEndDate || undefined,
       category: this.searchCategory || undefined
     };
-    
+
     this.photoService.getPhotos(currentSite._id!, searchParams).subscribe({
       next: (newPhotos) => {
-        console.log('收到新照片:', newPhotos.length, '張');
-        
         if (newPhotos.length === 0) {
-          console.log('沒有更多照片了');
           this.isLoading.set(false);
           return;
         }
 
         // 將新圖片加入現有的分組中
         this.updateImageGroups(newPhotos);
+
+        // 更新頁碼，準備下次載入
         this.photoService.nextPage();
         this.isLoading.set(false);
-        
-        console.log('照片載入完成，更新後總數:', this.photoGroups().reduce((acc, group) => acc + group.photos.length, 0));
       },
       error: (error) => {
         console.error('載入圖片時發生錯誤:', error);
@@ -267,35 +312,39 @@ export class SitePhotosComponent implements OnInit {
     });
   }
 
-  // 手動載入更多照片（用於測試）
+  // 手動載入更多照片
   loadMorePhotos(): void {
-    console.log('手動觸發載入更多照片');
+    if (this.isLoading()) {
+      return;
+    }
+
+    if (!this.photoService.hasMorePhotos()) {
+      return;
+    }
+
     this.loadPhotos();
   }
 
   private updateImageGroups(newPhotos: Photo[]): void {
     let allPhotos: Photo[];
 
-    // 檢查是否為第一頁加載
-    if (this.photoService.getCurrentPage() === 1) {
-      // 如果是第一頁，直接使用新照片替換舊列表
+    // 獲取當前已顯示的所有照片
+    const existingPhotos = this.getAllPhotosFromGroups();
+
+    // 如果沒有現有照片（第一次載入）或是重新搜尋（重置後的第一頁）
+    if (existingPhotos.length === 0 || this.photoService.getCurrentPage() === 1) {
+      // 使用新照片作為初始列表
       allPhotos = [...newPhotos];
     } else {
-      // 如果不是第一頁（無限滾動加載），則追加新照片
-      allPhotos = this.getAllPhotosFromGroups();
-      allPhotos.push(...newPhotos);
+      // 追加新照片到現有列表（無限滾動）
+      allPhotos = [...existingPhotos, ...newPhotos];
     }
 
     // 保存所有照片用於搜尋
     this.allPhotos = [...allPhotos];
 
-    // 如果有搜尋條件，則應用過濾（但現在搜尋條件已經在 API 層面處理）
-    if (this.isSearchActive()) {
-      // 搜尋條件已經在 API 層面處理，所以直接使用返回的照片
-      this.photoGroups.set(this.groupPhotosByDate(allPhotos));
-    } else {
-      this.photoGroups.set(this.groupPhotosByDate(allPhotos));
-    }
+    // 更新照片分組顯示
+    this.photoGroups.set(this.groupPhotosByDate(allPhotos));
 
     // 更新分類列表
     this.updatePhotoCategories(allPhotos);
@@ -372,6 +421,8 @@ export class SitePhotosComponent implements OnInit {
     const currentSite = this.site();
     if (currentSite && currentSite._id) {
       this.photoService.notifyPhotoStatsUpdated(currentSite._id);
+      // 重新載入照片統計
+      this.loadPhotoStats();
     }
   }
 
@@ -494,6 +545,8 @@ export class SitePhotosComponent implements OnInit {
       const currentSite = this.site();
       if (currentSite && currentSite._id) {
         this.photoService.notifyPhotoStatsUpdated(currentSite._id);
+        // 重新載入照片統計
+        this.loadPhotoStats();
       }
     } catch (error) {
       console.error('刪除照片失敗:', error);
@@ -708,14 +761,8 @@ export class SitePhotosComponent implements OnInit {
    * 搜尋照片
    */
   searchPhotos(): void {
-    console.log('執行搜尋，條件:', {
-      startDate: this.searchStartDate,
-      endDate: this.searchEndDate,
-      category: this.searchCategory
-    });
-    
     this.isFiltered.set(true);
-    
+
     // 如果有搜尋條件，重置分頁並重新載入所有照片
     if (this.searchStartDate || this.searchEndDate || this.searchCategory) {
       this.photoService.resetPagination();
@@ -767,8 +814,6 @@ export class SitePhotosComponent implements OnInit {
    * 清除搜尋條件
    */
   clearSearch(): void {
-    console.log('清除搜尋條件');
-    
     this.searchStartDate = '';
     this.searchEndDate = '';
     this.searchCategory = '';
@@ -952,7 +997,8 @@ export interface PhotoGroup {
 
 export interface Photo {
   id: number;
-  url: string;
+  url: string; // 原始圖片 URL
+  thumbnailUrl?: string; // 縮圖 URL
   // title: string;
   date: string;  // ISO 格式的日期字串 (YYYY-MM-DD)
   metadata: {

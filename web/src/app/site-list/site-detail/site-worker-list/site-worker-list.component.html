@@ -23,7 +23,7 @@
               id="workerSearch"
               placeholder="輸入姓名、身分證號碼或承攬公司進行搜尋"
               [(ngModel)]="searchQuery"
-              (input)="searchWorkers()"
+              (ngModelChange)="searchWorkers()"
               aria-label="搜尋工作人員"
               >
             <button
