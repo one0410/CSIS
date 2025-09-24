@@ -1,127 +1,127 @@
-<div class="container-fluid h-100">
-  <div class="row h-100">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">
-          <i class="fas fa-users me-2"></i>
-          訪客列表
-        </h4>
+<div class="d-flex flex-column h-100 w-100" style="overflow: hidden; padding: 1rem; box-sizing: border-box;">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
+    <h4 class="mb-0">
+      <i class="fas fa-users me-2"></i>
+      訪客列表
+    </h4>
+    <div class="d-flex gap-2">
+      <button
+        class="btn btn-info"
+        (click)="showQRCodeModal()"
+        [disabled]="loading()"
+      >
+        <i class="fas fa-qr-code me-1"></i>
+        產生QR code
+      </button>
+      <button
+        class="btn btn-primary"
+        (click)="showAddVisitorForm()"
+        [disabled]="loading()"
+      >
+        <i class="fas fa-plus-circle me-1"></i>
+        現場簽名
+      </button>
+    </div>
+  </div>
+
+  <!-- 載入中指示器 -->
+  @if (loading()) {
+  <div class="text-center py-4 flex-shrink-0">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">載入中...</span>
+    </div>
+  </div>
+  }
+
+  <!-- 新增訪客表單 -->
+  @if (showAddForm()) {
+  <div class="card mb-3 flex-shrink-0">
+    <div class="card-header">
+      <h5 class="mb-0">新增訪客</h5>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="saveVisitor()">
+        <div class="row">
+          <!-- 姓名 (必填) -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label" for="visitorName">
+              姓名 <span class="text-danger">*</span>
+            </label>
+            <input
+              id="visitorName"
+              type="text"
+              class="form-control"
+              [(ngModel)]="newVisitor.name"
+              name="name"
+              placeholder="請輸入姓名"
+              required
+            />
+          </div>
+
+          <!-- 身份證號 -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label" for="visitorIdno">身份證號</label>
+            <input
+              id="visitorIdno"
+              type="text"
+              class="form-control"
+              [(ngModel)]="newVisitor.idno"
+              name="idno"
+              placeholder="請輸入身份證號"
+            />
+          </div>
+
+          <!-- 手機 -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label" for="visitorTel">手機</label>
+            <input
+              id="visitorTel"
+              type="tel"
+              class="form-control"
+              [(ngModel)]="newVisitor.tel"
+              name="tel"
+              placeholder="請輸入手機號碼"
+            />
+          </div>
+        </div>
+
         <div class="d-flex gap-2">
           <button
-            class="btn btn-info"
-            (click)="showQRCodeModal()"
-            [disabled]="loading()"
+            type="submit"
+            class="btn btn-success"
+            [disabled]="loading() || !newVisitor.name?.trim()"
           >
-            <i class="fas fa-qr-code me-1"></i>
-            產生QR code
+            <i class="fas fa-check-circle me-1"></i>
+            儲存
           </button>
           <button
-            class="btn btn-primary"
-            (click)="showAddVisitorForm()"
-            [disabled]="loading()"
+            type="button"
+            class="btn btn-secondary"
+            (click)="hideAddVisitorForm()"
           >
-            <i class="fas fa-plus-circle me-1"></i>
-            現場簽名
+            <i class="fas fa-times-circle me-1"></i>
+            取消
           </button>
         </div>
-      </div>
+      </form>
+    </div>
+  </div>
+  }
 
-      <!-- 載入中指示器 -->
-      @if (loading()) {
-      <div class="text-center py-4">
-        <div class="spinner-border" role="status">
-          <span class="visually-hidden">載入中...</span>
-        </div>
-      </div>
-      }
-
-      <!-- 新增訪客表單 -->
-      @if (showAddForm()) {
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0">新增訪客</h5>
-        </div>
-        <div class="card-body">
-          <form (ngSubmit)="saveVisitor()">
-            <div class="row">
-              <!-- 姓名 (必填) -->
-              <div class="col-md-4 mb-3">
-                <label class="form-label" for="visitorName">
-                  姓名 <span class="text-danger">*</span>
-                </label>
-                <input
-                  id="visitorName"
-                  type="text"
-                  class="form-control"
-                  [(ngModel)]="newVisitor.name"
-                  name="name"
-                  placeholder="請輸入姓名"
-                  required
-                />
-              </div>
-
-              <!-- 身份證號 -->
-              <div class="col-md-4 mb-3">
-                <label class="form-label" for="visitorIdno">身份證號</label>
-                <input
-                  id="visitorIdno"
-                  type="text"
-                  class="form-control"
-                  [(ngModel)]="newVisitor.idno"
-                  name="idno"
-                  placeholder="請輸入身份證號"
-                />
-              </div>
-
-              <!-- 手機 -->
-              <div class="col-md-4 mb-3">
-                <label class="form-label" for="visitorTel">手機</label>
-                <input
-                  id="visitorTel"
-                  type="tel"
-                  class="form-control"
-                  [(ngModel)]="newVisitor.tel"
-                  name="tel"
-                  placeholder="請輸入手機號碼"
-                />
-              </div>
-            </div>
-
-            <div class="d-flex gap-2">
-              <button
-                type="submit"
-                class="btn btn-success"
-                [disabled]="loading() || !newVisitor.name?.trim()"
-              >
-                <i class="fas fa-check-circle me-1"></i>
-                儲存
-              </button>
-              <button
-                type="button"
-                class="btn btn-secondary"
-                (click)="hideAddVisitorForm()"
-              >
-                <i class="fas fa-times-circle me-1"></i>
-                取消
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-      }
-
-      <!-- 訪客列表 -->
-      @if (!loading()) { @if (visitors().length === 0) {
-      <div class="text-center py-5">
+  <!-- 訪客列表 -->
+  @if (!loading()) {
+    @if (visitors().length === 0) {
+      <div class="text-center py-5 flex-grow-1 d-flex flex-column justify-content-center">
         <i class="fas fa-users fs-1 text-muted"></i>
         <p class="text-muted mt-2">目前沒有訪客資料</p>
       </div>
-      } @else {
-      <div class="card">
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover mb-0" style="table-layout: fixed;">
-              <thead class="table-light">
+    } @else {
+      <div class="card flex-grow-1 d-flex flex-column w-100" style="min-height: 0;">
+        <div class="card-body p-0 d-flex flex-column w-100" style="min-height: 0;">
+          <!-- 表格容器 -->
+          <div class="flex-grow-1 w-100" style="overflow-y: auto; overflow-x: hidden; min-height: 0;">
+            <table class="table table-hover mb-0 w-100" style="table-layout: fixed;">
+              <thead class="table-light sticky-top">
                 <tr>
                   <th scope="col" style="width: 20%;">姓名</th>
                   <th scope="col" style="width: 18%;">身份證號</th>
@@ -133,8 +133,8 @@
               </thead>
               <tbody>
                 @for (visitor of visitors(); track visitor._id) {
-                <tr 
-                  class="visitor-row" 
+                <tr
+                  class="visitor-row"
                   (click)="viewVisitorDetail(visitor)"
                   style="cursor: pointer;"
                   title="點擊查看危害告知單"
@@ -233,11 +233,20 @@
               </tbody>
             </table>
           </div>
+
+          <!-- 統計資訊 -->
+          <div class="card-footer bg-light border-top p-3 flex-shrink-0">
+            <div class="d-flex justify-content-end">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-users me-2 text-primary"></i>
+                <span class="fw-bold">總訪客數：{{ visitors().length }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      } }
-    </div>
-  </div>
+    }
+  }
 </div>
 
 <!-- QR Code Modal -->

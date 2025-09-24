@@ -1,4 +1,4 @@
-import { Component, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, computed, signal, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -60,6 +60,28 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
   showOnlyActive = true;
   filterCompany = '';
   companies: string[] = [];
+
+  // 勞保 modal 相關
+  showLaborInsuranceModal = signal(false);
+  selectedWorker = signal<Worker | null>(null);
+  newLaborInsurance = {
+    belongSite: '',
+    applyDate: '',
+    picture: '',
+    associationDate: ''
+  };
+
+  // 意外險 modal 相關
+  showAccidentInsuranceModal = signal(false);
+  newAccidentInsurance = {
+    belongSite: '',
+    start: '',
+    end: '',
+    amount: '',
+    signDate: '',
+    companyName: '',
+    pictures: [] as string[]
+  };
 
   constructor(
     private route: ActivatedRoute,
@@ -267,6 +289,275 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
   hasTraining(worker: Worker): boolean {
     if (!worker._id) return false;
     return this.workerTrainingStatus.get(worker._id) || false;
+  }
+
+  // 檢查工人是否有此工地的勞保資料
+  hasLaborInsurance(worker: Worker): boolean {
+    if (!worker.laberInsurance || !worker.laberInsurance.length || !this.siteId) {
+      return false;
+    }
+
+    // 檢查是否有與當前工地匹配的勞保資料
+    return worker.laberInsurance.some(insurance =>
+      insurance.belongSite === this.siteId &&
+      insurance.applyDate &&
+      insurance.applyDate.trim() !== ''
+    );
+  }
+
+  // 檢查工人是否有此工地的意外險資料
+  hasAccidentInsurance(worker: Worker): boolean {
+    if (!worker.accidentInsurances || !worker.accidentInsurances.length || !this.siteId) {
+      return false;
+    }
+
+    // 檢查是否有與當前工地匹配的意外險資料
+    return worker.accidentInsurances.some(insurance =>
+      insurance.belongSite === this.siteId &&
+      insurance.start &&
+      insurance.start.trim() !== ''
+    );
+  }
+
+  // === 勞保 Modal 相關方法 ===
+
+  openLaborInsuranceModal(worker: Worker) {
+    this.selectedWorker.set(worker);
+    this.resetLaborInsuranceForm();
+    this.showLaborInsuranceModal.set(true);
+  }
+
+  closeLaborInsuranceModal() {
+    this.showLaborInsuranceModal.set(false);
+    this.selectedWorker.set(null);
+    this.resetLaborInsuranceForm();
+  }
+
+  resetLaborInsuranceForm() {
+    this.newLaborInsurance = {
+      belongSite: this.siteId || '',
+      applyDate: '',
+      picture: '',
+      associationDate: ''
+    };
+  }
+
+  getWorkerLaborInsurance(worker: Worker) {
+    if (!worker.laberInsurance || !this.siteId) return [];
+    return worker.laberInsurance.filter(insurance => insurance.belongSite === this.siteId);
+  }
+
+  handleLaborInsuranceFileUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.newLaborInsurance.picture = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeLaborInsuranceImage() {
+    this.newLaborInsurance.picture = '';
+  }
+
+  async saveLaborInsurance() {
+    const worker = this.selectedWorker();
+    if (!worker || !this.siteId) return;
+
+    try {
+      this.isLoading = true;
+
+      // 確保 laberInsurance 陣列存在
+      if (!worker.laberInsurance) {
+        worker.laberInsurance = [];
+      }
+
+      // 新增勞保資料到陣列
+      worker.laberInsurance.push({ ...this.newLaborInsurance });
+
+      // 更新到資料庫
+      await this.mongodbService.put('worker', worker._id!, worker);
+
+      // 重新載入資料
+      await this.loadSiteWorkers();
+
+      // 關閉 modal
+      this.closeLaborInsuranceModal();
+
+    } catch (error) {
+      console.error('儲存勞保資料時發生錯誤', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async deleteLaborInsurance(index: number) {
+    const worker = this.selectedWorker();
+    if (!worker || !this.siteId) return;
+
+    if (confirm('確定要刪除這筆勞保資料嗎？')) {
+      try {
+        this.isLoading = true;
+
+        // 獲取當前工地的勞保資料
+        const siteInsurances = this.getWorkerLaborInsurance(worker);
+        if (index >= 0 && index < siteInsurances.length) {
+          // 從原始陣列中移除對應項目
+          const insuranceToRemove = siteInsurances[index];
+          const originalIndex = worker.laberInsurance!.findIndex(ins =>
+            ins.belongSite === insuranceToRemove.belongSite &&
+            ins.applyDate === insuranceToRemove.applyDate
+          );
+
+          if (originalIndex >= 0) {
+            worker.laberInsurance!.splice(originalIndex, 1);
+
+            // 更新到資料庫
+            await this.mongodbService.put('worker', worker._id!, worker);
+
+            // 重新載入資料
+            await this.loadSiteWorkers();
+          }
+        }
+      } catch (error) {
+        console.error('刪除勞保資料時發生錯誤', error);
+      } finally {
+        this.isLoading = false;
+      }
+    }
+  }
+
+  viewImage(imageUrl: string) {
+    window.open(imageUrl, '_blank');
+  }
+
+  // === 意外險 Modal 相關方法 ===
+
+  openAccidentInsuranceModal(worker: Worker) {
+    this.selectedWorker.set(worker);
+    this.resetAccidentInsuranceForm();
+    this.showAccidentInsuranceModal.set(true);
+  }
+
+  closeAccidentInsuranceModal() {
+    this.showAccidentInsuranceModal.set(false);
+    this.selectedWorker.set(null);
+    this.resetAccidentInsuranceForm();
+  }
+
+  resetAccidentInsuranceForm() {
+    this.newAccidentInsurance = {
+      belongSite: this.siteId || '',
+      start: '',
+      end: '',
+      amount: '',
+      signDate: '',
+      companyName: '',
+      pictures: []
+    };
+  }
+
+  getWorkerAccidentInsurance(worker: Worker) {
+    if (!worker.accidentInsurances || !this.siteId) return [];
+    return worker.accidentInsurances.filter(insurance => insurance.belongSite === this.siteId);
+  }
+
+  handleAccidentInsuranceFileUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      Array.from(input.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.newAccidentInsurance.pictures.push(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  }
+
+  removeAccidentInsuranceImage(index: number) {
+    this.newAccidentInsurance.pictures.splice(index, 1);
+  }
+
+  viewAccidentImages(images: string[]) {
+    // 可以實作一個圖片輪播器或者開新視窗
+    if (images.length === 1) {
+      window.open(images[0], '_blank');
+    } else {
+      // 多張圖片的話，可以依次開啟或實作輪播
+      images.forEach(img => window.open(img, '_blank'));
+    }
+  }
+
+  async saveAccidentInsurance() {
+    const worker = this.selectedWorker();
+    if (!worker || !this.siteId) return;
+
+    try {
+      this.isLoading = true;
+
+      // 確保 accidentInsurances 陣列存在
+      if (!worker.accidentInsurances) {
+        worker.accidentInsurances = [];
+      }
+
+      // 新增意外險資料到陣列
+      worker.accidentInsurances.push({ ...this.newAccidentInsurance });
+
+      // 更新到資料庫
+      await this.mongodbService.put('worker', worker._id!, worker);
+
+      // 重新載入資料
+      await this.loadSiteWorkers();
+
+      // 關閉 modal
+      this.closeAccidentInsuranceModal();
+
+    } catch (error) {
+      console.error('儲存意外險資料時發生錯誤', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async deleteAccidentInsurance(index: number) {
+    const worker = this.selectedWorker();
+    if (!worker || !this.siteId) return;
+
+    if (confirm('確定要刪除這筆意外險資料嗎？')) {
+      try {
+        this.isLoading = true;
+
+        // 獲取當前工地的意外險資料
+        const siteInsurances = this.getWorkerAccidentInsurance(worker);
+        if (index >= 0 && index < siteInsurances.length) {
+          // 從原始陣列中移除對應項目
+          const insuranceToRemove = siteInsurances[index];
+          const originalIndex = worker.accidentInsurances!.findIndex(ins =>
+            ins.belongSite === insuranceToRemove.belongSite &&
+            ins.start === insuranceToRemove.start &&
+            ins.signDate === insuranceToRemove.signDate
+          );
+
+          if (originalIndex >= 0) {
+            worker.accidentInsurances!.splice(originalIndex, 1);
+
+            // 更新到資料庫
+            await this.mongodbService.put('worker', worker._id!, worker);
+
+            // 重新載入資料
+            await this.loadSiteWorkers();
+          }
+        }
+      } catch (error) {
+        console.error('刪除意外險資料時發生錯誤', error);
+      } finally {
+        this.isLoading = false;
+      }
+    }
   }
 
   async loadAllWorkers() {

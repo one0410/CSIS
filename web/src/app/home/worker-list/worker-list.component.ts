@@ -314,18 +314,19 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
       flex: 1,
       minWidth: 110,
     },
-    {
-      headerName: '勞保申請日期',
-      field: 'laborInsuranceApplyDate',
-      flex: 1,
-      minWidth: 110,
-    },
-    {
-      headerName: '勞工團體入會日期',
-      field: 'laborAssociationDate',
-      flex: 1,
-      minWidth: 110,
-    },
+    // 移除舊的勞保欄位，改用新的陣列結構
+    // {
+    //   headerName: '勞保申請日期',
+    //   field: 'laborInsuranceApplyDate',
+    //   flex: 1,
+    //   minWidth: 110,
+    // },
+    // {
+    //   headerName: '勞工團體入會日期',
+    //   field: 'laborAssociationDate',
+    //   flex: 1,
+    //   minWidth: 110,
+    // },
     {
       headerName: '意外險',
       field: 'accidentInsurances',
@@ -1116,7 +1117,8 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
           profilePicture: 0,
           idCardFrontPicture: 0,
           idCardBackPicture: 0,
-          laborInsurancePicture: 0,
+          // 移除舊的勞保圖片欄位
+          // laborInsurancePicture: 0,
           sixHourTrainingFrontPicture: 0,
           sixHourTrainingBackPicture: 0,
           medicalExamPictures: 0,
@@ -1236,7 +1238,8 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
           profilePicture: 0,
           idCardFrontPicture: 0,
           idCardBackPicture: 0,
-          laborInsurancePicture: 0,
+          // 移除舊的勞保圖片欄位
+          // laborInsurancePicture: 0,
           sixHourTrainingFrontPicture: 0,
           sixHourTrainingBackPicture: 0,
           medicalExamPictures: 0,
@@ -1489,13 +1492,15 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
       generalSafetyTrainingDueDate: dayjs('2024-01-01')
         .add(Math.floor(Math.random() * 365), 'days')
         .format('YYYY-MM-DD'),
-      laborInsuranceApplyDate: dayjs('2024-01-01')
-        .add(Math.floor(Math.random() * 365), 'days')
-        .format('YYYY-MM-DD'),
-      laborInsurancePicture: '',
-      laborAssociationDate: dayjs('2024-01-01')
-        .add(Math.floor(Math.random() * 365), 'days')
-        .format('YYYY-MM-DD'),
+      // 移除舊的勞保欄位，改用新的陣列結構
+      // laborInsuranceApplyDate: dayjs('2024-01-01')
+      //   .add(Math.floor(Math.random() * 365), 'days')
+      //   .format('YYYY-MM-DD'),
+      // laborInsurancePicture: '',
+      laberInsurance: [], // 新的勞保陣列結構
+      // laborAssociationDate: dayjs('2024-01-01')
+      //   .add(Math.floor(Math.random() * 365), 'days')
+      //   .format('YYYY-MM-DD'),
       // sixHourTrainingDate: dayjs('2024-01-01')
       //   .add(Math.floor(Math.random() * 365), 'days')
       //   .format('YYYY-MM-DD'),
@@ -2091,7 +2096,7 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
         { title: '一般安全衛生教育訓練發證日期', color: 'C55A5A' },
         { title: '一般安全衛生教育訓練應回訓日期', color: 'C55A5A' },
         { title: '勞保申請日期', color: 'C55A5A' },
-        { title: '勞工團體入會日期', color: 'C55A5A' },
+        // { title: '勞工團體入會日期', color: 'C55A5A' },
         { title: '6小時期效狀況', color: 'C55A5A' },
 
         // 意外險相關 - 紫色
@@ -2256,8 +2261,9 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
           worker.supplierIndustrialSafetyNumber || '',
           worker.generalSafetyTrainingDate || '',
           worker.generalSafetyTrainingDueDate || '',
-          worker.laborInsuranceApplyDate || '',
-          worker.laborAssociationDate || '',
+          // 移除舊的勞保欄位
+          // worker.laborInsuranceApplyDate || '',
+          // worker.laborAssociationDate || '',
           // worker.sixHourTrainingDate || '',
 
           // 意外險相關
@@ -3047,6 +3053,7 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // 處理意外險資料
     const accidentInsurances: {
+      belongSite: string;
       start: string;
       end: string;
       amount: string;
@@ -3055,28 +3062,28 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     }[] = [];
 
     // 檢查三組意外險資料
-    for (let i = 1; i <= 3; i++) {
-      const start = this.formatDate(
-        getFieldValue([`意外險有效期${i}(起始日)`])
-      );
-      const end = this.formatDate(
-        getFieldValue([`意外險有效期${i}(截止日)`])
-      );
-      const amount = getFieldValue([`保險金額${i}`]).toString();
-      const signDate = this.formatDate(getFieldValue([`加保日期${i}`]));
-      const companyName = getFieldValue([`保險公司${i}`]).toString();
+    // for (let i = 1; i <= 3; i++) {
+    //   const start = this.formatDate(
+    //     getFieldValue([`意外險有效期${i}(起始日)`])
+    //   );
+    //   const end = this.formatDate(
+    //     getFieldValue([`意外險有效期${i}(截止日)`])
+    //   );
+    //   const amount = getFieldValue([`保險金額${i}`]).toString();
+    //   const signDate = this.formatDate(getFieldValue([`加保日期${i}`]));
+    //   const companyName = getFieldValue([`保險公司${i}`]).toString();
 
-      // 只有當至少有開始日期時才加入資料
-      if (start) {
-        accidentInsurances.push({
-          start,
-          end,
-          amount,
-          signDate,
-          companyName,
-        });
-      }
-    }
+    //   // 只有當至少有開始日期時才加入資料
+    //   if (start) {
+    //     accidentInsurances.push({
+    //       start,
+    //       end,
+    //       amount,
+    //       signDate,
+    //       companyName,
+    //     });
+    //   }
+    // }
 
     // 處理證照資訊
     const certifications: Certification[] = [];
@@ -3205,18 +3212,20 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
       generalSafetyTrainingDueDate: this.formatDate(
         getFieldValue(['一般安全衛生教育訓練(6小時)\r\n應回訓'])
       ),
-      laborInsuranceApplyDate: this.formatDate(
-        getFieldValue(['勞保申請日期', '勞保日期', '勞保申請'])
-      ),
-      laborInsurancePicture: '',
-      laborAssociationDate: this.formatDate(
-        getFieldValue([
-          '勞工團體入會日期',
-          '勞工團體',
-          '團體入會日期',
-          '工會申請日期',
-        ])
-      ),
+      // 移除舊的勞保欄位，改用新的陣列結構
+      // laborInsuranceApplyDate: this.formatDate(
+      //   getFieldValue(['勞保申請日期', '勞保日期', '勞保申請'])
+      // ),
+      // laborInsurancePicture: '',
+      laberInsurance: [], // 新的勞保陣列結構，匯入時暫時為空陣列
+      // laborAssociationDate: this.formatDate(
+      //   getFieldValue([
+      //     '勞工團體入會日期',
+      //     '勞工團體',
+      //     '團體入會日期',
+      //     '工會申請日期',
+      //   ])
+      // ),
       // sixHourTrainingDate: this.formatDate(getFieldValue(['6小時期效狀況'])),
       sixHourTrainingFrontPicture: '',
       sixHourTrainingBackPicture: '',
@@ -3568,7 +3577,8 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     const imageCodeMap: { [key: string]: { field: string; name: string } } = {
       IDF: { field: 'idCardFrontPicture', name: '身份證正面' },
       IDR: { field: 'idCardBackPicture', name: '身份證反面' },
-      L: { field: 'laborInsurancePicture', name: '勞保證明' },
+      // 移除舊的勞保圖片欄位
+      // L: { field: 'laborInsurancePicture', name: '勞保證明' },
       P: { field: 'profilePicture', name: '大頭照' },
       '6F': { field: 'sixHourTrainingFrontPicture', name: '6小時證明正面' },
       '6R': { field: 'sixHourTrainingBackPicture', name: '6小時證明反面' },
@@ -3816,17 +3826,17 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
             }
 
             // 檢查是否已有對應索引的意外險資料，如果沒有則新增
-            while (worker.accidentInsurances.length <= accidentIndex) {
-              worker.accidentInsurances.push({
-                start: '',
-                end: '',
-                amount: '',
-                signDate: '',
-                companyName: '',
-                pictures: [] // 初始化圖片陣列
-              });
-              console.log(`為工人 ${worker.name} 新增意外險資料 #${worker.accidentInsurances.length}`);
-            }
+            // while (worker.accidentInsurances.length <= accidentIndex) {
+            //   worker.accidentInsurances.push({
+            //     start: '',
+            //     end: '',
+            //     amount: '',
+            //     signDate: '',
+            //     companyName: '',
+            //     pictures: [] // 初始化圖片陣列
+            //   });
+            //   console.log(`為工人 ${worker.name} 新增意外險資料 #${worker.accidentInsurances.length}`);
+            // }
 
             // 上傳圖片到 GridFS
             const file = new File([blob], fileName, { type: blob.type });
@@ -3971,7 +3981,8 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     const imageCodeMap: { [key: string]: string } = {
       IDF: 'idCardFrontPicture', // 身份證正面
       IDR: 'idCardBackPicture', // 身份證反面
-      L: 'laborInsurancePicture', // 勞保證明
+      // 移除舊的勞保圖片欄位
+      // L: 'laborInsurancePicture', // 勞保證明
       P: 'profilePicture', // 大頭照
       '6F': 'sixHourTrainingFrontPicture', // 6小時證明正面
       '6R': 'sixHourTrainingBackPicture', // 6小時證明反面
@@ -4086,16 +4097,16 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
             }
 
             // 檢查是否已有對應索引的意外險資料，如果沒有則新增
-            while (worker.accidentInsurances.length <= accidentIndex) {
-              worker.accidentInsurances.push({
-                start: '',
-                end: '',
-                amount: '',
-                signDate: '',
-                companyName: ''
-              });
-              console.log(`為工人 ${worker.name} 新增意外險資料 #${worker.accidentInsurances.length}`);
-            }
+            // while (worker.accidentInsurances.length <= accidentIndex) {
+            //   worker.accidentInsurances.push({
+            //     start: '',
+            //     end: '',
+            //     amount: '',
+            //     signDate: '',
+            //     companyName: ''
+            //   });
+            //   console.log(`為工人 ${worker.name} 新增意外險資料 #${worker.accidentInsurances.length}`);
+            // }
 
             // 上傳圖片到 GridFS
             const file = new File([blob], fileName, { type: blob.type });

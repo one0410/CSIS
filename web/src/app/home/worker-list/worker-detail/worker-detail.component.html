@@ -264,14 +264,14 @@
             </div>
           </div>
 
-          <div class="col-md-6">
+          <!-- <div class="col-md-6">
             <label for="laborAssociationDate" class="form-label">工會申請日期</label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-users"></i></span>
               <input type="date" class="form-control" id="laborAssociationDate" name="laborAssociationDate"
                 [(ngModel)]="worker.laborAssociationDate" aria-label="工會申請日期" title="請選擇工會申請日期">
             </div>
-          </div>
+          </div> -->
         </div>
 
         <!-- 六小時證明圖片上傳區域 -->
@@ -320,7 +320,7 @@
     </div>
 
     <!-- 勞保資料卡片 -->
-    <div class="card shadow-sm mb-4">
+    <!-- <div class="card shadow-sm mb-4">
       <div class="card-header bg-light">
         <h5 class="mb-0"><i class="fas fa-briefcase me-2"></i>勞保資料</h5>
       </div>
@@ -355,10 +355,10 @@
           }
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- 意外保險資料卡片 -->
-    <div class="card shadow-sm mb-4">
+    <!-- <div class="card shadow-sm mb-4">
       <div class="card-header bg-light d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>意外保險資料</h5>
         <button type="button" class="btn btn-sm btn-primary" (click)="addAccidentInsurance()" aria-label="新增保險資料">
@@ -441,7 +441,7 @@
                     [attr.aria-label]="'意外險證明 #' + (i + 1)" [attr.title]="'請上傳意外險 #' + (i + 1) + ' 的證明圖片'">
                 </div>
 
-                <!-- 顯示意外險圖片（支援多張圖片） -->
+                !-- 顯示意外險圖片（支援多張圖片） --
                 @if (getAccidentInsurancePictures(insurance).length > 0) {
                 <div class="mt-2">
                   <div class="row">
@@ -456,8 +456,8 @@
                           </button>
                         </div>
                         <div class="card-body p-1">
-                          <img [src]="picture" class="img-fluid rounded"
-                            style="max-height: 120px; width: 100%; object-fit: cover;"
+                          <img [src]="picture" class="img-fluid rounded w-100"
+                            style="max-height: 120px; object-fit: cover;"
                             [alt]="'意外險 #' + (i + 1) + ' 證明 #' + (picIndex + 1)"
                             [title]="'意外險 #' + (i + 1) + ' 證明 #' + (picIndex + 1)">
                         </div>
@@ -467,7 +467,7 @@
                   </div>
                 </div>
                 } @else if (insurance.picture) {
-                <!-- 向後相容：顯示舊的單一圖片格式 -->
+                !-- 向後相容：顯示舊的單一圖片格式 --
                 <div class="mt-2">
                   <img [src]="insurance.picture" class="img-thumbnail" style="max-height: 150px;"
                     [alt]="'意外險 #' + (i + 1) + ' 證明'" [title]="'意外險 #' + (i + 1) + ' 證明'">
@@ -483,7 +483,7 @@
         </div>
         }
       </div>
-    </div>
+    </div> -->
 
     <!-- 證照資料卡片 -->
     <div class="card shadow-sm mb-4">

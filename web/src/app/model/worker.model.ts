@@ -210,11 +210,17 @@ export interface Worker {
   generalSafetyTrainingDueDate: string;
 
   // 勞保申請日期 yyyy-mm-dd
-  laborInsuranceApplyDate: string;
+  // laborInsuranceApplyDate: string;
   // 勞保證明圖片 (GridFS URL)
-  laborInsurancePicture: string; // GridFS 檔案 URL
+  // laborInsurancePicture: string; // GridFS 檔案 URL
   // 勞工團體入會日期 yyyy-mm-dd
-  laborAssociationDate: string;
+  // laborAssociationDate: string;
+  laberInsurance: {
+    belongSite: string; // 屬於哪一個 site
+    applyDate: string; // 申請日期 YYYY-MM-dd
+    picture: string; // GridFS 檔案 URL
+    associationDate: string; // 勞工團體入會日期 YYYY-MM-dd
+  }[];
 
   // 6小時期效狀況
   // sixHourTrainingDate: string;
@@ -225,6 +231,7 @@ export interface Worker {
 
   // 意外險
   accidentInsurances?: {
+    belongSite: string; // 屬於哪一個 site
     start: string; // 開始日期 yyyy-mm-dd
     end: string; // 結束日期 yyyy-mm-dd
     amount: string; // 保額(萬元)

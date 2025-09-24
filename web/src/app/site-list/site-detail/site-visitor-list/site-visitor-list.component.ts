@@ -114,6 +114,16 @@ export class SiteVisitorListComponent implements OnInit {
     return visitor.hazardNoticeCompleted || false;
   }
 
+  // 取得已完成危害告知的訪客數量
+  getCompletedHazardNoticeCount(): number {
+    return this.visitors().filter(visitor => this.hasHazardNotice(visitor)).length;
+  }
+
+  // 取得待完成危害告知的訪客數量
+  getPendingHazardNoticeCount(): number {
+    return this.visitors().filter(visitor => !this.hasHazardNotice(visitor)).length;
+  }
+
   showAddVisitorForm() {
     // 導航到危害告知頁面供現場簽名（強制新增模式）
     const currentSite = this.site();

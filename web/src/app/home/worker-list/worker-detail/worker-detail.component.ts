@@ -35,9 +35,10 @@ export class WorkerDetailComponent implements OnInit {
     idCardBackPicture: '',
     // hazardNotifyDate: '',
     supplierIndustrialSafetyNumber: '',
-    laborInsuranceApplyDate: '',
-    laborInsurancePicture: '',
-    laborAssociationDate: '',
+    // laborInsuranceApplyDate: '',
+    // laborInsurancePicture: '',
+    // laborAssociationDate: '',
+    laberInsurance: [],
     accidentInsurances: [],
     contractingCompanyName: '',
     viceContractingCompanyName: '',
@@ -170,19 +171,19 @@ export class WorkerDetailComponent implements OnInit {
     }
   }
 
-  addAccidentInsurance() {
-    if (!this.worker.accidentInsurances) {
-      this.worker.accidentInsurances = [];
-    }
-    this.worker.accidentInsurances.push({
-      start: '',
-      end: '',
-      amount: '',
-      signDate: '',
-      companyName: '',
-      pictures: [] // 初始化圖片陣列
-    });
-  }
+  // addAccidentInsurance() {
+  //   if (!this.worker.accidentInsurances) {
+  //     this.worker.accidentInsurances = [];
+  //   }
+  //   this.worker.accidentInsurances.push({
+  //     start: '',
+  //     end: '',
+  //     amount: '',
+  //     signDate: '',
+  //     companyName: '',
+  //     pictures: [] // 初始化圖片陣列
+  //   });
+  // }
 
   addCertification() {
     if (!this.worker.certifications) {
@@ -267,32 +268,32 @@ export class WorkerDetailComponent implements OnInit {
   }
 
   // 處理勞保證明上傳
-  async handleLaborInsuranceProofUpload(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
+  // async handleLaborInsuranceProofUpload(event: Event) {
+  //   const input = event.target as HTMLInputElement;
+  //   if (!input.files || input.files.length === 0) return;
 
-    const file = input.files[0];
-    if (!file.type.startsWith('image/')) {
-      alert('請上傳圖片檔案');
-      return;
-    }
+  //   const file = input.files[0];
+  //   if (!file.type.startsWith('image/')) {
+  //     alert('請上傳圖片檔案');
+  //     return;
+  //   }
 
-    try {
-      // 準備元數據
-      const metadata = {
-        workerId: this.workerId,
-        workerName: this.worker.name,
-        imageType: 'laborInsurance'
-      };
+  //   try {
+  //     // 準備元數據
+  //     const metadata = {
+  //       workerId: this.workerId,
+  //       workerName: this.worker.name,
+  //       imageType: 'laborInsurance'
+  //     };
       
-      // 直接上傳原始檔案到 GridFS
-      const result = await this.gridFSService.uploadFile(file, metadata);
-      this.worker.laborInsurancePicture = `/api/gridfs/${result.filename}`;
-    } catch (error) {
-      console.error('處理勞保證明圖片時發生錯誤:', error);
-      alert('處理勞保證明圖片時發生錯誤');
-    }
-  }
+  //     // 直接上傳原始檔案到 GridFS
+  //     const result = await this.gridFSService.uploadFile(file, metadata);
+  //     this.worker.laborInsurancePicture = `/api/gridfs/${result.filename}`;
+  //   } catch (error) {
+  //     console.error('處理勞保證明圖片時發生錯誤:', error);
+  //     alert('處理勞保證明圖片時發生錯誤');
+  //   }
+  // }
 
   // 處理大頭貼上傳
   async handleProfilePictureUpload(event: Event) {
