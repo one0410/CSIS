@@ -79,6 +79,11 @@ export class SitePermitFormComponent implements OnInit {
   workEndDate: string = '';
   workEndTimeOnly: string = '';
 
+  // 時間選項和下拉選單控制
+  showTimeDropdown: string | false = false;
+  timeOptions: string[] = [];
+  filteredTimeOptions: string[] = [];
+
   // 定義表單模型
   permitData: SitePermitForm = {
     siteId: '',
@@ -201,6 +206,9 @@ export class SitePermitFormComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    // 生成時間選項 (06:00 到 20:00，每30分鐘)
+    this.generateTimeOptions();
+
     // 在這裡更新依賴 currentSiteService 的屬性
     this.permitData.siteId = this.site()?._id || '';
     this.permitData.projectNo = this.site()?.projectNo || '';
@@ -412,6 +420,113 @@ export class SitePermitFormComponent implements OnInit {
   cancel(): void {
     // 返回工地詳情頁面
     this.router.navigate(['/site', this.siteId, 'forms']);
+  }
+
+  // 生成時間選項 (06:00 到 20:00，每30分鐘)
+  private generateTimeOptions(): void {
+    this.timeOptions = [];
+    for (let hour = 6; hour <= 20; hour++) {
+      // 整點
+      this.timeOptions.push(`${hour.toString().padStart(2, '0')}:00`);
+      // 半點 (除了最後一個小時)
+      if (hour < 20) {
+        this.timeOptions.push(`${hour.toString().padStart(2, '0')}:30`);
+      }
+    }
+  }
+
+  // 當輸入框獲得焦點時
+  onTimeInputFocus(type: 'start' | 'end'): void {
+    this.showTimeDropdown = type;
+    // 顯示所有時間選項
+    this.filteredTimeOptions = [...this.timeOptions];
+  }
+
+  // 當輸入框失去焦點時
+  onTimeInputBlur(type: 'start' | 'end'): void {
+    // 延遲關閉下拉選單，以便點擊事件可以觸發
+    setTimeout(() => {
+      this.showTimeDropdown = false;
+      this.formatTimeInput(type);
+    }, 200);
+  }
+
+  // 當輸入框內容改變時
+  onTimeInputChange(type: 'start' | 'end', event: Event): void {
+    const inputValue = (event.target as HTMLInputElement).value;
+
+    if (!inputValue) {
+      // 如果輸入為空，顯示所有選項
+      this.filteredTimeOptions = [...this.timeOptions];
+    } else {
+      // 過濾時間選項（支持部分匹配）
+      this.filteredTimeOptions = this.timeOptions.filter(time =>
+        time.includes(inputValue.replace(/\D/g, '').substring(0, 4))
+      );
+
+      // 如果沒有匹配項，顯示所有選項
+      if (this.filteredTimeOptions.length === 0) {
+        this.filteredTimeOptions = [...this.timeOptions];
+      }
+    }
+  }
+
+  // 選擇時間選項
+  selectTime(type: 'start' | 'end', time: string): void {
+    if (type === 'start') {
+      this.workStartTimeOnly = time;
+    } else {
+      this.workEndTimeOnly = time;
+    }
+    this.showTimeDropdown = false;
+  }
+
+  // 格式化時間輸入 (支持直接輸入數字，如 2115 -> 21:15)
+  formatTimeInput(type: 'start' | 'end'): void {
+    const timeValue = type === 'start' ? this.workStartTimeOnly : this.workEndTimeOnly;
+
+    if (!timeValue) return;
+
+    // 移除所有非數字字符
+    const digitsOnly = timeValue.replace(/\D/g, '');
+
+    if (digitsOnly.length === 0) return;
+
+    let formattedTime = '';
+
+    if (digitsOnly.length <= 2) {
+      // 只有小時 (例如: 8 -> 08:00, 21 -> 21:00)
+      const hour = parseInt(digitsOnly, 10);
+      if (hour >= 0 && hour <= 23) {
+        formattedTime = `${hour.toString().padStart(2, '0')}:00`;
+      }
+    } else if (digitsOnly.length === 3) {
+      // 3位數字 (例如: 830 -> 08:30)
+      const hour = parseInt(digitsOnly.substring(0, 1), 10);
+      const minute = parseInt(digitsOnly.substring(1, 3), 10);
+      if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+        formattedTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      }
+    } else if (digitsOnly.length >= 4) {
+      // 4位數字或更多 (例如: 2115 -> 21:15, 08301 -> 08:30)
+      const hour = parseInt(digitsOnly.substring(0, 2), 10);
+      const minute = parseInt(digitsOnly.substring(2, 4), 10);
+      if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+        formattedTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      }
+    }
+
+    // 如果格式化成功，更新值
+    if (formattedTime) {
+      if (type === 'start') {
+        this.workStartTimeOnly = formattedTime;
+      } else {
+        this.workEndTimeOnly = formattedTime;
+      }
+    } else {
+      // 格式不正確，清空輸入或保持原值
+      // 這裡選擇保持原值，讓用戶自己修正
+    }
   }
 
 

@@ -163,70 +163,70 @@
                       (click)="toggleTriState('fallDrop')">
                       <i class="fas" [class]="getTriStateIcon('fallDrop')"></i>
                     </span>
-                    <label class="form-check-label">跌墜落</label>
+                    <label class="form-check-label" (click)="toggleTriState('fallDrop')" style="cursor: pointer;">跌墜落</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('physicalInjury')"
                       [title]="getTriStateTitle('physicalInjury')" (click)="toggleTriState('physicalInjury')">
                       <i class="fas" [class]="getTriStateIcon('physicalInjury')"></i>
                     </span>
-                    <label class="form-check-label">擦、刺、扭、壓、夾、碰撞、割傷</label>
+                    <label class="form-check-label" (click)="toggleTriState('physicalInjury')" style="cursor: pointer;">擦、刺、扭、壓、夾、碰撞、割傷</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('fallObject')" [title]="getTriStateTitle('fallObject')"
                       (click)="toggleTriState('fallObject')">
                       <i class="fas" [class]="getTriStateIcon('fallObject')"></i>
                     </span>
-                    <label class="form-check-label">物體飛落</label>
+                    <label class="form-check-label" (click)="toggleTriState('fallObject')" style="cursor: pointer;">物體飛落</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('foreignObjectInEye')"
                       [title]="getTriStateTitle('foreignObjectInEye')" (click)="toggleTriState('foreignObjectInEye')">
                       <i class="fas" [class]="getTriStateIcon('foreignObjectInEye')"></i>
                     </span>
-                    <label class="form-check-label">異物入眼</label>
+                    <label class="form-check-label" (click)="toggleTriState('foreignObjectInEye')" style="cursor: pointer;">異物入眼</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('highTempContact')"
                       [title]="getTriStateTitle('highTempContact')" (click)="toggleTriState('highTempContact')">
                       <i class="fas" [class]="getTriStateIcon('highTempContact')"></i>
                     </span>
-                    <label class="form-check-label">與高溫接觸</label>
+                    <label class="form-check-label" (click)="toggleTriState('highTempContact')" style="cursor: pointer;">與高溫接觸</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('lowTempContact')"
                       [title]="getTriStateTitle('lowTempContact')" (click)="toggleTriState('lowTempContact')">
                       <i class="fas" [class]="getTriStateIcon('lowTempContact')"></i>
                     </span>
-                    <label class="form-check-label">與低溫接觸</label>
+                    <label class="form-check-label" (click)="toggleTriState('lowTempContact')" style="cursor: pointer;">與低溫接觸</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('noise')" [title]="getTriStateTitle('noise')"
                       (click)="toggleTriState('noise')">
                       <i class="fas" [class]="getTriStateIcon('noise')"></i>
                     </span>
-                    <label class="form-check-label">噪音</label>
+                    <label class="form-check-label" (click)="toggleTriState('noise')" style="cursor: pointer;">噪音</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('electric')" [title]="getTriStateTitle('electric')"
                       (click)="toggleTriState('electric')">
                       <i class="fas" [class]="getTriStateIcon('electric')"></i>
                     </span>
-                    <label class="form-check-label">感電</label>
+                    <label class="form-check-label" (click)="toggleTriState('electric')" style="cursor: pointer;">感電</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('collapse')" [title]="getTriStateTitle('collapse')"
                       (click)="toggleTriState('collapse')">
                       <i class="fas" [class]="getTriStateIcon('collapse')"></i>
                     </span>
-                    <label class="form-check-label">塌陷</label>
+                    <label class="form-check-label" (click)="toggleTriState('collapse')" style="cursor: pointer;">塌陷</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('radiation')" [title]="getTriStateTitle('radiation')"
                       (click)="toggleTriState('radiation')">
                       <i class="fas" [class]="getTriStateIcon('radiation')"></i>
                     </span>
-                    <label class="form-check-label">游離輻射</label>
+                    <label class="form-check-label" (click)="toggleTriState('radiation')" style="cursor: pointer;">游離輻射</label>
                   </div>
                 </div>
               </div>
@@ -245,14 +245,14 @@
                       (click)="toggleTriState('burn')">
                       <i class="fas" [class]="getTriStateIcon('burn')"></i>
                     </span>
-                    <label class="form-check-label">化學性燒灼傷</label>
+                    <label class="form-check-label" (click)="toggleTriState('burn')" style="cursor: pointer;">化學性燒灼傷</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('inhalation')" [title]="getTriStateTitle('inhalation')"
                       (click)="toggleTriState('inhalation')">
                       <i class="fas" [class]="getTriStateIcon('inhalation')"></i>
                     </span>
-                    <label class="form-check-label">化學物吸入</label>
+                    <label class="form-check-label" (click)="toggleTriState('inhalation')" style="cursor: pointer;">化學物吸入</label>
                   </div>
                 </div>
               </div>
@@ -271,14 +271,14 @@
                       (click)="toggleTriState('fire')">
                       <i class="fas" [class]="getTriStateIcon('fire')"></i>
                     </span>
-                    <label class="form-check-label">火災</label>
+                    <label class="form-check-label" (click)="toggleTriState('fire')" style="cursor: pointer;">火災</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('explosion')" [title]="getTriStateTitle('explosion')"
                       (click)="toggleTriState('explosion')">
                       <i class="fas" [class]="getTriStateIcon('explosion')"></i>
                     </span>
-                    <label class="form-check-label">爆炸</label>
+                    <label class="form-check-label" (click)="toggleTriState('explosion')" style="cursor: pointer;">爆炸</label>
                   </div>
                 </div>
               </div>
@@ -297,28 +297,28 @@
                       (click)="toggleTriState('none')">
                       <i class="fas" [class]="getTriStateIcon('none')"></i>
                     </span>
-                    <label class="form-check-label">無</label>
+                    <label class="form-check-label" (click)="toggleTriState('none')" style="cursor: pointer;">無</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('oxygenDeficiency')"
                       [title]="getTriStateTitle('oxygenDeficiency')" (click)="toggleTriState('oxygenDeficiency')">
                       <i class="fas" [class]="getTriStateIcon('oxygenDeficiency')"></i>
                     </span>
-                    <label class="form-check-label">缺氧</label>
+                    <label class="form-check-label" (click)="toggleTriState('oxygenDeficiency')" style="cursor: pointer;">缺氧</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('biological')" [title]="getTriStateTitle('biological')"
                       (click)="toggleTriState('biological')">
                       <i class="fas" [class]="getTriStateIcon('biological')"></i>
                     </span>
-                    <label class="form-check-label">生物性危害</label>
+                    <label class="form-check-label" (click)="toggleTriState('biological')" style="cursor: pointer;">生物性危害</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('outdoorHighTemp')"
                       [title]="getTriStateTitle('outdoorHighTemp')" (click)="toggleTriState('outdoorHighTemp')">
                       <i class="fas" [class]="getTriStateIcon('outdoorHighTemp')"></i>
                     </span>
-                    <label class="form-check-label">戶外高溫</label>
+                    <label class="form-check-label" (click)="toggleTriState('outdoorHighTemp')" style="cursor: pointer;">戶外高溫</label>
                   </div>
                   <div class="form-check d-flex align-items-center">
                     <span [class]="getTriStateContainerClass('other')" [title]="getTriStateTitle('other')"
@@ -413,7 +413,7 @@
                       [title]="getTriStateTitle('headProtection')" (click)="toggleTriState('headProtection')">
                       <i class="fas" [class]="getTriStateIcon('headProtection')"></i>
                     </span>
-                    <label class="form-check-label">01.頭部防護：</label>
+                    <label class="form-check-label" (click)="toggleTriState('headProtection')" style="cursor: pointer;">01.頭部防護：</label>
                   </div>
                 </td>
                 <td style="width: 75%">
@@ -423,21 +423,21 @@
                         [title]="getTriStateTitle('workSiteHead')" (click)="toggleTriState('workSiteHead')">
                         <i class="fas" [class]="getTriStateIcon('workSiteHead')"></i>
                       </span>
-                      <label class="form-check-label">工地用</label>
+                      <label class="form-check-label" (click)="toggleTriState('workSiteHead')" style="cursor: pointer;">工地用</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('electricianHead')"
                         [title]="getTriStateTitle('electricianHead')" (click)="toggleTriState('electricianHead')">
                         <i class="fas" [class]="getTriStateIcon('electricianHead')"></i>
                       </span>
-                      <label class="form-check-label">電工用</label>
+                      <label class="form-check-label" (click)="toggleTriState('electricianHead')" style="cursor: pointer;">電工用</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('helmetHead')" [title]="getTriStateTitle('helmetHead')"
                         (click)="toggleTriState('helmetHead')">
                         <i class="fas" [class]="getTriStateIcon('helmetHead')"></i>
                       </span>
-                      <label class="form-check-label">膠盔</label>
+                      <label class="form-check-label" (click)="toggleTriState('helmetHead')" style="cursor: pointer;">膠盔</label>
                     </div>
                   </div>
                 </td>
@@ -451,7 +451,7 @@
                       [title]="getTriStateTitle('eyeProtection')" (click)="toggleTriState('eyeProtection')">
                       <i class="fas" [class]="getTriStateIcon('eyeProtection')"></i>
                     </span>
-                    <label class="form-check-label">02.眼部防護：</label>
+                    <label class="form-check-label" (click)="toggleTriState('eyeProtection')" style="cursor: pointer;">02.眼部防護：</label>
                   </div>
                 </td>
                 <td>
@@ -461,14 +461,14 @@
                         [title]="getTriStateTitle('mechanicalEyes')" (click)="toggleTriState('mechanicalEyes')">
                         <i class="fas" [class]="getTriStateIcon('mechanicalEyes')"></i>
                       </span>
-                      <label class="form-check-label">防禦機械能傷害的安全眼鏡</label>
+                      <label class="form-check-label" (click)="toggleTriState('mechanicalEyes')" style="cursor: pointer;">防禦機械能傷害的安全眼鏡</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('radiationEyes')"
                         [title]="getTriStateTitle('radiationEyes')" (click)="toggleTriState('radiationEyes')">
                         <i class="fas" [class]="getTriStateIcon('radiationEyes')"></i>
                       </span>
-                      <label class="form-check-label">防禦輻射能傷害的安全眼鏡</label>
+                      <label class="form-check-label" (click)="toggleTriState('radiationEyes')" style="cursor: pointer;">防禦輻射能傷害的安全眼鏡</label>
                     </div>
                   </div>
                 </td>
@@ -482,7 +482,7 @@
                       [title]="getTriStateTitle('earProtection')" (click)="toggleTriState('earProtection')">
                       <i class="fas" [class]="getTriStateIcon('earProtection')"></i>
                     </span>
-                    <label class="form-check-label">03.耳部防護：</label>
+                    <label class="form-check-label" (click)="toggleTriState('earProtection')" style="cursor: pointer;">03.耳部防護：</label>
                   </div>
                 </td>
                 <td>
@@ -492,14 +492,14 @@
                         (click)="toggleTriState('earPlugs')">
                         <i class="fas" [class]="getTriStateIcon('earPlugs')"></i>
                       </span>
-                      <label class="form-check-label">耳塞</label>
+                      <label class="form-check-label" (click)="toggleTriState('earPlugs')" style="cursor: pointer;">耳塞</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('earMuffs')" [title]="getTriStateTitle('earMuffs')"
                         (click)="toggleTriState('earMuffs')">
                         <i class="fas" [class]="getTriStateIcon('earMuffs')"></i>
                       </span>
-                      <label class="form-check-label">耳罩</label>
+                      <label class="form-check-label" (click)="toggleTriState('earMuffs')" style="cursor: pointer;">耳罩</label>
                     </div>
                   </div>
                 </td>
@@ -513,7 +513,7 @@
                       [title]="getTriStateTitle('breathProtection')" (click)="toggleTriState('breathProtection')">
                       <i class="fas" [class]="getTriStateIcon('breathProtection')"></i>
                     </span>
-                    <label class="form-check-label">04.呼吸防護：</label>
+                    <label class="form-check-label" (click)="toggleTriState('breathProtection')" style="cursor: pointer;">04.呼吸防護：</label>
                   </div>
                 </td>
                 <td>
@@ -523,35 +523,35 @@
                         (click)="toggleTriState('dustMask')">
                         <i class="fas" [class]="getTriStateIcon('dustMask')"></i>
                       </span>
-                      <label class="form-check-label">防塵</label>
+                      <label class="form-check-label" (click)="toggleTriState('dustMask')" style="cursor: pointer;">防塵</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('toxicMask')" [title]="getTriStateTitle('toxicMask')"
                         (click)="toggleTriState('toxicMask')">
                         <i class="fas" [class]="getTriStateIcon('toxicMask')"></i>
                       </span>
-                      <label class="form-check-label">濾毒</label>
+                      <label class="form-check-label" (click)="toggleTriState('toxicMask')" style="cursor: pointer;">濾毒</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('scba')" [title]="getTriStateTitle('scba')"
                         (click)="toggleTriState('scba')">
                         <i class="fas" [class]="getTriStateIcon('scba')"></i>
                       </span>
-                      <label class="form-check-label">SCBA</label>
+                      <label class="form-check-label" (click)="toggleTriState('scba')" style="cursor: pointer;">SCBA</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('papr')" [title]="getTriStateTitle('papr')"
                         (click)="toggleTriState('papr')">
                         <i class="fas" [class]="getTriStateIcon('papr')"></i>
                       </span>
-                      <label class="form-check-label">PAPR</label>
+                      <label class="form-check-label" (click)="toggleTriState('papr')" style="cursor: pointer;">PAPR</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('airlineMask')" [title]="getTriStateTitle('airlineMask')"
                         (click)="toggleTriState('airlineMask')">
                         <i class="fas" [class]="getTriStateIcon('airlineMask')"></i>
                       </span>
-                      <label class="form-check-label">輸氣管面罩</label>
+                      <label class="form-check-label" (click)="toggleTriState('airlineMask')" style="cursor: pointer;">輸氣管面罩</label>
                     </div>
                   </div>
                 </td>
@@ -565,7 +565,7 @@
                       [title]="getTriStateTitle('handProtection')" (click)="toggleTriState('handProtection')">
                       <i class="fas" [class]="getTriStateIcon('handProtection')"></i>
                     </span>
-                    <label class="form-check-label">05.手部防護：</label>
+                    <label class="form-check-label" (click)="toggleTriState('handProtection')" style="cursor: pointer;">05.手部防護：</label>
                   </div>
                 </td>
                 <td>
@@ -575,7 +575,7 @@
                         [title]="getTriStateTitle('cutResistantGloves')" (click)="toggleTriState('cutResistantGloves')">
                         <i class="fas" [class]="getTriStateIcon('cutResistantGloves')"></i>
                       </span>
-                      <label class="form-check-label">耐切割</label>
+                      <label class="form-check-label" (click)="toggleTriState('cutResistantGloves')" style="cursor: pointer;">耐切割</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('wearResistantGloves')"
@@ -583,7 +583,7 @@
                         (click)="toggleTriState('wearResistantGloves')">
                         <i class="fas" [class]="getTriStateIcon('wearResistantGloves')"></i>
                       </span>
-                      <label class="form-check-label">耐磨</label>
+                      <label class="form-check-label" (click)="toggleTriState('wearResistantGloves')" style="cursor: pointer;">耐磨</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('heatResistantGloves')"
@@ -591,21 +591,21 @@
                         (click)="toggleTriState('heatResistantGloves')">
                         <i class="fas" [class]="getTriStateIcon('heatResistantGloves')"></i>
                       </span>
-                      <label class="form-check-label">耐熱</label>
+                      <label class="form-check-label" (click)="toggleTriState('heatResistantGloves')" style="cursor: pointer;">耐熱</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('electricianGloves')"
                         [title]="getTriStateTitle('electricianGloves')" (click)="toggleTriState('electricianGloves')">
                         <i class="fas" [class]="getTriStateIcon('electricianGloves')"></i>
                       </span>
-                      <label class="form-check-label">電工用</label>
+                      <label class="form-check-label" (click)="toggleTriState('electricianGloves')" style="cursor: pointer;">電工用</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('chemicalGloves')"
                         [title]="getTriStateTitle('chemicalGloves')" (click)="toggleTriState('chemicalGloves')">
                         <i class="fas" [class]="getTriStateIcon('chemicalGloves')"></i>
                       </span>
-                      <label class="form-check-label">防化學</label>
+                      <label class="form-check-label" (click)="toggleTriState('chemicalGloves')" style="cursor: pointer;">防化學</label>
                     </div>
                   </div>
                 </td>
@@ -619,7 +619,7 @@
                       [title]="getTriStateTitle('footProtection')" (click)="toggleTriState('footProtection')">
                       <i class="fas" [class]="getTriStateIcon('footProtection')"></i>
                     </span>
-                    <label class="form-check-label">06.足部防護：</label>
+                    <label class="form-check-label" (click)="toggleTriState('footProtection')" style="cursor: pointer;">06.足部防護：</label>
                   </div>
                 </td>
                 <td>
@@ -629,14 +629,14 @@
                         (click)="toggleTriState('safetyShoes')">
                         <i class="fas" [class]="getTriStateIcon('safetyShoes')"></i>
                       </span>
-                      <label class="form-check-label">一般安全鞋</label>
+                      <label class="form-check-label" (click)="toggleTriState('safetyShoes')" style="cursor: pointer;">一般安全鞋</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('chemicalShoes')"
                         [title]="getTriStateTitle('chemicalShoes')" (click)="toggleTriState('chemicalShoes')">
                         <i class="fas" [class]="getTriStateIcon('chemicalShoes')"></i>
                       </span>
-                      <label class="form-check-label">防化學安全鞋</label>
+                      <label class="form-check-label" (click)="toggleTriState('chemicalShoes')" style="cursor: pointer;">防化學安全鞋</label>
                     </div>
                   </div>
                 </td>
@@ -650,7 +650,7 @@
                       [title]="getTriStateTitle('bodyProtection')" (click)="toggleTriState('bodyProtection')">
                       <i class="fas" [class]="getTriStateIcon('bodyProtection')"></i>
                     </span>
-                    <label class="form-check-label">07.身體防護：</label>
+                    <label class="form-check-label" (click)="toggleTriState('bodyProtection')" style="cursor: pointer;">07.身體防護：</label>
                   </div>
                 </td>
                 <td>
@@ -660,28 +660,28 @@
                         [title]="getTriStateTitle('backpackBelt')" (click)="toggleTriState('backpackBelt')">
                         <i class="fas" [class]="getTriStateIcon('backpackBelt')"></i>
                       </span>
-                      <label class="form-check-label">背負式安全帶</label>
+                      <label class="form-check-label" (click)="toggleTriState('backpackBelt')" style="cursor: pointer;">背負式安全帶</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('weldingMask')" [title]="getTriStateTitle('weldingMask')"
                         (click)="toggleTriState('weldingMask')">
                         <i class="fas" [class]="getTriStateIcon('weldingMask')"></i>
                       </span>
-                      <label class="form-check-label">電焊用防護面具</label>
+                      <label class="form-check-label" (click)="toggleTriState('weldingMask')" style="cursor: pointer;">電焊用防護面具</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('chemicalProtection')"
                         [title]="getTriStateTitle('chemicalProtection')" (click)="toggleTriState('chemicalProtection')">
                         <i class="fas" [class]="getTriStateIcon('chemicalProtection')"></i>
                       </span>
-                      <label class="form-check-label">化學防護衣</label>
+                      <label class="form-check-label" (click)="toggleTriState('chemicalProtection')" style="cursor: pointer;">化學防護衣</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('reflectiveVest')"
                         [title]="getTriStateTitle('reflectiveVest')" (click)="toggleTriState('reflectiveVest')">
                         <i class="fas" [class]="getTriStateIcon('reflectiveVest')"></i>
                       </span>
-                      <label class="form-check-label">反光背心</label>
+                      <label class="form-check-label" (click)="toggleTriState('reflectiveVest')" style="cursor: pointer;">反光背心</label>
                     </div>
                   </div>
                 </td>
@@ -695,7 +695,7 @@
                       [title]="getTriStateTitle('fallPrevention')" (click)="toggleTriState('fallPrevention')">
                       <i class="fas" [class]="getTriStateIcon('fallPrevention')"></i>
                     </span>
-                    <label class="form-check-label">08.墜落預防：</label>
+                    <label class="form-check-label" (click)="toggleTriState('fallPrevention')" style="cursor: pointer;">08.墜落預防：</label>
                   </div>
                 </td>
                 <td>
@@ -705,77 +705,77 @@
                         (click)="toggleTriState('ladder')">
                         <i class="fas" [class]="getTriStateIcon('ladder')"></i>
                       </span>
-                      <label class="form-check-label">合梯</label>
+                      <label class="form-check-label" (click)="toggleTriState('ladder')" style="cursor: pointer;">合梯</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('mobileLadder')"
                         [title]="getTriStateTitle('mobileLadder')" (click)="toggleTriState('mobileLadder')">
                         <i class="fas" [class]="getTriStateIcon('mobileLadder')"></i>
                       </span>
-                      <label class="form-check-label">移動梯</label>
+                      <label class="form-check-label" (click)="toggleTriState('mobileLadder')" style="cursor: pointer;">移動梯</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('scaffold')" [title]="getTriStateTitle('scaffold')"
                         (click)="toggleTriState('scaffold')">
                         <i class="fas" [class]="getTriStateIcon('scaffold')"></i>
                       </span>
-                      <label class="form-check-label">施工架</label>
+                      <label class="form-check-label" (click)="toggleTriState('scaffold')" style="cursor: pointer;">施工架</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('highWorkVehicle')"
                         [title]="getTriStateTitle('highWorkVehicle')" (click)="toggleTriState('highWorkVehicle')">
                         <i class="fas" [class]="getTriStateIcon('highWorkVehicle')"></i>
                       </span>
-                      <label class="form-check-label">高空工作車</label>
+                      <label class="form-check-label" (click)="toggleTriState('highWorkVehicle')" style="cursor: pointer;">高空工作車</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('safetyLine')" [title]="getTriStateTitle('safetyLine')"
                         (click)="toggleTriState('safetyLine')">
                         <i class="fas" [class]="getTriStateIcon('safetyLine')"></i>
                       </span>
-                      <label class="form-check-label">安全母索</label>
+                      <label class="form-check-label" (click)="toggleTriState('safetyLine')" style="cursor: pointer;">安全母索</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('protectionCage')"
                         [title]="getTriStateTitle('protectionCage')" (click)="toggleTriState('protectionCage')">
                         <i class="fas" [class]="getTriStateIcon('protectionCage')"></i>
                       </span>
-                      <label class="form-check-label">護籠</label>
+                      <label class="form-check-label" (click)="toggleTriState('protectionCage')" style="cursor: pointer;">護籠</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('guardrail')" [title]="getTriStateTitle('guardrail')"
                         (click)="toggleTriState('guardrail')">
                         <i class="fas" [class]="getTriStateIcon('guardrail')"></i>
                       </span>
-                      <label class="form-check-label">護欄</label>
+                      <label class="form-check-label" (click)="toggleTriState('guardrail')" style="cursor: pointer;">護欄</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('protectionCover')"
                         [title]="getTriStateTitle('protectionCover')" (click)="toggleTriState('protectionCover')">
                         <i class="fas" [class]="getTriStateIcon('protectionCover')"></i>
                       </span>
-                      <label class="form-check-label">護蓋</label>
+                      <label class="form-check-label" (click)="toggleTriState('protectionCover')" style="cursor: pointer;">護蓋</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('safetyNet')" [title]="getTriStateTitle('safetyNet')"
                         (click)="toggleTriState('safetyNet')">
                         <i class="fas" [class]="getTriStateIcon('safetyNet')"></i>
                       </span>
-                      <label class="form-check-label">安全網</label>
+                      <label class="form-check-label" (click)="toggleTriState('safetyNet')" style="cursor: pointer;">安全網</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('warningBarrier')"
                         [title]="getTriStateTitle('warningBarrier')" (click)="toggleTriState('warningBarrier')">
                         <i class="fas" [class]="getTriStateIcon('warningBarrier')"></i>
                       </span>
-                      <label class="form-check-label">警示圍籬</label>
+                      <label class="form-check-label" (click)="toggleTriState('warningBarrier')" style="cursor: pointer;">警示圍籬</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('fallPreventer')"
                         [title]="getTriStateTitle('fallPreventer')" (click)="toggleTriState('fallPreventer')">
                         <i class="fas" [class]="getTriStateIcon('fallPreventer')"></i>
                       </span>
-                      <label class="form-check-label">墜落防止器</label>
+                      <label class="form-check-label" (click)="toggleTriState('fallPreventer')" style="cursor: pointer;">墜落防止器</label>
                     </div>
                   </div>
                 </td>
@@ -789,7 +789,7 @@
                       [title]="getTriStateTitle('electricPrevention')" (click)="toggleTriState('electricPrevention')">
                       <i class="fas" [class]="getTriStateIcon('electricPrevention')"></i>
                     </span>
-                    <label class="form-check-label">09.感電預防：</label>
+                    <label class="form-check-label" (click)="toggleTriState('electricPrevention')" style="cursor: pointer;">09.感電預防：</label>
                   </div>
                 </td>
                 <td>
@@ -799,7 +799,7 @@
                         [title]="getTriStateTitle('leakageBreaker')" (click)="toggleTriState('leakageBreaker')">
                         <i class="fas" [class]="getTriStateIcon('leakageBreaker')"></i>
                       </span>
-                      <label class="form-check-label">漏電斷路器</label>
+                      <label class="form-check-label" (click)="toggleTriState('leakageBreaker')" style="cursor: pointer;">漏電斷路器</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('autoElectricPreventer')"
@@ -807,14 +807,14 @@
                         (click)="toggleTriState('autoElectricPreventer')">
                         <i class="fas" [class]="getTriStateIcon('autoElectricPreventer')"></i>
                       </span>
-                      <label class="form-check-label">交流電焊機自動電擊防止裝置</label>
+                      <label class="form-check-label" (click)="toggleTriState('autoElectricPreventer')" style="cursor: pointer;">交流電焊機自動電擊防止裝置</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('voltageDetector')"
                         [title]="getTriStateTitle('voltageDetector')" (click)="toggleTriState('voltageDetector')">
                         <i class="fas" [class]="getTriStateIcon('voltageDetector')"></i>
                       </span>
-                      <label class="form-check-label">檢電器</label>
+                      <label class="form-check-label" (click)="toggleTriState('voltageDetector')" style="cursor: pointer;">檢電器</label>
                     </div>
                   </div>
                 </td>
@@ -828,7 +828,7 @@
                       [title]="getTriStateTitle('firePrevention')" (click)="toggleTriState('firePrevention')">
                       <i class="fas" [class]="getTriStateIcon('firePrevention')"></i>
                     </span>
-                    <label class="form-check-label">10.火災預防：</label>
+                    <label class="form-check-label" (click)="toggleTriState('firePrevention')" style="cursor: pointer;">10.火災預防：</label>
                   </div>
                 </td>
                 <td>
@@ -838,14 +838,14 @@
                         [title]="getTriStateTitle('fireExtinguisher')" (click)="toggleTriState('fireExtinguisher')">
                         <i class="fas" [class]="getTriStateIcon('fireExtinguisher')"></i>
                       </span>
-                      <label class="form-check-label">滅火器</label>
+                      <label class="form-check-label" (click)="toggleTriState('fireExtinguisher')" style="cursor: pointer;">滅火器</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('fireBlanket')" [title]="getTriStateTitle('fireBlanket')"
                         (click)="toggleTriState('fireBlanket')">
                         <i class="fas" [class]="getTriStateIcon('fireBlanket')"></i>
                       </span>
-                      <label class="form-check-label">防火毯</label>
+                      <label class="form-check-label" (click)="toggleTriState('fireBlanket')" style="cursor: pointer;">防火毯</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('oxyacetyleneFireback')"
@@ -853,7 +853,7 @@
                         (click)="toggleTriState('oxyacetyleneFireback')">
                         <i class="fas" [class]="getTriStateIcon('oxyacetyleneFireback')"></i>
                       </span>
-                      <label class="form-check-label">氧乙炔防回火裝置</label>
+                      <label class="form-check-label" (click)="toggleTriState('oxyacetyleneFireback')" style="cursor: pointer;">氧乙炔防回火裝置</label>
                     </div>
                   </div>
                 </td>
@@ -867,7 +867,7 @@
                       [title]="getTriStateTitle('oxygenPrevention')" (click)="toggleTriState('oxygenPrevention')">
                       <i class="fas" [class]="getTriStateIcon('oxygenPrevention')"></i>
                     </span>
-                    <label class="form-check-label">11.缺氧預防：</label>
+                    <label class="form-check-label" (click)="toggleTriState('oxygenPrevention')" style="cursor: pointer;">11.缺氧預防：</label>
                   </div>
                 </td>
                 <td>
@@ -877,35 +877,35 @@
                         (click)="toggleTriState('ventilation')">
                         <i class="fas" [class]="getTriStateIcon('ventilation')"></i>
                       </span>
-                      <label class="form-check-label">通風設備</label>
+                      <label class="form-check-label" (click)="toggleTriState('ventilation')" style="cursor: pointer;">通風設備</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('lifeDetector')"
                         [title]="getTriStateTitle('lifeDetector')" (click)="toggleTriState('lifeDetector')">
                         <i class="fas" [class]="getTriStateIcon('lifeDetector')"></i>
                       </span>
-                      <label class="form-check-label">生命偵測裝置</label>
+                      <label class="form-check-label" (click)="toggleTriState('lifeDetector')" style="cursor: pointer;">生命偵測裝置</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('gasDetector')" [title]="getTriStateTitle('gasDetector')"
                         (click)="toggleTriState('gasDetector')">
                         <i class="fas" [class]="getTriStateIcon('gasDetector')"></i>
                       </span>
-                      <label class="form-check-label">氣體偵測器</label>
+                      <label class="form-check-label" (click)="toggleTriState('gasDetector')" style="cursor: pointer;">氣體偵測器</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('liftingEquipment')"
                         [title]="getTriStateTitle('liftingEquipment')" (click)="toggleTriState('liftingEquipment')">
                         <i class="fas" [class]="getTriStateIcon('liftingEquipment')"></i>
                       </span>
-                      <label class="form-check-label">吊升設備</label>
+                      <label class="form-check-label" (click)="toggleTriState('liftingEquipment')" style="cursor: pointer;">吊升設備</label>
                     </div>
                     <div class="form-check d-flex align-items-center">
                       <span [class]="getTriStateContainerClass('rescueEquipment')"
                         [title]="getTriStateTitle('rescueEquipment')" (click)="toggleTriState('rescueEquipment')">
                         <i class="fas" [class]="getTriStateIcon('rescueEquipment')"></i>
                       </span>
-                      <label class="form-check-label">搶救設備</label>
+                      <label class="form-check-label" (click)="toggleTriState('rescueEquipment')" style="cursor: pointer;">搶救設備</label>
                     </div>
                   </div>
                 </td>
@@ -919,7 +919,7 @@
                       [title]="getTriStateTitle('otherPrevention')" (click)="toggleTriState('otherPrevention')">
                       <i class="fas" [class]="getTriStateIcon('otherPrevention')"></i>
                     </span>
-                    <label class="form-check-label">12.其他預防：</label>
+                    <label class="form-check-label" (click)="toggleTriState('otherPrevention')" style="cursor: pointer;">12.其他預防：</label>
                   </div>
                 </td>
                 <td>
@@ -1300,6 +1300,9 @@
                     </div>
                     }
                   </div>
+                  @if (meetingData.beforeWorkSignatureTime) {
+                  <div class="mt-1 small text-muted">{{ formatSignatureTime(meetingData.beforeWorkSignatureTime) }}</div>
+                  }
                 </div>
                 <!-- 施工中簽名 -->
                 <div style="width: 25%"
@@ -1316,6 +1319,9 @@
                     </div>
                     }
                   </div>
+                  @if (meetingData.duringWorkSignatureTime) {
+                  <div class="mt-1 small text-muted">{{ formatSignatureTime(meetingData.duringWorkSignatureTime) }}</div>
+                  }
                 </div>
                 <!-- 收工前簽名 -->
                 <div style="width: 25%"
@@ -1332,6 +1338,9 @@
                     </div>
                     }
                   </div>
+                  @if (meetingData.afterWorkSignatureTime) {
+                  <div class="mt-1 small text-muted">{{ formatSignatureTime(meetingData.afterWorkSignatureTime) }}</div>
+                  }
                 </div>
                 <!-- 監工單位簽名 -->
                 <div style="width: 25%" class="d-flex flex-column align-items-center justify-content-center py-2 px-1">
@@ -1348,6 +1357,9 @@
                     </div>
                     }
                   </div>
+                  @if (meetingData.siteManagerSignatureTime) {
+                  <div class="mt-1 small text-muted">{{ formatSignatureTime(meetingData.siteManagerSignatureTime) }}</div>
+                  }
                 </div>
               </div>
             </div>

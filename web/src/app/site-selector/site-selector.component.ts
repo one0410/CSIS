@@ -95,17 +95,31 @@ export class SiteSelectorComponent {
   }
 
   get filteredSites(): Site[] {
-    if (!this.searchTerm) {
-      return this.userSites;
+    let sites = this.userSites;
+
+    // 如果有搜尋詞，先過濾
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      sites = sites.filter(site =>
+        site.projectName.toLowerCase().includes(term) ||
+        site.projectNo.toLowerCase().includes(term) ||
+        site.county.toLowerCase().includes(term) ||
+        site.town.toLowerCase().includes(term)
+      );
     }
-    
-    const term = this.searchTerm.toLowerCase();
-    return this.userSites.filter(site => 
-      site.projectName.toLowerCase().includes(term) || 
-      site.projectNo.toLowerCase().includes(term) ||
-      site.county.toLowerCase().includes(term) ||
-      site.town.toLowerCase().includes(term)
-    );
+
+    // 排序：未過期的在前面，過期的在後面
+    return sites.sort((a, b) => {
+      const aExpired = this.isExpired(a.endDate);
+      const bExpired = this.isExpired(b.endDate);
+
+      // 如果一個過期一個未過期，未過期的排在前面
+      if (aExpired && !bExpired) return 1;
+      if (!aExpired && bExpired) return -1;
+
+      // 如果都過期或都未過期，保持原順序
+      return 0;
+    });
   }
 
   async selectSite(site: Site) {

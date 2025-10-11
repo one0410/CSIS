@@ -28,9 +28,46 @@
   <!-- 教育訓練列表 -->
   <div class="card shadow-sm">
     <div class="card-body">
+      <!-- 搜尋框 -->
+      <div class="mb-3">
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="fas fa-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control"
+            placeholder="搜尋課程名稱、講師或參與者姓名..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+            aria-label="搜尋教育訓練"
+          />
+          @if (searchQuery()) {
+          <button
+            class="btn btn-outline-secondary"
+            type="button"
+            (click)="searchQuery.set('')"
+            title="清除搜尋"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+          }
+        </div>
+        @if (searchQuery()) {
+        <div class="text-muted small mt-1">
+          找到 {{ trainingForms().length }} 筆符合「{{ searchQuery() }}」的記錄
+        </div>
+        }
+      </div>
+
       @if (trainingForms().length === 0) {
       <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>目前沒有教育訓練記錄
+        <i class="fas fa-info-circle me-2"></i>
+        @if (searchQuery()) {
+          找不到符合「{{ searchQuery() }}」的教育訓練記錄
+        } @else {
+          目前沒有教育訓練記錄
+        }
       </div>
       } @else {
       <div class="table-responsive">

@@ -1,7 +1,6 @@
-import { Component, ElementRef, ViewChild, OnInit } from '@angular/core';
-import { Chart } from 'chart.js/auto';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DatePipe, CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 
 import { Site } from '../site-list.component';
 import { MongodbService } from '../../services/mongodb.service';
@@ -10,6 +9,13 @@ import { WeatherService } from '../../services/weather.service';
 import { WorkerCountService, ContractorWorkerCount } from '../../services/worker-count.service';
 import { ProgressTrendChartComponent } from '../../shared/progress-trend-chart/progress-trend-chart.component';
 import { ZeroAccidentHoursComponent } from './zero-accident-hours/zero-accident-hours.component';
+import { MonthlyWorkerChartComponent } from './monthly-worker-chart/monthly-worker-chart.component';
+import { ContractorWorkerChartComponent } from './contractor-worker-chart/contractor-worker-chart.component';
+import { ContractorViolationChartComponent } from './contractor-violation-chart/contractor-violation-chart.component';
+import { ViolationTypeChartComponent } from './violation-type-chart/violation-type-chart.component';
+import { TodayContractorViolationChartComponent } from './today-contractor-violation-chart/today-contractor-violation-chart.component';
+import { TodayViolationTypeChartComponent } from './today-violation-type-chart/today-violation-type-chart.component';
+import { FlawTrendChartComponent } from './flaw-trend-chart/flaw-trend-chart.component';
 import dayjs from 'dayjs';
 
 // 作業類別統計介面
@@ -32,16 +38,24 @@ interface ContractorWorkerStat {
 
 @Component({
   selector: 'app-site-dashboard',
-  imports: [ProgressTrendChartComponent, ZeroAccidentHoursComponent, CommonModule],
+  imports: [
+    ProgressTrendChartComponent,
+    ZeroAccidentHoursComponent,
+    MonthlyWorkerChartComponent,
+    ContractorWorkerChartComponent,
+    ContractorViolationChartComponent,
+    ViolationTypeChartComponent,
+    TodayContractorViolationChartComponent,
+    TodayViolationTypeChartComponent,
+    FlawTrendChartComponent,
+    CommonModule
+  ],
   templateUrl: './site-dashboard.component.html',
   styleUrl: './site-dashboard.component.scss',
 })
 export class SiteDashboardComponent implements OnInit {
   siteId: string = '';
   site: Site | null = null;
-
-  @ViewChild('chartFlaw') canvas2?: ElementRef;
-  chartFlaw: any;
 
   todayDate: string = '';
   allProjectDays: number = 0;
@@ -115,301 +129,11 @@ export class SiteDashboardComponent implements OnInit {
 
             // 計算廠商工人統計
             this.calculateWorkerStats();
-
-            // 在這裡初始化圖表，確保 allProjectDays 已經計算完成
-            setTimeout(() => {
-              this.initCharts();
-            }, 0);
           }
         }
       });
     }
   }
-
-  // 將圖表初始化邏輯移到單獨的方法
-  async initCharts(): Promise<void> {
-    if (
-      !this.canvas2 ||
-      !this.site ||
-      !this.site.startDate ||
-      !this.site.endDate
-    )
-      return;
-
-    const startDate = new Date(this.site.startDate);
-    const endDate = new Date(this.site.endDate);
-    const today = new Date();
-
-    // 獲取所有任務資料來計算規劃進度
-    const tasks = await this.mongodbService.getArray('task', {
-      siteId: this.siteId,
-    });
-
-    // 計算任務的實際開始和結束日期範圍（規劃進度用）
-    let taskStartDate = null;
-    let taskEndDate = null;
-    
-    if (tasks && tasks.length > 0) {
-      const validTasks = tasks.filter((task: any) => task.start && task.end);
-      if (validTasks.length > 0) {
-        const startDates: Date[] = validTasks.map((task: any) => new Date(task.start));
-        const endDates: Date[] = validTasks.map((task: any) => new Date(task.end));
-        
-        const startTimes = startDates.map(d => d.getTime());
-        const endTimes = endDates.map(d => d.getTime());
-        
-        taskStartDate = new Date(Math.min(...startTimes));
-        taskEndDate = new Date(Math.max(...endTimes));
-      }
-    }
-
-    // 處理日期標籤 - 從開始日到結束日
-    let dateLabels: string[] = [];
-    let actualProgressData: (number | null)[] = [];
-    let plannedProgressData: number[] = [];
-    let scheduledProgressData: number[] = []; // 新增：規劃進度
-
-    // 產生所有日期標籤和對應的預設資料點
-    const getDatesInRange = (start: Date, end: Date): Date[] => {
-      const dates: Date[] = [];
-      const currentDate = new Date(start);
-      while (currentDate <= end) {
-        dates.push(new Date(currentDate));
-        currentDate.setDate(currentDate.getDate() + 1);
-      }
-      return dates;
-    };
-
-    const allDates = getDatesInRange(startDate, endDate);
-
-    // 格式化日期為MM/DD格式用於顯示
-    dateLabels = allDates.map((date) => {
-      return `${date.getMonth() + 1}/${date.getDate()}`;
-    });
-
-    // 獲取實際進度數據
-    interface ProgressRecord {
-      date: string;
-      progress: number;
-    }
-
-    // 收集所有任務的進度歷史記錄
-    const allProgressRecords: ProgressRecord[] = [];
-    if (tasks && tasks.length > 0) {
-      tasks.forEach((task: any) => {
-        if (task.progressHistory && Array.isArray(task.progressHistory)) {
-          task.progressHistory.forEach((record: any) => {
-            allProgressRecords.push({
-              date: record.date,
-              progress: record.progress
-            });
-          });
-        }
-      });
-    }
-
-    // 計算每日的實際總進度（所有任務的平均）
-    const getActualProgressForDate = (date: Date): number | null => {
-      if (!tasks || tasks.length === 0) return null;
-      
-      let totalProgress = 0;
-      let taskCount = 0;
-      
-      tasks.forEach((task: any) => {
-        if (task.progressHistory && task.progressHistory.length > 0) {
-          // 尋找指定日期或最近的歷史記錄
-          const sortedHistory = [...task.progressHistory].sort((a: any, b: any) => 
-            new Date(a.date).getTime() - new Date(b.date).getTime()
-          );
-          
-          let taskProgress = 0;
-          for (const record of sortedHistory) {
-            if (new Date(record.date) <= date) {
-              taskProgress = record.progress;
-            } else {
-              break;
-            }
-          }
-          
-          totalProgress += taskProgress;
-          taskCount++;
-        } else if (task.progress !== undefined) {
-          // 如果沒有歷史記錄但有進度值，使用當前進度
-          totalProgress += task.progress;
-          taskCount++;
-        }
-      });
-      
-      return taskCount > 0 ? totalProgress / taskCount : null;
-    };
-
-    // 計算各種進度線的資料
-    allDates.forEach((date, index) => {
-      // 1. 預定進度：基於專案總時程的線性進度
-      const plannedProgress = (index / (allDates.length - 1)) * 100;
-      plannedProgressData.push(plannedProgress);
-
-      // 2. 規劃進度：基於任務實際開始和結束日期的線性進度
-      if (taskStartDate && taskEndDate) {
-        let scheduledProgress = 0;
-        if (date < taskStartDate) {
-          scheduledProgress = 0;
-        } else if (date > taskEndDate) {
-          scheduledProgress = 100;
-        } else {
-          const totalTaskDays = Math.max(1, Math.floor(
-            (taskEndDate.getTime() - taskStartDate.getTime()) / (1000 * 60 * 60 * 24)
-          ));
-          const daysFromTaskStart = Math.floor(
-            (date.getTime() - taskStartDate.getTime()) / (1000 * 60 * 60 * 24)
-          );
-          scheduledProgress = Math.min(100, (daysFromTaskStart / totalTaskDays) * 100);
-        }
-        scheduledProgressData.push(Math.max(0, scheduledProgress));
-      } else {
-        // 如果沒有任務日期，使用與預定進度相同的邏輯
-        scheduledProgressData.push(plannedProgress);
-      }
-
-      // 3. 實際進度：從進度歷史計算
-      if (date <= today) {
-        const actualProgress = getActualProgressForDate(date);
-        actualProgressData.push(actualProgress);
-      } else {
-        // 未來日期沒有實際進度
-        actualProgressData.push(null);
-      }
-    });
-
-    // 缺失數據圖表 - 使用過去30天的數據
-    let last30Days: Date[] = [];
-    for (let i = 30; i > 0; i--) {
-      last30Days.push(dayjs().subtract(i, 'day').toDate());
-    }
-    const last30DayLabels = last30Days.map(
-      (date) => `${date.getMonth() + 1}/${date.getDate()}`
-    );
-
-    // 獲取缺失數據
-    // 假設我們要從資料庫獲取實際的缺失數據
-    interface FlawForm {
-      applyDate: string | Date;
-    }
-
-    // 獲取過去30天的缺失數據 - 優化為單次查詢
-    let flawData30Days: number[] = [];
-    
-    try {
-      // 計算查詢日期範圍
-      const startDate = dayjs().subtract(30, 'day').format('YYYY-MM-DD');
-      const endDate = dayjs().format('YYYY-MM-DD');
-      
-      // 一次性查詢過去30天的所有缺失資料
-      const flawForms = await this.mongodbService.getArray('siteForm', {
-        formType: 'siteFlaw',
-        siteId: this.siteId,
-        applyDate: { $gte: startDate, $lte: endDate }
-      });
-      
-      // 建立日期計數對應表
-      const dateCounts: { [key: string]: number } = {};
-      last30Days.forEach(date => {
-        const dateStr = dayjs(date).format('YYYY-MM-DD');
-        dateCounts[dateStr] = 0;
-      });
-      
-      // 統計每天的缺失數量
-      flawForms.forEach((form: any) => {
-        if (form.applyDate && dateCounts.hasOwnProperty(form.applyDate)) {
-          dateCounts[form.applyDate]++;
-        }
-      });
-      
-      // 產生圖表資料
-      flawData30Days = last30Days.map(date => {
-        const dateStr = dayjs(date).format('YYYY-MM-DD');
-        return dateCounts[dateStr] || 0;
-      });
-      
-    } catch (error) {
-      console.error('獲取缺失資料失敗:', error);
-      // 如果查詢失敗，填入全部為0的資料
-      flawData30Days = last30Days.map(() => 0);
-    }
-    
-    console.log('缺失趨勢資料:', flawData30Days);
-
-    // 如果沒有真實資料，生成一些模擬資料以便測試圖表顯示
-    // if (flawData30Days.every(count => count === 0)) {
-    //   console.log('沒有真實缺失資料，使用模擬資料');
-    //   flawData30Days = last30Days.map(() => Math.floor(Math.random() * 5));
-    // }
-
-    // 創建缺失圖表
-    this.chartFlaw = new Chart(this.canvas2?.nativeElement.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: last30DayLabels,
-        datasets: [
-          {
-            label: '缺失數量',
-            data: flawData30Days,
-            backgroundColor: '#ff4d4f',
-            borderRadius: 4,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: '缺失數量',
-              color: '#ffffff',
-            },
-            ticks: {
-              color: '#ffffff',
-              precision: 0,
-            },
-            grid: {
-              color: 'rgba(255, 255, 255, 0.1)',
-            },
-          },
-          x: {
-            ticks: {
-              color: '#ffffff',
-              maxRotation: 45,
-              minRotation: 45,
-            },
-            grid: {
-              color: 'rgba(255, 255, 255, 0.1)',
-            },
-          },
-        },
-        plugins: {
-          legend: {
-            labels: {
-              color: '#ffffff',
-            },
-          },
-          tooltip: {
-            callbacks: {
-              title: function (tooltipItems) {
-                return '日期: ' + tooltipItems[0].label;
-              },
-              label: function (context) {
-                return '缺失數量: ' + context.parsed.y;
-              },
-            },
-          },
-        },
-      },
-    });
-  }
-  
 
   async getWeather() {
     if (!this.site || !this.site.county) {

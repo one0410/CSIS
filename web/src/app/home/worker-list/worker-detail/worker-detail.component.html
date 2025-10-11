@@ -54,7 +54,9 @@
 
         <div class="row mb-3">
           <div class="col-md-4">
-            <label for="gender" class="form-label">性別</label>
+            <label for="gender" class="form-label">性別
+              <span class="text-danger">*</span>
+            </label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-user"></i></span>
               <select class="form-select" id="gender" name="gender" [(ngModel)]="worker.gender" required
@@ -183,23 +185,32 @@
               請輸入電話
             </div>
           </div>
-
           <div class="col-md-6">
-            <label for="emergencyTel" class="form-label">緊急聯絡電話</label>
+            <label for="address" class="form-label">地址</label>
             <div class="input-group">
-              <span class="input-group-text"><i class="fas fa-phone-plus"></i></span>
-              <input type="tel" class="form-control" id="emergencyTel" name="emergencyTel"
-                [(ngModel)]="worker.emergencyTel" aria-label="緊急聯絡電話" title="請輸入緊急聯絡電話">
+              <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+              <input type="text" class="form-control" id="address" name="address" [(ngModel)]="worker.address"
+                aria-label="地址" title="請輸入地址">
             </div>
           </div>
         </div>
 
-        <div class="mb-3">
-          <label for="address" class="form-label">地址</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-            <input type="text" class="form-control" id="address" name="address" [(ngModel)]="worker.address"
-              aria-label="地址" title="請輸入地址">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="liaison" class="form-label">緊急聯絡人</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-user-friends"></i></span>
+              <input type="text" class="form-control" id="liaison" name="liaison" [(ngModel)]="worker.liaison"
+                aria-label="緊急聯絡人" title="請輸入緊急聯絡人姓名">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label for="emergencyTel" class="form-label">緊急聯絡電話</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-phone-volume"></i></span>
+              <input type="tel" class="form-control" id="emergencyTel" name="emergencyTel"
+                [(ngModel)]="worker.emergencyTel" aria-label="緊急聯絡電話" title="請輸入緊急聯絡電話">
+            </div>
           </div>
         </div>
       </div>

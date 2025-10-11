@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, AfterViewInit, computed } from '@angular/core';
+import { Component, ViewChild, AfterViewInit, computed } from '@angular/core';
 
 import {
   FullCalendarComponent,
@@ -146,7 +146,20 @@ export class SiteFormListComponent implements AfterViewInit {
       
       // 事件點擊處理
       eventClick: this.handleEventClick.bind(this),
-      
+
+      // 事件渲染完成後處理（用於設置 tooltip）
+      eventDidMount: (info) => {
+        const formData = info.event.extendedProps['originalData'];
+        const formType = info.event.extendedProps['formType'];
+
+        if (formData && formType) {
+          const tooltipContent = this.getTooltipContent(formType, formData);
+          if (tooltipContent) {
+            info.el.title = tooltipContent;
+          }
+        }
+      },
+
       // 視圖渲染完成後處理
       viewDidMount: (arg) => {
           // 儲存當前視圖 (通過程式改變視圖時也會觸發這個事件)
@@ -370,6 +383,12 @@ export class SiteFormListComponent implements AfterViewInit {
           workLocation: 1,
           projectName: 1,
           contractorCompany: 1,
+          workContent: 1,              // 工地許可單：工作內容
+          workItems: 1,                // 工具箱會議：本日工作項目及地點
+          courseName: 1,               // 教育訓練：訓練課程
+          checkType: 1,                // 工地巡迴檢查表：檢查種類
+          workType: 1,                 // 特殊作業自檢表：作業名稱
+          workName: 1,                 // 危害告知單：工程名稱
 
           // 工地許可單簽名資訊（只載入姓名和時間，不載入 base64 簽名圖片）
           'applicantSignature.name': 1,
@@ -685,6 +704,50 @@ export class SiteFormListComponent implements AfterViewInit {
     }
   }
 
+  // 生成 tooltip 內容
+  getTooltipContent(formType: string, formData: any): string {
+    switch(formType) {
+      case 'sitePermit':
+        // 工地許可單：顯示工作內容
+        return formData.workContent ? `工作內容：${formData.workContent}` : '工地許可單';
+
+      case 'toolboxMeeting':
+        // 工具箱會議：顯示本日工作項目及本日工作地點
+        const items: string[] = [];
+        // workItems 是一個陣列，通常第一個是工作項目，第二個是工作地點
+        if (formData.workItems && Array.isArray(formData.workItems)) {
+          // 第一個項目通常是「本日工作項目」
+          if (formData.workItems[0]?.description) {
+            items.push(`工作項目：${formData.workItems[0].description}`);
+          }
+          // 第二個項目通常是「本日工作地點」
+          if (formData.workItems[1]?.description) {
+            items.push(`工作地點：${formData.workItems[1].description}`);
+          }
+        }
+        return items.length > 0 ? items.join('\n') : '工具箱會議';
+
+      case 'training':
+        // 教育訓練：顯示訓練課程
+        return formData.courseName ? `訓練課程：${formData.courseName}` : '教育訓練';
+
+      case 'safetyPatrolChecklist':
+        // 工安巡迴檢查表：顯示檢查種類
+        return formData.checkType ? `檢查種類：${formData.checkType}` : '工安巡迴檢查表';
+
+      case 'specialWorkChecklist':
+        // 特殊作業自檢表：顯示作業名稱
+        return formData.workType ? `作業名稱：${formData.workType}` : '特殊作業自檢表';
+
+      case 'hazardNotice':
+        // 危害告知單：顯示工程名稱
+        return formData.workName ? `工程名稱：${formData.workName}` : '危害告知單';
+
+      default:
+        return '';
+    }
+  }
+
   // 獲取狀態對應的顏色
   getStatusColor(status: string): string {
     switch(status) {
@@ -769,7 +832,7 @@ export class SiteFormListComponent implements AfterViewInit {
           route = ['/site', this.siteId, 'forms', 'safety-issue-record', eventId];
           break;
         case 'hazardNotice':
-          route = ['/site', this.siteId, 'forms', 'hazard-notice', eventId];
+          route = ['/site', this.siteId, 'hazardNotice', eventId];
           break;
         case 'training':
           route = ['/site', this.siteId, 'training', eventId];
@@ -793,7 +856,7 @@ export class SiteFormListComponent implements AfterViewInit {
           } else if (title.includes('缺失記錄') || title.includes('安全缺失')) {
             route = ['/site', this.siteId, 'forms', 'safety-issue-record', eventId];
           } else if (title.includes('危害告知')) {
-            route = ['/site', this.siteId, 'forms', 'hazard-notice', eventId];
+            route = ['/site', this.siteId, 'hazardNotice', eventId];
           } else if (title.includes('教育訓練') || title === 'training') {
             route = ['/site', this.siteId, 'training', eventId];
           } else {
@@ -1046,14 +1109,15 @@ export class SiteFormListComponent implements AfterViewInit {
   canCreateToolboxMeeting(): boolean {
     const user = this.currentUser();
     if (!user || !this.siteId) return false;
-    
+
     // 取得當前使用者在此工地的角色
     const userSiteRole = user.belongSites?.find(site => site.siteId === this.siteId)?.role;
-    
-    // 專案經理、工地經理、環安主管、環安工程師可以新增工具箱會議
-    return userSiteRole === 'projectManager' || 
-           userSiteRole === 'siteManager' || 
-           userSiteRole === 'safetyManager' || 
+
+    // 專案經理、專案工程師、工地經理、環安主管、環安工程師可以新增工具箱會議
+    return userSiteRole === 'projectManager' ||
+           userSiteRole === 'projectEngineer' ||
+           userSiteRole === 'siteManager' ||
+           userSiteRole === 'safetyManager' ||
            userSiteRole === 'safetyEngineer';
   }
 

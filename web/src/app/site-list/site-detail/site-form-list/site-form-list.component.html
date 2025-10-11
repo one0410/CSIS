@@ -1,20 +1,20 @@
-<div class="d-flex gap-2 mb-2">
+<div class="d-flex flex-wrap gap-2 mb-2">
   <span 
     [title]="!canCreateSitePermit() ? '所有角色都可以新增工地許可單' : ''"
     class="d-inline-block"
   >
     <button 
-      class="btn btn-primary" 
+      class="btn btn-primary text-nowrap" 
       (click)="createSitePermit()"
       [disabled]="!canCreateSitePermit()"
     >新增工地許可單</button>
   </span>
-  <span 
-    [title]="!canCreateToolboxMeeting() ? '只有專案經理、工地經理、環安主管、環安工程師可以新增工具箱會議' : ''"
+  <span
+    [title]="!canCreateToolboxMeeting() ? '只有專案經理、專案工程師、工地經理、環安主管、環安工程師可以新增工具箱會議' : ''"
     class="d-inline-block"
   >
-    <button 
-      class="btn btn-primary" 
+    <button
+      class="btn btn-primary text-nowrap"
       (click)="createToolboxMeeting()"
       [disabled]="!canCreateToolboxMeeting()"
     >新增工具箱會議</button>
@@ -24,7 +24,7 @@
     class="d-inline-block"
   >
     <button 
-      class="btn btn-primary" 
+      class="btn btn-primary text-nowrap" 
       (click)="createEnvironmentCheckList()"
       [disabled]="!canCreateEnvironmentCheckList()"
     >新增環安衛自主檢點表</button>
@@ -34,7 +34,7 @@
     class="d-inline-block"
   >
     <button 
-      class="btn btn-primary" 
+      class="btn btn-primary text-nowrap" 
       (click)="createSpecialWorkChecklist()"
       [disabled]="!canCreateSpecialWorkChecklist()"
     >新增特殊作業自主檢點表</button>
@@ -44,7 +44,7 @@
     class="d-inline-block"
   >
     <button 
-      class="btn btn-primary" 
+      class="btn btn-primary text-nowrap" 
       (click)="createSafetyIssueRecord()"
       [disabled]="!canCreateSafetyIssueRecord()"
     >新增缺失記錄單</button>
@@ -54,7 +54,7 @@
     class="d-inline-block"
   >
     <button 
-      class="btn btn-primary" 
+      class="btn btn-primary text-nowrap" 
       (click)="createSafetyPatrolChecklist()"
       [disabled]="!canCreateSafetyPatrolChecklist()"
     >新增工安巡迴檢查表</button>
@@ -64,7 +64,7 @@
     class="d-inline-block"
   >
     <button 
-      class="btn btn-primary" 
+      class="btn btn-primary text-nowrap" 
       (click)="createTraining()"
       [disabled]="!canCreateTraining()"
     >新增教育訓練</button>
@@ -137,7 +137,7 @@
                 <td class="fw-bold">工具箱會議</td>
                 <td class="text-center text-success fs-5">✓</td>
                 <td class="text-center text-muted">－</td>
-                <td class="text-center text-muted">－</td>
+                <td class="text-center text-success fs-5">✓</td>
                 <td class="text-center text-success fs-5">✓</td>
                 <td class="text-center text-success fs-5">✓</td>
                 <td class="text-center text-success fs-5">✓</td>

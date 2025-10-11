@@ -20,10 +20,7 @@
           <div class="progress-details">
             <div class="progress-value">{{ currentProjectProgress }}%</div>
             <div class="progress-bar">
-              <div
-                class="progress-fill"
-                [style.width]="currentProjectProgress + '%'"
-              ></div>
+              <div class="progress-fill" [style.width]="currentProjectProgress + '%'"></div>
             </div>
           </div>
         </div>
@@ -49,20 +46,10 @@
     </div>
 
     <!-- 天氣資訊卡 -->
-    <div
-      class="info-card"
-      (click)="navigateTo('weather')"
-      [class.clickable]="true"
-      title="點擊後查看今日天氣詳細資訊"
-    >
+    <div class="info-card" (click)="navigateTo('weather')" [class.clickable]="true" title="點擊後查看今日天氣詳細資訊">
       <h3 class="card-title">
         今日天氣({{ site?.county }})
-        <span class="info-icon-right"
-          ><i
-            class="fas fa-info-circle"
-            title="顯示目前工地所在區域的天氣資訊"
-          ></i
-        ></span>
+        <span class="info-icon-right"><i class="fas fa-info-circle" title="顯示目前工地所在區域的天氣資訊"></i></span>
       </h3>
       <div class="card-content weather-content">
         <div class="weather-icon">
@@ -82,17 +69,10 @@
     <app-zero-accident-hours>
     </app-zero-accident-hours>
 
-    <div
-      class="info-card"
-      (click)="navigateTo('permit')"
-      [class.clickable]="true"
-      title="點擊後查看許可單統計詳細資訊"
-    >
+    <div class="info-card" (click)="navigateTo('permit')" [class.clickable]="true" title="點擊後查看許可單統計詳細資訊">
       <h3 class="card-title">
         許可單統計
-        <span class="info-icon-right"
-          ><i class="fas fa-info-circle" title="顯示今日許可單數量統計"></i
-        ></span>
+        <span class="info-icon-right"><i class="fas fa-info-circle" title="顯示今日許可單數量統計"></i></span>
       </h3>
       <div class="card-content">
         <!-- 總數顯示 -->
@@ -103,45 +83,45 @@
           <div class="large-value">{{ todayPermitCount }}</div>
           <div class="stat-subtitle">今日許可單數</div>
         </div>
-        
+
         <!-- 作業類別統計 -->
         @if (permitCategoryStats.length > 0) {
-          <div class="category-stats">
-            <div class="category-stats-header">
-              <small class="text-muted">
-                <i class="fas fa-chart-pie me-1"></i>作業類別分佈
-              </small>
-            </div>
-            <div class="category-stats-list">
-              @for (stat of permitCategoryStats.slice(0, 5); track stat.category) {
-                <div class="category-item">
-                  <div class="category-info">
-                    <i [class]="stat.icon" [style.color]="stat.color"></i>
-                    <span class="category-name">{{ stat.displayName }}</span>
-                  </div>
-                  <span class="category-count badge" [style.background-color]="stat.color">
-                    {{ stat.count }}
-                  </span>
-                </div>
-              }
-              @if (permitCategoryStats.length > 5) {
-                <div class="category-item text-muted">
-                  <span class="category-name">
-                    <i class="fas fa-ellipsis-h me-1"></i>
-                    還有 {{ permitCategoryStats.length - 5 }} 種作業類別
-                  </span>
-                </div>
-              }
-            </div>
+        <div class="category-stats">
+          <div class="category-stats-header">
+            <small class="text-muted">
+              <i class="fas fa-chart-pie me-1"></i>作業類別分佈
+            </small>
           </div>
+          <div class="category-stats-list">
+            @for (stat of permitCategoryStats.slice(0, 5); track stat.category) {
+            <div class="category-item">
+              <div class="category-info">
+                <i [class]="stat.icon" [style.color]="stat.color"></i>
+                <span class="category-name">{{ stat.displayName }}</span>
+              </div>
+              <span class="category-count badge" [style.background-color]="stat.color">
+                {{ stat.count }}
+              </span>
+            </div>
+            }
+            @if (permitCategoryStats.length > 5) {
+            <div class="category-item text-muted">
+              <span class="category-name">
+                <i class="fas fa-ellipsis-h me-1"></i>
+                還有 {{ permitCategoryStats.length - 5 }} 種作業類別
+              </span>
+            </div>
+            }
+          </div>
+        </div>
         } @else if (todayPermitCount === 0) {
-          <div class="text-center text-muted mt-2">
-            <small>今日無許可單作業</small>
-          </div>
+        <div class="text-center text-muted mt-2">
+          <small>今日無許可單作業</small>
+        </div>
         } @else if (todayPermitCount > 0 && permitCategoryStats.length === 0) {
-          <div class="text-center text-muted mt-2">
-            <small>許可單無作業類別資料</small>
-          </div>
+        <div class="text-center text-muted mt-2">
+          <small>許可單無作業類別資料</small>
+        </div>
         }
       </div>
       <!-- 展開圖示 -->
@@ -161,59 +141,52 @@
           <div class="large-value">{{ todayWorkerCount }}</div>
           <div class="stat-subtitle">今日工地人數</div>
         </div>
-        
+
         <!-- 廠商統計 -->
         @if (contractorWorkerStats.length > 0) {
-          <div class="contractor-stats">
-            <div class="contractor-stats-header">
-              <small class="text-muted">
-                <i class="fas fa-building me-1"></i>廠商人數分佈
-              </small>
-            </div>
-            <div class="contractor-stats-list">
-              @for (stat of contractorWorkerStats.slice(0, 5); track stat.contractorName) {
-                <div class="contractor-item">
-                  <div class="contractor-info">
-                    <i [class]="stat.icon" [style.color]="stat.color"></i>
-                    <span class="contractor-name" [title]="stat.contractorName">{{ stat.contractorName }}</span>
-                  </div>
-                  <div class="contractor-count-info">
-                    <span class="contractor-count badge" [style.background-color]="stat.color">
-                      {{ stat.workerCount }}
-                    </span>
-                    <small class="contractor-percentage text-muted">{{ stat.percentage }}%</small>
-                  </div>
-                </div>
-              }
-              @if (contractorWorkerStats.length > 5) {
-                <div class="contractor-item text-muted">
-                  <span class="contractor-name">
-                    <i class="fas fa-ellipsis-h me-1"></i>
-                    還有 {{ contractorWorkerStats.length - 5 }} 個廠商
-                  </span>
-                </div>
-              }
-            </div>
+        <div class="contractor-stats">
+          <div class="contractor-stats-header">
+            <small class="text-muted">
+              <i class="fas fa-building me-1"></i>廠商人數分佈
+            </small>
           </div>
+          <div class="contractor-stats-list">
+            @for (stat of contractorWorkerStats.slice(0, 5); track stat.contractorName) {
+            <div class="contractor-item">
+              <div class="contractor-info">
+                <i [class]="stat.icon" [style.color]="stat.color"></i>
+                <span class="contractor-name" [title]="stat.contractorName">{{ stat.contractorName }}</span>
+              </div>
+              <div class="contractor-count-info">
+                <span class="contractor-count badge" [style.background-color]="stat.color">
+                  {{ stat.workerCount }}
+                </span>
+                <small class="contractor-percentage text-muted">{{ stat.percentage }}%</small>
+              </div>
+            </div>
+            }
+            @if (contractorWorkerStats.length > 5) {
+            <div class="contractor-item text-muted">
+              <span class="contractor-name">
+                <i class="fas fa-ellipsis-h me-1"></i>
+                還有 {{ contractorWorkerStats.length - 5 }} 個廠商
+              </span>
+            </div>
+            }
+          </div>
+        </div>
         } @else if (todayWorkerCount === 0) {
-          <div class="text-center text-muted mt-2">
-            <small>今日無工人出工記錄</small>
-          </div>
+        <div class="text-center text-muted mt-2">
+          <small>今日無工人出工記錄</small>
+        </div>
         }
       </div>
     </div>
 
-    <div
-      class="info-card"
-      (click)="navigateTo('flaw')"
-      [class.clickable]="true"
-      title="點擊後查看缺失統計詳細資訊"
-    >
+    <div class="info-card" (click)="navigateTo('flaw')" [class.clickable]="true" title="點擊後查看缺失統計詳細資訊">
       <h3 class="card-title">
         缺失統計
-        <span class="info-icon-right"
-          ><i class="fas fa-info-circle" title="顯示今日缺失單數量統計"></i
-        ></span>
+        <span class="info-icon-right"><i class="fas fa-info-circle" title="顯示今日缺失單數量統計"></i></span>
       </h3>
       <div class="card-content stat-content">
         <div class="stat-tile-icon">
@@ -231,6 +204,49 @@
 
   <!-- 圖表區域 -->
   <div class="charts-container">
+    <!-- 新增的四個圖表卡片 -->
+    <div class="info-card">
+      <h3 class="card-title">每月累積出工人數</h3>
+      <div class="card-content">
+        <app-monthly-worker-chart [siteId]="siteId"></app-monthly-worker-chart>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3 class="card-title">當月各供應商累積出工人數</h3>
+      <div class="card-content">
+        <app-contractor-worker-chart [siteId]="siteId"></app-contractor-worker-chart>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3 class="card-title">今日各供應商違規次數統計</h3>
+      <div class="card-content">
+        <app-today-contractor-violation-chart [siteId]="siteId"></app-today-contractor-violation-chart>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3 class="card-title">當月各供應商違規次數統計</h3>
+      <div class="card-content">
+        <app-contractor-violation-chart [siteId]="siteId"></app-contractor-violation-chart>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3 class="card-title">今日違規種類統計</h3>
+      <div class="card-content">
+        <app-today-violation-type-chart [siteId]="siteId"></app-today-violation-type-chart>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3 class="card-title">當月違規種類統計</h3>
+      <div class="card-content">
+        <app-violation-type-chart [siteId]="siteId"></app-violation-type-chart>
+      </div>
+    </div>
+    
     <div class="info-card">
       <h3 class="card-title">工程進度趨勢</h3>
       <div class="card-content">
@@ -240,9 +256,10 @@
 
     <div class="info-card">
       <h3 class="card-title">缺失趨勢</h3>
-      <div class="card-content chart-wrapper">
-        <canvas #chartFlaw id="chartFlaw"></canvas>
+      <div class="card-content">
+        <app-flaw-trend-chart [siteId]="siteId"></app-flaw-trend-chart>
       </div>
     </div>
+
   </div>
 </div>

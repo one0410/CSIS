@@ -40,7 +40,7 @@ export interface ToolboxMeetingForm extends SiteForm {
   hostCompany: string; // 主持人單位
   hostPerson: string; // 主持人
   contractors: Contractor[]; // 與會人員
-  workItems: WorkItem[];
+  workItems: WorkItem[]; // 本日工作項目及本日工作地點
   hazards: Hazards; // 危害
   safetyPrecautions: SafetyPrecautions; // 安全防護措施
   healthWarnings: HealthWarnings; // 健康危害告知
@@ -337,86 +337,86 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     safetyPrecautions: {
       personalProtection: {
         // 主類別 三狀態 checkbox
-        headProtection: null, // 01.頭部防護
-        eyeProtection: null, // 02.眼部防護
-        earProtection: null, // 03.耳部防護
-        breathProtection: null, // 04.呼吸防護
-        handProtection: null, // 05.手部防護
-        footProtection: null, // 06.足部防護
-        bodyProtection: null, // 07.身體防護
-        fallPrevention: null, // 08.墜落預防
-        electricPrevention: null, // 09.感電預防
-        firePrevention: null, // 10.火災預防
-        oxygenPrevention: null, // 11.缺氧預防
-        otherPrevention: null, // 12.其他預防
-        
+        headProtection: false, // 01.頭部防護
+        eyeProtection: false, // 02.眼部防護
+        earProtection: false, // 03.耳部防護
+        breathProtection: false, // 04.呼吸防護
+        handProtection: false, // 05.手部防護
+        footProtection: false, // 06.足部防護
+        bodyProtection: false, // 07.身體防護
+        fallPrevention: false, // 08.墜落預防
+        electricPrevention: false, // 09.感電預防
+        firePrevention: false, // 10.火災預防
+        oxygenPrevention: false, // 11.缺氧預防
+        otherPrevention: false, // 12.其他預防
+
         // 詳細項目 - 三狀態
         // 01. 頭部防護詳細項目
-        workSiteHead: null,
-        electricianHead: null,
-        helmetHead: null,
-        
+        workSiteHead: false,
+        electricianHead: false,
+        helmetHead: false,
+
         // 02. 眼部防護詳細項目
-        mechanicalEyes: null,
-        radiationEyes: null,
-        
+        mechanicalEyes: false,
+        radiationEyes: false,
+
         // 03. 耳部防護詳細項目
-        earPlugs: null,
-        earMuffs: null,
-        
+        earPlugs: false,
+        earMuffs: false,
+
         // 04. 呼吸防護詳細項目
-        dustMask: null,
-        toxicMask: null,
-        scba: null,
-        papr: null,
-        airlineMask: null,
-        
+        dustMask: false,
+        toxicMask: false,
+        scba: false,
+        papr: false,
+        airlineMask: false,
+
         // 05. 手部防護詳細項目
-        cutResistantGloves: null,
-        wearResistantGloves: null,
-        heatResistantGloves: null,
-        electricianGloves: null,
-        chemicalGloves: null,
-        
+        cutResistantGloves: false,
+        wearResistantGloves: false,
+        heatResistantGloves: false,
+        electricianGloves: false,
+        chemicalGloves: false,
+
         // 06. 足部防護詳細項目
-        safetyShoes: null,
-        chemicalShoes: null,
-        
+        safetyShoes: false,
+        chemicalShoes: false,
+
         // 07. 身體防護詳細項目
-        backpackBelt: null,
-        weldingMask: null,
-        chemicalProtection: null,
-        reflectiveVest: null,
-        
+        backpackBelt: false,
+        weldingMask: false,
+        chemicalProtection: false,
+        reflectiveVest: false,
+
         // 08. 墜落預防詳細項目
-        ladder: null,
-        mobileLadder: null,
-        scaffold: null,
-        highWorkVehicle: null,
-        safetyLine: null,
-        protectionCage: null,
-        guardrail: null,
-        protectionCover: null,
-        safetyNet: null,
-        warningBarrier: null,
-        fallPreventer: null,
-        
+        ladder: false,
+        mobileLadder: false,
+        scaffold: false,
+        highWorkVehicle: false,
+        safetyLine: false,
+        protectionCage: false,
+        guardrail: false,
+        protectionCover: false,
+        safetyNet: false,
+        warningBarrier: false,
+        fallPreventer: false,
+
         // 09. 感電預防詳細項目
-        leakageBreaker: null,
-        autoElectricPreventer: null,
-        voltageDetector: null,
-        
+        leakageBreaker: false,
+        autoElectricPreventer: false,
+        voltageDetector: false,
+
         // 10. 火災預防詳細項目
-        fireExtinguisher: null,
-        fireBlanket: null,
-        oxyacetyleneFireback: null,
-        
+        fireExtinguisher: false,
+        fireBlanket: false,
+        oxyacetyleneFireback: false,
+
         // 11. 缺氧預防詳細項目
-        ventilation: null,
-        lifeDetector: null,
-        gasDetector: null,
-        liftingEquipment: null,
-        rescueEquipment: null,
+        ventilation: false,
+        lifeDetector: false,
+        gasDetector: false,
+        liftingEquipment: false,
+        rescueEquipment: false,
         
         // 舊有的詳細項目保留兼容性
         head: false,
@@ -1357,6 +1357,14 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
   // 格式化編號
   formatNo(index: number): string {
     return (index + 1).toString().padStart(2, '0');
+  }
+
+  // 格式化簽名日期時間為 MM-DD HH:mm
+  formatSignatureTime(signatureTime?: Date): string {
+    if (!signatureTime) {
+      return '';
+    }
+    return dayjs(signatureTime).format('MM-DD HH:mm');
   }
 
   // 僅保存表單資料，不跳轉頁面

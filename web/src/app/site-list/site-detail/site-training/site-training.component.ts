@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { MongodbService } from '../../../services/mongodb.service';
 import { AuthService } from '../../../services/auth.service';
@@ -8,24 +9,42 @@ import { TrainingForm } from './training-form/training-form.component';
 @Component({
   selector: 'app-site-training',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './site-training.component.html',
   styleUrls: ['./site-training.component.scss']
 })
 export class SiteTrainingComponent implements OnInit {
   private allTrainingForms = signal<TrainingForm[]>([]);
   showRevokedForms = signal<boolean>(false);
-  
+  searchQuery = signal<string>('');
+
   // 使用 computed 來過濾表單資料
   trainingForms = computed(() => {
-    const allForms = this.allTrainingForms();
-    if (this.showRevokedForms()) {
-      return allForms;
-    } else {
-      return allForms.filter(form => form.status !== 'revoked');
+    let forms = this.allTrainingForms();
+
+    // 先過濾作廢表單
+    if (!this.showRevokedForms()) {
+      forms = forms.filter(form => form.status !== 'revoked');
     }
+
+    // 再根據搜尋條件過濾
+    const query = this.searchQuery().toLowerCase().trim();
+    if (query) {
+      forms = forms.filter(form => {
+        // 搜尋課程名稱、講師、或參與者姓名
+        const matchesCourseName = form.courseName?.toLowerCase().includes(query);
+        const matchesInstructor = form.instructor?.toLowerCase().includes(query);
+        const matchesWorker = form.workerSignatures?.some(sig =>
+          sig.name?.toLowerCase().includes(query)
+        );
+
+        return matchesCourseName || matchesInstructor || matchesWorker;
+      });
+    }
+
+    return forms;
   });
-  
+
   siteId: string = '';
 
   constructor(
@@ -42,6 +61,14 @@ export class SiteTrainingComponent implements OnInit {
       if (id) {
         this.siteId = id;
         this.loadForms();
+      }
+    });
+
+    // 檢查是否有搜尋參數
+    this.route.queryParams.subscribe(params => {
+      const searchParam = params['search'];
+      if (searchParam) {
+        this.searchQuery.set(searchParam);
       }
     });
   }

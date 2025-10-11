@@ -117,16 +117,52 @@
                       <input type="date" class="form-control table-input" name="workStartDate"
                         [(ngModel)]="workStartDate" required [readonly]="isViewMode" aria-label="施工開始日期"
                         style="width: 150px" />
-                      <input type="time" class="form-control table-input" name="workStartTime"
-                        [(ngModel)]="workStartTimeOnly" required [readonly]="isViewMode" aria-label="施工開始時間"
-                        style="width: 120px" />
+
+                      <!-- 開始時間輸入框 -->
+                      <div class="position-relative" style="width: 120px">
+                        <input type="text" class="form-control table-input" name="workStartTime"
+                          [(ngModel)]="workStartTimeOnly" required [readonly]="isViewMode" aria-label="施工開始時間"
+                          placeholder="HH:MM"
+                          (blur)="onTimeInputBlur('start')"
+                          (focus)="onTimeInputFocus('start')"
+                          (input)="onTimeInputChange('start', $event)"
+                          autocomplete="off" />
+                        @if (showTimeDropdown === 'start' && !isViewMode) {
+                          <div class="time-dropdown-menu">
+                            @for (time of filteredTimeOptions; track time) {
+                              <div class="time-dropdown-item" (mousedown)="selectTime('start', time)">
+                                {{ time }}
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+
                       <span>至</span>
                       <input type="date" class="form-control table-input" name="workEndDate"
                         [(ngModel)]="workEndDate" required [readonly]="isViewMode" aria-label="施工結束日期"
                         style="width: 150px" />
-                      <input type="time" class="form-control table-input" name="workEndTime"
-                        [(ngModel)]="workEndTimeOnly" required [readonly]="isViewMode" aria-label="施工結束時間"
-                        style="width: 120px" />
+
+                      <!-- 結束時間輸入框 -->
+                      <div class="position-relative" style="width: 120px">
+                        <input type="text" class="form-control table-input" name="workEndTime"
+                          [(ngModel)]="workEndTimeOnly" required [readonly]="isViewMode" aria-label="施工結束時間"
+                          placeholder="HH:MM"
+                          (blur)="onTimeInputBlur('end')"
+                          (focus)="onTimeInputFocus('end')"
+                          (input)="onTimeInputChange('end', $event)"
+                          autocomplete="off" />
+                        @if (showTimeDropdown === 'end' && !isViewMode) {
+                          <div class="time-dropdown-menu">
+                            @for (time of filteredTimeOptions; track time) {
+                              <div class="time-dropdown-item" (mousedown)="selectTime('end', time)">
+                                {{ time }}
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+
                       <span>止。</span>
                     </div>
                   </td>
@@ -201,7 +237,7 @@
                     <input class="form-check-input" type="checkbox" id="otherWork" [(ngModel)]="permitData.otherWork"
                       name="otherWork" [disabled]="isViewMode" />
                     <label class="form-check-label" for="otherWork">
-                      11.其他：
+                      {{ workCategories.length + 1 }}.其他：
                     </label>
                   </div>
                 </div>
