@@ -55,8 +55,8 @@ export class ContractorWorkerChartComponent implements OnInit, OnChanges, AfterV
         }
       });
 
-      // 統計各廠商的簽名數（累積出工人數）- 使用與工地日報表相同的邏輯
-      const contractorCountMap = new Map<string, number>();
+      // 統計各廠商的不重複工人數（當月累積出工人數）- 使用 Set 避免重複計算
+      const contractorWorkerMap = new Map<string, Set<string>>();
 
       toolboxMeetings.forEach((meeting: any) => {
         if (meeting.healthWarnings) {
@@ -73,11 +73,14 @@ export class ContractorWorkerChartComponent implements OnInit, OnChanges, AfterV
               // 檢查有效簽名（name, signature, company 都要存在）
               if (signature && signature.name && signature.signature && signature.company) {
                 const companyName = signature.company.trim();
+                const workerName = signature.name.trim();
 
-                if (companyName !== '') {
-                  // 累加簽名數（每個簽名代表一次出工）
-                  const currentCount = contractorCountMap.get(companyName) || 0;
-                  contractorCountMap.set(companyName, currentCount + 1);
+                if (companyName !== '' && workerName !== '') {
+                  // 使用 Set 儲存不重複的工人名稱
+                  if (!contractorWorkerMap.has(companyName)) {
+                    contractorWorkerMap.set(companyName, new Set());
+                  }
+                  contractorWorkerMap.get(companyName)!.add(workerName);
                 }
               }
             }
@@ -85,10 +88,10 @@ export class ContractorWorkerChartComponent implements OnInit, OnChanges, AfterV
         }
       });
 
-      // 轉換為陣列並排序
-      const contractorData = Array.from(contractorCountMap.entries())
-        .filter(([name, count]) => name && name.trim() !== '' && count > 0)
-        .map(([name, count]) => ({ name, count }))
+      // 轉換為陣列並排序，計算每個廠商的不重複工人數
+      const contractorData = Array.from(contractorWorkerMap.entries())
+        .filter(([name, workerSet]) => name && name.trim() !== '' && workerSet.size > 0)
+        .map(([name, workerSet]) => ({ name, count: workerSet.size }))
         .sort((a, b) => b.count - a.count); // 按出工人數降序排列
 
       const labels = contractorData.map(d => d.name);
