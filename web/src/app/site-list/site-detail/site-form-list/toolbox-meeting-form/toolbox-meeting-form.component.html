@@ -1101,7 +1101,7 @@
                     alt="主承攬商簽名" class="signature-image" style="max-height: 38px" />
                   } @else {
                   <div class="signature-placeholder small text-muted">
-                    工人簽名
+                    使用者簽名
                   </div>
                   }
                 </div>
@@ -1468,16 +1468,30 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="workerVerificationModalLabel">
-          工人身份驗證
+          @if (currentSignatureColumn === 0) {
+            使用者身份驗證
+          } @else {
+            工人身份驗證
+          }
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
       </div>
       <div class="modal-body">
-        <div class="mb-3">
-          <label for="verificationId" class="form-label">請輸入身份證號碼或手機號碼</label>
-          <input type="text" class="form-control" id="verificationId" [(ngModel)]="verificationIdOrPhone"
-            placeholder="身份證號碼或手機號碼" />
-        </div>
+        @if (currentSignatureColumn === 0) {
+          <!-- 主承攬商：輸入工號 -->
+          <div class="mb-3">
+            <label for="verificationEmployeeId" class="form-label">請輸入工號</label>
+            <input type="text" class="form-control" id="verificationEmployeeId" [(ngModel)]="verificationEmployeeId"
+              placeholder="工號" (keyup.enter)="verifyUser()" />
+          </div>
+        } @else {
+          <!-- 次承攬商：輸入身份證或手機 -->
+          <div class="mb-3">
+            <label for="verificationId" class="form-label">請輸入身份證號碼或手機號碼</label>
+            <input type="text" class="form-control" id="verificationId" [(ngModel)]="verificationIdOrPhone"
+              placeholder="身份證號碼或手機號碼" (keyup.enter)="verifyWorker()" />
+          </div>
+        }
         @if (verificationError) {
         <div class="alert alert-danger">{{ verificationError }}</div>
         }
@@ -1486,9 +1500,15 @@
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           取消
         </button>
-        <button type="button" class="btn btn-primary" (click)="verifyWorker()">
-          驗證
-        </button>
+        @if (currentSignatureColumn === 0) {
+          <button type="button" class="btn btn-primary" (click)="verifyUser()">
+            驗證
+          </button>
+        } @else {
+          <button type="button" class="btn btn-primary" (click)="verifyWorker()">
+            驗證
+          </button>
+        }
       </div>
     </div>
   </div>

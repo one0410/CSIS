@@ -13,6 +13,7 @@ import { SiteForm } from '../../../../model/siteForm.model';
 import dayjs from 'dayjs';
 import { AuthService } from '../../../../services/auth.service';
 import { Worker } from '../../../../model/worker.model';
+import { User } from '../../../../model/user.model';
 import { SignatureData } from '../../../../model/signatureData.model';
 import { BulletinService } from '../../../../services/bulletin.service';
 import { Bulletin } from '../../../../model/bulletin.model';
@@ -298,31 +299,31 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     ],
     hazards: {
       physical: {
-        fallDrop: null, // 跌墜落 - 三狀態
-        physicalInjury: null, // 擦、刺、扭、壓、夾、碰撞、割傷 - 三狀態
-        fallObject: null, // 物體飛落 - 三狀態
-        foreignObjectInEye: null, // 異物入眼 - 三狀態
-        highTempContact: null, // 與高溫接觸 - 三狀態
-        lowTempContact: null, // 與低溫接觸 - 三狀態
-        noise: null, // 噪音 - 三狀態
-        electric: null, // 感電 - 三狀態
-        collapse: null, // 塌陷 - 三狀態
-        radiation: null, // 游離輻射 - 三狀態
+        fallDrop: false, // 跌墜落 - 三狀態，預設為叉叉
+        physicalInjury: false, // 擦、刺、扭、壓、夾、碰撞、割傷 - 三狀態，預設為叉叉
+        fallObject: false, // 物體飛落 - 三狀態，預設為叉叉
+        foreignObjectInEye: false, // 異物入眼 - 三狀態，預設為叉叉
+        highTempContact: false, // 與高溫接觸 - 三狀態，預設為叉叉
+        lowTempContact: false, // 與低溫接觸 - 三狀態，預設為叉叉
+        noise: false, // 噪音 - 三狀態，預設為叉叉
+        electric: false, // 感電 - 三狀態，預設為叉叉
+        collapse: false, // 塌陷 - 三狀態，預設為叉叉
+        radiation: false, // 游離輻射 - 三狀態，預設為叉叉
       },
       chemical: {
-        burn: null, // 化學性燒灼傷 - 三狀態
-        inhalation: null, // 化學物吸入 - 三狀態
+        burn: false, // 化學性燒灼傷 - 三狀態，預設為叉叉
+        inhalation: false, // 化學物吸入 - 三狀態，預設為叉叉
       },
       fire: {
-        fire: null, // 火災 - 三狀態
-        explosion: null, // 爆炸 - 三狀態
+        fire: false, // 火災 - 三狀態，預設為叉叉
+        explosion: false, // 爆炸 - 三狀態，預設為叉叉
       },
       other: {
-        none: null, // 無 - 三狀態
-        oxygenDeficiency: null, // 缺氧 - 三狀態
-        biological: null, // 生物性危害 - 三狀態
-        outdoorHighTemp: null, // 戶外高溫 - 三狀態
-        other: null, // 其他 - 三狀態
+        none: false, // 無 - 三狀態，預設為叉叉
+        oxygenDeficiency: false, // 缺氧 - 三狀態，預設為叉叉
+        biological: false, // 生物性危害 - 三狀態，預設為叉叉
+        outdoorHighTemp: false, // 戶外高溫 - 三狀態，預設為叉叉
+        other: false, // 其他 - 三狀態，預設為叉叉
         otherContent: '', // 其他內容
       },
       chemicalArea: {
@@ -558,6 +559,11 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
   currentWorker: ProjectWorker | null = null;
   workerVerificationModal: any;
 
+  // 使用者列表和驗證相關屬性（用於主承攬商簽名）
+  siteUsers: User[] = [];
+  verificationEmployeeId: string = '';
+  currentUser: User | null = null;
+
   // 當前選擇的承攬商類型 (0:主承攬商, 1:再承攬商1, 2:再承攬商2, 3:再承攬商3)
   currentSignatureColumn: number = -1;
 
@@ -724,6 +730,9 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
 
         // 載入專案工人列表
         await this.loadProjectWorkers(id);
+
+        // 載入工地使用者列表（用於主承攬商簽名）
+        await this.loadSiteUsers(id);
 
         // 如果有表單ID，載入現有表單
         if (formId) {
@@ -1146,6 +1155,19 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // 載入工地使用者（用於主承攬商簽名）
+  async loadSiteUsers(siteId: string): Promise<void> {
+    try {
+      // 從資料庫獲取該工地的使用者列表
+      this.siteUsers = await this.mongodbService.getArray('user', {
+        belongSites: { $elemMatch: { siteId: siteId } },
+        enabled: true // 只載入啟用的使用者
+      });
+    } catch (error) {
+      console.error('載入工地使用者資料失敗', error);
+    }
+  }
+
   // 載入公佈欄內容
   async loadBulletinContent(siteId: string): Promise<void> {
     try {
@@ -1204,6 +1226,48 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     return '';
   }
 
+  // 使用者身份驗證（用於主承攬商）
+  verifyUser() {
+    // 重設錯誤訊息
+    this.verificationError = '';
+
+    // 檢查是否有輸入工號
+    if (!this.verificationEmployeeId) {
+      this.verificationError = '請輸入工號';
+      return;
+    }
+
+    // 查找使用者
+    const user = this.siteUsers.find(
+      (u) => u.employeeId === this.verificationEmployeeId
+    );
+
+    // 檢查使用者是否存在
+    if (!user) {
+      this.verificationError = '找不到此使用者，請確認工號是否正確';
+      return;
+    }
+
+    // 檢查使用者是否已簽名（檢查當前表單的主承攬商簽名）
+    const alreadySigned = this.meetingData.healthWarnings.attendeeMainContractorSignatures.some(
+      sig => sig.name === user.name && sig.signature && sig.signature.trim() !== ''
+    );
+
+    if (alreadySigned) {
+      this.verificationError = `此使用者 (${user.name}) 已經簽名過`;
+      return;
+    }
+
+    // 將當前使用者設為已驗證的使用者
+    this.currentUser = user;
+
+    // 關閉驗證 Modal
+    this.workerVerificationModal.hide();
+
+    // 開啟簽名對話框
+    this.openUserSignatureDialog();
+  }
+
   // 工人身份驗證
   verifyWorker() {
     // 重設錯誤訊息
@@ -1247,16 +1311,61 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     this.openWorkerSignatureDialog();
   }
 
+  // 開啟使用者簽名對話框（用於主承攬商）
+  async openUserSignatureDialog(): Promise<void> {
+    try {
+      const signature = await this.signatureDialog.open();
+      if (signature && this.currentUser) {
+        // 找到第一個空的簽名位置（主承攬商）
+        const emptySignature = this.findEmptySignatureSlot(0);
+
+        if (!emptySignature) {
+          alert('主承攬商的簽名表已滿，無法再新增簽名');
+          return;
+        }
+
+        // 建立簽名記錄
+        emptySignature.signature = signature;
+        emptySignature.name = this.currentUser.name;
+        // 從 contractors 陣列找到主承攬商的公司名稱
+        const mainContractor = this.meetingData.contractors.find(c => c.type === '主承攬商');
+        emptySignature.company = mainContractor?.company || '';
+        emptySignature.signedAt = new Date();
+        emptySignature.idno = this.currentUser.idno || '';
+        emptySignature.tel = this.currentUser.cell || '';
+
+        try {
+          // 自動保存表單（不跳轉頁面）
+          await this.saveFormData();
+          console.log('使用者簽名已加入表格');
+          alert(`${this.currentUser.name} 簽名成功`);
+        } catch (error) {
+          console.error('保存使用者簽名失敗', error);
+          alert('保存簽名時發生錯誤，請稍後再試');
+          // 如果保存失敗，回復簽名狀態
+          emptySignature.signature = '';
+          emptySignature.name = '';
+          emptySignature.company = '';
+          emptySignature.signedAt = new Date();
+          emptySignature.idno = '';
+          emptySignature.tel = '';
+        }
+      }
+    } catch (error) {
+      console.error('簽名對話框操作失敗', error);
+    }
+  }
+
   // 開啟工人簽名對話框
   async openWorkerSignatureDialog(): Promise<void> {
     try {
       const signature = await this.signatureDialog.open();
       if (signature && this.currentWorker) {
         const targetColumn = this.currentSignatureColumn;
-        
+
         // 找到第一個空的簽名位置
         const emptySignature = this.findEmptySignatureSlot(targetColumn);
-        
+
         if (!emptySignature) {
           alert('此承攬商的簽名表已滿，無法再新增簽名');
           return;
@@ -1269,7 +1378,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
         emptySignature.signedAt = new Date();
         emptySignature.idno = this.currentWorker.idno;
         emptySignature.tel = this.currentWorker.tel;
-        
+
         // 標記此工人已簽名
         const workerIndex = this.projectWorkers.findIndex(
           (w) => w._id === this.currentWorker!._id
@@ -1330,9 +1439,17 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
   // 移除不再需要的方法，直接簡化邏輯
   showWorkerVerificationModal(contractorType: number): void {
     this.currentSignatureColumn = contractorType;
-    this.verificationIdOrPhone = '';
     this.verificationError = '';
-    this.currentWorker = null;
+
+    // 主承攬商(0)使用使用者驗證，其他使用工人驗證
+    if (contractorType === 0) {
+      this.verificationEmployeeId = '';
+      this.currentUser = null;
+    } else {
+      this.verificationIdOrPhone = '';
+      this.currentWorker = null;
+    }
+
     this.workerVerificationModal.show();
   }
 
