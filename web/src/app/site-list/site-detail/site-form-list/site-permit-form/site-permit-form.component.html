@@ -1,4 +1,43 @@
-<div class="container-fluid bg-light min-vh-100 p-3">
+<div class="container-fluid bg-light p-3" style="min-height: calc(100vh - 56px);">
+  <!-- 分頁導航 -->
+  <ul class="nav nav-tabs mb-4 d-print-none">
+    <li class="nav-item">
+      <button
+        type="button"
+        class="nav-link"
+        [class.active]="currentTab === 1"
+        (click)="switchTab(1)"
+      >
+        <i class="fas fa-file-alt me-2"></i>基本資料
+      </button>
+    </li>
+    <li class="nav-item">
+      <button
+        type="button"
+        class="nav-link"
+        [class.active]="currentTab === 2"
+        (click)="switchTab(2)"
+      >
+        <i class="fas fa-users me-2"></i>參與人員
+        @if (selectedWorkerObjects.length > 0) {
+          <span class="badge bg-primary ms-1">{{ selectedWorkerObjects.length }}</span>
+        }
+      </button>
+    </li>
+    <li class="nav-item">
+      <button
+        type="button"
+        class="nav-link"
+        [class.active]="currentTab === 3"
+        (click)="switchTab(3)"
+      >
+        <i class="fas fa-clipboard-list me-2"></i>工作安全分析 (JSA)
+      </button>
+    </li>
+  </ul>
+
+  <!-- 分頁1：基本資料 -->
+  @if (currentTab === 1) {
   <!-- 固定頂端提醒區塊（移到 card 外層） -->
   <div class="sticky-top d-print-none">
     <div class="alert alert-warning d-flex align-items-start mb-3 py-2">
@@ -18,7 +57,6 @@
       <div class="print-content">
         <!-- 表單頭部 -->
         <app-site-form-header title="工作許可單"></app-site-form-header>
-
         <form #permitForm="ngForm" class="mb-3">
           <!-- 在查看模式下添加返回按鈕 -->
           @if (isViewMode) {
@@ -357,10 +395,151 @@
           </div>
 
         </form>
+
       </div>
     </div>
   </div>
+  }
 
+  <!-- 分頁2：參與人員 -->
+  @if (currentTab === 2) {
+  <!-- 人才選擇卡片 -->
+  <div class="card d-flex flex-column" style="height: calc(100vh - 236px);">
+    <div class="card-header flex-shrink-0">
+      <h5 class="mb-0">
+        <i class="fas fa-users me-2"></i>參與人員選擇
+      </h5>
+    </div>
+    <div class="card-body d-flex flex-column flex-grow-1" style="overflow: hidden; min-height: 0;">
+      <!-- 搜尋區域 -->
+      <div class="row mb-3 g-2 flex-shrink-0">
+        <!-- 關鍵字搜尋 -->
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="searchQuery"
+              (input)="onSearchWorkers()"
+              placeholder="搜尋人才（姓名、身份證、電話、公司名稱）"
+            />
+          </div>
+        </div>
+
+        <!-- 認證類型篩選 -->
+        <div class="col-md-5">
+          <select
+            class="form-select"
+            [(ngModel)]="selectedCertificationType"
+            (change)="onSearchWorkers()"
+          >
+            <option value="">全部認證類型</option>
+            @for (certType of certificationTypes; track certType.code) {
+              <option [value]="certType.code">
+                {{ certType.name }} ({{ getCertificationCount(certType.code) }})
+              </option>
+            }
+          </select>
+        </div>
+
+        <!-- 清除按鈕 -->
+        <div class="col-md-1">
+          <button
+            type="button"
+            class="btn btn-outline-secondary w-100"
+            (click)="clearFilters()"
+            title="清除所有過濾條件"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 已選擇的人才 -->
+      @if (selectedWorkerObjects.length > 0) {
+        <div class="mb-3 flex-shrink-0">
+          <label class="form-label fw-bold">已選擇人員 ({{ selectedWorkerObjects.length }})</label>
+          <div class="d-flex flex-wrap gap-2" style="max-height: 120px; overflow-y: auto;">
+            @for (worker of selectedWorkerObjects; track worker._id) {
+              <span class="badge bg-primary d-flex align-items-center" style="font-size: 0.9rem; padding: 0.5rem 0.75rem;">
+                {{ worker.name }}
+                @if (worker.contractingCompanyName) {
+                  <small class="ms-1">({{ worker.contractingCompanyName }})</small>
+                }
+                <button
+                  type="button"
+                  class="btn-close btn-close-white ms-2"
+                  style="font-size: 0.7rem;"
+                  (click)="removeSelectedWorker(worker._id!)"
+                  title="移除"
+                ></button>
+              </span>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- 可選擇的人才列表 -->
+      <div class="flex-grow-1 d-flex flex-column" style="min-height: 0;">
+        <label class="form-label fw-bold flex-shrink-0">可選擇人員</label>
+        <div class="border rounded flex-grow-1" style="overflow-y: auto;">
+          @if (filteredWorkers.length === 0) {
+            <div class="text-center text-muted p-3">
+              @if (searchQuery) {
+                沒有符合搜尋條件的人才
+              } @else {
+                此工地尚無人才資料
+              }
+            </div>
+          } @else {
+            <table class="table table-sm table-hover mb-0">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th style="width: 50px"></th>
+                  <th style="width: 100px">姓名</th>
+                  <th style="width: 150px">公司</th>
+                  <th style="width: 110px">電話</th>
+                  <th style="width: 120px">身份證</th>
+                  <th>認證資料</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (worker of filteredWorkers; track worker._id) {
+                  <tr
+                    (click)="toggleWorkerSelection(worker)"
+                    style="cursor: pointer;"
+                    [class.table-active]="isWorkerSelected(worker._id!)"
+                  >
+                    <td class="text-center">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="isWorkerSelected(worker._id!)"
+                        (click)="$event.stopPropagation()"
+                        (change)="toggleWorkerSelection(worker)"
+                      />
+                    </td>
+                    <td>{{ worker.name }}</td>
+                    <td>{{ worker.contractingCompanyName || '-' }}</td>
+                    <td>{{ worker.tel || '-' }}</td>
+                    <td>{{ worker.idno || '-' }}</td>
+                    <td>
+                      <small>{{ getWorkerCertifications(worker) }}</small>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- 分頁3：工作安全分析 (JSA) -->
+  @if (currentTab === 3) {
   <!-- JSA 表單 -->
   <div class="card mt-4">
     <div class="card-header">
@@ -438,9 +617,10 @@
       </div>
     </div>
   </div>
+  }
 
   <!-- 按鈕區域 -->
-  <div class="d-flex mt-4 pt-3">
+  <div class="d-flex mt-4 pt-3 d-print-none">
     <button type="button" class="btn btn-outline-secondary px-4" (click)="cancel()">
       <i class="fas fa-times-circle me-1"></i>取消
     </button>

@@ -5,6 +5,7 @@ import { SiteFormHeaderComponent } from '../site-form-header/site-form-header.co
 import { ActivatedRoute, Router } from '@angular/router';
 import { MongodbService } from '../../../../services/mongodb.service';
 import { SignatureDialogService } from '../../../../shared/signature-dialog.service';
+import { Worker, CertificationTypeManager } from '../../../../model/worker.model';
 
 import { DocxTemplateService } from '../../../../services/docx-template.service';
 import dayjs from 'dayjs';
@@ -49,6 +50,8 @@ export interface SitePermitForm extends SiteForm {
   emergencyMeasures?: string; // 緊急/搶救措施
   workDate?: string; // 施作日期
   workPersonCount?: number; // 施作人數
+  // 人才選擇欄位
+  selectedWorkers?: string[]; // 已選擇的人才ID列表
 }
 
 // 簽名類型
@@ -140,6 +143,7 @@ export class SitePermitFormComponent implements OnInit {
     emergencyMeasures: '',
     workDate: dayjs().format('YYYY-MM-DD'),
     workPersonCount: 0,
+    selectedWorkers: [], // 初始化人才選擇列表
   };
 
   // 簽名存儲
@@ -153,6 +157,19 @@ export class SitePermitFormComponent implements OnInit {
 
   // 在類別定義中新增一個屬性
   workCategories: string[] = [];
+
+  // 人才選擇相關變數
+  siteWorkers: Worker[] = []; // 所有工地人才
+  searchQuery: string = ''; // 搜尋關鍵字
+  selectedCertificationType: string = ''; // 選擇的認證類型
+  filteredWorkers: Worker[] = []; // 過濾後的人才列表
+  selectedWorkerObjects: Worker[] = []; // 已選擇的人才物件（用於顯示）
+
+  // 取得所有認證類型選項
+  certificationTypes = CertificationTypeManager.getAllCertificationInfo();
+
+  // 分頁相關變數
+  currentTab: number = 1; // 當前分頁（1: 基本資料, 2: 參與人員, 3: JSA表單）
 
   constructor(
     private mongodbService: MongodbService,
@@ -247,12 +264,132 @@ export class SitePermitFormComponent implements OnInit {
         // 去除重複項目
         this.workCategories = [...new Set(this.workCategories)];
 
+        // 載入工地人才列表
+        await this.loadSiteWorkers(id);
+
         // 處理表單
         if (formId) {
           await this.loadFormDetails(formId);
         }
       }
     });
+  }
+
+  // 載入工地人才列表
+  async loadSiteWorkers(siteId: string): Promise<void> {
+    try {
+      this.siteWorkers = await this.mongodbService.getArray('worker', {
+        belongSites: { $elemMatch: { siteId: siteId } },
+      });
+      this.filteredWorkers = [...this.siteWorkers]; // 初始顯示所有人才
+    } catch (error) {
+      console.error('載入工地人才失敗:', error);
+    }
+  }
+
+  // 搜尋人才
+  onSearchWorkers(): void {
+    const query = this.searchQuery.toLowerCase().trim();
+    const certType = this.selectedCertificationType;
+
+    // 如果沒有任何過濾條件，顯示所有人才
+    if (!query && !certType) {
+      this.filteredWorkers = [...this.siteWorkers];
+      return;
+    }
+
+    this.filteredWorkers = this.siteWorkers.filter(worker => {
+      // 搜尋基本資料
+      const basicMatch = !query || (
+        worker.name.toLowerCase().includes(query) ||
+        (worker.idno && worker.idno.toLowerCase().includes(query)) ||
+        (worker.tel && worker.tel.includes(query)) ||
+        (worker.contractingCompanyName && worker.contractingCompanyName.toLowerCase().includes(query))
+      );
+
+      // 認證類型過濾
+      const certificationMatch = !certType || (
+        worker.certifications?.some(cert => {
+          const certCode = CertificationTypeManager.getCode(cert.type);
+          return certCode === certType;
+        }) || false
+      );
+
+      return basicMatch && certificationMatch;
+    });
+  }
+
+  // 清除所有過濾條件
+  clearFilters(): void {
+    this.searchQuery = '';
+    this.selectedCertificationType = '';
+    this.onSearchWorkers();
+  }
+
+  // 取得人才的認證資訊字串（用於顯示）
+  getWorkerCertifications(worker: Worker): string {
+    if (!worker.certifications || worker.certifications.length === 0) {
+      return '-';
+    }
+
+    return worker.certifications
+      .map(cert => CertificationTypeManager.getName(cert.type))
+      .join('、');
+  }
+
+  // 計算擁有特定認證類型的人才數量
+  getCertificationCount(certCode: string): number {
+    return this.siteWorkers.filter(worker =>
+      worker.certifications?.some(cert =>
+        CertificationTypeManager.getCode(cert.type) === certCode
+      )
+    ).length;
+  }
+
+  // 檢查人才是否已被選擇
+  isWorkerSelected(workerId: string): boolean {
+    return this.permitData.selectedWorkers?.includes(workerId) || false;
+  }
+
+  // 切換人才選擇狀態
+  toggleWorkerSelection(worker: Worker): void {
+    if (!this.permitData.selectedWorkers) {
+      this.permitData.selectedWorkers = [];
+    }
+
+    const index = this.permitData.selectedWorkers.indexOf(worker._id!);
+    if (index > -1) {
+      // 已選擇，移除
+      this.permitData.selectedWorkers.splice(index, 1);
+      const objIndex = this.selectedWorkerObjects.findIndex(w => w._id === worker._id);
+      if (objIndex > -1) {
+        this.selectedWorkerObjects.splice(objIndex, 1);
+      }
+    } else {
+      // 未選擇，添加
+      this.permitData.selectedWorkers.push(worker._id!);
+      this.selectedWorkerObjects.push(worker);
+    }
+  }
+
+  // 切換分頁
+  switchTab(tabNumber: number): void {
+    this.currentTab = tabNumber;
+  }
+
+  // 移除已選擇的人才
+  removeSelectedWorker(workerId: string): void {
+    if (!this.permitData.selectedWorkers) return;
+
+    const index = this.permitData.selectedWorkers.indexOf(workerId);
+    if (index > -1) {
+      this.permitData.selectedWorkers.splice(index, 1);
+    }
+
+    const objIndex = this.selectedWorkerObjects.findIndex(w => w._id === workerId);
+    if (objIndex > -1) {
+      this.selectedWorkerObjects.splice(objIndex, 1);
+    }
   }
 
   // 載入表單詳情
@@ -293,7 +430,15 @@ export class SitePermitFormComponent implements OnInit {
           emergencyMeasures: formData.emergencyMeasures || '',
           workDate: formData.workDate || this.permitData.workDate,
           workPersonCount: formData.workPersonCount || 0,
+          selectedWorkers: formData.selectedWorkers || [],
         };
+
+        // 載入已選擇的人才物件
+        if (formData.selectedWorkers && formData.selectedWorkers.length > 0) {
+          this.selectedWorkerObjects = this.siteWorkers.filter(worker =>
+            formData.selectedWorkers.includes(worker._id)
+          );
+        }
 
         // 如果有簽名數據，顯示簽名
         if (formData.approvalSignature)

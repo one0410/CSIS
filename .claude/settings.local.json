@@ -4,7 +4,10 @@
       "Bash(npm run build:*)",
       "Bash(node:*)",
       "Bash(awk:*)",
-      "Bash(ng generate component:*)"
+      "Bash(ng generate component:*)",
+      "Bash(npm start)",
+      "Bash(timeout /t 15 /nobreak)",
+      "Bash(npx ng build:*)"
     ],
     "deny": [],
     "ask": []
