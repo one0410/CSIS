@@ -49,46 +49,45 @@ export class ContractorWorkerChartComponent implements OnInit, OnChanges, AfterV
       const toolboxMeetings = await this.mongodbService.getArray('siteForm', {
         siteId: this.siteId,
         formType: 'toolboxMeeting',
-        status: { $ne: 'revoked' },
         applyDate: {
           $gte: startOfMonth,
           $lte: endOfMonth
         }
       });
 
-      // 統計各主承攬商的簽名數（出工人數）
+      // 統計各廠商的簽名數（累積出工人數）- 使用與工地日報表相同的邏輯
       const contractorCountMap = new Map<string, number>();
 
       toolboxMeetings.forEach((meeting: any) => {
-        // 檢查 contractors 陣列中的主承攬商
-        if (meeting.contractors && Array.isArray(meeting.contractors)) {
-          const mainContractors = meeting.contractors.filter((c: any) =>
-            c.type === '主承攬商' && c.company && c.company.trim() !== ''
-          );
+        if (meeting.healthWarnings) {
+          // 收集所有4個廠商的簽名陣列（與 WorkerCountService 相同邏輯）
+          const allSignatureArrays = [
+            meeting.healthWarnings.attendeeMainContractorSignatures || [],
+            meeting.healthWarnings.attendeeSubcontractor1Signatures || [],
+            meeting.healthWarnings.attendeeSubcontractor2Signatures || [],
+            meeting.healthWarnings.attendeeSubcontractor3Signatures || []
+          ];
 
-          mainContractors.forEach((contractor: any) => {
-            const contractorName = contractor.company;
+          for (const signatures of allSignatureArrays) {
+            for (const signature of signatures) {
+              // 檢查有效簽名（name, signature, company 都要存在）
+              if (signature && signature.name && signature.signature && signature.company) {
+                const companyName = signature.company.trim();
 
-            // 統計該主承攬商在 healthWarnings.attendeeMainContractorSignatures 中的簽名數
-            if (meeting.healthWarnings && meeting.healthWarnings.attendeeMainContractorSignatures) {
-              const signatures = meeting.healthWarnings.attendeeMainContractorSignatures;
-              if (Array.isArray(signatures)) {
-                // 計算屬於該主承攬商的有效簽名數
-                const validSignatures = signatures.filter((sig: any) =>
-                  sig.signature && sig.signature.trim() !== '' &&
-                  sig.company === contractorName
-                );
-
-                const currentCount = contractorCountMap.get(contractorName) || 0;
-                contractorCountMap.set(contractorName, currentCount + validSignatures.length);
+                if (companyName !== '') {
+                  // 累加簽名數（每個簽名代表一次出工）
+                  const currentCount = contractorCountMap.get(companyName) || 0;
+                  contractorCountMap.set(companyName, currentCount + 1);
+                }
               }
             }
-          });
+          }
         }
       });
 
       // 轉換為陣列並排序
       const contractorData = Array.from(contractorCountMap.entries())
+        .filter(([name, count]) => name && name.trim() !== '' && count > 0)
         .map(([name, count]) => ({ name, count }))
         .sort((a, b) => b.count - a.count); // 按出工人數降序排列
 

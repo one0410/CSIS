@@ -700,15 +700,56 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
     if (this.totalPages === 0) this.totalPages = 1;
   }
 
-  getPageNumbers(): number[] {
-    const pages: number[] = [];
-    for (let i = 1; i <= this.totalPages; i++) {
-      pages.push(i);
+  getPageNumbers(): (number | string)[] {
+    const pages: (number | string)[] = [];
+    const maxVisiblePages = 7; // 最多顯示的頁碼數量
+
+    if (this.totalPages <= maxVisiblePages) {
+      // 如果總頁數少於最大顯示數，顯示所有頁碼
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // 總是顯示第一頁
+      pages.push(1);
+
+      // 計算當前頁附近要顯示的範圍
+      let startPage = Math.max(2, this.currentPage - 2);
+      let endPage = Math.min(this.totalPages - 1, this.currentPage + 2);
+
+      // 調整範圍以保持固定數量的頁碼
+      if (this.currentPage <= 3) {
+        endPage = Math.min(maxVisiblePages - 1, this.totalPages - 1);
+      } else if (this.currentPage >= this.totalPages - 2) {
+        startPage = Math.max(2, this.totalPages - maxVisiblePages + 2);
+      }
+
+      // 如果起始頁不是2，加入省略號
+      if (startPage > 2) {
+        pages.push('...');
+      }
+
+      // 加入中間的頁碼
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+
+      // 如果結束頁不是倒數第二頁，加入省略號
+      if (endPage < this.totalPages - 1) {
+        pages.push('...');
+      }
+
+      // 總是顯示最後一頁
+      pages.push(this.totalPages);
     }
+
     return pages;
   }
 
-  goToPage(page: number) {
+  goToPage(page: number | string) {
+    // 如果是省略號，不做任何事
+    if (typeof page === 'string') return;
+
     if (page < 1 || page > this.totalPages) return;
     this.currentPage = page;
   }

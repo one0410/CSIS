@@ -207,7 +207,7 @@
           <div class="table-responsive">
             <table class="table table-hover">
               <thead class="table-light">
-                <tr>
+                <tr class="text-nowrap">
                   <th scope="col" style="width: 50px;"></th>
                   <th scope="col">姓名</th>
                   <th scope="col">身分證號碼</th>
@@ -374,19 +374,25 @@
           </div>
 
           <!-- 分頁控制 -->
-          <div class="d-flex justify-content-between align-items-center mt-3">
-            <div>顯示 {{ filteredSiteWorkers.length }} 位工作人員，共 {{ siteWorkers.length }} 位</div>
+          <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap">
+            <div class="mb-2 mb-sm-0">顯示 {{ filteredSiteWorkers.length }} 位工作人員，共 {{ siteWorkers.length }} 位</div>
             <nav aria-label="工作人員列表分頁">
-              <ul class="pagination pagination-sm">
+              <ul class="pagination pagination-sm mb-0">
                 <li class="page-item" [class.disabled]="currentPage === 1">
                   <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage - 1)" aria-label="上一頁">
                     <i class="fas fa-chevron-left"></i>
                   </a>
                 </li>
-                @for (page of getPageNumbers(); track page) {
-                  <li class="page-item" [class.active]="currentPage === page">
-                    <a class="page-link" href="javascript:void(0)" (click)="goToPage(page)">{{ page }}</a>
-                  </li>
+                @for (page of getPageNumbers(); track $index) {
+                  @if (page === '...') {
+                    <li class="page-item disabled">
+                      <span class="page-link">...</span>
+                    </li>
+                  } @else {
+                    <li class="page-item" [class.active]="currentPage === page">
+                      <a class="page-link" href="javascript:void(0)" (click)="goToPage(page)">{{ page }}</a>
+                    </li>
+                  }
                 }
                 <li class="page-item" [class.disabled]="currentPage === totalPages">
                   <a class="page-link" href="javascript:void(0)" (click)="goToPage(currentPage + 1)" aria-label="下一頁">
