@@ -99,13 +99,15 @@
               <th style="width: 15%" class="text-center fw-bold py-2">
                 <div>結果</div>
                 <div class="d-flex justify-content-around small mt-1">
-                  <span class="cursor-pointer text-decoration-underline" 
+                  <span class="cursor-pointer text-decoration-underline"
                         (click)="selectAllForColumn('正常', 'preWork')"
                         title="點擊選擇所有項目為正常">正常</span>
-                  <span class="cursor-pointer text-decoration-underline" 
+                  <span class="cursor-pointer text-decoration-underline"
                         (click)="selectAllForColumn('異常', 'preWork')"
                         title="點擊選擇所有項目為異常">異常</span>
-                  <span >不適用</span>
+                  <span class="cursor-pointer text-decoration-underline"
+                        (click)="selectAllForColumn('不適用', 'preWork')"
+                        title="點擊選擇所有項目為不適用">不適用</span>
                 </div>
               </th>
               <th style="width: 15%" class="text-center fw-bold py-2">
