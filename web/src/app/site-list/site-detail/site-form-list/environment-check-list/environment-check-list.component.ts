@@ -128,7 +128,7 @@ export class EnvironmentCheckListComponent implements OnInit {
     siteId: '',
     formType: 'environmentChecklist',
     applyDate: dayjs().format('YYYY-MM-DD'),
-    createdAt: dayjs().format('YYYY-MM-DD'),
+    createdAt: new Date(),
     createdBy: '',
     location: '',
     projectNo: '',

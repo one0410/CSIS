@@ -187,7 +187,7 @@ export class WordDownloadService {
       case 'safetyPatrolChecklist':
         return '工安巡迴檢查表';
       case 'safetyIssueRecord':
-        return '安全缺失記錄單';
+        return '工安缺失紀錄單';
       case 'hazardNotice':
         return '危害告知單';
       case 'training':

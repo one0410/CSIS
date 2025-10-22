@@ -92,7 +92,7 @@ interface DefectByType {
               <div class="text-center text-muted">
                 <i class="fas fa-check-circle fs-1 mb-2 text-success opacity-50"></i>
                 <p class="mb-0">本月無缺失記錄</p>
-                <small>各廠商均無安全缺失</small>
+                <small>各廠商均無工安缺失</small>
               </div>
             }
           } @else {
@@ -126,7 +126,7 @@ interface DefectByType {
               <div class="text-center text-muted">
                 <i class="fas fa-check-circle fs-1 mb-2 text-success opacity-50"></i>
                 <p class="mb-0">本月無缺失記錄</p>
-                <small>各類型均無安全缺失</small>
+                <small>各類型均無工安缺失</small>
               </div>
             }
           }
@@ -273,7 +273,7 @@ export class MonthlyDefectSummaryComponent implements OnInit, OnChanges, OnDestr
       const startDate = dayjs(monthStr).startOf('month');
       const endDate = dayjs(monthStr).endOf('month');
 
-      // 建立查詢條件 - 查詢安全缺失記錄
+      // 建立查詢條件 - 查詢工安缺失紀錄
       const query = {
         siteId: siteId,
         formType: 'safetyIssueRecord',
@@ -285,11 +285,11 @@ export class MonthlyDefectSummaryComponent implements OnInit, OnChanges, OnDestr
 
       console.log('查詢月報表缺失記錄:', query);
 
-      // 查詢安全缺失記錄
+      // 查詢工安缺失紀錄
       const defectRecords = await this.mongodbService.getArray('siteForm', query);
 
       if (!defectRecords || !Array.isArray(defectRecords)) {
-        console.warn('未找到缺失記錄資料或格式不正確');
+        console.warn('未找到工安缺失紀錄資料或格式不正確');
         this.defectsByContractor.set([]);
         this.defectsByType.set([]);
         return;
@@ -302,7 +302,7 @@ export class MonthlyDefectSummaryComponent implements OnInit, OnChanges, OnDestr
       this.calculateDefectsByType(defectRecords);
 
     } catch (error) {
-      console.error('載入月報表缺失統計時發生錯誤:', error);
+      console.error('載入月報表工安缺失統計時發生錯誤:', error);
       this.defectsByContractor.set([]);
       this.defectsByType.set([]);
     } finally {

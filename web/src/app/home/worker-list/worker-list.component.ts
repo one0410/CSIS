@@ -375,6 +375,19 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
         return params.data.certifications?.length || 0;
       },
     },
+    {
+      headerName: '缺失次數',
+      field: 'safetyIssuesCount',
+      flex: 1,
+      minWidth: 100,
+      cellRenderer: (params: any) => {
+        const count = params.data.safetyIssues?.length || 0;
+        if (count > 0) {
+          return `<span class="badge bg-danger">${count}</span>`;
+        }
+        return '<span class="text-muted">0</span>';
+      },
+    },
     { headerName: '審核人員', field: 'reviewStaff', flex: 1, minWidth: 100 },
     { headerName: '身分證字號', field: 'idno', flex: 1, minWidth: 120 },
     {

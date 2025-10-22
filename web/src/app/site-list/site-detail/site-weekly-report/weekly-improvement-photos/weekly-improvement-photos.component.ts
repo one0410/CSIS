@@ -330,7 +330,7 @@ export class WeeklyImprovementPhotosComponent implements OnInit, OnChanges, OnDe
       const startDate = dayjs(weekStart);
       const endDate = startDate.add(6, 'day');
 
-      // 查詢安全缺失記錄
+      // 查詢工安缺失紀錄
       const query = {
         siteId: siteId,
         formType: 'safetyIssueRecord',
@@ -349,7 +349,7 @@ export class WeeklyImprovementPhotosComponent implements OnInit, OnChanges, OnDe
         return;
       }
 
-      // 處理每個缺失記錄
+      // 處理每個工安缺失紀錄
       const improvementPhotos: ImprovementPhoto[] = [];
       
       for (const record of defectRecords) {
@@ -372,7 +372,7 @@ export class WeeklyImprovementPhotosComponent implements OnInit, OnChanges, OnDe
       this.improvementPhotos.set(improvementPhotos);
 
     } catch (error) {
-      console.error('載入週報表缺失改善照片時發生錯誤:', error);
+      console.error('載入週報表工安缺失改善照片時發生錯誤:', error);
       this.improvementPhotos.set([]);
     } finally {
       this.isLoading.set(false);
@@ -431,7 +431,7 @@ export class WeeklyImprovementPhotosComponent implements OnInit, OnChanges, OnDe
       };
 
     } catch (error) {
-      console.error('處理缺失記錄時發生錯誤:', error);
+      console.error('處理工安缺失紀錄時發生錯誤:', error);
       return null;
     }
   }

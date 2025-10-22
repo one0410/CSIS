@@ -13,6 +13,7 @@ import { PhotoService } from '../../../../services/photo.service';
 import { DocxTemplateService } from '../../../../services/docx-template.service';
 import { signal } from '@angular/core';
 import dayjs from 'dayjs';
+import { Worker, CertificationTypeManager } from '../../../../model/worker.model';
 
 // 導入 Bootstrap Modal 相關類型
 declare const bootstrap: {
@@ -28,7 +29,6 @@ export interface IssueRecord extends SiteForm {
   recordNo: string; // 編號(單位-工號-年/月/流水號)
   establishUnit: string; // 開立單位
   establishPerson: string; // 開立人員
-  establishDate: string; // 開立日期
   issueDate: string; // 缺失日期
   factoryArea: string; // 發生廠區/地點
   responsibleUnit: string; // 缺失責任單位（選項：MIC或供應商）
@@ -46,6 +46,8 @@ export interface IssueRecord extends SiteForm {
   workerSignature: string; // 作業人員簽名
   status: string; // 狀態
   issuePhotos?: IssuePhoto[]; // 修改：工安缺失照片列表，包含檔名和改善狀態
+  selectedWorkers?: string[]; // 涉及缺失的人才ID列表
+  noSpecificWorker?: boolean; // 無特定人員
 }
 
 // 新增：缺失照片介面
@@ -120,17 +122,16 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
     siteId: '',
     formType: 'safetyIssueRecord',
     applyDate: dayjs().format('YYYY-MM-DD'),
-    recordNo: '', 
+    recordNo: '',
     establishUnit: '',
     establishPerson: '',
-    establishDate: dayjs().format('YYYY-MM-DD'),
     issueDate: dayjs().format('YYYY-MM-DD'),
     factoryArea: '',
     responsibleUnit: '',
     responsibleUnitName: '',
     supplierName: '',
     issueDescription: '',
-    remedyMeasures: [], 
+    remedyMeasures: [],
     improvementDeadline: '',
     deductionCode: '',
     recordPoints: '',
@@ -143,7 +144,17 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
     createdAt: new Date(),
     createdBy: '',
     issuePhotos: [], // 初始化為空的IssuePhoto數組
+    selectedWorkers: [], // 涉及缺失的人才ID列表
+    noSpecificWorker: false, // 無特定人員
   };
+
+  // 人才選擇相關變數
+  siteWorkers: Worker[] = [];
+  filteredWorkers: Worker[] = [];
+  selectedWorkerObjects: Worker[] = [];
+  searchQuery: string = '';
+  selectedCertificationType: string = '';
+  certificationTypes = CertificationTypeManager.getAllCertificationInfo();
 
   // 新增：照片相關屬性
   uploadedPhotos = signal<{filename: string, url: string, title: string, improvementStatus: 'before' | 'after'}[]>([]);
@@ -184,7 +195,10 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
       if (id) {
         this.siteId = id;
         this.issueRecord.siteId = id;
-        
+
+        // 載入工地人才列表
+        this.loadSiteWorkers();
+
         // 檢查是否有表單ID（編輯模式）
         const formId = params.get('formId');
         if (formId) {
@@ -258,13 +272,20 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
       const data = await this.mongodbService.getById('siteForm', formId);
       if (data && data.formType === 'safetyIssueRecord') {
         this.issueRecord = data;
-        
+
         // 更新簽名顯示
         this.supervisorSignature = data.supervisorSignature || '';
         this.workerSignature = data.workerSignature || '';
-        
+
         // 載入相關照片
         await this.loadIssuePhotos();
+
+        // 載入已選擇的人才對象
+        if (data.selectedWorkers && data.selectedWorkers.length > 0) {
+          this.selectedWorkerObjects = this.siteWorkers.filter(worker =>
+            data.selectedWorkers.includes(worker._id!)
+          );
+        }
       }
     } catch (error) {
       console.error('加載缺失記錄數據失敗', error);
@@ -295,6 +316,13 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
 
   // 保存缺失記錄
   async saveIssueRecord(): Promise<void> {
+    // 驗證：必須選擇至少一位人才，或勾選"無特定人員"
+    if (!this.issueRecord.noSpecificWorker &&
+        (!this.issueRecord.selectedWorkers || this.issueRecord.selectedWorkers.length === 0)) {
+      alert('請至少選擇一位涉及缺失的人員，或勾選「無特定人員」');
+      return;
+    }
+
     try {
       const formData = {
         ...this.issueRecord,
@@ -317,12 +345,58 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
       }
 
       if (result) {
+        // 更新相關人才的 safetyIssues 陣列
+        if (!this.issueRecord.noSpecificWorker && this.issueRecord.selectedWorkers && this.issueRecord.selectedWorkers.length > 0) {
+          await this.updateWorkerSafetyIssues(result._id || this.formId);
+        }
+
         alert('工安缺失紀錄表保存成功');
         this.router.navigate(['/site', this.siteId, 'forms']);
       }
     } catch (error) {
       console.error('保存缺失記錄失敗', error);
       alert('保存失敗，請稍後重試');
+    }
+  }
+
+  // 更新人才的 safetyIssues 陣列
+  async updateWorkerSafetyIssues(formId: string): Promise<void> {
+    try {
+      for (const workerId of this.issueRecord.selectedWorkers || []) {
+        // 獲取人才資料
+        const worker = await this.mongodbService.getById('worker', workerId);
+        if (worker) {
+          // 初始化 safetyIssues 陣列（如果不存在）
+          if (!worker.safetyIssues) {
+            worker.safetyIssues = [];
+          }
+
+          // 檢查是否已存在此缺失記錄
+          const existingIndex = worker.safetyIssues.findIndex(
+            (issue: any) => issue.formId === formId
+          );
+
+          const issueData = {
+            siteId: this.siteId,
+            formId: formId,
+            issueDate: this.issueRecord.issueDate,
+          };
+
+          if (existingIndex > -1) {
+            // 更新現有記錄
+            worker.safetyIssues[existingIndex] = issueData;
+          } else {
+            // 新增記錄
+            worker.safetyIssues.push(issueData);
+          }
+
+          // 更新人才資料
+          await this.mongodbService.put('worker', workerId, worker);
+        }
+      }
+    } catch (error) {
+      console.error('更新人才缺失記錄失敗', error);
+      // 不中斷流程，只記錄錯誤
     }
   }
 
@@ -509,7 +583,7 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
       return;
     }
     
-    if (confirm('確定要刪除這筆安全缺失記錄嗎？此操作無法復原。')) {
+    if (confirm('確定要刪除這筆工安缺失紀錄嗎？此操作無法復原。')) {
       try {
         await this.mongodbService.delete('siteForm', this.formId);
         
@@ -530,10 +604,10 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
           }
         }
         
-        alert('安全缺失記錄已刪除');
+        alert('工安缺失紀錄已刪除');
         this.router.navigate(['/site', this.siteId, 'forms']);
       } catch (error) {
-        console.error('刪除缺失記錄時發生錯誤:', error);
+        console.error('刪除工安缺失紀錄時發生錯誤:', error);
         alert('刪除失敗，請稍後重試');
       }
     }
@@ -619,6 +693,115 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
       alert('生成Word文件失敗，請稍後重試');
     } finally {
       this.isGeneratingDocument.set(false);
+    }
+  }
+
+  // 載入工地人才列表
+  async loadSiteWorkers(): Promise<void> {
+    try {
+      const workers = await this.mongodbService.getArray('worker', {
+        'belongSites.siteId': this.siteId
+      });
+      this.siteWorkers = workers;
+      this.filteredWorkers = workers;
+    } catch (error) {
+      console.error('載入人才列表失敗:', error);
+    }
+  }
+
+  // 搜尋人才
+  onSearchWorkers(): void {
+    let filtered = this.siteWorkers;
+
+    // 關鍵字搜尋
+    if (this.searchQuery) {
+      const query = this.searchQuery.toLowerCase();
+      filtered = filtered.filter(worker =>
+        worker.name?.toLowerCase().includes(query) ||
+        worker.idno?.toLowerCase().includes(query) ||
+        worker.tel?.toLowerCase().includes(query) ||
+        worker.contractingCompanyName?.toLowerCase().includes(query)
+      );
+    }
+
+    // 認證類型篩選
+    if (this.selectedCertificationType) {
+      filtered = filtered.filter(worker => {
+        if (!worker.certifications || worker.certifications.length === 0) {
+          return false;
+        }
+        return worker.certifications.some(cert =>
+          cert.type === this.selectedCertificationType
+        );
+      });
+    }
+
+    this.filteredWorkers = filtered;
+  }
+
+  // 清除篩選條件
+  clearFilters(): void {
+    this.searchQuery = '';
+    this.selectedCertificationType = '';
+    this.filteredWorkers = this.siteWorkers;
+  }
+
+  // 獲取人才的認證資料
+  getWorkerCertifications(worker: Worker): string {
+    if (!worker.certifications || worker.certifications.length === 0) {
+      return '-';
+    }
+    return worker.certifications.map(cert => cert.name).join(', ');
+  }
+
+  // 計算認證類型的人才數量
+  getCertificationCount(certCode: string): number {
+    return this.siteWorkers.filter(worker => {
+      if (!worker.certifications || worker.certifications.length === 0) {
+        return false;
+      }
+      return worker.certifications.some(cert => cert.type === certCode);
+    }).length;
+  }
+
+  // 切換人才選擇
+  toggleWorkerSelection(worker: Worker): void {
+    if (!this.issueRecord.selectedWorkers) {
+      this.issueRecord.selectedWorkers = [];
+    }
+
+    const index = this.issueRecord.selectedWorkers.indexOf(worker._id!);
+    if (index > -1) {
+      // 已選擇，移除
+      this.issueRecord.selectedWorkers.splice(index, 1);
+      const objIndex = this.selectedWorkerObjects.findIndex(w => w._id === worker._id);
+      if (objIndex > -1) {
+        this.selectedWorkerObjects.splice(objIndex, 1);
+      }
+    } else {
+      // 未選擇，添加
+      this.issueRecord.selectedWorkers.push(worker._id!);
+      this.selectedWorkerObjects.push(worker);
+    }
+  }
+
+  // 檢查人才是否已選擇
+  isWorkerSelected(workerId: string): boolean {
+    return this.issueRecord.selectedWorkers?.includes(workerId) || false;
+  }
+
+  // 移除已選擇的人才
+  removeSelectedWorker(workerId: string): void {
+    if (!this.issueRecord.selectedWorkers) return;
+
+    const index = this.issueRecord.selectedWorkers.indexOf(workerId);
+    if (index > -1) {
+      this.issueRecord.selectedWorkers.splice(index, 1);
+    }
+
+    const objIndex = this.selectedWorkerObjects.findIndex(w => w._id === workerId);
+    if (objIndex > -1) {
+      this.selectedWorkerObjects.splice(objIndex, 1);
     }
   }
 } 

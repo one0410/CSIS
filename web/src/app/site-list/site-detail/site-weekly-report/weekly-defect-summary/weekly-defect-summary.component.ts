@@ -92,7 +92,7 @@ interface DefectByType {
               <div class="text-center text-muted">
                 <i class="fas fa-check-circle fs-1 mb-2 text-success opacity-50"></i>
                 <p class="mb-0">該週無缺失記錄</p>
-                <small>各廠商均無安全缺失</small>
+                <small>各廠商均無工安缺失</small>
               </div>
             }
           } @else {
@@ -126,7 +126,7 @@ interface DefectByType {
               <div class="text-center text-muted">
                 <i class="fas fa-check-circle fs-1 mb-2 text-success opacity-50"></i>
                 <p class="mb-0">該週無缺失記錄</p>
-                <small>各類型均無安全缺失</small>
+                <small>各類型均無工安缺失</small>
               </div>
             }
           }
@@ -273,7 +273,7 @@ export class WeeklyDefectSummaryComponent implements OnInit, OnChanges, OnDestro
       const startDate = dayjs(weekStart);
       const endDate = startDate.add(6, 'day');
 
-      // 建立查詢條件 - 查詢安全缺失記錄
+      // 建立查詢條件 - 查詢工安缺失紀錄
       const query = {
         siteId: siteId,
         formType: 'safetyIssueRecord',
@@ -285,11 +285,11 @@ export class WeeklyDefectSummaryComponent implements OnInit, OnChanges, OnDestro
 
       console.log('查詢週報表缺失記錄:', query);
 
-      // 查詢安全缺失記錄
+      // 查詢工安缺失紀錄
       const defectRecords = await this.mongodbService.getArray('siteForm', query);
 
       if (!defectRecords || !Array.isArray(defectRecords)) {
-        console.warn('未找到缺失記錄資料或格式不正確');
+        console.warn('未找到工安缺失紀錄資料或格式不正確');
         this.defectsByContractor.set([]);
         this.defectsByType.set([]);
         return;

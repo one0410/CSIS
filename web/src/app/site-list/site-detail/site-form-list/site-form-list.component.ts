@@ -691,7 +691,7 @@ export class SiteFormListComponent implements AfterViewInit {
       case 'defectRecord':
         return '缺失記錄單';
       case 'safetyIssueRecord':
-        return '安全缺失記錄單';
+        return '工安缺失紀錄單';
       case 'hazardNotice':
         // 後面加上工程名稱。例如：危害告知單-工程名稱
         const workName = (form as any).workName;
@@ -853,7 +853,7 @@ export class SiteFormListComponent implements AfterViewInit {
             route = ['/site', this.siteId, 'forms', 'special-work-checklist', eventId];
           } else if (title.includes('工安巡迴檢查表')) {
             route = ['/site', this.siteId, 'forms', 'safety-patrol-checklist', eventId];
-          } else if (title.includes('缺失記錄') || title.includes('安全缺失')) {
+          } else if (title.includes('缺失記錄') || title.includes('工安缺失')) {
             route = ['/site', this.siteId, 'forms', 'safety-issue-record', eventId];
           } else if (title.includes('危害告知')) {
             route = ['/site', this.siteId, 'hazardNotice', eventId];

@@ -51,7 +51,7 @@ src/app/
 - ✅ 環安衛自檢表 (`environmentChecklist`)
 - ✅ 特殊作業自檢表 (`specialWorkChecklist`)
 - ✅ 工安巡迴檢查表 (`safetyPatrolChecklist`)
-- ✅ 安全缺失記錄單 (`safetyIssueRecord`)
+- ✅ 工安缺失紀錄單 (`safetyIssueRecord`)
 - ✅ 危害告知單 (`hazardNotice`)
 - ✅ 教育訓練 (`training`)
 

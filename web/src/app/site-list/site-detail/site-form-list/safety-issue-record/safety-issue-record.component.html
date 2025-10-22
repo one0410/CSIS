@@ -6,591 +6,545 @@
         <!-- 表單頭部 -->
         <app-site-form-header title="工安缺失紀錄表"></app-site-form-header>
 
-      <!-- 表單內容 -->
-      <!-- 第一行：編號、開立人員 -->
-      <div class="d-flex border border-dark">
-        <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
-          <span class="fw-normal">編號(單位-工號-年/月/流水號)：</span>
-        </div>
-        <div style="width: 35%" class="d-flex align-items-center border-end border-dark py-2 px-2">
-          <input 
-            type="text" 
-            class="form-control table-input" 
-            [(ngModel)]="issueRecord.recordNo"
-            name="recordNo"
-            title="編號"
-          />
-        </div>
-        <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
-          <span class="fw-normal">開立人員</span>
-        </div>
-        <div style="width: 35%" class="d-flex align-items-center py-2 px-2">
-          <input 
-            type="text" 
-            class="form-control table-input" 
-            [(ngModel)]="issueRecord.establishPerson"
-            name="establishPerson"
-            placeholder="請輸入開立人員"
-            title="開立人員"
-            required
-          />
-        </div>
-      </div>
-
-      <!-- 第二行：開立單位、專案編號 -->
-      <div class="d-flex border border-dark border-top-0">
-        <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
-          <span class="fw-normal">開立單位</span>
-        </div>
-        <div style="width: 35%" class="d-flex align-items-center border-end border-dark py-2 px-2">
-          <input 
-            type="text" 
-            class="form-control table-input" 
-            [(ngModel)]="issueRecord.establishUnit"
-            name="establishUnit"
-            placeholder="請輸入開立單位"
-            title="開立單位"
-            required
-          />
-        </div>
-        <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
-          <span class="fw-normal">專案編號</span>
-        </div>
-        <div style="width: 35%" class="d-flex align-items-center py-2 px-2">
-          <input 
-            type="text" 
-            class="form-control table-input" 
-            value="{{ site()?.projectNo || '' }}"
-            readonly
-            title="專案編號"
-          />
-        </div>
-      </div>
-
-      <!-- 第三行：開立日期、缺失責任單位 -->
-      <div class="d-flex border border-dark border-top-0">
-        <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
-          <span class="fw-normal">開立日期</span>
-        </div>
-        <div style="width: 35%" class="d-flex align-items-center border-end border-dark py-2 px-2">
-          <input 
-            type="date" 
-            class="form-control table-input" 
-            [(ngModel)]="issueRecord.establishDate"
-            name="establishDate"
-            title="開立日期"
-          />
-        </div>
-        <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
-          <span class="fw-normal">缺失責任單位</span>
-        </div>
-        <div style="width: 35%" class="d-flex align-items-center py-2 px-2">
-          <div class="d-flex flex-column gap-2 w-100">
-            <div class="d-flex align-items-center">
-              <div class="form-check me-2">
-              <input 
-                class="form-check-input" 
-                type="radio" 
-                name="responsibleUnit" 
-                id="responsibleUnit_MIC"
-                value="MIC"
-                [(ngModel)]="issueRecord.responsibleUnit"
-                title="選擇MIC"
-              />
-              <label class="form-check-label" for="responsibleUnit_MIC">
-                MIC
-              </label>
-            </div>
-              <input 
-                type="text" 
-                class="form-control form-control-sm" 
-                [(ngModel)]="issueRecord.responsibleUnitName"
-                name="responsibleUnitName"
-                placeholder="請輸入MIC單位名稱"
-                title="MIC單位名稱"
-                [disabled]="issueRecord.responsibleUnit !== 'MIC'"
-                style="border-bottom: 1px solid #000; border-top: none; border-left: none; border-right: none; border-radius: 0;"
-              />
-            </div>
-            <div class="d-flex align-items-center">
-              <div class="form-check me-2">
-              <input 
-                class="form-check-input" 
-                type="radio" 
-                name="responsibleUnit" 
-                id="responsibleUnit_supplier"
-                value="supplier"
-                [(ngModel)]="issueRecord.responsibleUnit"
-                title="選擇供應商"
-              />
-              <label class="form-check-label" for="responsibleUnit_supplier">
-                供應商
-              </label>
-              </div>
-              <input 
-                type="text" 
-                class="form-control form-control-sm" 
-                [(ngModel)]="issueRecord.supplierName"
-                name="supplierName"
-                placeholder="請輸入供應商名稱"
-                title="供應商名稱"
-                [disabled]="issueRecord.responsibleUnit !== 'supplier'"
-                style="border-bottom: 1px solid #000; border-top: none; border-left: none; border-right: none; border-radius: 0;"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 第四行：缺失日期 -->
-      <div class="d-flex border border-dark border-top-0">
-        <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
-          <span class="fw-normal">缺失日期</span>
-        </div>
-        <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
-          <input 
-            type="date" 
-            class="form-control table-input" 
-            [(ngModel)]="issueRecord.issueDate"
-            name="issueDate"
-            title="缺失日期"
-            style="width: 200px;"
-          />
-        </div>
-      </div>
-
-      <!-- 第五行：發生廠區/地點 -->
-      <div class="d-flex border border-dark border-top-0">
-        <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
-          <span class="fw-normal">發生廠區/地點</span>
-        </div>
-        <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
-          <input 
-            type="text" 
-            class="form-control table-input" 
-            [(ngModel)]="issueRecord.factoryArea"
-            name="factoryArea"
-            placeholder="請輸入發生廠區/地點"
-            title="發生廠區/地點"
-          />
-        </div>
-      </div>
-
-      <!-- 缺失說明＆照片黏貼處 -->
-      <div class="border border-dark border-top-0">
-        <div class="d-flex justify-content-between align-items-center py-2 px-2 bg-light">
-          <span class="fw-bold">缺失說明＆照片黏貼處：</span>
-          <div class="d-flex gap-2">
-            <label 
-              for="photoUpload" 
-              class="btn btn-sm btn-primary"
-              title="上傳缺失照片"
-            >
-              <i class="fas fa-camera me-1"></i>新增照片
-              <input
-                type="file"
-                id="photoUpload"
-                accept="image/*"
-                multiple
-                hidden
-                (change)="onPhotoSelected($event)"
-              />
-            </label>
-          </div>
-        </div>
-        <div class="p-3">
-          <textarea 
-            class="form-control table-input" 
-            rows="10"
-            [(ngModel)]="issueRecord.issueDescription"
-            name="issueDescription"
-            placeholder="請輸入缺失說明或照片描述"
-            title="缺失說明＆照片黏貼處"
-          ></textarea>
-          
-          <!-- 上傳進度條 -->
-          @if (isUploadingPhoto()) {
-          <div class="mt-3">
-            <div class="progress mb-2">
-              <div
-                class="progress-bar"
-                role="progressbar"
-                [style.width.%]="uploadProgress()"
-                [attr.aria-valuenow]="uploadProgress()"
-                aria-valuemin="0"
-                aria-valuemax="100"
-              >
-                {{ uploadProgress() }}%
-              </div>
-            </div>
-            <p class="text-muted small">正在上傳照片，請勿關閉視窗...</p>
-          </div>
-          }
-          
-                     <!-- 已上傳的照片 -->
-           @if (uploadedPhotos().length > 0) {
-           <div class="mt-3">
-             <h6 class="mb-2">已上傳照片：<small class="text-muted">（點擊照片可查看大圖並編輯備註）</small></h6>
-             <div class="row g-2">
-               @for (photo of uploadedPhotos(); track photo.filename; let i = $index) {
-               <div class="col-md-3">
-                 <div class="card position-relative photo-card">
-                   <img 
-                     [src]="photoService.getPhotoThumbnailUrl(photo.filename)" 
-                     [alt]="photo.title"
-                     [title]="photo.title"
-                     class="card-img-top" 
-                     style="height: 120px; object-fit: cover; cursor: pointer;"
-                     loading="lazy"
-                     (click)="viewPhoto(i)"
-                   />
-                   <button 
-                     class="btn btn-danger btn-sm photo-delete-btn position-absolute" 
-                     (click)="deletePhoto(i)"
-                     title="刪除照片"
-                     style="top: 5px; right: 5px; width: 30px; height: 30px; padding: 0; opacity: 0; transition: opacity 0.2s ease;"
-                   >
-                     <i class="fas fa-times"></i>
-                   </button>
-                   <div class="card-body p-2">
-                     <select 
-                       class="form-select form-select-sm"
-                       [value]="photo.improvementStatus"
-                       (change)="onImprovementStatusChange($event, i)"
-                       title="選擇改善狀態"
-                     >
-                       @for (option of improvementStatusOptions; track option.value) {
-                         <option [value]="option.value">{{ option.label }}</option>
-                       }
-                     </select>
-                   </div>
-                 </div>
-               </div>
-               }
-             </div>
-           </div>
-           }
-        </div>
-      </div>
-
-      <!-- 缺失處置 -->
-      <div class="border border-dark border-top-0">
-        <div class="d-flex align-items-center py-2 px-2 bg-light">
-          <span class="fw-bold">缺失處置：</span>
-        </div>
-        <div class="p-3">
-          <div class="mb-3">
-            <div class="form-check">
-              <input 
-                class="form-check-input" 
-                type="checkbox" 
-                id="remedy_immediate"
-                [checked]="issueRecord.remedyMeasures.includes('immediate')"
-                (change)="toggleRemedyMeasure('immediate')"
-                title="選擇立即完成改正"
-              />
-              <label class="form-check-label" for="remedy_immediate">
-                1. 已立即完成改正
-              </label>
-            </div>
-          </div>
-          <div class="mb-3">
-            <div class="form-check d-flex align-items-center">
-              <input 
-                class="form-check-input me-2" 
-                type="checkbox" 
-                id="remedy_deadline"
-                [checked]="issueRecord.remedyMeasures.includes('improvementWithDeadline')"
-                (change)="toggleRemedyMeasure('improvementWithDeadline')"
-                title="選擇限期改善完成時間"
-              />
-              <label class="form-check-label d-flex align-items-center" for="remedy_deadline">
-                限期改善完成時間
-                <input 
-                  type="date" 
-                  class="form-control mx-2" 
-                  style="width: 150px;"
-                  [(ngModel)]="issueRecord.improvementDeadline"
-                  name="improvementDeadline"
-                  title="改善完成時間"
-                />
-              </label>
-            </div>
-          </div>
-          <div class="form-check">
-            <input 
-              class="form-check-input" 
-              type="checkbox" 
-              id="remedy_report"
-              [checked]="issueRecord.remedyMeasures.includes('correctivePreventionReport')"
-              (change)="toggleRemedyMeasure('correctivePreventionReport')"
-              title="選擇提出矯正預防措施報告"
-            />
-            <label class="form-check-label" for="remedy_report">
-              2. 須提出矯正預防措施報告
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <!-- 缺失評核 -->
-      <div class="border border-dark border-top-0">
-        <div class="d-flex align-items-center py-2 px-2 bg-light">
-          <span class="fw-bold">缺失評核(請參閱工安缺失扣點表之記點點數)</span>
-        </div>
-        <div class="p-3">
-          <div class="row">
-            <div class="col-md-6 mb-2">
-              <div class="d-flex align-items-center">
-                <label class="form-label me-2 mb-0" style="width: 80px;">缺失代碼：<span class="text-danger">*</span></label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  [(ngModel)]="issueRecord.deductionCode"
-                  name="deductionCode"
-                  placeholder="請輸入缺失代碼"
-                  title="缺失代碼"
-                  required
-                />
-              </div>
-            </div>
-            <div class="col-md-6 mb-2">
-              <div class="d-flex align-items-center">
-                <label class="form-label me-2 mb-0" style="width: 80px;">記點點數：</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  [(ngModel)]="issueRecord.recordPoints"
-                  name="recordPoints"
-                  placeholder="請輸入記點點數"
-                  title="記點點數"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 複查資訊 -->
-      <div class="border border-dark border-top-0">
-        <div class="d-flex">
+        <!-- 表單內容 -->
+        <!-- 第一行：編號、開立人員 -->
+        <div class="d-flex border border-dark">
           <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
-            <span class="fw-normal">複查日期：</span>
+            <span class="fw-normal">編號(單位-工號-年/月/流水號)：</span>
           </div>
           <div style="width: 35%" class="d-flex align-items-center border-end border-dark py-2 px-2">
-            <input 
-              type="date" 
-              class="form-control table-input" 
-              [(ngModel)]="issueRecord.reviewDate"
-              name="reviewDate"
-              title="複查日期"
-            />
+            <input type="text" class="form-control table-input" [(ngModel)]="issueRecord.recordNo" name="recordNo"
+              title="編號" />
           </div>
           <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
-            <span class="fw-normal">複查者：</span>
+            <span class="fw-normal">開立人員</span>
           </div>
           <div style="width: 35%" class="d-flex align-items-center py-2 px-2">
-            <input 
-              type="text" 
-              class="form-control table-input" 
-              [(ngModel)]="issueRecord.reviewer"
-              name="reviewer"
-              placeholder="請輸入複查者"
-              title="複查者"
+            <input type="text" class="form-control table-input" [(ngModel)]="issueRecord.establishPerson"
+              name="establishPerson" placeholder="請輸入開立人員" title="開立人員" required />
+          </div>
+        </div>
+
+        <!-- 第二行：開立單位、專案編號 -->
+        <div class="d-flex border border-dark border-top-0">
+          <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
+            <span class="fw-normal">開立單位</span>
+          </div>
+          <div style="width: 35%" class="d-flex align-items-center border-end border-dark py-2 px-2">
+            <input type="text" class="form-control table-input" [(ngModel)]="issueRecord.establishUnit"
+              name="establishUnit" placeholder="請輸入開立單位" title="開立單位" required />
+          </div>
+          <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
+            <span class="fw-normal">專案編號</span>
+          </div>
+          <div style="width: 35%" class="d-flex align-items-center py-2 px-2">
+            <input type="text" class="form-control table-input" value="{{ site()?.projectNo || '' }}" readonly
+              title="專案編號" />
+          </div>
+        </div>
+
+        <!-- 第三行：開立日期、缺失責任單位 -->
+        <div class="d-flex border border-dark border-top-0">
+          <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
+            <span class="fw-normal">開立日期</span>
+          </div>
+          <div style="width: 35%" class="d-flex align-items-center border-end border-dark py-2 px-2">
+            <input type="date" class="form-control table-input" [(ngModel)]="issueRecord.applyDate"
+              name="applyDate" title="開立日期" />
+          </div>
+          <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
+            <span class="fw-normal">缺失責任單位</span>
+          </div>
+          <div style="width: 35%" class="d-flex align-items-center py-2 px-2">
+            <div class="d-flex flex-column gap-2 w-100">
+              <div class="d-flex align-items-center">
+                <div class="form-check me-2">
+                  <input class="form-check-input" type="radio" name="responsibleUnit" id="responsibleUnit_MIC"
+                    value="MIC" [(ngModel)]="issueRecord.responsibleUnit" title="選擇MIC" />
+                  <label class="form-check-label" for="responsibleUnit_MIC">
+                    MIC
+                  </label>
+                </div>
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="issueRecord.responsibleUnitName"
+                  name="responsibleUnitName" placeholder="請輸入MIC單位名稱" title="MIC單位名稱"
+                  [disabled]="issueRecord.responsibleUnit !== 'MIC'"
+                  style="border-bottom: 1px solid #000; border-top: none; border-left: none; border-right: none; border-radius: 0;" />
+              </div>
+              <div class="d-flex align-items-center">
+                <div class="form-check me-2">
+                  <input class="form-check-input" type="radio" name="responsibleUnit" id="responsibleUnit_supplier"
+                    value="supplier" [(ngModel)]="issueRecord.responsibleUnit" title="選擇供應商" />
+                  <label class="form-check-label" for="responsibleUnit_supplier">
+                    供應商
+                  </label>
+                </div>
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="issueRecord.supplierName"
+                  name="supplierName" placeholder="請輸入供應商名稱" title="供應商名稱"
+                  [disabled]="issueRecord.responsibleUnit !== 'supplier'"
+                  style="border-bottom: 1px solid #000; border-top: none; border-left: none; border-right: none; border-radius: 0;" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 第四行：缺失日期 -->
+        <div class="d-flex border border-dark border-top-0">
+          <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
+            <span class="fw-normal">缺失日期</span>
+          </div>
+          <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
+            <input type="date" class="form-control table-input" [(ngModel)]="issueRecord.issueDate" name="issueDate"
+              title="缺失日期" style="width: 200px;" />
+          </div>
+        </div>
+
+        <!-- 第五行：發生廠區/地點 -->
+        <div class="d-flex border border-dark border-top-0">
+          <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
+            <span class="fw-normal">發生廠區/地點</span>
+          </div>
+          <div style="width: 85%" class="d-flex align-items-center py-2 px-2">
+            <input type="text" class="form-control table-input" [(ngModel)]="issueRecord.factoryArea" name="factoryArea"
+              placeholder="請輸入發生廠區/地點" title="發生廠區/地點" />
+          </div>
+        </div>
+
+        <!-- 缺失說明＆照片黏貼處 -->
+        <div class="border border-dark border-top-0">
+          <div class="d-flex justify-content-between align-items-center py-2 px-2 bg-light">
+            <span class="fw-bold">缺失說明＆照片黏貼處：</span>
+            <div class="d-flex gap-2">
+              <label for="photoUpload" class="btn btn-sm btn-primary" title="上傳缺失照片">
+                <i class="fas fa-camera me-1"></i>新增照片
+                <input type="file" id="photoUpload" accept="image/*" multiple hidden
+                  (change)="onPhotoSelected($event)" />
+              </label>
+            </div>
+          </div>
+          <div class="p-3">
+            <textarea class="form-control table-input" rows="10" [(ngModel)]="issueRecord.issueDescription"
+              name="issueDescription" placeholder="請輸入缺失說明或照片描述" title="缺失說明＆照片黏貼處"></textarea>
+
+            <!-- 上傳進度條 -->
+            @if (isUploadingPhoto()) {
+            <div class="mt-3">
+              <div class="progress mb-2">
+                <div class="progress-bar" role="progressbar" [style.width.%]="uploadProgress()"
+                  [attr.aria-valuenow]="uploadProgress()" aria-valuemin="0" aria-valuemax="100">
+                  {{ uploadProgress() }}%
+                </div>
+              </div>
+              <p class="text-muted small">正在上傳照片，請勿關閉視窗...</p>
+            </div>
+            }
+
+            <!-- 已上傳的照片 -->
+            @if (uploadedPhotos().length > 0) {
+            <div class="mt-3">
+              <h6 class="mb-2">已上傳照片：<small class="text-muted">（點擊照片可查看大圖並編輯備註）</small></h6>
+              <div class="row g-2">
+                @for (photo of uploadedPhotos(); track photo.filename; let i = $index) {
+                <div class="col-md-3">
+                  <div class="card position-relative photo-card">
+                    <img [src]="photoService.getPhotoThumbnailUrl(photo.filename)" [alt]="photo.title"
+                      [title]="photo.title" class="card-img-top"
+                      style="height: 120px; object-fit: cover; cursor: pointer;" loading="lazy"
+                      (click)="viewPhoto(i)" />
+                    <button class="btn btn-danger btn-sm photo-delete-btn position-absolute" (click)="deletePhoto(i)"
+                      title="刪除照片"
+                      style="top: 5px; right: 5px; width: 30px; height: 30px; padding: 0; opacity: 0; transition: opacity 0.2s ease;">
+                      <i class="fas fa-times"></i>
+                    </button>
+                    <div class="card-body p-2">
+                      <select class="form-select form-select-sm" [value]="photo.improvementStatus"
+                        (change)="onImprovementStatusChange($event, i)" title="選擇改善狀態">
+                        @for (option of improvementStatusOptions; track option.value) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                }
+              </div>
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- 缺失處置 -->
+        <div class="border border-dark border-top-0">
+          <div class="d-flex align-items-center py-2 px-2 bg-light">
+            <span class="fw-bold">缺失處置：</span>
+          </div>
+          <div class="p-3">
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="remedy_immediate"
+                  [checked]="issueRecord.remedyMeasures.includes('immediate')"
+                  (change)="toggleRemedyMeasure('immediate')" title="選擇立即完成改正" />
+                <label class="form-check-label" for="remedy_immediate">
+                  1. 已立即完成改正
+                </label>
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="form-check d-flex align-items-center">
+                <input class="form-check-input me-2" type="checkbox" id="remedy_deadline"
+                  [checked]="issueRecord.remedyMeasures.includes('improvementWithDeadline')"
+                  (change)="toggleRemedyMeasure('improvementWithDeadline')" title="選擇限期改善完成時間" />
+                <label class="form-check-label d-flex align-items-center" for="remedy_deadline">
+                  限期改善完成時間
+                  <input type="date" class="form-control mx-2" style="width: 150px;"
+                    [(ngModel)]="issueRecord.improvementDeadline" name="improvementDeadline" title="改善完成時間" />
+                </label>
+              </div>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="remedy_report"
+                [checked]="issueRecord.remedyMeasures.includes('correctivePreventionReport')"
+                (change)="toggleRemedyMeasure('correctivePreventionReport')" title="選擇提出矯正預防措施報告" />
+              <label class="form-check-label" for="remedy_report">
+                2. 須提出矯正預防措施報告
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 缺失評核 -->
+        <div class="border border-dark border-top-0">
+          <div class="d-flex align-items-center py-2 px-2 bg-light">
+            <span class="fw-bold">缺失評核(請參閱工安缺失扣點表之記點點數)</span>
+          </div>
+          <div class="p-3">
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <div class="d-flex align-items-center">
+                  <label class="form-label me-2 mb-0" style="width: 80px;">缺失代碼：<span
+                      class="text-danger">*</span></label>
+                  <input type="text" class="form-control" [(ngModel)]="issueRecord.deductionCode" name="deductionCode"
+                    placeholder="請輸入缺失代碼" title="缺失代碼" required />
+                </div>
+              </div>
+              <div class="col-md-6 mb-2">
+                <div class="d-flex align-items-center">
+                  <label class="form-label me-2 mb-0" style="width: 80px;">記點點數：</label>
+                  <input type="text" class="form-control" [(ngModel)]="issueRecord.recordPoints" name="recordPoints"
+                    placeholder="請輸入記點點數" title="記點點數" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 複查資訊 -->
+        <div class="border border-dark border-top-0">
+          <div class="d-flex">
+            <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
+              <span class="fw-normal">複查日期：</span>
+            </div>
+            <div style="width: 35%" class="d-flex align-items-center border-end border-dark py-2 px-2">
+              <input type="date" class="form-control table-input" [(ngModel)]="issueRecord.reviewDate" name="reviewDate"
+                title="複查日期" />
+            </div>
+            <div style="width: 15%" class="d-flex align-items-center border-end border-dark py-2 px-2 bg-light">
+              <span class="fw-normal">複查者：</span>
+            </div>
+            <div style="width: 35%" class="d-flex align-items-center py-2 px-2">
+              <input type="text" class="form-control table-input" [(ngModel)]="issueRecord.reviewer" name="reviewer"
+                placeholder="請輸入複查者" title="複查者" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 追蹤複查結果 -->
+        <div class="border border-dark border-top-0">
+          <div class="p-3">
+            <div class="mb-2 fw-bold">追蹤複查結果：</div>
+            <div class="d-flex gap-4">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="reviewResult" id="reviewResult_completed"
+                  value="completed" [(ngModel)]="issueRecord.reviewResult" title="選擇已完成改正" />
+                <label class="form-check-label" for="reviewResult_completed">
+                  已完成改正
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="reviewResult" id="reviewResult_incomplete"
+                  value="incomplete" [(ngModel)]="issueRecord.reviewResult" title="選擇未完成改正" />
+                <label class="form-check-label" for="reviewResult_incomplete">
+                  未完成改正(要求改善，再次開立工安缺失紀錄表)
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 簽名區域 -->
+        <div class="mt-4">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header bg-light text-center fw-bold">監工簽名</div>
+                <div class="card-body text-center">
+                  <div class="signature mb-2" (click)="openSignatureDialog(SignatureType.Supervisor)"
+                    style="min-height: 120px; cursor: pointer;">
+                    @if (supervisorSignature) {
+                    <img [src]="supervisorSignature" alt="監工簽名" class="img-fluid" style="max-height: 150px"
+                      title="監工簽名" />
+                    } @else {
+                    <div class="p-3 border rounded h-100 d-flex align-items-center justify-content-center">
+                      <div class="text-muted">
+                        <i class="fas fa-edit"></i>
+                        <br>點擊此處進行簽名
+                      </div>
+                    </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header bg-light text-center fw-bold">作業人員簽名</div>
+                <div class="card-body text-center">
+                  <div class="signature mb-2" (click)="openSignatureDialog(SignatureType.Worker)"
+                    style="min-height: 120px; cursor: pointer;">
+                    @if (workerSignature) {
+                    <img [src]="workerSignature" alt="作業人員簽名" class="img-fluid" style="max-height: 150px"
+                      title="作業人員簽名" />
+                    } @else {
+                    <div class="p-3 border rounded h-100 d-flex align-items-center justify-content-center">
+                      <div class="text-muted">
+                        <i class="fas fa-edit"></i>
+                        <br>點擊此處進行簽名
+                      </div>
+                    </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 本單流程 -->
+        <div class="border border-dark mt-4">
+          <div class="d-flex align-items-center py-2 px-2 bg-light">
+            <span class="fw-bold">本單流程：</span>
+          </div>
+          <div class="p-3">
+            <p class="mb-2">MIC監工單位開單者：正本(MIC監工單位)、副本(缺失責任單位、M8)</p>
+            <p class="mb-0">MIC M8開單者：正本(MIC M8)、副本(缺失責任單位、MIC監工單位)</p>
+          </div>
+        </div>
+
+        <!-- 表單編號 -->
+        <div class="text-end mt-3">
+          <small class="text-muted">EE-4411-06A</small>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 人才選擇卡片 -->
+  <div class="card mt-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="fas fa-users me-2"></i>涉及缺失人員選擇
+      </h5>
+    </div>
+    <div class="card-body">
+      <!-- 無特定人員選項 -->
+      <div class="mb-3">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="noSpecificWorker"
+            [(ngModel)]="issueRecord.noSpecificWorker"
+          />
+          <label class="form-check-label fw-bold text-primary" for="noSpecificWorker">
+            無特定人員（環境或設備缺失，非特定人員造成）
+          </label>
+        </div>
+        @if (issueRecord.noSpecificWorker) {
+          <small class="text-muted d-block mt-1">
+            <i class="fas fa-info-circle me-1"></i>已勾選此項，可不選擇人員直接儲存
+          </small>
+        }
+      </div>
+
+      <hr class="my-3" />
+
+      <!-- 搜尋區域 -->
+      <div class="row mb-3 g-2">
+        <!-- 關鍵字搜尋 -->
+        <div class="col-md-6">
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="searchQuery"
+              (input)="onSearchWorkers()"
+              placeholder="搜尋人才（姓名、身份證、電話、公司名稱）"
             />
           </div>
         </div>
-      </div>
 
-      <!-- 追蹤複查結果 -->
-      <div class="border border-dark border-top-0">
-        <div class="p-3">
-          <div class="mb-2 fw-bold">追蹤複查結果：</div>
-          <div class="d-flex gap-4">
-            <div class="form-check">
-              <input 
-                class="form-check-input" 
-                type="radio" 
-                name="reviewResult" 
-                id="reviewResult_completed"
-                value="completed"
-                [(ngModel)]="issueRecord.reviewResult"
-                title="選擇已完成改正"
-              />
-              <label class="form-check-label" for="reviewResult_completed">
-                已完成改正
-              </label>
-            </div>
-            <div class="form-check">
-              <input 
-                class="form-check-input" 
-                type="radio" 
-                name="reviewResult" 
-                id="reviewResult_incomplete"
-                value="incomplete"
-                [(ngModel)]="issueRecord.reviewResult"
-                title="選擇未完成改正"
-              />
-              <label class="form-check-label" for="reviewResult_incomplete">
-                未完成改正(要求改善，再次開立工安缺失紀錄表)
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 簽名區域 -->
-      <div class="mt-4">
-        <div class="row">
-          <div class="col-md-6">
-            <div class="card">
-              <div class="card-header bg-light text-center fw-bold">監工簽名</div>
-              <div class="card-body text-center">
-                <div
-                  class="signature mb-2"
-                  (click)="openSignatureDialog(SignatureType.Supervisor)"
-                  style="min-height: 120px; cursor: pointer;"
-                >
-                  @if (supervisorSignature) {
-                  <img
-                    [src]="supervisorSignature"
-                    alt="監工簽名"
-                    class="img-fluid"
-                    style="max-height: 150px"
-                    title="監工簽名"
-                  />
-                  } @else {
-                  <div class="p-3 border rounded h-100 d-flex align-items-center justify-content-center">
-                    <div class="text-muted">
-                      <i class="fas fa-edit"></i> 
-                      <br>點擊此處進行簽名
-                    </div>
-                  </div>
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card">
-              <div class="card-header bg-light text-center fw-bold">作業人員簽名</div>
-              <div class="card-body text-center">
-                <div
-                  class="signature mb-2"
-                  (click)="openSignatureDialog(SignatureType.Worker)"
-                  style="min-height: 120px; cursor: pointer;"
-                >
-                  @if (workerSignature) {
-                  <img
-                    [src]="workerSignature"
-                    alt="作業人員簽名"
-                    class="img-fluid"
-                    style="max-height: 150px"
-                    title="作業人員簽名"
-                  />
-                  } @else {
-                  <div class="p-3 border rounded h-100 d-flex align-items-center justify-content-center">
-                    <div class="text-muted">
-                      <i class="fas fa-edit"></i> 
-                      <br>點擊此處進行簽名
-                    </div>
-                  </div>
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 本單流程 -->
-      <div class="border border-dark mt-4">
-        <div class="d-flex align-items-center py-2 px-2 bg-light">
-          <span class="fw-bold">本單流程：</span>
-        </div>
-        <div class="p-3">
-          <p class="mb-2">MIC監工單位開單者：正本(MIC監工單位)、副本(缺失責任單位、M8)</p>
-          <p class="mb-0">MIC M8開單者：正本(MIC M8)、副本(缺失責任單位、MIC監工單位)</p>
-        </div>
-      </div>
-
-      <!-- 表單編號 -->
-      <div class="text-end mt-3">
-        <small class="text-muted">EE-4411-06A</small>
-      </div>
-
-      <!-- 底部按鈕 -->
-      <div class="d-flex mt-4 pt-3">
-        <button
-          type="button"
-          class="btn btn-outline-secondary px-4"
-          (click)="cancel()"
-        >
-          <i class="fas fa-times-circle me-1"></i>取消
-        </button>
-        @if (currentUser()?.role === 'admin' && formId) {
-        <button
-          type="button"
-          class="btn btn-outline-danger px-4 ms-2"
-          (click)="deleteIssueRecord()"
-        >
-          <i class="fas fa-trash me-1"></i>刪除
-        </button>
-        }
-        
-        @if (issueRecord._id) {
-        <div class="mx-auto">
-          <button
-            type="button"
-            class="btn btn-success px-4"
-            (click)="generateDocx()"
-            [disabled]="isGeneratingDocument()"
+        <!-- 認證類型篩選 -->
+        <div class="col-md-5">
+          <select
+            class="form-select"
+            [(ngModel)]="selectedCertificationType"
+            (change)="onSearchWorkers()"
           >
-            @if (isGeneratingDocument()) {
-              <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-              生成中...
-            } @else {
-              <i class="fas fa-file-word me-1"></i>下載Word
+            <option value="">全部認證類型</option>
+            @for (certType of certificationTypes; track certType.code) {
+              <option [value]="certType.code">
+                {{ certType.name }} ({{ getCertificationCount(certType.code) }})
+              </option>
             }
-          </button>
+          </select>
         </div>
-        }
-        
-        <div class="ms-auto">
+
+        <!-- 清除按鈕 -->
+        <div class="col-md-1">
           <button
             type="button"
-            class="btn btn-primary px-4"
-            (click)="saveIssueRecord()"
+            class="btn btn-outline-secondary w-100"
+            (click)="clearFilters()"
+            title="清除所有過濾條件"
           >
-            <i class="fas fa-save me-1"></i>儲存
+            <i class="fas fa-times"></i>
           </button>
         </div>
       </div>
+
+      <!-- 已選擇的人才 -->
+      @if (selectedWorkerObjects.length > 0) {
+        <div class="mb-3">
+          <label class="form-label fw-bold">已選擇人員 ({{ selectedWorkerObjects.length }})</label>
+          <div class="d-flex flex-wrap gap-2">
+            @for (worker of selectedWorkerObjects; track worker._id) {
+              <span class="badge bg-danger d-flex align-items-center" style="font-size: 0.9rem; padding: 0.5rem 0.75rem;">
+                {{ worker.name }}
+                @if (worker.contractingCompanyName) {
+                  <small class="ms-1">({{ worker.contractingCompanyName }})</small>
+                }
+                <button
+                  type="button"
+                  class="btn-close btn-close-white ms-2"
+                  style="font-size: 0.7rem;"
+                  (click)="removeSelectedWorker(worker._id!)"
+                  title="移除"
+                ></button>
+              </span>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- 可選擇的人才列表 -->
+      <div>
+        <label class="form-label fw-bold">可選擇人員</label>
+        <div class="border rounded" style="max-height: 300px; overflow-y: auto;">
+          @if (filteredWorkers.length === 0) {
+            <div class="text-center text-muted p-3">
+              @if (searchQuery) {
+                沒有符合搜尋條件的人才
+              } @else {
+                此工地尚無人才資料
+              }
+            </div>
+          } @else {
+            <table class="table table-sm table-hover mb-0">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th style="width: 50px"></th>
+                  <th style="width: 100px">姓名</th>
+                  <th style="width: 150px">公司</th>
+                  <th style="width: 110px">電話</th>
+                  <th style="width: 120px">身份證</th>
+                  <th>認證資料</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (worker of filteredWorkers; track worker._id) {
+                  <tr
+                    (click)="toggleWorkerSelection(worker)"
+                    style="cursor: pointer;"
+                    [class.table-active]="isWorkerSelected(worker._id!)"
+                  >
+                    <td class="text-center">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="isWorkerSelected(worker._id!)"
+                        (click)="$event.stopPropagation()"
+                        (change)="toggleWorkerSelection(worker)"
+                      />
+                    </td>
+                    <td>{{ worker.name }}</td>
+                    <td>{{ worker.contractingCompanyName || '-' }}</td>
+                    <td>{{ worker.tel || '-' }}</td>
+                    <td>{{ worker.idno || '-' }}</td>
+                    <td>
+                      <small>{{ getWorkerCertifications(worker) }}</small>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
       </div>
+    </div>
+  </div>
+
+  <!-- 底部按鈕 -->
+  <div class="d-flex mt-4 pt-3">
+    <button type="button" class="btn btn-outline-secondary px-4" (click)="cancel()">
+      <i class="fas fa-times-circle me-1"></i>取消
+    </button>
+    @if (currentUser()?.role === 'admin' && formId) {
+    <button type="button" class="btn btn-outline-danger px-4 ms-2" (click)="deleteIssueRecord()">
+      <i class="fas fa-trash me-1"></i>刪除
+    </button>
+    }
+
+    @if (issueRecord._id) {
+    <div class="mx-auto">
+      <button type="button" class="btn btn-success px-4" (click)="generateDocx()" [disabled]="isGeneratingDocument()">
+        @if (isGeneratingDocument()) {
+        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        生成中...
+        } @else {
+        <i class="fas fa-file-word me-1"></i>下載Word
+        }
+      </button>
+    </div>
+    }
+
+    <div class="ms-auto">
+      <button type="button" class="btn btn-primary px-4" (click)="saveIssueRecord()">
+        <i class="fas fa-save me-1"></i>儲存
+      </button>
     </div>
   </div>
 </div>
 
 <!-- 照片查看 Modal -->
-<div
-  class="modal fade"
-  id="photoModal"
-  tabindex="-1"
-  aria-labelledby="photoModalLabel"
-  aria-hidden="true"
->
+<div class="modal fade" id="photoModal" tabindex="-1" aria-labelledby="photoModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="photoModalLabel">
           <i class="fas fa-image me-2"></i>照片查看
         </h5>
-        <button
-          type="button"
-          class="btn-close"
-          (click)="closePhotoModal()"
-          aria-label="關閉"
-        ></button>
+        <button type="button" class="btn-close" (click)="closePhotoModal()" aria-label="關閉"></button>
       </div>
       <div class="modal-body">
         @if (getCurrentPhoto()) {
@@ -598,15 +552,11 @@
           <!-- 照片顯示區 -->
           <div class="col-md-8">
             <div class="text-center">
-                             <img
-                 [src]="'/api/gridfs/' + getCurrentPhoto().filename"
-                 [alt]="getCurrentPhoto().title"
-                 class="img-fluid rounded"
-                 style="max-height: 500px; width: auto;"
-               />
+              <img [src]="'/api/gridfs/' + getCurrentPhoto().filename" [alt]="getCurrentPhoto().title"
+                class="img-fluid rounded" style="max-height: 500px; width: auto;" />
             </div>
           </div>
-          
+
           <!-- 照片資訊編輯區 -->
           <div class="col-md-4">
             <div class="card">
@@ -619,45 +569,30 @@
                 <!-- 改善狀態 -->
                 <div class="mb-3">
                   <label class="form-label">改善狀態</label>
-                  <select 
-                    class="form-select"
-                    [value]="getCurrentPhoto().improvementStatus"
-                    (change)="onImprovementStatusChange($event, currentPhotoIndex())"
-                  >
+                  <select class="form-select" [value]="getCurrentPhoto().improvementStatus"
+                    (change)="onImprovementStatusChange($event, currentPhotoIndex())">
                     @for (option of improvementStatusOptions; track option.value) {
-                      <option [value]="option.value">{{ option.label }}</option>
+                    <option [value]="option.value">{{ option.label }}</option>
                     }
                   </select>
                 </div>
-                
+
                 <!-- 照片標題/備註 -->
                 <div class="mb-3">
                   <label class="form-label">照片標題/備註</label>
-                  <textarea
-                    class="form-control"
-                    rows="4"
-                    [(ngModel)]="editingPhotoTitle"
-                    placeholder="請輸入照片標題或備註..."
-                  ></textarea>
+                  <textarea class="form-control" rows="4" [(ngModel)]="editingPhotoTitle"
+                    placeholder="請輸入照片標題或備註..."></textarea>
                   <div class="form-text">
                     可以在此描述照片內容、缺失詳情或改善措施等。
                   </div>
                 </div>
-                
+
                 <!-- 操作按鈕 -->
                 <div class="d-grid gap-2">
-                  <button
-                    type="button"
-                    class="btn btn-primary"
-                    (click)="savePhotoTitle()"
-                  >
+                  <button type="button" class="btn btn-primary" (click)="savePhotoTitle()">
                     <i class="fas fa-save me-1"></i>儲存備註
                   </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-danger"
-                    (click)="deletePhoto(currentPhotoIndex())"
-                  >
+                  <button type="button" class="btn btn-outline-danger" (click)="deletePhoto(currentPhotoIndex())">
                     <i class="fas fa-trash me-1"></i>刪除照片
                   </button>
                 </div>
@@ -668,11 +603,7 @@
         }
       </div>
       <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="closePhotoModal()"
-        >
+        <button type="button" class="btn btn-secondary" (click)="closePhotoModal()">
           關閉
         </button>
       </div>
@@ -684,41 +615,41 @@
   .photo-card:hover .photo-delete-btn {
     opacity: 1 !important;
   }
-  
+
   .photo-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  
+
   .photo-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
-  
+
   .photo-delete-btn {
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  
+
   .photo-delete-btn:hover {
     background-color: #dc3545 !important;
     border-color: #dc3545 !important;
   }
-  
+
   .card-img-top {
     transition: all 0.2s ease;
   }
-  
+
   .card-img-top:hover {
     opacity: 0.8;
     transform: scale(1.02);
   }
-  
+
   .photo-card .card-img-top {
     position: relative;
   }
-  
+
   .photo-card:hover .card-img-top::after {
     content: "🔍 點擊查看";
     position: absolute;
@@ -732,4 +663,4 @@
     font-size: 12px;
     pointer-events: none;
   }
-</style> 
+</style>

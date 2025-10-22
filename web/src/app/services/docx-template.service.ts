@@ -1019,7 +1019,7 @@ export class DocxTemplateService {
       establishPerson: formData.establishPerson || '',
       establishUnit: formData.establishUnit || '',
       projectNo: currentSite.projectNo || '',
-      establishDate: dayjs(formData.establishDate).format('YYYY 年 MM 月 DD 日') || '',
+      applyDate: dayjs(formData.applyDate).format('YYYY 年 MM 月 DD 日') || '',
       responsibleUnitMIC: formData.responsibleUnit === 'MIC' ? '■' : '□',
       responsibleUnitSupplier: formData.responsibleUnit === 'supplier' ? '■' : '□',
       issueDate: dayjs(formData.issueDate).format('YYYY 年 MM 月 DD 日') || '',

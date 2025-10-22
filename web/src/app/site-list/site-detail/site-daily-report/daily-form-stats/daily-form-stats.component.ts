@@ -322,7 +322,7 @@ export class DailyFormStatsComponent implements OnInit, OnChanges, OnDestroy {
         icon: 'bi-binoculars'
       },
       'safetyIssueRecord': {
-        displayName: '安全缺失記錄單',
+        displayName: '工安缺失紀錄單',
         color: '#dc3545',
         icon: 'bi-exclamation-circle'
       },

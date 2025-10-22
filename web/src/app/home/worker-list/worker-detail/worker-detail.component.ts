@@ -60,6 +60,10 @@ export class WorkerDetailComponent implements OnInit {
   showSaveSuccess = false;
   isDeleting = false;
 
+  // 工安缺失紀錄
+  safetyIssueRecords: any[] = [];
+  isLoadingSafetyIssues = false;
+
   private currentSiteService = inject(CurrentSiteService);
   private authService = inject(AuthService);
 
@@ -89,10 +93,10 @@ export class WorkerDetailComponent implements OnInit {
         const workerData = await this.mongodbService.getById('worker', this.workerId);
         if (workerData) {
           this.worker = workerData;
-          
+
           // 處理舊資料遷移：將 picture 欄位移到 pictures 陣列
           this.migrateAccidentInsuranceData();
-          
+
           if (this.worker.birthday) {
             this.calculateAge();
           }
@@ -102,6 +106,9 @@ export class WorkerDetailComponent implements OnInit {
           } else if (this.worker.gender === '女') {
             this.worker.gender = 'female';
           }
+
+          // 載入工安缺失紀錄
+          await this.loadSafetyIssueRecords();
         } else {
           console.error('找不到此工作人員資料');
         }
@@ -710,6 +717,44 @@ export class WorkerDetailComponent implements OnInit {
     } else if (insurance.picture && pictureIndex === 0) {
       // 移除舊格式的單一圖片
       (insurance as any).picture = '';
+    }
+  }
+
+  // 載入工安缺失紀錄
+  async loadSafetyIssueRecords(): Promise<void> {
+    if (!this.worker.safetyIssues || this.worker.safetyIssues.length === 0) {
+      this.safetyIssueRecords = [];
+      return;
+    }
+
+    this.isLoadingSafetyIssues = true;
+
+    try {
+      const recordPromises = this.worker.safetyIssues.map(async (issue) => {
+        try {
+          const record = await this.mongodbService.getById('siteForm', issue.formId);
+          if (record && record.issueRecord) {
+            return {
+              ...record.issueRecord,
+              formId: issue.formId,
+              siteId: issue.siteId,
+              projectName: '' // 可選：若需要顯示工地名稱，可再額外查詢
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error(`載入缺失單 ${issue.formId} 失敗:`, error);
+          return null;
+        }
+      });
+
+      const records = await Promise.all(recordPromises);
+      this.safetyIssueRecords = records.filter(record => record !== null);
+
+    } catch (error) {
+      console.error('載入工安缺失紀錄失敗:', error);
+    } finally {
+      this.isLoadingSafetyIssues = false;
     }
   }
 

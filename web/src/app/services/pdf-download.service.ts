@@ -261,7 +261,7 @@ export class PdfDownloadService {
       'environmentChecklist': '環安衛自檢表',
       'specialWorkChecklist': '特殊作業自檢表',
       'safetyPatrolChecklist': '工安巡迴檢查表',
-      'safetyIssueRecord': '安全缺失記錄單',
+      'safetyIssueRecord': '工安缺失紀錄單',
       'hazardNotice': '危害告知單',
       'training': '教育訓練'
     };

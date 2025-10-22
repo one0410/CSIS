@@ -260,6 +260,12 @@ export interface Worker {
     assignDate: Date; // 指派日期
     isVisitor?: boolean; // 是否為訪客
   }[];
+  // 工安缺失紀錄
+  safetyIssues?: {
+    siteId: string; // 工地ID
+    formId: string; // 工安缺失紀錄單ID
+    issueDate: string; // 工安缺失紀錄日期
+  }[];
 }
 
 export interface Certification {
