@@ -390,6 +390,10 @@ export class SiteFormListComponent implements AfterViewInit {
           workType: 1,                 // 特殊作業自檢表：作業名稱
           workName: 1,                 // 危害告知單：工程名稱
 
+          // 工安缺失紀錄單相關欄位
+          deductionCode: 1,     // 缺失代碼
+          issueDescription: 1,  // 缺失說明
+
           // 工地許可單簽名資訊（只載入姓名和時間，不載入 base64 簽名圖片）
           'applicantSignature.name': 1,
           'applicantSignature.signedAt': 1,
@@ -742,6 +746,18 @@ export class SiteFormListComponent implements AfterViewInit {
       case 'hazardNotice':
         // 危害告知單：顯示工程名稱
         return formData.workName ? `工程名稱：${formData.workName}` : '危害告知單';
+
+      case 'safetyIssueRecord':
+        // 工安缺失紀錄單：顯示缺失說明和代碼
+        const tooltipItems: string[] = [];
+        const issueRecord = formData.issueRecord || formData; // 支援兩種資料結構
+        if (issueRecord.deductionCode) {
+          tooltipItems.push(`缺失代碼：${issueRecord.deductionCode}`);
+        }
+        if (issueRecord.issueDescription) {
+          tooltipItems.push(`缺失說明：${issueRecord.issueDescription}`);
+        }
+        return tooltipItems.length > 0 ? tooltipItems.join('\n') : '工安缺失紀錄單';
 
       default:
         return '';

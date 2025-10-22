@@ -322,12 +322,20 @@
                       </button>
                     </td>
                     <td>
-                      @if (hasCertification(worker)) {
+                      @if (getValidCertificationCount(worker) > 0) {
                         <span
                           class="badge rounded-pill bg-success me-1"
-                          title="有證照"
+                          title="有效證照（未過期）"
                           >
-                          <i class="fas fa-certificate me-1"></i>{{ worker.certifications?.length || 0 }}
+                          <i class="fas fa-certificate me-1"></i>{{ getValidCertificationCount(worker) }}
+                        </span>
+                      }
+                      @if (getExpiredCertificationCount(worker) > 0) {
+                        <span
+                          class="badge rounded-pill bg-danger me-1"
+                          title="已過期證照"
+                          >
+                          <i class="fas fa-exclamation-triangle me-1"></i>{{ getExpiredCertificationCount(worker) }}
                         </span>
                       }
                       @if (!hasCertification(worker)) {

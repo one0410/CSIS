@@ -642,6 +642,16 @@ export class WorkerDetailComponent implements OnInit {
     return CertificationTypeManager.getAllCertificationOptions();
   }
 
+  // 檢查證照是否已過期
+  isCertificationExpired(certification: any): boolean {
+    if (!certification.withdraw) {
+      return false; // 沒有到期日不算過期
+    }
+    const withdrawDate = dayjs(certification.withdraw);
+    const today = dayjs();
+    return withdrawDate.isBefore(today, 'day');
+  }
+
   // 移除圖片（處理 GridFS 檔案刪除）
   async removeImage(fieldName: string, certIndex?: number, medicalExamIndex?: number, accidentInsuranceIndex?: number) {
     try {

@@ -883,12 +883,44 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
     if (!worker.certifications || worker.certifications.length === 0) {
       return false;
     }
-    
+
     if (certificationType) {
       return worker.certifications.some(cert => cert.type === certificationType);
     }
-    
+
     return worker.certifications.length > 0;
+  }
+
+  // 計算有效證照數量（未過期）
+  getValidCertificationCount(worker: Worker): number {
+    if (!worker.certifications || worker.certifications.length === 0) {
+      return 0;
+    }
+
+    const today = dayjs();
+    return worker.certifications.filter(cert => {
+      if (!cert.withdraw) {
+        return false; // 沒有到期日視為無效
+      }
+      const withdrawDate = dayjs(cert.withdraw);
+      return withdrawDate.isAfter(today) || withdrawDate.isSame(today, 'day');
+    }).length;
+  }
+
+  // 計算過期證照數量
+  getExpiredCertificationCount(worker: Worker): number {
+    if (!worker.certifications || worker.certifications.length === 0) {
+      return 0;
+    }
+
+    const today = dayjs();
+    return worker.certifications.filter(cert => {
+      if (!cert.withdraw) {
+        return false; // 沒有到期日不計入過期
+      }
+      const withdrawDate = dayjs(cert.withdraw);
+      return withdrawDate.isBefore(today, 'day');
+    }).length;
   }
 
   calculateAge(birthday: string): string {
