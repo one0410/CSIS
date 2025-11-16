@@ -39,6 +39,7 @@
         id="startDate"
         name="startDate"
         [(ngModel)]="site.startDate"
+        required
       />
     </div>
 
@@ -51,6 +52,7 @@
         id="endDate"
         name="endDate"
         [(ngModel)]="site.endDate"
+        required
       />
     </div>
 
@@ -204,7 +206,7 @@
         type="button" 
         class="btn btn-secondary"
         [disabled]="isSubmitting"
-        (click)="router.navigate(['/sitelist'])">
+        (click)="router.navigate(['/admin/sitelist'])">
         <i class="fas fa-arrow-left me-2"></i>
         返回工地列表
       </button>

@@ -1510,7 +1510,7 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
       //   .add(Math.floor(Math.random() * 365), 'days')
       //   .format('YYYY-MM-DD'),
       // laborInsurancePicture: '',
-      laberInsurance: [], // 新的勞保陣列結構
+      laborInsurance: [], // 新的勞保陣列結構
       // laborAssociationDate: dayjs('2024-01-01')
       //   .add(Math.floor(Math.random() * 365), 'days')
       //   .format('YYYY-MM-DD'),
@@ -3230,7 +3230,7 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
       //   getFieldValue(['勞保申請日期', '勞保日期', '勞保申請'])
       // ),
       // laborInsurancePicture: '',
-      laberInsurance: [], // 新的勞保陣列結構，匯入時暫時為空陣列
+      laborInsurance: [], // 新的勞保陣列結構，匯入時暫時為空陣列
       // laborAssociationDate: this.formatDate(
       //   getFieldValue([
       //     '勞工團體入會日期',

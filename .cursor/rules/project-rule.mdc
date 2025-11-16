@@ -36,7 +36,6 @@ alwaysApply: true
 - 避免使用 rxjs
 - 跨元件通知請使用 computed signal 來處理畫面變化
 - 表單請使用 template driven form
-- 使用 fetch API 取代 HttpClient
 - 路由設定統一在 src/app/app.routes.ts 中
 - 請善用 bootstrap 的 functional CSS, 可以在 html 中直接加入例如 fs-2, d-flex, p-2, ms-3, h-100, position-fixed 等等, 除非沒有的樣式, 再寫到頁面附屬的 .scss 檔案。
   

@@ -40,7 +40,7 @@ export class UserListComponent {
     onCellClicked: (params) => {
       console.log(params);
       // navigate to user detail page
-      this.router.navigate(['/setting/user', params.data._id]);
+      this.router.navigate(['/admin/user', params.data._id]);
     },
     // getRowStyle: (params) => {
     //   return {
@@ -80,7 +80,7 @@ export class UserListComponent {
 
   navigateToAddUser() {
     // 導航到用戶新增頁面
-    this.router.navigate(['/setting/user/new']);
+    this.router.navigate(['/admin/user/new']);
   }
 }
 

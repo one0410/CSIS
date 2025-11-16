@@ -215,7 +215,7 @@ export interface Worker {
   // laborInsurancePicture: string; // GridFS 檔案 URL
   // 勞工團體入會日期 yyyy-mm-dd
   // laborAssociationDate: string;
-  laberInsurance: {
+  laborInsurance: {
     belongSite: string; // 屬於哪一個 site
     applyDate: string; // 申請日期 YYYY-MM-dd
     picture: string; // GridFS 檔案 URL

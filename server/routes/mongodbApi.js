@@ -130,8 +130,15 @@ app.get('/api/mongodb/:collectionName/:filter?', async (req, res) => {
     try {
         let count = await collection.countDocuments(filter);
         let docs = await collection.find(filter).project(projection).sort(sort).limit(limit).skip(skip).toArray();
+
+        // _id 轉換為 string
+        docs.forEach(doc => {
+            doc._id = doc._id.toString();
+        });
+
         res.header('X-Pagination', JSON.stringify({ count, limit, skip }));
-        return res.send(docs);
+        res.set('Content-Type', 'application/json');
+        res.send(EJSON.stringify(docs));
     } catch (error) {
         logger.error('mongodb get error', error);
         res.header('Content-Type', 'text/plain; charset=utf-8');
@@ -181,6 +188,7 @@ app.put('/api/mongodb/:collectionName/:id', (req, res) => {
     const collection = db.collection(collectionName);
     const doc = req.body;
     let json = EJSON.parse(JSON.stringify(doc));
+
     // 刪除 _id 屬性
     delete json._id;
 

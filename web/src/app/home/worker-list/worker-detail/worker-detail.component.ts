@@ -38,7 +38,7 @@ export class WorkerDetailComponent implements OnInit {
     // laborInsuranceApplyDate: '',
     // laborInsurancePicture: '',
     // laborAssociationDate: '',
-    laberInsurance: [],
+    laborInsurance: [],
     accidentInsurances: [],
     contractingCompanyName: '',
     viceContractingCompanyName: '',

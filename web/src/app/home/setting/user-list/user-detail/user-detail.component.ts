@@ -149,6 +149,6 @@ export class UserDetailComponent implements OnInit {
   }
 
   navigateToList() {
-    this.router.navigate(['/user']);
+    this.router.navigate(['/admin/user']);
   }
 }

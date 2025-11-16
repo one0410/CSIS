@@ -1,67 +1,34 @@
 # CLAUDE.md
 
-此檔案為 Claude Code (claude.ai/code) 提供在此儲存庫中工作的指引。
+這是一個工地專案管理系統, 每個系統登入的使用者, 在不同的工地都有各自工地的權限。
+工地管理系統, 每日有例行的表單作業需要進行。
+從工地許可單為源頭, 依據申請施工的工作類別, 延伸所需的管制單及缺失單。
+除表單之外, 也需管理工作人員, 工作人員在執行工作類別的時候，需要具備相關的工作證照。
+另外, 也需要管理工地的進度。
 
 ## 開發指令
 
 ### 前端 (Angular - 在 `/web` 目錄)
-```bash
-cd web
-npm start         # 啟動開發伺服器於 port 4200 (會執行 prestart 來產生版本號)
-npm run build     # 建置正式版本至 ../server/wwwroot (會執行 prebuild 來產生版本號)
-npm run watch     # 開發模式下的監視建置
-npm test          # 使用 Karma/Jasmine 執行單元測試
-```
 
-### 後端 (Bun/Node.js - 在 `/server` 目錄)
-```bash
-cd server
-bun start         # 啟動伺服器 (預設 port 3000)
-bun run watch     # 啟動伺服器並自動重載變更
-bun run debug     # 啟動偵錯模式的伺服器
-bun run build     # 建置 Windows 執行檔
-bun run buildLinux # 建置 Linux 執行檔
-```
+- 使用 yarn 為套件管理工具
+- 使用 angular v20 框架, 請使用新的語法及新功能
+- 使用 bootstrap 為 CSS framework, 優先使用functional CSS, 例如 d-flex, h-100 等等, 以節省 css 檔案的內容, 並提升HTML的可讀性
+- 使用 dayjs 處理時間, 以節省 ts 檔案的複雜度
 
-### 工具指令
-```bash
-# 產生版本時間戳記 (在 build/start 時會自動執行)
-cd web && bun ./src/environments/generateVersion.ts
-```
+
+### 後端 (Bun - 在 `/server` 目錄)
+
+- /api/mongodb/:collection 為統一資料庫操作API入口, 物件可於前端定義, 就不用每個物件要開一個新的API
+
 
 註記：前端和後端都使用 Yarn 作為套件管理器 (請見 package.json 中的 packageManager 欄位)。
 
-## 架構概覽
 
-### 專案結構
-工地安全管理系統 (CSIS) - 一個全面的安全管理平台。
-
-**前端 (Angular 20)：** 位於 `/web`
-- 進入點：`src/main.ts` → `app.component.ts` → `app.routes.ts`
-- 核心服務：`src/app/services/` (mongodb, auth, photo, weather, gridfs, toast, history)
-- 主要模組：
-  - 認證：`login/`，由 `AuthGuard` 保護
-  - 儀表板與管理：`home/` (包含使用者管理、工人清單、設定、表單配置)
-  - 工地管理：`site-list/` 包含表單、工人、進度等巢狀元件
-  - 共用元件：`shared/` (簽名板、頂部選單、側邊選單)
-
-**後端 (Bun/Express)：** 位於 `/server`
-- 進入點：`index.ts` - Express 伺服器搭配 Socket.IO 整合
-- API 路由：`routes/` 目錄
-  - `/auth` - 認證端點 (基於 JWT)
-  - `/api/mongodb` - MongoDB CRUD 操作
-  - `/api/gridfs` - GridFS 檔案儲存操作
-  - `/api/photos` - 照片管理
-  - `/api/file` - 檔案操作
-- 靜態檔案服務於 `wwwroot/browser/`
-- 透過 Socket.IO 支援 WebSocket (`mysocket.js`)
-- 使用 Winston 進行日誌記錄 (`logger.js`)
 
 ### 關鍵技術
 - **前端：** Angular 20, Bootstrap 5, ag-Grid, Chart.js, FullCalendar, DHTMLX Gantt, signature_pad, angularx-qrcode
 - **後端：** Bun runtime, Express 4, MongoDB/Mongoose 8, GridFS, Socket.IO, JWT, Multer, Sharp (影像處理)
 - **資料庫：** MongoDB 搭配 GridFS 進行檔案儲存
-- **建置工具：** Angular CLI, Bun bundler
 
 ### 表單系統架構
 應用程式擁有複雜的表單管理系統：
@@ -82,14 +49,3 @@ cd web && bun ./src/environments/generateVersion.ts
 2. MongoDB 服務處理所有資料庫操作
 3. GridFS 管理二進位資料 (照片、文件)
 4. 透過 Socket.IO 實現協作功能的即時更新
-
-## 測試
-
-### 前端測試
-```bash
-cd web
-npm test          # 使用 Karma 執行所有測試
-npm test -- --include='**/specific.spec.ts'  # 執行特定測試檔案
-```
-
-測試檔案位於元件旁邊，檔名為 `*.spec.ts`

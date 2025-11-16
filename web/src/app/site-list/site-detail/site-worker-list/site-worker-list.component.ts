@@ -8,6 +8,7 @@ import { MongodbService } from '../../../services/mongodb.service';
 import { Worker, CertificationTypeManager } from '../../../model/worker.model';
 import { CurrentSiteService } from '../../../services/current-site.service';
 import { AuthService } from '../../../services/auth.service';
+import { GridFSService } from '../../../services/gridfs.service';
 import dayjs from 'dayjs';
 
 @Component({
@@ -88,7 +89,8 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
     private router: Router,
     private mongodbService: MongodbService,
     private currentSiteService: CurrentSiteService,
-    private authService: AuthService
+    private authService: AuthService,
+    private gridFSService: GridFSService
   ) {}
 
   async ngOnInit() {
@@ -289,15 +291,19 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
 
   // 檢查工人是否有此工地的勞保資料
   hasLaborInsurance(worker: Worker): boolean {
-    if (!worker.laberInsurance || !worker.laberInsurance.length || !this.siteId) {
+    if (!worker.laborInsurance || !worker.laborInsurance.length || !this.siteId) {
       return false;
     }
 
     // 檢查是否有與當前工地匹配的勞保資料
-    return worker.laberInsurance.some(insurance =>
-      insurance.belongSite === this.siteId &&
-      insurance.applyDate &&
-      insurance.applyDate.trim() !== ''
+    // 使用 toString() 確保類型一致性 (處理 ObjectId vs string 的情況)
+    return worker.laborInsurance.some(insurance =>
+      insurance.belongSite?.toString() === this.siteId?.toString() &&
+      (
+        (insurance.applyDate && insurance.applyDate.trim() !== '') ||
+        (insurance.picture && insurance.picture.trim() !== '') ||
+        (insurance.associationDate && insurance.associationDate.trim() !== '')
+      )
     );
   }
 
@@ -339,19 +345,44 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
   }
 
   getWorkerLaborInsurance(worker: Worker) {
-    if (!worker.laberInsurance || !this.siteId) return [];
-    return worker.laberInsurance.filter(insurance => insurance.belongSite === this.siteId);
+    if (!worker.laborInsurance || !this.siteId) return [];
+    return worker.laborInsurance.filter(insurance => insurance.belongSite?.toString() === this.siteId?.toString());
   }
 
-  handleLaborInsuranceFileUpload(event: Event) {
+  async handleLaborInsuranceFileUpload(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.newLaborInsurance.picture = e.target?.result as string;
-      };
-      reader.readAsDataURL(file);
+      try {
+        this.isLoading = true;
+
+        // 壓縮圖片
+        const compressedDataUrl = await this.compressImage(file, 1200, 0.8);
+
+        // 將 base64 轉換為 File 物件
+        const compressedFile = await this.dataUrlToFile(compressedDataUrl, file.name);
+
+        // 上傳到 GridFS
+        const worker = this.selectedWorker();
+        const uploadResult = await this.gridFSService.uploadFile(compressedFile, {
+          type: 'laborInsurance',
+          workerId: worker?._id || '',
+          siteId: this.siteId || '',
+          originalName: file.name
+        });
+
+        if (uploadResult && uploadResult.filename) {
+          // 儲存 GridFS URL
+          this.newLaborInsurance.picture = `/api/gridfs/${uploadResult.filename}`;
+        } else {
+          throw new Error('上傳失敗，未取得檔案名稱');
+        }
+      } catch (error) {
+        console.error('圖片上傳失敗', error);
+        alert('圖片上傳失敗，請重試');
+      } finally {
+        this.isLoading = false;
+      }
     }
   }
 
@@ -363,28 +394,57 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
     const worker = this.selectedWorker();
     if (!worker || !this.siteId) return;
 
+    // 驗證至少填寫了一個欄位
+    if (!this.newLaborInsurance.applyDate &&
+        !this.newLaborInsurance.picture &&
+        !this.newLaborInsurance.associationDate) {
+      alert('請至少填寫一個欄位（申請日期、工會日期或勞保證明圖片）');
+      return;
+    }
+
     try {
       this.isLoading = true;
 
-      // 確保 laberInsurance 陣列存在
-      if (!worker.laberInsurance) {
-        worker.laberInsurance = [];
+      // 確保 laborInsurance 陣列存在
+      if (!worker.laborInsurance) {
+        worker.laborInsurance = [];
       }
 
+      // 確保 belongSite 已設定
+      const newInsurance = {
+        ...this.newLaborInsurance,
+        belongSite: this.siteId // 明確設定 belongSite
+      };
+
       // 新增勞保資料到陣列
-      worker.laberInsurance.push({ ...this.newLaborInsurance });
+      worker.laborInsurance.push(newInsurance);
 
       // 更新到資料庫
-      await this.mongodbService.put('worker', worker._id!, worker);
+      const result = await this.mongodbService.put('worker', worker._id!, worker);
+
+      if (!result) {
+        console.error('儲存勞保資料失敗');
+        alert('儲存失敗，請重試');
+        // 回復變更
+        worker.laborInsurance.pop();
+        return;
+      }
 
       // 重新載入資料
       await this.loadSiteWorkers();
+
+      // 更新 selectedWorker 為新載入的工人資料
+      const updatedWorker = this.siteWorkers.find(w => w._id === worker._id);
+      if (updatedWorker) {
+        this.selectedWorker.set(updatedWorker);
+      }
 
       // 關閉 modal
       this.closeLaborInsuranceModal();
 
     } catch (error) {
       console.error('儲存勞保資料時發生錯誤', error);
+      alert('儲存時發生錯誤，請重試');
     } finally {
       this.isLoading = false;
     }
@@ -400,16 +460,16 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
 
         // 獲取當前工地的勞保資料
         const siteInsurances = this.getWorkerLaborInsurance(worker);
-        if (index >= 0 && index < siteInsurances.length) {
+        if (index >= 0 && index < siteInsurances.length && worker.laborInsurance) {
           // 從原始陣列中移除對應項目
           const insuranceToRemove = siteInsurances[index];
-          const originalIndex = worker.laberInsurance!.findIndex(ins =>
+          const originalIndex = worker.laborInsurance.findIndex(ins =>
             ins.belongSite === insuranceToRemove.belongSite &&
             ins.applyDate === insuranceToRemove.applyDate
           );
 
           if (originalIndex >= 0) {
-            worker.laberInsurance!.splice(originalIndex, 1);
+            worker.laborInsurance.splice(originalIndex, 1);
 
             // 更新到資料庫
             await this.mongodbService.put('worker', worker._id!, worker);
@@ -461,16 +521,41 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
     return worker.accidentInsurances.filter(insurance => insurance.belongSite === this.siteId);
   }
 
-  handleAccidentInsuranceFileUpload(event: Event) {
+  async handleAccidentInsuranceFileUpload(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      Array.from(input.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.newAccidentInsurance.pictures.push(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-      });
+      try {
+        this.isLoading = true;
+        const worker = this.selectedWorker();
+
+        for (const file of Array.from(input.files)) {
+          // 壓縮圖片
+          const compressedDataUrl = await this.compressImage(file, 1200, 0.8);
+
+          // 將 base64 轉換為 File 物件
+          const compressedFile = await this.dataUrlToFile(compressedDataUrl, file.name);
+
+          // 上傳到 GridFS
+          const uploadResult = await this.gridFSService.uploadFile(compressedFile, {
+            type: 'accidentInsurance',
+            workerId: worker?._id || '',
+            siteId: this.siteId || '',
+            originalName: file.name
+          });
+
+          if (uploadResult && uploadResult.filename) {
+            // 儲存 GridFS URL
+            this.newAccidentInsurance.pictures.push(`/api/gridfs/${uploadResult.filename}`);
+          } else {
+            throw new Error('上傳失敗，未取得檔案名稱');
+          }
+        }
+      } catch (error) {
+        console.error('圖片上傳失敗', error);
+        alert('圖片上傳失敗，請重試');
+      } finally {
+        this.isLoading = false;
+      }
     }
   }
 
@@ -1369,5 +1454,56 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
     } else {
       return '<div class="certification-images"><span class="text-muted">未完成</span></div>';
     }
+  }
+
+  // 壓縮圖片功能
+  private compressImage(file: File, maxWidth: number = 1200, quality: number = 0.8): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // 計算新尺寸，保持比例
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('無法創建 canvas context'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // 轉換為壓縮後的 base64
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        };
+        img.onerror = () => reject(new Error('圖片載入失敗'));
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('檔案讀取失敗'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // 將 Data URL 轉換為 File 物件
+  private async dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    // 產生新的檔案名稱（加上時間戳記避免重複）
+    const timestamp = Date.now();
+    const extension = filename.split('.').pop() || 'jpg';
+    const newFilename = `${filename.replace(/\.[^/.]+$/, '')}_${timestamp}.${extension}`;
+    return new File([blob], newFilename, { type: blob.type });
   }
 }
