@@ -1008,6 +1008,11 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
     }).length;
   }
 
+  // 取得工安缺失紀錄次數
+  getSafetyIssueCount(worker: Worker): number {
+    return worker.safetyIssues?.length || 0;
+  }
+
   calculateAge(birthday: string): string {
     if (!birthday) return '未知';
     

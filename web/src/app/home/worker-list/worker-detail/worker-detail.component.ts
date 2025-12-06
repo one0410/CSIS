@@ -745,11 +745,26 @@ export class WorkerDetailComponent implements OnInit {
           const record = await this.mongodbService.getById('siteForm', issue.formId);
           // 工安缺失紀錄資料直接存在 siteForm 中，formType 為 'safetyIssueRecord'
           if (record && record.formType === 'safetyIssueRecord') {
+            // 根據 reviewResult 判斷改善狀態
+            let improvementStatus: 'improved' | 'improving' | 'not improved' = 'not improved';
+            if (record.reviewResult === 'completed') {
+              improvementStatus = 'improved';
+            } else if (record.reviewResult === 'incomplete') {
+              improvementStatus = 'not improved';
+            } else if (record.reviewDate && !record.reviewResult) {
+              // 有複查日期但沒有複查結果，可能是改善中
+              improvementStatus = 'improving';
+            }
+
             return {
               ...record,
               formId: issue.formId,
               siteId: issue.siteId,
-              projectName: '' // 可選：若需要顯示工地名稱，可再額外查詢
+              projectName: '', // 可選：若需要顯示工地名稱，可再額外查詢
+              // 映射缺失代碼為項目名稱（用於顯示）
+              itemName: record.deductionCode || '',
+              // 添加改善狀態
+              improvementStatus: improvementStatus
             };
           }
           return null;
