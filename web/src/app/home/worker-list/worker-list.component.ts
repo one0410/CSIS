@@ -547,7 +547,7 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
       },
     },
     {
-      headerName: '缺氧(侷限)作業主管證照(o2)',
+      headerName: '缺氧(局限)作業主管證照(o2)',
       field: 'o2',
       flex: 1,
       minWidth: 150,
@@ -570,7 +570,7 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
             ' <i class="fas fa-exclamation-triangle text-danger" title="已過期"></i>';
           div.style.backgroundColor = 'red';
           div.style.color = 'white';
-          div.title = '缺氧(侷限)作業主管證照(o2)已過期';
+          div.title = '缺氧(局限)作業主管證照(o2)已過期';
         }
 
         div.innerHTML = html;
@@ -2139,8 +2139,8 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
         { title: '急救人員\r\n發證日期\r\n(FR)', color: '002060' },
         { title: '急救人員\r\n回訓日期(期效3年)', color: '002060' },
 
-        { title: '缺氧(侷限)作業主管證照\r\n發證日期\r\n(O2)', color: 'FFFF00' },
-        { title: '缺氧(侷限)作業主管證照\r\n回訓日期(期效3年)', color: 'FFFF00' },
+        { title: '缺氧(局限)作業主管證照\r\n發證日期\r\n(O2)', color: 'FFFF00' },
+        { title: '缺氧(局限)作業主管證照\r\n回訓日期(期效3年)', color: 'FFFF00' },
 
         { title: '有機溶劑作業主管證照\r\n發證日期\r\n(OS)', color: '92D050' },
         { title: '有機溶劑作業主管證照\r\n回訓日期(期效3年)', color: '92D050' },

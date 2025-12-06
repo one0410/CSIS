@@ -721,6 +721,33 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
       const id = params.get('id');
       const formId = params.get('formId');
 
+      // 情況1：只有 formId（從獨立路由 /toolbox-meeting/:formId 進入）
+      if (formId && !id) {
+        // 先載入表單資料以獲取 siteId
+        await this.loadFormData(formId);
+
+        // 從表單資料中取得 siteId 並設定 currentSite
+        if (this.meetingData.siteId) {
+          this.siteId = this.meetingData.siteId;
+          await this.currentSiteService.setCurrentSiteById(this.siteId);
+          this.meetingData.projectNo = this.site()?.projectNo || '';
+          this.meetingData.projectName = this.site()?.projectName || '';
+
+          // 載入專案工人列表
+          await this.loadProjectWorkers(this.siteId);
+
+          // 載入工地使用者列表（用於主承攬商簽名）
+          await this.loadSiteUsers(this.siteId);
+        }
+
+        if (!this.isLoggedIn) {
+          this.isWorkerSigningMode = true;
+        }
+        this.generateToolboxQr();
+        return;
+      }
+
+      // 情況2：有 id（從工地內路由進入）
       if (id) {
         this.siteId = id;
         this.meetingData.siteId = id;
@@ -744,7 +771,7 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
         } else {
           // 新表單：載入公佈欄內容
           await this.loadBulletinContent(id);
-          
+
           // 檢查 URL 查詢參數中是否有日期
           this.route.queryParams.subscribe((queryParams) => {
             if (queryParams['date']) {

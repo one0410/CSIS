@@ -738,7 +738,7 @@
             </thead>
             <tbody>
               @for (record of safetyIssueRecords; track record.formId) {
-              <tr>
+              <tr class="cursor-pointer" (click)="navigateToSafetyIssueRecord(record)" title="點擊查看詳情">
                 <td>{{ record.issueDate || '-' }}</td>
                 <td>{{ record.itemName || '-' }}</td>
                 <td>

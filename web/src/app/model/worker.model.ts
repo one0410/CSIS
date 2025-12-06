@@ -4,7 +4,7 @@ export enum CertificationType {
   AOS = 'aos',           // 甲級職業安全管理員
   AOH = 'aoh',           // 甲級職業衛生管理師
   FR = 'fr',             // 急救人員
-  O2 = 'o2',             // 缺氧(侷限)作業主管證照
+  O2 = 'o2',             // 缺氧(局限)作業主管證照
   OS = 'os',             // 有機溶劑作業主管證照
   SA = 'sa',             // 施工架組配作業主管證照
   S = 's',               // 營造業職業安全衛生業務主管
@@ -56,8 +56,8 @@ export class CertificationTypeManager {
     },
     [CertificationType.O2]: { 
       code: 'o2', 
-      name: '缺氧(侷限)作業主管',
-      fullLabel: '缺氧(侷限)作業主管(o2)'
+      name: '缺氧(局限)作業主管',
+      fullLabel: '缺氧(局限)作業主管(o2)'
     },
     [CertificationType.OS]: { 
       code: 'os', 

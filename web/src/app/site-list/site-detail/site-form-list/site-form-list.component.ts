@@ -933,13 +933,22 @@ export class SiteFormListComponent implements AfterViewInit {
       wrapper.style.borderRadius = '4px';
       wrapper.style.fontWeight = 'bold';
       wrapper.style.width = '100%';
-      
+
       // 獲取簽名狀態
       const event = arg.event;
       const anyProps = event.extendedProps as any;
-      
+
       // 取得表單資料
       const permitData = anyProps.originalData || {};
+
+      // 調試：輸出簽名資料
+      console.log('工地許可單簽名資料:', {
+        id: permitData._id,
+        applicantSignature: permitData.applicantSignature,
+        departmentManagerSignature: permitData.departmentManagerSignature,
+        reviewSignature: permitData.reviewSignature,
+        approvalSignature: permitData.approvalSignature
+      });
       
       // 四個簽名狀態的圖示
       const signature1 = permitData.applicantSignature?.name ? '✅' : '❌';

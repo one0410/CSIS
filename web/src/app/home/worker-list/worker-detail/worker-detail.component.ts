@@ -743,9 +743,10 @@ export class WorkerDetailComponent implements OnInit {
       const recordPromises = this.worker.safetyIssues.map(async (issue) => {
         try {
           const record = await this.mongodbService.getById('siteForm', issue.formId);
-          if (record && record.issueRecord) {
+          // 工安缺失紀錄資料直接存在 siteForm 中，formType 為 'safetyIssueRecord'
+          if (record && record.formType === 'safetyIssueRecord') {
             return {
-              ...record.issueRecord,
+              ...record,
               formId: issue.formId,
               siteId: issue.siteId,
               projectName: '' // 可選：若需要顯示工地名稱，可再額外查詢
@@ -765,6 +766,13 @@ export class WorkerDetailComponent implements OnInit {
       console.error('載入工安缺失紀錄失敗:', error);
     } finally {
       this.isLoadingSafetyIssues = false;
+    }
+  }
+
+  // 導航到工安缺失紀錄表
+  navigateToSafetyIssueRecord(record: any): void {
+    if (record.siteId && record.formId) {
+      this.router.navigate(['/site', record.siteId, 'forms', 'safety-issue-record', record.formId]);
     }
   }
 
