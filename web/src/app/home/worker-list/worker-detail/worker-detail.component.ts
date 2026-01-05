@@ -732,6 +732,9 @@ export class WorkerDetailComponent implements OnInit {
 
   // 載入工安缺失紀錄
   async loadSafetyIssueRecords(): Promise<void> {
+    // 調試：輸出原始 safetyIssues 資料
+    console.log('worker.safetyIssues:', this.worker.safetyIssues);
+
     if (!this.worker.safetyIssues || this.worker.safetyIssues.length === 0) {
       this.safetyIssueRecords = [];
       return;
@@ -742,7 +745,15 @@ export class WorkerDetailComponent implements OnInit {
     try {
       const recordPromises = this.worker.safetyIssues.map(async (issue) => {
         try {
+          // 驗證 formId 格式（必須是 24 個十六進制字符的字串）
+          if (!issue.formId || typeof issue.formId !== 'string' || !/^[a-fA-F0-9]{24}$/.test(issue.formId)) {
+            console.warn('無效的 formId:', issue.formId);
+            return null;
+          }
+
+          console.log('正在查詢 formId:', issue.formId);
           const record = await this.mongodbService.getById('siteForm', issue.formId);
+          console.log('查詢結果:', record ? record.formType : 'null');
           // 工安缺失紀錄資料直接存在 siteForm 中，formType 為 'safetyIssueRecord'
           if (record && record.formType === 'safetyIssueRecord') {
             // 根據 reviewResult 判斷改善狀態
