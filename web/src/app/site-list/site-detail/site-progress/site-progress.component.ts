@@ -136,6 +136,9 @@ export class SiteProgressComponent
   private ganttScrollHandler: any = null;
   private ganttResizeObserver: ResizeObserver | null = null;
 
+  // 進度計算快取：避免重複排序
+  private progressCache = new Map<string, { sortedHistory: ProgressRecord[], lastModified: number }>();
+
   constructor(
     private mongodbService: MongodbService,
     private route: ActivatedRoute,
@@ -514,6 +517,9 @@ export class SiteProgressComponent
 
   async loadTasks(): Promise<ProjectTask[]> {
     try {
+      // 清除進度快取，因為任務資料將被重新載入
+      this.clearProgressCache();
+
       try {
         const rawData = await this.mongodbService.getArray('task', {
           siteId: this.siteId,
@@ -567,26 +573,46 @@ export class SiteProgressComponent
           }
         }).filter(task => task._id); // 過濾掉沒有有效ID的任務
 
-        // 檢查 wbs, 如果該WBS下還有子WBS, 則將該工項設為 type: 'project'
-        tasks.forEach((task) => {
+        // 優化：使用 Map 建立 WBS 索引，將 O(n²) 優化為 O(n)
+        const wbsMap = new Map<string, ProjectTask>();
+        tasks.forEach(task => {
           if (task.wbs) {
-            const subTasks = tasks.filter(
-              (t) => t.wbs?.startsWith(task.wbs!) && t.wbs !== task.wbs
-            );
-            if (subTasks.length > 0) {
-              task.type = 'project';
-              task['open'] = true;
+            wbsMap.set(task.wbs, task);
+          }
+        });
 
-              // 計算父項目的進度：子項目進度加總除以子項目個數
-              const totalProgress = subTasks.reduce((sum, subTask) => sum + (subTask.progress || 0), 0);
-              task.progress = Math.round(totalProgress / subTasks.length);
+        // 建立子任務列表 Map
+        const childrenMap = new Map<string, ProjectTask[]>();
 
-              console.log(`重新計算父項目 ${task.name} (WBS: ${task.wbs}) 的進度: ${subTasks.length} 個子項目，平均進度 ${task.progress}%`);
+        // 遍歷所有任務，找出父任務
+        tasks.forEach(task => {
+          if (task.wbs && task.wbs.includes('.')) {
+            // 取得父 WBS（例如 "1.1.1" 的父 WBS 是 "1.1"）
+            const parentWbs = task.wbs.substring(0, task.wbs.lastIndexOf('.'));
+            const parentTask = wbsMap.get(parentWbs);
 
-              subTasks.forEach((subTask) => {
-                subTask['parent'] = task._id;
-              });
+            if (parentTask) {
+              task['parent'] = parentTask._id;
+
+              // 將子任務加入 childrenMap
+              if (!childrenMap.has(parentWbs)) {
+                childrenMap.set(parentWbs, []);
+              }
+              childrenMap.get(parentWbs)!.push(task);
             }
+          }
+        });
+
+        // 設置父項目類型並計算進度
+        childrenMap.forEach((children, parentWbs) => {
+          const parentTask = wbsMap.get(parentWbs);
+          if (parentTask && children.length > 0) {
+            parentTask.type = 'project';
+            parentTask['open'] = true;
+
+            // 計算父項目的進度：子項目進度加總除以子項目個數
+            const totalProgress = children.reduce((sum, child) => sum + (child.progress || 0), 0);
+            parentTask.progress = Math.round(totalProgress / children.length);
           }
         });
 
@@ -853,6 +879,10 @@ export class SiteProgressComponent
     }
   }
 
+  // 靜態標記：甘特圖腳本是否已載入
+  private static ganttScriptLoaded = false;
+  private static ganttScriptLoading = false;
+
   // 初始化甘特圖
   initGantt() {
     if (!this.ganttScrollContainer) {
@@ -860,16 +890,16 @@ export class SiteProgressComponent
       return;
     }
 
-    console.log('開始初始化甘特圖，重建 DOM 元素');
+    console.log('開始初始化甘特圖');
 
     try {
       // 清理舊的甘特圖實例
       if (this.ganttChart) {
         try {
           this.ganttChart.detachAllEvents();
-          this.ganttChart.destructor();
+          // 不調用 destructor，因為我們重複使用全局 gantt 實例
         } catch (e) {
-          console.error('清理舊甘特圖實例失敗', e);
+          console.error('清理舊甘特圖事件失敗', e);
         }
         this.ganttChart = null;
       }
@@ -888,81 +918,114 @@ export class SiteProgressComponent
       ganttContainer.style.width = '100%';
       scrollContainer.appendChild(ganttContainer);
 
-      // 強制重載 dhtmlxGantt 腳本
+      // 檢查甘特圖腳本是否已載入
+      if ((window as any).gantt && SiteProgressComponent.ganttScriptLoaded) {
+        console.log('使用已載入的甘特圖腳本');
+        this.setupAndInitGantt(ganttContainer);
+        return;
+      }
+
+      // 如果正在載入中，等待載入完成
+      if (SiteProgressComponent.ganttScriptLoading) {
+        console.log('甘特圖腳本正在載入中，等待...');
+        const checkInterval = setInterval(() => {
+          if (SiteProgressComponent.ganttScriptLoaded && (window as any).gantt) {
+            clearInterval(checkInterval);
+            this.setupAndInitGantt(ganttContainer);
+          }
+        }, 100);
+        return;
+      }
+
+      // 首次載入甘特圖腳本
+      SiteProgressComponent.ganttScriptLoading = true;
       const script = document.createElement('script');
       script.onload = () => {
-        console.log('甘特圖腳本已重新載入');
-
-        // 使用全局作用域中的新 gantt 實例
-        const freshGantt = (window as any).gantt;
-        if (!freshGantt) {
-          console.error('無法獲取新的 gantt 實例');
-          return;
-        }
-
-        // 設置甘特圖
-        this.ganttChart = freshGantt;
-
-        this.ganttChart.plugins({ marker: true });
-
-        // 配置甘特圖
-        this.ganttChart.config.xml_date = '%Y-%m-%d';
-        this.ganttChart.config.autosize = 'y';
-        this.ganttChart.config.fit_tasks = true;
-        this.ganttChart.config.show_progress = true;
-
-        // 啟用自動調度功能，讓父項目自動計算子項目的時程範圍
-        this.ganttChart.config.auto_scheduling = true;
-        this.ganttChart.config.auto_scheduling_strict = true;
-        this.ganttChart.config.auto_scheduling_initial = true;
-
-        this.ganttChart.config.lightbox.sections = [
-          { name: 'description', height: 100, map_to: 'text', type: 'textarea' },
-          { name: "time", type: "duration", map_to: "auto", time_format: ["%d", "%m", "%Y", "%H:%i"] },
-        ];
-
-        // 設置本地化
-        this.setGanttLocalization();
-
-        // 設置欄位
-        this.ganttChart.config.columns = [
-          { name: 'wbs', label: 'WBS', tree: true, width: 100 },
-          { name: 'text', label: '工程項目', width: 200 },
-          { name: 'start_date', label: '開始日期', align: 'center', width: 100 },
-          { name: 'end_date', label: '結束日期', align: 'center', width: 100 },
-          {
-            name: 'progress',
-            label: '進度',
-            align: 'center',
-            width: 80,
-            template: (task: any) => {
-              return Math.round(task.progress * 100) + '%';
-            },
-          },
-        ];
-
-        // 設置任務資料變更監聽
-        this.setupGanttEventListeners();
-
-        console.log('正在初始化甘特圖...');
-        // 初始化甘特圖
-        this.ganttChart.init(ganttContainer);
-        console.log('甘特圖初始化完成');
-
-        // 甘特圖初始化完成後再設置視圖模式
-        this.changeGanttViewMode(this.ganttViewMode);
-
-        // 載入任務數據
-        this.loadDataToGantt();
+        console.log('甘特圖腳本載入完成');
+        SiteProgressComponent.ganttScriptLoaded = true;
+        SiteProgressComponent.ganttScriptLoading = false;
+        this.setupAndInitGantt(ganttContainer);
+      };
+      script.onerror = () => {
+        console.error('甘特圖腳本載入失敗');
+        SiteProgressComponent.ganttScriptLoading = false;
       };
 
-      // 強制瀏覽器加載新腳本，使用時間戳防止緩存
-      script.src = '//cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js?v=' + new Date().getTime();
+      // 使用固定版本的 URL，允許瀏覽器緩存
+      script.src = '//cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js';
       document.head.appendChild(script);
 
     } catch (error) {
       console.error('初始化甘特圖失敗', error);
     }
+  }
+
+  // 設置並初始化甘特圖（從全局 gantt 實例）
+  private setupAndInitGantt(ganttContainer: HTMLElement) {
+    const freshGantt = (window as any).gantt;
+    if (!freshGantt) {
+      console.error('無法獲取 gantt 實例');
+      return;
+    }
+
+    // 設置甘特圖
+    this.ganttChart = freshGantt;
+
+    // 清除之前的資料和事件
+    this.ganttChart.clearAll();
+    this.ganttChart.detachAllEvents();
+
+    this.ganttChart.plugins({ marker: true });
+
+    // 配置甘特圖
+    this.ganttChart.config.xml_date = '%Y-%m-%d';
+    this.ganttChart.config.autosize = 'y';
+    this.ganttChart.config.fit_tasks = true;
+    this.ganttChart.config.show_progress = true;
+
+    // 啟用自動調度功能，讓父項目自動計算子項目的時程範圍
+    this.ganttChart.config.auto_scheduling = true;
+    this.ganttChart.config.auto_scheduling_strict = true;
+    this.ganttChart.config.auto_scheduling_initial = true;
+
+    this.ganttChart.config.lightbox.sections = [
+      { name: 'description', height: 100, map_to: 'text', type: 'textarea' },
+      { name: "time", type: "duration", map_to: "auto", time_format: ["%d", "%m", "%Y", "%H:%i"] },
+    ];
+
+    // 設置本地化
+    this.setGanttLocalization();
+
+    // 設置欄位
+    this.ganttChart.config.columns = [
+      { name: 'wbs', label: 'WBS', tree: true, width: 100 },
+      { name: 'text', label: '工程項目', width: 200 },
+      { name: 'start_date', label: '開始日期', align: 'center', width: 100 },
+      { name: 'end_date', label: '結束日期', align: 'center', width: 100 },
+      {
+        name: 'progress',
+        label: '進度',
+        align: 'center',
+        width: 80,
+        template: (task: any) => {
+          return Math.round(task.progress * 100) + '%';
+        },
+      },
+    ];
+
+    // 設置任務資料變更監聽
+    this.setupGanttEventListeners();
+
+    console.log('正在初始化甘特圖...');
+    // 初始化甘特圖
+    this.ganttChart.init(ganttContainer);
+    console.log('甘特圖初始化完成');
+
+    // 甘特圖初始化完成後再設置視圖模式
+    this.changeGanttViewMode(this.ganttViewMode);
+
+    // 載入任務數據
+    this.loadDataToGantt();
   }
 
   // 設置甘特圖事件監聽器
@@ -1151,22 +1214,46 @@ export class SiteProgressComponent
   }
 
   // 保存任務
-  async saveTask(task: ProjectTask) {
+  // skipReload: 設為 true 時跳過重新載入資料，用於批量操作
+  async saveTask(task: ProjectTask, skipReload: boolean = false) {
     try {
       task.siteId = this.siteId;
 
       if (task._id) {
         await this.mongodbService.put('task', task._id, task);
       } else {
-        await this.mongodbService.post('task', task);
+        const result = await this.mongodbService.post('task', task);
+        // 如果是新增，更新任務的 _id
+        if (result && result._id) {
+          task._id = result._id;
+          task.id = result._id;
+        }
       }
 
-      // 重新載入數據
-      await this.loadTasks();
-
-      this.refreshGantt();
+      // 只有非批量操作時才重新載入數據
+      if (!skipReload) {
+        this.tasks = await this.loadTasks();
+        this.refreshGantt();
+      }
     } catch (error) {
       console.error('儲存任務失敗', error);
+    }
+  }
+
+  // 批量保存任務（優化版本：避免每次保存都重新載入）
+  async saveTasksBatch(tasks: ProjectTask[]) {
+    if (tasks.length === 0) return;
+
+    try {
+      // 並行保存所有任務（跳過重新載入）
+      await Promise.all(tasks.map(task => this.saveTask(task, true)));
+
+      // 批量操作完成後只重新載入一次
+      this.tasks = await this.loadTasks();
+      this.refreshGantt();
+    } catch (error) {
+      console.error('批量儲存任務失敗', error);
+      throw error;
     }
   }
 
@@ -1554,14 +1641,18 @@ export class SiteProgressComponent
       });
 
       // 依據 WBS 決定是新增還是覆蓋
+      const tasksToSave: ProjectTask[] = [];
       for (const importTask of this.importData) {
         importTask.siteId = this.siteId;
         if (importTask.wbs && wbsMap[importTask.wbs]) {
           // 覆蓋：保留原 id
           importTask._id = wbsMap[importTask.wbs]._id;
         }
-        await this.saveTask(importTask);
+        tasksToSave.push(importTask);
       }
+
+      // 使用批量保存（只會在最後重新載入一次）
+      await this.saveTasksBatch(tasksToSave);
 
       alert(`成功匯入 ${this.importData.length} 個工程項目`);
       this.closeModal('import');
@@ -1576,9 +1667,7 @@ export class SiteProgressComponent
         this.fileInput.nativeElement.value = '';
       }
 
-      // 重新載入資料
-      await this.loadTasks();
-      this.refreshGantt();
+      // saveTasksBatch 已經重新載入資料，不需要再次載入
     } catch (error) {
       console.error('匯入失敗', error);
       alert('匯入過程中發生錯誤');
@@ -1622,27 +1711,26 @@ export class SiteProgressComponent
 
   // === 進度輸入與管理功能 ===
 
-  // 根據日期取得任務的進度
+  // 根據日期取得任務的進度（使用快取優化）
   getProgressByDate(task: ProjectTask, date: string): number {
     if (!task.progressHistory || task.progressHistory.length === 0) {
       return task.progress; // 回傳當前進度
     }
 
-    // 尋找指定日期的進度記錄
+    // 尋找指定日期的進度記錄（直接查找，不需要排序）
     const exactRecord = task.progressHistory.find(record => record.date === date);
     if (exactRecord) {
       return exactRecord.progress;
     }
 
-    // 如果沒有找到精確日期，找最近的歷史記錄
-    const sortedHistory = [...task.progressHistory].sort((a, b) =>
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    // 使用快取的排序歷史記錄
+    const sortedHistory = this.getSortedProgressHistory(task);
 
     // 找到指定日期之前最近的記錄
+    const dateTime = new Date(date).getTime();
     let latestProgress = task.progress;
     for (const record of sortedHistory) {
-      if (new Date(record.date) <= new Date(date)) {
+      if (new Date(record.date).getTime() <= dateTime) {
         latestProgress = record.progress;
       } else {
         break;
@@ -1650,6 +1738,39 @@ export class SiteProgressComponent
     }
 
     return latestProgress;
+  }
+
+  // 取得快取的排序進度歷史（避免重複排序）
+  private getSortedProgressHistory(task: ProjectTask): ProgressRecord[] {
+    if (!task._id || !task.progressHistory || task.progressHistory.length === 0) {
+      return [];
+    }
+
+    const cacheKey = task._id;
+    const historyLength = task.progressHistory.length;
+    const cached = this.progressCache.get(cacheKey);
+
+    // 檢查快取是否有效（長度相同表示未修改）
+    if (cached && cached.lastModified === historyLength) {
+      return cached.sortedHistory;
+    }
+
+    // 排序並快取
+    const sortedHistory = [...task.progressHistory].sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    this.progressCache.set(cacheKey, {
+      sortedHistory,
+      lastModified: historyLength
+    });
+
+    return sortedHistory;
+  }
+
+  // 清除進度快取（當任務資料重新載入時呼叫）
+  private clearProgressCache() {
+    this.progressCache.clear();
   }
 
   // 重新計算父項目進度
@@ -2084,19 +2205,30 @@ export class SiteProgressComponent
         return;
       }
 
-      // 批量儲存到資料庫
+      // 批量儲存到資料庫（並行處理以提升效能）
+      await Promise.all(
+        updatedTasks
+          .filter(task => task._id)
+          .map(task => this.mongodbService.put('task', task._id!, task))
+      );
+
+      // 重新載入任務資料（只載入一次）
+      this.tasks = await this.loadTasks();
+
+      // 收集所有需要更新的父項目，避免重複計算
+      const parentIdsToUpdate = new Set<string>();
       for (const task of updatedTasks) {
-        if (task._id) {
-          await this.mongodbService.put('task', task._id, task);
+        if (task.parent) {
+          parentIdsToUpdate.add(task.parent);
         }
       }
 
-      // 重新載入任務資料
-      this.tasks = await this.loadTasks();
-
-      // 重新計算所有父項目進度
-      for (const task of updatedTasks) {
-        await this.recalculateParentProgress(task);
+      // 重新計算父項目進度（已去重）
+      for (const parentId of parentIdsToUpdate) {
+        const parentTask = this.tasks.find(t => t._id === parentId);
+        if (parentTask) {
+          await this.recalculateParentProgress(parentTask);
+        }
       }
 
       // 顯示成功訊息
