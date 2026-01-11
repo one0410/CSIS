@@ -68,8 +68,8 @@ export class NewScheduleComponent implements OnInit {
   isEditing = false;
   editingTask: ScheduleTask | null = null;
   
-  // 載入狀態
-  isLoadingData = false;
+  // 載入狀態 - 預設為 true，確保頁面載入時就顯示載入動畫
+  isLoadingData = true;
   
   // 效能優化相關
   private refreshTimeout: any = null;
