@@ -31,6 +31,11 @@
         <i class="fas fa-file-import me-1"></i>匯入 XML
       </button>
 
+      <!-- 匯出甘特圖按鈕 -->
+      <button class="btn btn-outline-success btn-sm text-nowrap" (click)="exportGanttToExcel()" title="匯出甘特圖至Excel（依據目前視圖模式）">
+        <i class="fas fa-file-excel me-1"></i>匯出甘特圖
+      </button>
+
       <!-- 新增頂層任務按鈕 -->
       <button class="btn btn-primary btn-sm text-nowrap" (click)="addNewTask()">
         <i class="fas fa-plus me-1"></i>新增頂層任務
@@ -43,22 +48,28 @@
 
   <!-- 甘特圖表格 -->
 
-  <div class="card position-relative">
+  <div class="card position-relative flex-grow-1 d-flex flex-column overflow-hidden">
     <!-- 載入中覆蓋層 -->
     @if (isLoadingData) {
     <div class="loading-overlay">
       <div class="loading-content">
-        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
-          <span class="visually-hidden">載入中...</span>
+        <div class="loading-spinner mb-3">
+          <div class="spinner-ring"></div>
+          <div class="spinner-ring"></div>
+          <div class="spinner-ring"></div>
+          <i class="fas fa-calendar-alt spinner-icon"></i>
         </div>
-        <h5 class="text-primary">載入進度表資料中...</h5>
-        <p class="text-muted">請稍候，正在從資料庫載入任務資料</p>
+        <h5 class="text-primary mb-2">載入進度表資料中...</h5>
+        <p class="text-muted mb-0">請稍候，正在從資料庫載入任務資料</p>
+        <div class="loading-dots mt-2">
+          <span></span><span></span><span></span>
+        </div>
       </div>
     </div>
     }
 
-    <div class="card-body p-0">
-      <div class="table-responsive" style="max-height: 600px; overflow: auto;" #tableContainer>
+    <div class="card-body p-0 flex-grow-1 d-flex flex-column overflow-hidden">
+      <div class="table-responsive flex-grow-1" style="overflow: auto;" #tableContainer>
         <table class="table table-sm table-bordered mb-0" [style.min-width]="getTableMinWidth()">
           <!-- 表格標題 -->
           <thead class="table-light sticky-top">
