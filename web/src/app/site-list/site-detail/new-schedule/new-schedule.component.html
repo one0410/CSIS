@@ -31,6 +31,11 @@
         <i class="fas fa-file-import me-1"></i>匯入 XML
       </button>
 
+      <!-- 匯出甘特圖按鈕 -->
+      <button class="btn btn-outline-success btn-sm text-nowrap" (click)="exportGanttToExcel()" title="匯出甘特圖至Excel（依據目前視圖模式）">
+        <i class="fas fa-file-excel me-1"></i>匯出甘特圖
+      </button>
+
       <!-- 新增頂層任務按鈕 -->
       <button class="btn btn-primary btn-sm text-nowrap" (click)="addNewTask()">
         <i class="fas fa-plus me-1"></i>新增頂層任務

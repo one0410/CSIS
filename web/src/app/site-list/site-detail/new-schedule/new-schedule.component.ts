@@ -7,6 +7,7 @@ import { MongodbService } from '../../../services/mongodb.service';
 import dayjs from 'dayjs';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
 import isoWeek from 'dayjs/plugin/isoWeek';
+import * as ExcelJS from 'exceljs';
 import { ProjectTask } from '../site-progress/site-progress.component';
 
 // 擴展 Day.js 功能
@@ -2052,7 +2053,7 @@ export class NewScheduleComponent implements OnInit {
   // 根據 WBS 列表移除任務
   private removeTasksByWbs(wbsList: string[]) {
     const wbsSet = new Set(wbsList);
-    
+
     // 遞迴移除任務
     const removeFromTaskTree = (tasks: ScheduleTask[]): ScheduleTask[] => {
       return tasks.filter(task => {
@@ -2060,17 +2061,361 @@ export class NewScheduleComponent implements OnInit {
           // 如果該任務要被移除，則跳過
           return false;
         }
-        
+
         // 如果有子任務，遞迴處理子任務
         if (task.children && task.children.length > 0) {
           task.children = removeFromTaskTree(task.children);
         }
-        
+
         return true;
       });
     };
-    
+
     // 從根任務開始移除
     this.tasks = removeFromTaskTree(this.tasks);
+  }
+
+  // =============================================
+  // 匯出甘特圖到 Excel（類似 Microsoft Project 樣式）
+  // =============================================
+
+  async exportGanttToExcel() {
+    if (this.flatTasks.length === 0) {
+      alert('沒有工程項目可匯出');
+      return;
+    }
+
+    try {
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'CSIS 工地管理系統';
+      workbook.created = new Date();
+
+      const worksheet = workbook.addWorksheet('工程進度', {
+        views: [{ state: 'frozen', xSplit: 4, ySplit: 2 }]
+      });
+
+      // 計算專案時間範圍
+      const { projectStart, projectEnd } = this.getExcelProjectDateRange();
+
+      // 根據視圖模式產生日期欄位
+      const dateColumns = this.generateExcelDateColumns(projectStart, projectEnd);
+
+      // 設定欄位寬度
+      const fixedColumns = [
+        { header: 'WBS', key: 'wbs', width: 12 },
+        { header: '工作名稱', key: 'name', width: 30 },
+        { header: '開始日期', key: 'start', width: 12 },
+        { header: '結束日期', key: 'end', width: 12 }
+      ];
+
+      // 設定所有欄位
+      worksheet.columns = [
+        ...fixedColumns,
+        ...dateColumns.map((col, index) => ({
+          header: col.label,
+          key: `date_${index}`,
+          width: this.viewMode === 'week' ? 5 : (this.viewMode === 'day' ? 4 : 8)
+        }))
+      ];
+
+      // 添加第一行標題
+      const headerRow1 = worksheet.getRow(1);
+      headerRow1.height = 20;
+
+      // 固定欄位標題
+      ['WBS', '工作名稱', '開始日期', '結束日期'].forEach((title, index) => {
+        const cell = headerRow1.getCell(index + 1);
+        cell.value = title;
+        cell.font = { bold: true, size: 10 };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFE0E0E0' }
+        };
+        cell.border = this.getExcelBorder();
+      });
+
+      // 日期欄位標題
+      dateColumns.forEach((col, index) => {
+        const cell = headerRow1.getCell(5 + index);
+        cell.value = col.label;
+        cell.font = { bold: true, size: 9 };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: this.isExcelCurrentPeriod(col) ? 'FFFFF0B3' : 'FFE8F4FD' }
+        };
+        cell.border = this.getExcelBorder();
+      });
+
+      // 添加第二行標題（子標題）
+      const headerRow2 = worksheet.getRow(2);
+      headerRow2.height = 18;
+
+      // 固定欄位在第二行保持空白
+      for (let i = 1; i <= 4; i++) {
+        const cell = headerRow2.getCell(i);
+        cell.value = '';
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFE0E0E0' }
+        };
+        cell.border = this.getExcelBorder();
+      }
+
+      // 日期欄位子標題
+      dateColumns.forEach((col, index) => {
+        const cell = headerRow2.getCell(5 + index);
+        cell.value = col.subLabel || '';
+        cell.font = { size: 8 };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: this.isExcelCurrentPeriod(col) ? 'FFFFF0B3' : 'FFF5FAFD' }
+        };
+        cell.border = this.getExcelBorder();
+      });
+
+      // 添加任務資料行
+      this.flatTasks.forEach((task, taskIndex) => {
+        const row = worksheet.getRow(taskIndex + 3);
+        row.height = 22;
+
+        // 計算任務層級
+        const isParentTask = task.children && task.children.length > 0;
+
+        // 固定欄位
+        const wbsCell = row.getCell(1);
+        wbsCell.value = task.wbs || '';
+        wbsCell.font = { size: 10, bold: isParentTask };
+        wbsCell.alignment = { horizontal: 'left', vertical: 'middle', indent: task.level };
+        wbsCell.border = this.getExcelBorder();
+
+        const nameCell = row.getCell(2);
+        nameCell.value = task.name;
+        nameCell.font = { size: 10, bold: isParentTask };
+        nameCell.alignment = { horizontal: 'left', vertical: 'middle', indent: task.level };
+        nameCell.border = this.getExcelBorder();
+
+        const startCell = row.getCell(3);
+        startCell.value = task.startDate || '';
+        startCell.font = { size: 9 };
+        startCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        startCell.border = this.getExcelBorder();
+
+        const endCell = row.getCell(4);
+        endCell.value = task.endDate || '';
+        endCell.font = { size: 9 };
+        endCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        endCell.border = this.getExcelBorder();
+
+        // 甘特圖條
+        const taskStart = task.startDate ? dayjs(task.startDate) : null;
+        const taskEnd = task.endDate ? dayjs(task.endDate) : null;
+
+        // 計算任務進度
+        const progress = this.calculateTaskProgress(task);
+
+        dateColumns.forEach((col, colIndex) => {
+          const cell = row.getCell(5 + colIndex);
+          cell.border = this.getExcelBorder();
+
+          if (taskStart && taskEnd) {
+            const colStart = col.startDate;
+            const colEnd = col.endDate;
+
+            // 檢查任務是否在此時間區間內
+            const isInRange = taskStart.isBefore(colEnd.add(1, 'day')) && taskEnd.isAfter(colStart.subtract(1, 'day'));
+
+            if (isInRange) {
+              // 計算進度顏色
+              const progressColor = isParentTask ? 'FF4472C4' : 'FF70AD47';
+              const progressBgColor = isParentTask ? 'FFB4C6E7' : 'FFC5E0B4';
+
+              // 根據進度設定填充
+              if (progress > 0) {
+                cell.fill = {
+                  type: 'pattern',
+                  pattern: 'solid',
+                  fgColor: { argb: progress >= 100 ? progressColor : progressBgColor }
+                };
+              } else {
+                cell.fill = {
+                  type: 'pattern',
+                  pattern: 'solid',
+                  fgColor: { argb: 'FFDDDDDD' }
+                };
+              }
+
+              // 如果這是任務範圍內的第一個欄位，顯示進度百分比
+              const compareUnit = this.viewMode === 'week' ? 'week' : (this.viewMode === 'day' ? 'day' : 'month');
+              if (colStart.isSame(taskStart, compareUnit) ||
+                  (taskStart.isBefore(colStart) && colIndex === 0)) {
+                cell.value = progress > 0 ? `${Math.round(progress)}%` : '';
+                cell.font = { size: 8, color: { argb: 'FF000000' } };
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+              }
+            } else {
+              cell.value = '';
+            }
+          } else {
+            cell.value = '';
+          }
+        });
+      });
+
+      // 設定列印區域和頁面設定
+      worksheet.pageSetup = {
+        orientation: 'landscape',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0
+      };
+
+      // 生成並下載檔案
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `工程進度甘特圖_${this.site()?.projectNo}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
+      link.click();
+
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 100);
+
+    } catch (error) {
+      console.error('匯出Excel失敗', error);
+      alert('匯出Excel時發生錯誤');
+    }
+  }
+
+  // 計算任務進度
+  private calculateTaskProgress(task: ScheduleTask): number {
+    if (!task.dailyProgress) return 0;
+
+    const progressValues = Object.values(task.dailyProgress);
+    if (progressValues.length === 0) return 0;
+
+    // 取最新的進度值（最大值）
+    return Math.max(...progressValues);
+  }
+
+  // 取得專案的時間範圍
+  private getExcelProjectDateRange(): { projectStart: dayjs.Dayjs, projectEnd: dayjs.Dayjs } {
+    let minDate: dayjs.Dayjs | null = null;
+    let maxDate: dayjs.Dayjs | null = null;
+
+    this.flatTasks.forEach(task => {
+      if (task.startDate) {
+        const start = dayjs(task.startDate);
+        if (!minDate || start.isBefore(minDate)) {
+          minDate = start;
+        }
+      }
+      if (task.endDate) {
+        const end = dayjs(task.endDate);
+        if (!maxDate || end.isAfter(maxDate)) {
+          maxDate = end;
+        }
+      }
+    });
+
+    // 預設範圍：如果沒有任務日期，使用當前月份
+    const projectStart = minDate || dayjs().startOf('month');
+    const projectEnd = maxDate || dayjs().endOf('month');
+
+    return { projectStart, projectEnd };
+  }
+
+  // 根據視圖模式產生日期欄位
+  private generateExcelDateColumns(start: dayjs.Dayjs, end: dayjs.Dayjs): Array<{
+    label: string;
+    subLabel: string;
+    startDate: dayjs.Dayjs;
+    endDate: dayjs.Dayjs;
+  }> {
+    const columns: Array<{
+      label: string;
+      subLabel: string;
+      startDate: dayjs.Dayjs;
+      endDate: dayjs.Dayjs;
+    }> = [];
+
+    let current = start.clone();
+
+    switch (this.viewMode) {
+      case 'day':
+        // 日視圖：每欄代表一天
+        while (current.isBefore(end) || current.isSame(end, 'day')) {
+          columns.push({
+            label: current.format('M/D'),
+            subLabel: current.format('ddd'),
+            startDate: current.clone(),
+            endDate: current.clone()
+          });
+          current = current.add(1, 'day');
+        }
+        break;
+
+      case 'week':
+        // 週視圖：每欄代表一週
+        current = current.startOf('isoWeek');
+        while (current.isBefore(end) || current.isSame(end, 'week')) {
+          const weekStart = current.clone();
+          const weekEnd = current.endOf('isoWeek');
+          columns.push({
+            label: `W${current.isoWeek()}`,
+            subLabel: `${current.format('M/D')}`,
+            startDate: weekStart,
+            endDate: weekEnd
+          });
+          current = current.add(1, 'week');
+        }
+        break;
+
+      case 'month':
+      default:
+        // 月視圖：每欄代表一個月
+        current = current.startOf('month');
+        while (current.isBefore(end) || current.isSame(end, 'month')) {
+          const monthStart = current.clone();
+          const monthEnd = current.endOf('month');
+          columns.push({
+            label: current.format('YYYY/MM'),
+            subLabel: '',
+            startDate: monthStart,
+            endDate: monthEnd
+          });
+          current = current.add(1, 'month');
+        }
+        break;
+    }
+
+    return columns;
+  }
+
+  // 判斷是否為當前時間區間
+  private isExcelCurrentPeriod(col: { startDate: dayjs.Dayjs; endDate: dayjs.Dayjs }): boolean {
+    const today = dayjs();
+    return today.isAfter(col.startDate.subtract(1, 'day')) && today.isBefore(col.endDate.add(1, 'day'));
+  }
+
+  // 取得 Excel 儲存格邊框樣式
+  private getExcelBorder(): Partial<ExcelJS.Borders> {
+    return {
+      top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+      left: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+      bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+      right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
+    };
   }
 } 
