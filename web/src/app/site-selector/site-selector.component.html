@@ -1,53 +1,56 @@
 <!-- 登出按鈕，固定在右上角 -->
 <button class="btn btn-outline-danger position-fixed" style="top: 15px; right: 15px; z-index: 1000;" title="登出系統"
-  (click)="logout()">
-  <i class="fas fa-sign-out-alt me-1"></i>登出
+  (click)="logout()" aria-label="登出系統">
+  <i class="fas fa-sign-out-alt me-1" aria-hidden="true"></i>登出
 </button>
 
-<div class="container py-4">
-  <div class="row mb-4">
-    <div class="col-12">
-      <h2 class="text-center">選擇工地</h2>
-      <p class="text-center text-muted">請選擇您要進入的工地</p>
+<main class="container py-4">
+  <header class="row mb-4">
+    <div class="col-12 text-center">
+      <h1 class="h2">選擇工地</h1>
+      <p class="text-muted">請選擇您要進入的工地</p>
     </div>
-  </div>
+  </header>
 
-  <div class="row mb-4">
+  <section class="row mb-4">
     <div class="col-md-10 mx-auto d-flex justify-content-between align-items-center">
-      <div class="input-group">
+      <search class="input-group" role="search">
         <span class="input-group-text">
-          <i class="fas fa-search"></i>
+          <i class="fas fa-search" aria-hidden="true"></i>
         </span>
-        <input type="text" class="form-control" placeholder="搜尋工地名稱、編號或地點..." [(ngModel)]="searchTerm" />
-        <div class="btn-group">
+        <label for="siteSearch" class="visually-hidden">搜尋工地</label>
+        <input type="search" id="siteSearch" class="form-control" placeholder="搜尋工地名稱、編號或地點..." [(ngModel)]="searchTerm" />
+        <div class="btn-group" role="group" aria-label="切換檢視模式">
           <button type="button" class="btn btn-outline-secondary" (click)="setViewMode('card')"
-            [class.active]="viewMode === 'card'" title="卡片檢視">
-            <i class="fas fa-th"></i>
+            [class.active]="viewMode === 'card'" title="卡片檢視" [attr.aria-pressed]="viewMode === 'card'">
+            <i class="fas fa-th" aria-hidden="true"></i>
+            <span class="visually-hidden">卡片檢視</span>
           </button>
           <button type="button" class="btn btn-outline-secondary" (click)="setViewMode('list')"
-            [class.active]="viewMode === 'list'" title="列表檢視">
-            <i class="fas fa-list"></i>
+            [class.active]="viewMode === 'list'" title="列表檢視" [attr.aria-pressed]="viewMode === 'list'">
+            <i class="fas fa-list" aria-hidden="true"></i>
+            <span class="visually-hidden">列表檢視</span>
           </button>
         </div>
-      </div>
+      </search>
       @if (canCreateSite) {
       <a class="btn btn-primary ms-2 text-nowrap" routerLink="/admin/site/new" title="新增工地">
-        <i class="fas fa-plus-circle me-1"></i>
+        <i class="fas fa-plus-circle me-1" aria-hidden="true"></i>
         <span class="d-none d-sm-inline">新增工地</span>
       </a>
       }
     </div>
-  </div>
+  </section>
 
   @if (isLoading) {
-  <div class="d-flex justify-content-center my-5">
-    <div class="spinner-border text-primary" role="status">
+  <div class="d-flex justify-content-center my-5" role="status" aria-live="polite">
+    <div class="spinner-border text-primary">
       <span class="visually-hidden">載入中...</span>
     </div>
   </div>
   } @else if (filteredSites.length === 0) {
-  <div class="alert alert-info text-center my-5">
-    <i class="fas fa-info-circle me-2"></i>
+  <div class="alert alert-info text-center my-5" role="alert">
+    <i class="fas fa-info-circle me-2" aria-hidden="true"></i>
     @if (searchTerm) {
     找不到符合 "{{searchTerm}}" 的工地
     } @else {
@@ -57,101 +60,98 @@
   } @else {
   <!-- 卡片視圖 -->
   @if (viewMode === 'card') {
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+  <section class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" aria-label="工地卡片列表">
     @for (site of filteredSites; track site._id) {
     <div class="col">
-      <div class="card h-100 shadow-sm position-relative" [class.border-danger]="isExpired(site.endDate)"
-        style="cursor: pointer;" (click)="selectSite(site)">
+      <article class="card h-100 shadow-sm position-relative" [class.border-danger]="isExpired(site.endDate)"
+        style="cursor: pointer;" (click)="selectSite(site)" role="button" tabindex="0">
         @if (isExpired(site.endDate)) {
-        <!-- <div class="position-absolute fs-1 text-nowrap text-danger px-5 py-2 border border-4 border-danger" style="
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%) rotate(-15deg);
-                    z-index: 10;
-                  ">
-          已過期
-        </div> -->
         <div class="position-absolute w-100 h-100 top-0 start-0"
-          style="background-color: rgba(200, 200, 200, 0.5); z-index: 5;"></div>
+          style="background-color: rgba(200, 200, 200, 0.5); z-index: 5;" aria-hidden="true"></div>
         }
-        <div class="site-image overflow-hidden" style="height: 160px">
+        <figure class="site-image overflow-hidden m-0" style="height: 160px">
           <img class="card-img-top object-fit-cover w-100 h-100" src="{{ site.image || '/assets/site.jpg' }}"
-            alt="{{site.projectName}}" />
-        </div>
+            alt="{{site.projectName}} 工地照片" />
+        </figure>
         <div class="card-body">
-          <h5 class="card-title">{{site.projectName}}</h5>
+          <h2 class="card-title h5">{{site.projectName}}</h2>
           <p class="card-text text-muted small mb-2">專案編號：{{site.projectNo}}</p>
-          <p class="card-text text-muted small mb-2">
-            <i class="fas fa-map-marker-alt me-1"></i> {{site.county}} {{site.town}}
-          </p>
+          <address class="card-text text-muted small mb-2 not-italic">
+            <i class="fas fa-map-marker-alt me-1" aria-hidden="true"></i> {{site.county}} {{site.town}}
+          </address>
           <p class="card-text text-muted small">
-            <i class="fas fa-calendar-day me-1"></i> {{site.startDate}} ~ {{site.endDate}}
+            <i class="fas fa-calendar-day me-1" aria-hidden="true"></i>
+            <time>{{site.startDate}}</time> ~ <time>{{site.endDate}}</time>
           </p>
         </div>
-        <div class="card-footer bg-transparent">
-          <div class="factories small">
+        <footer class="card-footer bg-transparent">
+          <ul class="factories small list-unstyled m-0">
             @for (factory of site.factories; track factory.name) {
-            <span class="fw-medium me-1">{{factory.name}}:</span>
-            @for (area of factory.areas; track area) {
-            <span class="badge bg-info-subtle text-info me-1">{{area}}</span>
+            <li>
+              <strong class="fw-medium me-1">{{factory.name}}:</strong>
+              @for (area of factory.areas; track area) {
+              <span class="badge bg-info-subtle text-info me-1">{{area}}</span>
+              }
+            </li>
             }
-            }
-          </div>
-        </div>
-      </div>
+          </ul>
+        </footer>
+      </article>
     </div>
     }
-  </div>
+  </section>
   }
 
   <!-- 列表視圖 -->
   @if (viewMode === 'list') {
-  <div class="table-responsive">
+  <section class="table-responsive" aria-label="工地列表">
     <table class="table table-hover border">
       <thead class="bg-light">
         <tr>
-          <th style="width: 100px">圖片</th>
-          <th>專案資訊</th>
-          <th>工期</th>
-          <th>地點</th>
-          <th>廠區資訊</th>
+          <th scope="col" style="width: 100px">圖片</th>
+          <th scope="col">專案資訊</th>
+          <th scope="col">工期</th>
+          <th scope="col">地點</th>
+          <th scope="col">廠區資訊</th>
         </tr>
       </thead>
       <tbody>
         @for (site of filteredSites; track site._id) {
         <tr [class.table-danger]="isExpired(site.endDate)" style="cursor: pointer; vertical-align: middle;"
-          (click)="selectSite(site)">
+          (click)="selectSite(site)" role="button" tabindex="0">
           <td class="p-2">
-            <div class="position-relative" style="width: 80px; height: 60px;">
-              <img class="object-fit-cover w-100 h-100 rounded" src="/assets/site.jpg" alt="{{site.projectName}}" />
-            </div>
+            <figure class="position-relative m-0" style="width: 80px; height: 60px;">
+              <img class="object-fit-cover w-100 h-100 rounded" src="/assets/site.jpg" alt="{{site.projectName}} 工地照片" />
+            </figure>
           </td>
           <td>
-            <div class="mb-1 fw-bold">{{site.projectName}}</div>
-            <div class="text-muted small">專案編號：{{site.projectNo}}</div>
+            <strong class="mb-1 d-block">{{site.projectName}}</strong>
+            <small class="text-muted">專案編號：{{site.projectNo}}</small>
           </td>
           <td>
-            <div class="small">開始：{{site.startDate}}</div>
-            <div class="small">結束：{{site.endDate}}</div>
+            <time class="small d-block">開始：{{site.startDate}}</time>
+            <time class="small d-block">結束：{{site.endDate}}</time>
           </td>
-          <td>{{site.county}} {{site.town}}</td>
           <td>
-            <div class="factories">
+            <address class="m-0 not-italic">{{site.county}} {{site.town}}</address>
+          </td>
+          <td>
+            <ul class="factories list-unstyled m-0">
               @for (factory of site.factories; track factory.name) {
-              <div class="factory-item small mb-1">
-                <span class="fw-medium">{{factory.name}}：</span>
+              <li class="factory-item small mb-1">
+                <strong class="fw-medium">{{factory.name}}：</strong>
                 @for (area of factory.areas; track area) {
                 <span class="badge bg-info-subtle text-info me-1">{{area}}</span>
                 }
-              </div>
+              </li>
               }
-            </div>
+            </ul>
           </td>
         </tr>
         }
       </tbody>
     </table>
-  </div>
+  </section>
   }
   }
-</div>
+</main>
