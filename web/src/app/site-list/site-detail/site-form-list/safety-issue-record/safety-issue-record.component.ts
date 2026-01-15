@@ -92,7 +92,7 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
   currentUser = computed(() => this.authService.user());
   isDeleting: boolean = false; // 刪除狀態
 
-  // 檢查使用者是否有刪除權限（管理人員、專案經理、工地秘書）
+  // 檢查使用者是否有刪除權限（管理員/管理人員/環安主管/環安工程師/建立者）
   canDelete = computed(() => {
     const user = this.authService.user();
     if (!user) return false;
@@ -102,12 +102,17 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
       return true;
     }
 
-    // 檢查工地特定角色
+    // 檢查是否為建立者
+    if (this.issueRecord.createdBy && user.name === this.issueRecord.createdBy) {
+      return true;
+    }
+
+    // 檢查工地特定角色（環安主管、環安工程師）
     const currentSite = this.currentSiteService.currentSite();
     if (!currentSite || !user.belongSites) return false;
 
     const userSiteRole = user.belongSites.find(site => site.siteId === currentSite._id)?.role;
-    return userSiteRole === 'projectManager' || userSiteRole === 'secretary' || userSiteRole === 'manager';
+    return userSiteRole === 'safetyManager' || userSiteRole === 'safetyEngineer';
   });
 
   supervisorSignature: string = '';

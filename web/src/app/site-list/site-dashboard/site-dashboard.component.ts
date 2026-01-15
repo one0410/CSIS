@@ -58,6 +58,7 @@ export class SiteDashboardComponent implements OnInit {
   site: Site | null = null;
 
   todayDate: string = '';
+  todayWeekday: string = '';
   allProjectDays: number = 0;
   todayProjectDays: number = 0;
   todayWorkerCount: number = 0;
@@ -79,10 +80,19 @@ export class SiteDashboardComponent implements OnInit {
     private weatherService: WeatherService,
     private workerCountService: WorkerCountService
   ) {
-    this.todayDate = new Date().toLocaleDateString('zh-TW', {
+    const today = new Date();
+    // 取得瀏覽器預設語系，如果沒有則使用繁體中文
+    const locale = navigator.language || 'zh-TW';
+    
+    // 設定日期格式（使用繁體中文格式）
+    this.todayDate = today.toLocaleDateString('zh-TW', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
+    });
+    // 設定星期幾，使用瀏覽器語系以支援不同語系
+    this.todayWeekday = today.toLocaleDateString(locale, {
+      weekday: 'long',
     });
   }
 

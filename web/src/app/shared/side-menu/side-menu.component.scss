@@ -27,6 +27,21 @@
       display: none;
     }
   }
+
+  /* 報表相關子選單樣式 */
+  .nav-item {
+    [data-bs-toggle="collapse"] {
+      cursor: pointer;
+
+      .fa-chevron-down {
+        transition: transform 0.2s ease-in-out;
+      }
+
+      &[aria-expanded="true"] .fa-chevron-down {
+        transform: rotate(180deg);
+      }
+    }
+  }
 }
 
 /* 手機版時的預設狀態（選單隱藏在左側） */
