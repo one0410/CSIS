@@ -75,6 +75,25 @@ export class SitePermitFormComponent implements OnInit {
   today = new Date();
   isViewMode: boolean = false; // 是否處於查看模式
   isGeneratingPdf: boolean = false; // PDF生成狀態
+  isDeleting: boolean = false; // 刪除狀態
+
+  // 檢查使用者是否有刪除權限（管理人員、專案經理、工地秘書）
+  canDelete = computed(() => {
+    const user = this.authService.user();
+    if (!user) return false;
+
+    // 全域管理員或管理人員
+    if (user.role === 'admin' || user.role === 'manager') {
+      return true;
+    }
+
+    // 檢查工地特定角色
+    const currentSite = this.currentSiteService.currentSite();
+    if (!currentSite || !user.belongSites) return false;
+
+    const userSiteRole = user.belongSites.find(site => site.siteId === currentSite._id)?.role;
+    return userSiteRole === 'projectManager' || userSiteRole === 'secretary' || userSiteRole === 'manager';
+  });
 
   // 臨時屬性用於分離日期和時間輸入
   workStartDate: string = '';
@@ -565,6 +584,39 @@ export class SitePermitFormComponent implements OnInit {
   cancel(): void {
     // 返回工地詳情頁面
     this.router.navigate(['/site', this.siteId, 'forms']);
+  }
+
+  // 刪除工地許可單
+  async deletePermit(): Promise<void> {
+    if (!this.permitData._id) {
+      alert('無法刪除：表單ID不存在');
+      return;
+    }
+
+    // 確認對話框
+    const confirmed = confirm(
+      `確定要刪除此工地許可單嗎？\n\n` +
+      `工作內容：${this.permitData.workContent || '無'}\n` +
+      `申請日期：${this.permitData.applyDate || '無'}\n\n` +
+      `此操作無法復原！`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.isDeleting = true;
+    try {
+      await this.mongodbService.delete('siteForm', this.permitData._id);
+      alert('工地許可單已成功刪除');
+      // 刪除成功後返回表單列表
+      this.router.navigate(['/site', this.siteId, 'forms']);
+    } catch (error) {
+      console.error('刪除工地許可單失敗', error);
+      alert('刪除失敗，請稍後再試');
+    } finally {
+      this.isDeleting = false;
+    }
   }
 
   // 生成時間選項 (06:00 到 20:00，每30分鐘)

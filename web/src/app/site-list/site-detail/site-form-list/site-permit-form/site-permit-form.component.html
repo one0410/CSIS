@@ -638,7 +638,16 @@
     </div>
     }
 
-    <div class="ms-auto">
+    <div class="ms-auto d-flex gap-2">
+      @if (canDelete() && permitData._id) {
+        <button type="button" class="btn btn-danger px-4" (click)="deletePermit()" [disabled]="isDeleting">
+          @if (isDeleting) {
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>刪除中...
+          } @else {
+            <i class="fas fa-trash-alt me-1"></i>刪除
+          }
+        </button>
+      }
       <button type="button" class="btn btn-primary px-4" (click)="savePermit()">
         <i class="fas fa-save me-1"></i>儲存
       </button>

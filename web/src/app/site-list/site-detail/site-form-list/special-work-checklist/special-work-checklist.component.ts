@@ -74,7 +74,26 @@ export class SpecialWorkChecklistComponent implements OnInit {
   siteId: string = '';
   formId: string = '';
   site = computed(() => this.currentSiteService.currentSite());
-  
+  isDeleting: boolean = false; // 刪除狀態
+
+  // 檢查使用者是否有刪除權限（管理人員、專案經理、工地秘書）
+  canDelete = computed(() => {
+    const user = this.authService.user();
+    if (!user) return false;
+
+    // 全域管理員或管理人員
+    if (user.role === 'admin' || user.role === 'manager') {
+      return true;
+    }
+
+    // 檢查工地特定角色
+    const currentSite = this.currentSiteService.currentSite();
+    if (!currentSite || !user.belongSites) return false;
+
+    const userSiteRole = user.belongSites.find(site => site.siteId === currentSite._id)?.role;
+    return userSiteRole === 'projectManager' || userSiteRole === 'secretary' || userSiteRole === 'manager';
+  });
+
   // 施工前簽名
   preWorkSupervisorSignature: string = '';
   preWorkWorkerSignature: string = '';
@@ -537,6 +556,35 @@ export class SpecialWorkChecklistComponent implements OnInit {
   // 取消並返回
   cancel(): void {
     this.router.navigate(['/site', this.siteId, 'forms']);
+  }
+
+  // 刪除特殊作業自主檢點表
+  async deleteChecklist(): Promise<void> {
+    if (!this.formId) {
+      alert('無法刪除：表單ID不存在');
+      return;
+    }
+
+    const confirmed = confirm(
+      `確定要刪除此特殊作業自主檢點表嗎？\n\n` +
+      `作業類型：${this.checklistData.workType || '無'}\n` +
+      `檢點日期：${this.checklistData.applyDate || '無'}\n\n` +
+      `此操作無法復原！`
+    );
+
+    if (!confirmed) return;
+
+    this.isDeleting = true;
+    try {
+      await this.mongodbService.delete('siteForm', this.formId);
+      alert('特殊作業自主檢點表已成功刪除');
+      this.router.navigate(['/site', this.siteId, 'forms']);
+    } catch (error) {
+      console.error('刪除特殊作業自主檢點表失敗', error);
+      alert('刪除失敗，請稍後再試');
+    } finally {
+      this.isDeleting = false;
+    }
   }
 
   // 選擇整列的radio按鈕

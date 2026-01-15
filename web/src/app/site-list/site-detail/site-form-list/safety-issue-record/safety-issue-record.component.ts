@@ -90,7 +90,26 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
   formId: string = '';
   site = computed(() => this.currentSiteService.currentSite());
   currentUser = computed(() => this.authService.user());
-  
+  isDeleting: boolean = false; // 刪除狀態
+
+  // 檢查使用者是否有刪除權限（管理人員、專案經理、工地秘書）
+  canDelete = computed(() => {
+    const user = this.authService.user();
+    if (!user) return false;
+
+    // 全域管理員或管理人員
+    if (user.role === 'admin' || user.role === 'manager') {
+      return true;
+    }
+
+    // 檢查工地特定角色
+    const currentSite = this.currentSiteService.currentSite();
+    if (!currentSite || !user.belongSites) return false;
+
+    const userSiteRole = user.belongSites.find(site => site.siteId === currentSite._id)?.role;
+    return userSiteRole === 'projectManager' || userSiteRole === 'secretary' || userSiteRole === 'manager';
+  });
+
   supervisorSignature: string = '';
   workerSignature: string = '';
   
@@ -579,37 +598,48 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
   // 刪除缺失記錄
   async deleteIssueRecord(): Promise<void> {
     if (!this.formId) {
-      alert('無法刪除：缺少表單ID');
+      alert('無法刪除：表單ID不存在');
       return;
     }
-    
-    if (confirm('確定要刪除這筆工安缺失紀錄嗎？此操作無法復原。')) {
-      try {
-        await this.mongodbService.delete('siteForm', this.formId);
-        
-        // 如果有相關照片，也要刪除
-        if (this.issueRecord.issuePhotos && this.issueRecord.issuePhotos.length > 0) {
-          for (const photo of this.issueRecord.issuePhotos) {
-            try {
-              await this.gridFSService.deleteFile(photo.filename);
-            } catch (error) {
-              console.error('刪除照片時發生錯誤:', error);
-            }
-          }
-          
-          // 通知照片服務統計更新
-          const currentSite = this.site();
-          if (currentSite && currentSite._id) {
-            this.photoService.notifyPhotoStatsUpdated(currentSite._id);
+
+    const confirmed = confirm(
+      `確定要刪除此工安缺失紀錄嗎？\n\n` +
+      `編號：${this.issueRecord.recordNo || '無'}\n` +
+      `缺失日期：${this.issueRecord.issueDate || '無'}\n` +
+      `責任單位：${this.issueRecord.responsibleUnit === 'MIC' ? 'MIC' : this.issueRecord.supplierName || '無'}\n\n` +
+      `此操作無法復原！`
+    );
+
+    if (!confirmed) return;
+
+    this.isDeleting = true;
+    try {
+      await this.mongodbService.delete('siteForm', this.formId);
+
+      // 如果有相關照片，也要刪除
+      if (this.issueRecord.issuePhotos && this.issueRecord.issuePhotos.length > 0) {
+        for (const photo of this.issueRecord.issuePhotos) {
+          try {
+            await this.gridFSService.deleteFile(photo.filename);
+          } catch (error) {
+            console.error('刪除照片時發生錯誤:', error);
           }
         }
-        
-        alert('工安缺失紀錄已刪除');
-        this.router.navigate(['/site', this.siteId, 'forms']);
-      } catch (error) {
-        console.error('刪除工安缺失紀錄時發生錯誤:', error);
-        alert('刪除失敗，請稍後重試');
+
+        // 通知照片服務統計更新
+        const currentSite = this.site();
+        if (currentSite && currentSite._id) {
+          this.photoService.notifyPhotoStatsUpdated(currentSite._id);
+        }
       }
+
+      alert('工安缺失紀錄已成功刪除');
+      this.router.navigate(['/site', this.siteId, 'forms']);
+    } catch (error) {
+      console.error('刪除工安缺失紀錄失敗', error);
+      alert('刪除失敗，請稍後再試');
+    } finally {
+      this.isDeleting = false;
     }
   }
 

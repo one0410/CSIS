@@ -271,6 +271,25 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
   site = computed(() => this.currentSiteService.currentSite());
   today = new Date();
   isGeneratingPdf: boolean = false; // 文檔生成狀態
+  isDeleting: boolean = false; // 刪除狀態
+
+  // 檢查使用者是否有刪除權限（管理人員、專案經理、工地秘書）
+  canDelete = computed(() => {
+    const user = this.authService.user();
+    if (!user) return false;
+
+    // 全域管理員或管理人員
+    if (user.role === 'admin' || user.role === 'manager') {
+      return true;
+    }
+
+    // 檢查工地特定角色
+    const currentSite = this.currentSiteService.currentSite();
+    if (!currentSite || !user.belongSites) return false;
+
+    const userSiteRole = user.belongSites.find(site => site.siteId === currentSite._id)?.role;
+    return userSiteRole === 'projectManager' || userSiteRole === 'secretary' || userSiteRole === 'manager';
+  });
   isLoggedIn: boolean = false;
   isWorkerSigningMode: boolean = false;
   formQrCodeUrl: string = '';
@@ -1547,6 +1566,35 @@ export class ToolboxMeetingFormComponent implements OnInit, AfterViewInit {
     } catch (error) {
       console.error('儲存工具箱會議失敗', error);
       alert('儲存工具箱會議失敗');
+    }
+  }
+
+  // 刪除工具箱會議表單
+  async deleteMeeting(): Promise<void> {
+    if (!this.meetingData._id) {
+      alert('無法刪除：表單ID不存在');
+      return;
+    }
+
+    const confirmed = confirm(
+      `確定要刪除此工具箱會議嗎？\n\n` +
+      `會議日期：${this.meetingData.applyDate || '無'}\n` +
+      `專案名稱：${this.meetingData.projectName || '無'}\n\n` +
+      `此操作無法復原！`
+    );
+
+    if (!confirmed) return;
+
+    this.isDeleting = true;
+    try {
+      await this.mongodbService.delete('siteForm', this.meetingData._id);
+      alert('工具箱會議已成功刪除');
+      this.router.navigate(['/site', this.siteId, 'forms']);
+    } catch (error) {
+      console.error('刪除工具箱會議失敗', error);
+      alert('刪除失敗，請稍後再試');
+    } finally {
+      this.isDeleting = false;
     }
   }
 

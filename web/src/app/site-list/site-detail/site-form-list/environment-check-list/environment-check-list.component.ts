@@ -57,6 +57,25 @@ export class EnvironmentCheckListComponent implements OnInit {
   formId: string = '';
   site = computed(() => this.currentSiteService.currentSite());
   currentUser = computed(() => this.authService.user());
+  isDeleting: boolean = false; // 刪除狀態
+
+  // 檢查使用者是否有刪除權限（管理人員、專案經理、工地秘書）
+  canDelete = computed(() => {
+    const user = this.authService.user();
+    if (!user) return false;
+
+    // 全域管理員或管理人員
+    if (user.role === 'admin' || user.role === 'manager') {
+      return true;
+    }
+
+    // 檢查工地特定角色
+    const currentSite = this.currentSiteService.currentSite();
+    if (!currentSite || !user.belongSites) return false;
+
+    const userSiteRole = user.belongSites.find(site => site.siteId === currentSite._id)?.role;
+    return userSiteRole === 'projectManager' || userSiteRole === 'secretary' || userSiteRole === 'manager';
+  });
   
   preWorkSupervisorSignature: string = '';
   preWorkWorkerSignature: string = '';
@@ -320,21 +339,29 @@ export class EnvironmentCheckListComponent implements OnInit {
   // 刪除檢查表
   async deleteChecklist(): Promise<void> {
     if (!this.formId) {
-      alert('無法刪除：缺少表單ID');
+      alert('無法刪除：表單ID不存在');
       return;
     }
-    
-    if (confirm('確定要刪除這份環安衛自主檢點表嗎？此操作無法復原。')) {
-      try {
-        await this.mongodbService.delete('siteForm', this.formId);
-        
-        alert('環安衛自主檢點表已刪除');
-        this.router.navigate(['/site', this.siteId, 'forms']);
-      } catch (error) {
-        console.error('刪除檢查表時發生錯誤:', error);
-        const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-        alert(`刪除失敗: ${errorMessage}`);
-      }
+
+    const confirmed = confirm(
+      `確定要刪除此環安衛自主檢點表嗎？\n\n` +
+      `檢點日期：${this.checklistData.applyDate || '無'}\n` +
+      `廠區：${this.checklistData.factoryArea || '無'}\n\n` +
+      `此操作無法復原！`
+    );
+
+    if (!confirmed) return;
+
+    this.isDeleting = true;
+    try {
+      await this.mongodbService.delete('siteForm', this.formId);
+      alert('環安衛自主檢點表已成功刪除');
+      this.router.navigate(['/site', this.siteId, 'forms']);
+    } catch (error) {
+      console.error('刪除檢查表時發生錯誤:', error);
+      alert('刪除失敗，請稍後再試');
+    } finally {
+      this.isDeleting = false;
     }
   }
 }
