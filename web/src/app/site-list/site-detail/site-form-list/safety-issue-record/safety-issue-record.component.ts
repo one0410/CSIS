@@ -180,6 +180,9 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
   selectedCertificationType: string = '';
   certificationTypes = CertificationTypeManager.getAllCertificationInfo();
 
+  // 記錄原始選擇的人才（用於編輯時比較變更）
+  private originalSelectedWorkers: string[] = [];
+
   // 新增：照片相關屬性
   uploadedPhotos = signal<{filename: string, url: string, title: string, improvementStatus: 'before' | 'after'}[]>([]);
   isUploadingPhoto = signal<boolean>(false);
@@ -309,6 +312,8 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
           this.selectedWorkerObjects = this.siteWorkers.filter(worker =>
             data.selectedWorkers.includes(worker._id!)
           );
+          // 保存原始選擇的人才ID（用於編輯時比較變更）
+          this.originalSelectedWorkers = [...data.selectedWorkers];
         }
       }
     } catch (error) {
@@ -369,9 +374,20 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
       }
 
       if (result) {
-        // 更新相關人才的 safetyIssues 陣列
+        const savedFormId = result._id || this.formId;
+
+        // 處理被移除的人才：清理其 safetyIssues
+        if (this.formId && this.originalSelectedWorkers.length > 0) {
+          const currentWorkers = this.issueRecord.noSpecificWorker ? [] : (this.issueRecord.selectedWorkers || []);
+          const removedWorkers = this.originalSelectedWorkers.filter(id => !currentWorkers.includes(id));
+          if (removedWorkers.length > 0) {
+            await this.removeWorkersFromSafetyIssues(removedWorkers, savedFormId);
+          }
+        }
+
+        // 更新相關人才的 safetyIssues 陣列（新增或保留的人才）
         if (!this.issueRecord.noSpecificWorker && this.issueRecord.selectedWorkers && this.issueRecord.selectedWorkers.length > 0) {
-          await this.updateWorkerSafetyIssues(result._id || this.formId);
+          await this.updateWorkerSafetyIssues(savedFormId);
         }
 
         alert('工安缺失紀錄表保存成功');
@@ -421,6 +437,53 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
     } catch (error) {
       console.error('更新人才缺失記錄失敗', error);
       // 不中斷流程，只記錄錯誤
+    }
+  }
+
+  // 從人才的 safetyIssues 陣列中移除缺失記錄
+  async removeWorkerSafetyIssues(formId: string): Promise<void> {
+    try {
+      for (const workerId of this.issueRecord.selectedWorkers || []) {
+        // 獲取人才資料
+        const worker = await this.mongodbService.getById('worker', workerId);
+        if (worker && worker.safetyIssues && worker.safetyIssues.length > 0) {
+          // 找到並移除此缺失記錄
+          const existingIndex = worker.safetyIssues.findIndex(
+            (issue: any) => issue.formId === formId
+          );
+
+          if (existingIndex > -1) {
+            worker.safetyIssues.splice(existingIndex, 1);
+            // 更新人才資料
+            await this.mongodbService.put('worker', workerId, worker);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('移除人才缺失記錄失敗', error);
+      // 不中斷流程，只記錄錯誤
+    }
+  }
+
+  // 從指定人才清單的 safetyIssues 陣列中移除缺失記錄（用於編輯時處理被移除的人才）
+  async removeWorkersFromSafetyIssues(workerIds: string[], formId: string): Promise<void> {
+    try {
+      for (const workerId of workerIds) {
+        const worker = await this.mongodbService.getById('worker', workerId);
+        if (worker && worker.safetyIssues && worker.safetyIssues.length > 0) {
+          const existingIndex = worker.safetyIssues.findIndex(
+            (issue: any) => issue.formId === formId
+          );
+
+          if (existingIndex > -1) {
+            worker.safetyIssues.splice(existingIndex, 1);
+            await this.mongodbService.put('worker', workerId, worker);
+            console.log(`已從人才 ${workerId} 移除缺失記錄 ${formId}`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('移除被移除人才的缺失記錄失敗', error);
     }
   }
 
@@ -619,6 +682,11 @@ export class SafetyIssueRecordComponent implements OnInit, AfterViewInit {
 
     this.isDeleting = true;
     try {
+      // 清理相關人才的 safetyIssues 陣列
+      if (this.issueRecord.selectedWorkers && this.issueRecord.selectedWorkers.length > 0) {
+        await this.removeWorkerSafetyIssues(this.formId);
+      }
+
       await this.mongodbService.delete('siteForm', this.formId);
 
       // 如果有相關照片，也要刪除

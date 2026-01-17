@@ -742,6 +742,9 @@ export class WorkerDetailComponent implements OnInit {
 
     this.isLoadingSafetyIssues = true;
 
+    // 記錄原始的 safetyIssues 長度，用於後續調和檢查
+    const originalCount = this.worker.safetyIssues.length;
+
     try {
       const recordPromises = this.worker.safetyIssues.map(async (issue) => {
         try {
@@ -788,10 +791,38 @@ export class WorkerDetailComponent implements OnInit {
       const records = await Promise.all(recordPromises);
       this.safetyIssueRecords = records.filter(record => record !== null);
 
+      // 自動調和：檢查原始數量與有效記錄數量是否一致
+      if (this.safetyIssueRecords.length !== originalCount) {
+        console.log(`偵測到孤兒參考：原始記錄 ${originalCount} 筆，有效記錄 ${this.safetyIssueRecords.length} 筆，正在清理...`);
+        await this.reconcileSafetyIssues();
+      }
+
     } catch (error) {
       console.error('載入工安缺失紀錄失敗:', error);
     } finally {
       this.isLoadingSafetyIssues = false;
+    }
+  }
+
+  // 調和工安缺失紀錄：清理孤兒參考
+  private async reconcileSafetyIssues(): Promise<void> {
+    if (!this.workerId) return;
+
+    try {
+      // 從有效的 safetyIssueRecords 重建 safetyIssues 陣列
+      const validSafetyIssues = this.safetyIssueRecords.map(record => ({
+        formId: record.formId,
+        siteId: record.siteId,
+        issueDate: record.issueDate || record.createdAt || ''
+      }));
+
+      // 更新 worker 文檔中的 safetyIssues
+      this.worker.safetyIssues = validSafetyIssues;
+      await this.mongodbService.put('worker', this.workerId, { safetyIssues: validSafetyIssues });
+
+      console.log(`已清理孤兒參考，目前有效記錄：${validSafetyIssues.length} 筆`);
+    } catch (error) {
+      console.error('調和工安缺失紀錄失敗:', error);
     }
   }
 
