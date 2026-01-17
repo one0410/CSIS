@@ -1101,7 +1101,8 @@ export class SiteFormListComponent implements AfterViewInit {
            userSiteRole === 'projectEngineer' || 
            userSiteRole === 'siteManager' || 
            userSiteRole === 'safetyManager' || 
-           userSiteRole === 'safetyEngineer';
+           userSiteRole === 'safetyEngineer' ||
+           userSiteRole === 'admin';
   }
 
   // 檢查當前使用者是否有權限新增工地許可單
@@ -1118,7 +1119,8 @@ export class SiteFormListComponent implements AfterViewInit {
            userSiteRole === 'projectEngineer' || 
            userSiteRole === 'siteManager' || 
            userSiteRole === 'safetyManager' || 
-           userSiteRole === 'safetyEngineer';
+           userSiteRole === 'safetyEngineer' ||
+           userSiteRole === 'admin';
   }
 
   // 檢查當前使用者是否有權限新增工具箱會議
@@ -1134,7 +1136,8 @@ export class SiteFormListComponent implements AfterViewInit {
            userSiteRole === 'projectEngineer' ||
            userSiteRole === 'siteManager' ||
            userSiteRole === 'safetyManager' ||
-           userSiteRole === 'safetyEngineer';
+           userSiteRole === 'safetyEngineer' ||
+           userSiteRole === 'admin';
   }
 
   // 檢查當前使用者是否有權限新增特殊作業自主檢點表
@@ -1150,7 +1153,8 @@ export class SiteFormListComponent implements AfterViewInit {
            userSiteRole === 'projectEngineer' || 
            userSiteRole === 'siteManager' || 
            userSiteRole === 'safetyManager' || 
-           userSiteRole === 'safetyEngineer';
+           userSiteRole === 'safetyEngineer' ||
+           userSiteRole === 'admin';
   }
 
   // 檢查當前使用者是否有權限新增缺失紀錄單
@@ -1166,7 +1170,8 @@ export class SiteFormListComponent implements AfterViewInit {
            userSiteRole === 'projectEngineer' || 
            userSiteRole === 'siteManager' || 
            userSiteRole === 'safetyManager' || 
-           userSiteRole === 'safetyEngineer';
+           userSiteRole === 'safetyEngineer' ||
+           userSiteRole === 'admin';
   }
 
   // 檢查當前使用者是否有權限新增工安巡迴檢查表
@@ -1179,7 +1184,8 @@ export class SiteFormListComponent implements AfterViewInit {
     
     // 只有環安主管、環安工程師可以新增工安巡迴檢查表
     return userSiteRole === 'safetyManager' || 
-           userSiteRole === 'safetyEngineer';
+           userSiteRole === 'safetyEngineer' ||
+           userSiteRole === 'admin';
   }
 
   // 檢查當前使用者是否有權限新增教育訓練
