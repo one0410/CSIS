@@ -624,16 +624,14 @@ export class SitePermitFormComponent implements OnInit {
     }
   }
 
-  // 生成時間選項 (06:00 到 20:00，每30分鐘)
+  // 生成時間選項 (00:00 到 23:30，每30分鐘)
   private generateTimeOptions(): void {
     this.timeOptions = [];
-    for (let hour = 6; hour <= 20; hour++) {
+    for (let hour = 0; hour <= 23; hour++) {
       // 整點
       this.timeOptions.push(`${hour.toString().padStart(2, '0')}:00`);
-      // 半點 (除了最後一個小時)
-      if (hour < 20) {
-        this.timeOptions.push(`${hour.toString().padStart(2, '0')}:30`);
-      }
+      // 半點
+      this.timeOptions.push(`${hour.toString().padStart(2, '0')}:30`);
     }
   }
 

@@ -40,14 +40,19 @@
   @if (currentTab === 1) {
   <!-- 固定頂端提醒區塊（移到 card 外層） -->
   <div class="sticky-top d-print-none">
-    <div class="alert alert-warning d-flex align-items-start mb-3 py-2">
-      <i class="fas fa-info-circle me-2 mt-1"></i>
-      <div class="small lh-base">
-        監工單位為廠商<br />
-        監工為廠商之監工<br />
-        申請單位主管與申請人為廠商<br />
-        審核與核准為帆宣
+    <div class="alert alert-warning d-flex align-items-start justify-content-between mb-3 py-2">
+      <div class="d-flex align-items-start">
+        <i class="fas fa-info-circle me-2 mt-1"></i>
+        <div class="small lh-base">
+          監工單位為廠商<br />
+          監工為廠商之監工<br />
+          申請單位主管與申請人為廠商<br />
+          審核與核准為帆宣
+        </div>
       </div>
+      <button type="button" class="btn btn-sm btn-secondary ms-3" (click)="cancel()">
+        <i class="fas fa-arrow-left me-1"></i>返回列表
+      </button>
     </div>
   </div>
   <div class="card form-card shadow-sm">
@@ -58,30 +63,6 @@
         <!-- 表單頭部 -->
         <app-site-form-header title="工作許可單"></app-site-form-header>
         <form #permitForm="ngForm" class="mb-3">
-          <!-- 在查看模式下添加返回按鈕 -->
-          @if (isViewMode) {
-          <div class="alert alert-info mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <span>您正在查看表單。此表單狀態為：{{
-                permitData.status === "draft"
-                ? "草稿"
-                : permitData.status === "pending"
-                ? "待審核"
-                : permitData.status === "approved"
-                ? "已核准"
-                : permitData.status === "rejected"
-                ? "已拒絕"
-                : "未知"
-                }}</span>
-              <div class="d-flex gap-2">
-                <button type="button" class="btn btn-secondary" (click)="cancel()">
-                  <i class="fas fa-arrow-left me-1"></i>返回列表
-                </button>
-              </div>
-            </div>
-          </div>
-          }
-
           <!-- 申請類型選項 -->
           <div class="mb-0 p-2">
             <div class="form-check form-check-inline">
