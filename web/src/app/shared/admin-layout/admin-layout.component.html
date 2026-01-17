@@ -1,9 +1,11 @@
 <div class="d-flex flex-column vh-100">
   <!-- 頂部導航欄組件 -->
-  <app-top-bar (menuToggle)="toggleMenu()"></app-top-bar>
+  <header>
+    <app-top-bar (menuToggle)="toggleMenu()"></app-top-bar>
+  </header>
 
   <!-- 內容區域 - 不包含側邊選單 -->
-  <div class="flex-fill" style="overflow-y: auto">
+  <main class="flex-fill" style="overflow-y: auto">
     <router-outlet></router-outlet>
-  </div>
-</div> 
+  </main>
+</div>
