@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 
 import { Site } from '../site-list.component';
 import { MongodbService } from '../../services/mongodb.service';
@@ -14,8 +14,7 @@ import { ContractorWorkerChartComponent } from './contractor-worker-chart/contra
 import { ContractorViolationChartComponent } from './contractor-violation-chart/contractor-violation-chart.component';
 import { ViolationTypeChartComponent } from './violation-type-chart/violation-type-chart.component';
 import { TodayContractorViolationChartComponent } from './today-contractor-violation-chart/today-contractor-violation-chart.component';
-import { TodayViolationTypeChartComponent } from './today-violation-type-chart/today-violation-type-chart.component';
-import { FlawTrendChartComponent } from './flaw-trend-chart/flaw-trend-chart.component';
+import { TodayScheduleChartComponent } from './today-schedule-chart/today-schedule-chart.component';
 import dayjs from 'dayjs';
 
 // 作業類別統計介面
@@ -36,6 +35,16 @@ interface ContractorWorkerStat {
   percentage: number;
 }
 
+// 環境監測數據介面
+interface EnvironmentData {
+  temperature: number;
+  humidity: number;
+  windSpeed: number;
+  pm25: number;
+  pm10: number;
+  noise: number;
+}
+
 @Component({
   selector: 'app-site-dashboard',
   imports: [
@@ -46,17 +55,24 @@ interface ContractorWorkerStat {
     ContractorViolationChartComponent,
     ViolationTypeChartComponent,
     TodayContractorViolationChartComponent,
-    TodayViolationTypeChartComponent,
-    FlawTrendChartComponent,
-    CommonModule
+    TodayScheduleChartComponent,
+    CommonModule,
+    DatePipe
   ],
   templateUrl: './site-dashboard.component.html',
   styleUrl: './site-dashboard.component.scss',
 })
-export class SiteDashboardComponent implements OnInit {
+export class SiteDashboardComponent implements OnInit, OnDestroy {
   siteId: string = '';
   site: Site | null = null;
 
+  // 日期時間顯示
+  currentDateTime: string = '';
+  todayDateShort: string = '';
+  tomorrowDateShort: string = '';
+  private timeInterval: ReturnType<typeof setInterval> | null = null;
+
+  // 舊有屬性（保持相容）
   todayDate: string = '';
   todayWeekday: string = '';
   allProjectDays: number = 0;
@@ -66,12 +82,26 @@ export class SiteDashboardComponent implements OnInit {
   todayFlawCount: number = 0;
   currentProjectProgress: number = 0;
   todayWeather: string = '';
-  
+
+  // 環境監測數據
+  environmentData: EnvironmentData = {
+    temperature: 0,
+    humidity: 0,
+    windSpeed: 0,
+    pm25: 0,
+    pm10: 0,
+    noise: 0
+  };
+
   // 許可單作業類別統計
   permitCategoryStats: PermitCategoryStat[] = [];
-  
+
   // 廠商工人統計
   contractorWorkerStats: ContractorWorkerStat[] = [];
+
+  // 明日預計出工統計
+  tomorrowWorkerStats: ContractorWorkerStat[] = [];
+  tomorrowTotalWorkers: number = 0;
 
   constructor(
     private route: ActivatedRoute,
@@ -80,23 +110,13 @@ export class SiteDashboardComponent implements OnInit {
     private weatherService: WeatherService,
     private workerCountService: WorkerCountService
   ) {
-    const today = new Date();
-    // 取得瀏覽器預設語系，如果沒有則使用繁體中文
-    const locale = navigator.language || 'zh-TW';
-    
-    // 設定日期格式（使用繁體中文格式）
-    this.todayDate = today.toLocaleDateString('zh-TW', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-    // 設定星期幾，使用瀏覽器語系以支援不同語系
-    this.todayWeekday = today.toLocaleDateString(locale, {
-      weekday: 'long',
-    });
+    this.updateDateTime();
   }
 
   ngOnInit() {
+    // 每秒更新時間
+    this.timeInterval = setInterval(() => this.updateDateTime(), 1000);
+
     // 從父路由獲取工地ID
     const parent = this.route.parent;
     if (parent) {
@@ -123,8 +143,8 @@ export class SiteDashboardComponent implements OnInit {
               ) + 1;
             if (this.todayProjectDays < 0) this.todayProjectDays = 0;
 
-            // 天氣
-            this.getWeather();
+            // 天氣與環境數據
+            this.getWeatherAndEnvironment();
 
             // 計算許可單數
             this.calculatePermitCount();
@@ -135,87 +155,79 @@ export class SiteDashboardComponent implements OnInit {
             // 計算當前工程進度
             this.calculateCurrentProgress();
 
-            // 移除零事故時數計算，改用獨立元件
-
             // 計算廠商工人統計
             this.calculateWorkerStats();
+
+            // 計算明日預計出工
+            this.calculateTomorrowWorkerStats();
           }
         }
       });
     }
   }
 
-  async getWeather() {
+  ngOnDestroy() {
+    if (this.timeInterval) {
+      clearInterval(this.timeInterval);
+    }
+  }
+
+  // 更新日期時間顯示
+  private updateDateTime(): void {
+    const now = dayjs();
+    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+    const weekday = weekdays[now.day()];
+
+    // 格式: 2025/09/23(二) 下午05:20
+    const hour = now.hour();
+    const period = hour < 12 ? '上午' : '下午';
+    const hour12 = hour % 12 || 12;
+
+    this.currentDateTime = `${now.format('YYYY/MM/DD')}(${weekday}) ${period}${hour12.toString().padStart(2, '0')}:${now.format('mm')}`;
+
+    // 短日期格式: 9/23
+    this.todayDateShort = now.format('M/D');
+    this.tomorrowDateShort = now.add(1, 'day').format('M/D');
+
+    // 設定舊有的日期格式（保持相容）
+    this.todayDate = now.format('YYYY/MM/DD');
+    this.todayWeekday = `星期${weekday}`;
+  }
+
+  async getWeatherAndEnvironment() {
     if (!this.site || !this.site.county) {
       this.todayWeather = '無天氣資訊';
       return;
     }
 
     try {
-      // 使用新的天氣服務獲取天氣文字
-      this.todayWeather = await this.weatherService.getWeatherText(this.site.county);
-      
-      // 獲取完整天氣數據用於更新天氣圖標
+      // 使用天氣服務獲取天氣數據
       const weatherData = await this.weatherService.getWeather(this.site.county);
-      this.updateWeatherIcon(weatherData.current.condition.icon);
+      this.todayWeather = await this.weatherService.getWeatherText(this.site.county);
+
+      // 更新環境監測數據
+      this.environmentData = {
+        temperature: weatherData.current.temp_c || 0,
+        humidity: weatherData.current.humidity || 0,
+        windSpeed: weatherData.current.wind_kph || 0,
+        pm25: weatherData.current.air_quality?.pm2_5 || 0,
+        pm10: weatherData.current.air_quality?.pm10 || 0,
+        noise: 0 // 噪音數據需要從其他來源獲取，目前設為0
+      };
+
     } catch (error) {
       console.error('獲取天氣資訊時出錯:', error);
       this.todayWeather = '無法獲取天氣資訊';
+      // 設定預設值
+      this.environmentData = {
+        temperature: 0,
+        humidity: 0,
+        windSpeed: 0,
+        pm25: 0,
+        pm10: 0,
+        noise: 0
+      };
     }
-  }
-
-  // 更新天氣圖標
-  private updateWeatherIcon(weatherIconUrl: string): void {
-    setTimeout(() => {
-      // 先查找新的版面結構
-      let weatherIconElement = document.querySelector('.weather-icon i');
-
-      if (weatherIconElement) {
-        // 找到父元素
-        const parentElement = weatherIconElement.parentElement;
-        if (parentElement) {
-          // 移除Bootstrap圖標元素
-          parentElement.innerHTML = '';
-
-          // 創建並添加圖片元素
-          const imgElement = document.createElement('img');
-          // 使用API提供的天氣圖標URL
-          imgElement.src = weatherIconUrl;
-          imgElement.alt = this.todayWeather;
-          imgElement.style.width = '64px';
-          imgElement.style.height = '64px';
-
-          // 將圖片添加到父元素
-          parentElement.appendChild(imgElement);
-        }
-      } else {
-        // 嘗試查找舊版面結構
-        weatherIconElement = document.querySelector(
-          '.col-12.col-md-4 .card .value .bi'
-        );
-        if (weatherIconElement && weatherIconElement.parentElement) {
-          const parentElement = weatherIconElement.parentElement;
-
-          // 移除Bootstrap圖標元素
-          weatherIconElement.remove();
-
-          // 創建並添加圖片元素
-          const imgElement = document.createElement('img');
-          imgElement.src = 'https:' + weatherIconUrl;
-          imgElement.alt = this.todayWeather;
-          imgElement.style.width = '48px';
-          imgElement.style.height = '48px';
-          imgElement.style.marginRight = '8px';
-
-          // 將圖片插入到原位置
-          if (parentElement.firstChild) {
-            parentElement.insertBefore(imgElement, parentElement.firstChild);
-          } else {
-            parentElement.appendChild(imgElement);
-          }
-        }
-      }
-    }, 0);
   }
 
   async calculatePermitCount() {
@@ -224,7 +236,7 @@ export class SiteDashboardComponent implements OnInit {
     try {
       // 使用今天的日期作為基準
       const today = dayjs().format('YYYY-MM-DD');
-      
+
       // 獲取許可單，條件為：工作時間包含今天
       const permits = await this.mongodbService.getArray('siteForm', {
         formType: 'sitePermit',
@@ -234,9 +246,9 @@ export class SiteDashboardComponent implements OnInit {
           { workEndTime: { $gte: today } }     // 結束時間在今天或之後
         ]
       });
-      
+
       this.todayPermitCount = permits.length;
-      
+
       console.log('📋 許可單查詢結果:', {
         數量: permits.length,
         許可單資料: permits.map((p: any) => ({
@@ -246,7 +258,7 @@ export class SiteDashboardComponent implements OnInit {
           workEndTime: p.workEndTime
         }))
       });
-      
+
       // 統計作業類別 - 使用 selectedCategories 陣列
       const categoryCountMap = new Map<string, number>();
       permits.forEach((permit: any) => {
@@ -258,17 +270,17 @@ export class SiteDashboardComponent implements OnInit {
             }
           });
         }
-        
+
         // 處理其他作業類別
         if (permit.otherWork && permit.otherWorkContent && permit.otherWorkContent.trim()) {
           const otherCategory = `其他: ${permit.otherWorkContent}`;
           categoryCountMap.set(otherCategory, (categoryCountMap.get(otherCategory) || 0) + 1);
         }
       });
-      
+
       // 獲取作業類別配置
       const categoryConfigs = this.getPermitCategoryConfigs();
-      
+
       // 轉換為統計數據
       const stats: PermitCategoryStat[] = [];
       categoryCountMap.forEach((count, category) => {
@@ -281,17 +293,17 @@ export class SiteDashboardComponent implements OnInit {
           icon: config.icon
         });
       });
-      
+
       // 按數量降序排列
       stats.sort((a, b) => b.count - a.count);
       this.permitCategoryStats = stats;
-      
+
       console.log('📊 許可單統計:', {
         總數: this.todayPermitCount,
         作業類別統計: stats,
         類別計數Map: Array.from(categoryCountMap.entries())
       });
-      
+
     } catch (error) {
       console.error('計算許可單數時出錯:', error);
       this.permitCategoryStats = [];
@@ -396,10 +408,10 @@ export class SiteDashboardComponent implements OnInit {
       tasks.forEach((task: any) => {
         if (task.progressHistory && task.progressHistory.length > 0) {
           // 尋找今天或最近的歷史記錄
-          const sortedHistory = [...task.progressHistory].sort((a: any, b: any) => 
+          const sortedHistory = [...task.progressHistory].sort((a: any, b: any) =>
             new Date(a.date).getTime() - new Date(b.date).getTime()
           );
-          
+
           let taskProgress = 0;
           for (const record of sortedHistory) {
             if (new Date(record.date) <= today) {
@@ -408,7 +420,7 @@ export class SiteDashboardComponent implements OnInit {
               break;
             }
           }
-          
+
           totalProgress += taskProgress;
           taskCount++;
         } else if (task.progress !== undefined) {
@@ -419,7 +431,7 @@ export class SiteDashboardComponent implements OnInit {
       });
 
       // 計算平均進度並四捨五入到一位小數
-      this.currentProjectProgress = taskCount > 0 ? 
+      this.currentProjectProgress = taskCount > 0 ?
         Math.round((totalProgress / taskCount) * 10) / 10 : 0;
 
     } catch (error) {
@@ -427,8 +439,6 @@ export class SiteDashboardComponent implements OnInit {
       this.currentProjectProgress = 0;
     }
   }
-
-
 
   // 計算廠商工人統計
   async calculateWorkerStats(): Promise<void> {
@@ -439,7 +449,7 @@ export class SiteDashboardComponent implements OnInit {
 
       // 使用今天的日期作為基準
       const today = dayjs().format('YYYY-MM-DD');
-      
+
       // 獲取今日廠商工人計數資料
       const workerCounts = await this.workerCountService.getDailyContractorWorkerCount(this.siteId, today);
 
@@ -454,7 +464,7 @@ export class SiteDashboardComponent implements OnInit {
       const stats: ContractorWorkerStat[] = workerCounts.map((wc: ContractorWorkerCount) => {
         const percentage = totalWorkerCount > 0 ? (wc.workerCount / totalWorkerCount) * 100 : 0;
         const config = contractorConfigs[wc.contractorName] || contractorConfigs['default'];
-        
+
         return {
           contractorName: wc.contractorName,
           workerCount: wc.workerCount,
@@ -480,40 +490,68 @@ export class SiteDashboardComponent implements OnInit {
     }
   }
 
+  // 計算明日預計出工統計
+  async calculateTomorrowWorkerStats(): Promise<void> {
+    if (!this.siteId || !this.site) return;
+
+    try {
+      console.log('👷 Dashboard: 計算明日預計出工統計...');
+
+      // 使用明天的日期
+      const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD');
+
+      // 獲取明日廠商工人計數資料
+      const workerCounts = await this.workerCountService.getDailyContractorWorkerCount(this.siteId, tomorrow);
+
+      // 計算總工人數
+      const totalWorkerCount = workerCounts.reduce((sum: number, wc: ContractorWorkerCount) => sum + wc.workerCount, 0);
+      this.tomorrowTotalWorkers = totalWorkerCount;
+
+      // 獲取廠商顏色配置
+      const contractorConfigs = this.getContractorConfigs();
+
+      // 計算每個廠商的統計數據
+      const stats: ContractorWorkerStat[] = workerCounts.map((wc: ContractorWorkerCount) => {
+        const percentage = totalWorkerCount > 0 ? (wc.workerCount / totalWorkerCount) * 100 : 0;
+        const config = contractorConfigs[wc.contractorName] || contractorConfigs['default'];
+
+        return {
+          contractorName: wc.contractorName,
+          workerCount: wc.workerCount,
+          color: config.color,
+          icon: config.icon,
+          percentage: Math.round(percentage * 10) / 10
+        };
+      });
+
+      // 按工人數量降序排列
+      stats.sort((a, b) => b.workerCount - a.workerCount);
+      this.tomorrowWorkerStats = stats;
+
+      console.log('📊 明日預計出工統計:', {
+        預計總工人數: totalWorkerCount,
+        廠商統計: stats
+      });
+
+    } catch (error) {
+      console.error('計算明日預計出工統計時出錯:', error);
+      this.tomorrowWorkerStats = [];
+      this.tomorrowTotalWorkers = 0;
+    }
+  }
+
   // 獲取廠商配置
   private getContractorConfigs(): Record<string, {color: string, icon: string}> {
+    // 使用一組預設顏色，會根據順序分配
+    const defaultColors = [
+      '#007bff', '#dc3545', '#28a745', '#ffc107', '#17a2b8',
+      '#6f42c1', '#fd7e14', '#e83e8c', '#20c997', '#6c757d'
+    ];
+
     return {
       '帆宣系統科技股份有限公司': {
         color: '#007bff',
         icon: 'fas fa-building'
-      },
-      '廠商A': {
-        color: '#dc3545',
-        icon: 'fas fa-users'
-      },
-      '廠商B': {
-        color: '#28a745',
-        icon: 'fas fa-hard-hat'
-      },
-      '廠商C': {
-        color: '#ffc107',
-        icon: 'fas fa-tools'
-      },
-      '廠商D': {
-        color: '#17a2b8',
-        icon: 'fas fa-industry'
-      },
-      '廠商E': {
-        color: '#6f42c1',
-        icon: 'fas fa-wrench'
-      },
-      '廠商F': {
-        color: '#fd7e14',
-        icon: 'fas fa-hammer'
-      },
-      '廠商G': {
-        color: '#e83e8c',
-        icon: 'fas fa-cogs'
       },
       'default': {
         color: '#6c757d',
@@ -539,6 +577,4 @@ export class SiteDashboardComponent implements OnInit {
         break;
     }
   }
-
-
 }

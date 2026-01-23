@@ -1,266 +1,235 @@
 <main class="dashboard-container">
-  <!-- 頂部統計卡片區 -->
-  <header class="dashboard-header">
-    <!-- 日期卡片 -->
-    <article class="info-card">
-      <h2 class="card-title">今日日期</h2>
-      <div class="card-content">
-        <p class="large-value">{{ todayDate }}</p>
-        <p class="large-value">{{ todayWeekday }}</p>
-      </div>
-    </article>
-
-    <!-- 工程進度卡片 -->
-    <article class="info-card">
-      <h2 class="card-title">工程進度</h2>
-      <div class="card-content">
-        <figure class="progress-banner">
-          <div class="progress-icon">
-            <i class="fas fa-chart-bar" aria-hidden="true"></i>
-          </div>
-          <figcaption class="progress-details">
-            <data class="progress-value" [value]="currentProjectProgress">{{ currentProjectProgress }}%</data>
-            <div class="progress-bar" role="progressbar" [attr.aria-valuenow]="currentProjectProgress" aria-valuemin="0" aria-valuemax="100" aria-label="工程進度">
-              <div class="progress-fill" [style.width]="currentProjectProgress + '%'"></div>
-            </div>
-          </figcaption>
-        </figure>
-
-        <!-- 工程日數資訊 -->
-        <dl class="timeline-info">
-          <div class="stat-card">
-            <dd class="stat-value">{{ allProjectDays }}</dd>
-            <dt class="stat-label">總工程日數</dt>
-          </div>
-          <div class="timeline-separator">
-            <div class="timeline-line"></div>
-          </div>
-          <div class="stat-card">
-            <dd class="stat-value">{{ todayProjectDays }}</dd>
-            <dt class="stat-label">已過日數</dt>
-            <dd class="stat-subtitle">
-              {{ ((todayProjectDays / allProjectDays) * 100).toFixed(1) }}%
-            </dd>
-          </div>
-        </dl>
-      </div>
-    </article>
-
-    <!-- 天氣資訊卡 -->
-    <article class="info-card" (click)="navigateTo('weather')" [class.clickable]="true" title="點擊後查看今日天氣詳細資訊" role="button" tabindex="0">
-      <h2 class="card-title">
-        今日天氣({{ site?.county }})
-        <span class="info-icon-right"><i class="fas fa-info-circle" title="顯示目前工地所在區域的天氣資訊" aria-hidden="true"></i></span>
-      </h2>
-      <div class="card-content weather-content">
-        <div class="weather-icon">
-          <i class="fas fa-cloud-sun" aria-hidden="true"></i>
-        </div>
-        <data class="weather-value">{{ todayWeather }}</data>
-      </div>
-      <!-- 展開圖示 -->
-      <div class="expand-icon" aria-hidden="true">
-        <i class="fas fa-external-link-alt"></i>
-      </div>
-    </article>
+  <!-- 頂部時間顯示 -->
+  <header class="dashboard-time-header">
+    <time class="current-datetime">{{ currentDateTime }}</time>
   </header>
 
-  <!-- 其他統計資訊 -->
-  <section class="stats-grid" aria-label="統計資訊">
-    <app-zero-accident-hours>
-    </app-zero-accident-hours>
-
-    <article class="info-card" (click)="navigateTo('permit')" [class.clickable]="true" title="點擊後查看許可單統計詳細資訊" role="button" tabindex="0">
-      <h2 class="card-title">
-        許可單統計
-        <span class="info-icon-right"><i class="fas fa-info-circle" title="顯示今日許可單數量統計" aria-hidden="true"></i></span>
-      </h2>
+  <!-- 第一區塊：即時資訊 -->
+  <section class="dashboard-section" aria-label="即時資訊">
+    <!-- 環境監測指標 -->
+    <article class="info-card environment-card" (click)="navigateTo('weather')" [class.clickable]="true" role="button" tabindex="0">
+      <h2 class="card-title">環境監測指標</h2>
       <div class="card-content">
-        <!-- 總數顯示 -->
-        <div class="stat-content mb-3">
-          <div class="stat-tile-icon">
-            <i class="fas fa-file-circle-check" aria-hidden="true"></i>
+        <div class="environment-grid">
+          <!-- 溫度 -->
+          <div class="env-item">
+            <div class="env-icon temperature">
+              <i class="fas fa-thermometer-half" aria-hidden="true"></i>
+            </div>
+            <div class="env-value">{{ environmentData.temperature }}°C</div>
+            <div class="env-label">溫度</div>
           </div>
-          <data class="large-value" [value]="todayPermitCount">{{ todayPermitCount }}</data>
-          <p class="stat-subtitle">今日許可單數</p>
+          <!-- 濕度 -->
+          <div class="env-item">
+            <div class="env-icon humidity">
+              <i class="fas fa-tint" aria-hidden="true"></i>
+            </div>
+            <div class="env-value">{{ environmentData.humidity }}%</div>
+            <div class="env-label">濕度</div>
+          </div>
+          <!-- 風速 -->
+          <div class="env-item">
+            <div class="env-icon wind">
+              <i class="fas fa-wind" aria-hidden="true"></i>
+            </div>
+            <div class="env-value">{{ environmentData.windSpeed }}km/h</div>
+            <div class="env-label">風速</div>
+          </div>
+          <!-- PM2.5 -->
+          <div class="env-item">
+            <div class="env-icon pm25" [class.warning]="environmentData.pm25 > 35" [class.danger]="environmentData.pm25 > 75">
+              <i class="fas fa-smog" aria-hidden="true"></i>
+            </div>
+            <div class="env-value">{{ environmentData.pm25 }}</div>
+            <div class="env-label">PM2.5 μg/m³</div>
+          </div>
+          <!-- PM10 -->
+          <div class="env-item">
+            <div class="env-icon pm10" [class.warning]="environmentData.pm10 > 50" [class.danger]="environmentData.pm10 > 100">
+              <i class="fas fa-cloud" aria-hidden="true"></i>
+            </div>
+            <div class="env-value">{{ environmentData.pm10 }}</div>
+            <div class="env-label">PM10 μg/m³</div>
+          </div>
+          <!-- 噪音 -->
+          <div class="env-item">
+            <div class="env-icon noise">
+              <i class="fas fa-volume-up" aria-hidden="true"></i>
+            </div>
+            <div class="env-value">{{ environmentData.noise }}dB</div>
+            <div class="env-label">噪音</div>
+          </div>
         </div>
-
-        <!-- 作業類別統計 -->
-        @if (permitCategoryStats.length > 0) {
-        <aside class="category-stats">
-          <header class="category-stats-header">
-            <small class="text-muted">
-              <i class="fas fa-chart-pie me-1" aria-hidden="true"></i>作業類別分佈
-            </small>
-          </header>
-          <ul class="category-stats-list">
-            @for (stat of permitCategoryStats.slice(0, 5); track stat.category) {
-            <li class="category-item">
-              <span class="category-info">
-                <i [class]="stat.icon" [style.color]="stat.color" aria-hidden="true"></i>
-                <span class="category-name">{{ stat.displayName }}</span>
-              </span>
-              <data class="category-count badge" [style.background-color]="stat.color" [value]="stat.count">
-                {{ stat.count }}
-              </data>
-            </li>
-            }
-            @if (permitCategoryStats.length > 5) {
-            <li class="category-item text-muted">
-              <span class="category-name">
-                <i class="fas fa-ellipsis-h me-1" aria-hidden="true"></i>
-                還有 {{ permitCategoryStats.length - 5 }} 種作業類別
-              </span>
-            </li>
-            }
-          </ul>
-        </aside>
-        } @else if (todayPermitCount === 0) {
-        <p class="text-center text-muted mt-2">
-          <small>今日無許可單作業</small>
-        </p>
-        } @else if (todayPermitCount > 0 && permitCategoryStats.length === 0) {
-        <p class="text-center text-muted mt-2">
-          <small>許可單無作業類別資料</small>
-        </p>
-        }
       </div>
-      <!-- 展開圖示 -->
       <div class="expand-icon" aria-hidden="true">
         <i class="fas fa-external-link-alt"></i>
       </div>
     </article>
 
-    <article class="info-card">
-      <h2 class="card-title">人員統計</h2>
+    <!-- 今日即時出工狀況 -->
+    <article class="info-card worker-status-card">
+      <h2 class="card-title">{{ todayDateShort }}(今日)即時出工狀況</h2>
       <div class="card-content">
-        <!-- 總數顯示 -->
-        <div class="stat-content mb-3">
-          <div class="stat-tile-icon">
-            <i class="fas fa-users" aria-hidden="true"></i>
-          </div>
-          <data class="large-value" [value]="todayWorkerCount">{{ todayWorkerCount }}</data>
-          <p class="stat-subtitle">今日工地人數</p>
+        <div class="worker-status-list">
+          @for (stat of contractorWorkerStats; track stat.contractorName) {
+            <div class="worker-row">
+              <div class="worker-icon">
+                <i class="fas fa-hard-hat" [style.color]="stat.color" aria-hidden="true"></i>
+              </div>
+              <span class="contractor-label">{{ stat.contractorName }}</span>
+              <span class="worker-count-badge" [style.background-color]="stat.color">{{ stat.workerCount }}人</span>
+            </div>
+          }
+          @if (contractorWorkerStats.length === 0) {
+            <div class="no-data">今日無工人出工記錄</div>
+          }
         </div>
-
-        <!-- 廠商統計 -->
-        @if (contractorWorkerStats.length > 0) {
-        <aside class="contractor-stats">
-          <header class="contractor-stats-header">
-            <small class="text-muted">
-              <i class="fas fa-building me-1" aria-hidden="true"></i>廠商人數分佈
-            </small>
-          </header>
-          <ul class="contractor-stats-list">
-            @for (stat of contractorWorkerStats.slice(0, 5); track stat.contractorName) {
-            <li class="contractor-item">
-              <span class="contractor-info">
-                <i [class]="stat.icon" [style.color]="stat.color" aria-hidden="true"></i>
-                <span class="contractor-name" [title]="stat.contractorName">{{ stat.contractorName }}</span>
-              </span>
-              <span class="contractor-count-info">
-                <data class="contractor-count badge" [style.background-color]="stat.color" [value]="stat.workerCount">
-                  {{ stat.workerCount }}
-                </data>
-                <small class="contractor-percentage text-muted">{{ stat.percentage }}%</small>
-              </span>
-            </li>
-            }
-            @if (contractorWorkerStats.length > 5) {
-            <li class="contractor-item text-muted">
-              <span class="contractor-name">
-                <i class="fas fa-ellipsis-h me-1" aria-hidden="true"></i>
-                還有 {{ contractorWorkerStats.length - 5 }} 個廠商
-              </span>
-            </li>
-            }
-          </ul>
-        </aside>
-        } @else if (todayWorkerCount === 0) {
-        <p class="text-center text-muted mt-2">
-          <small>今日無工人出工記錄</small>
-        </p>
-        }
+        <div class="total-workers">
+          <span>總計：</span>
+          <strong>{{ todayWorkerCount }}人</strong>
+        </div>
       </div>
     </article>
 
-    <article class="info-card" (click)="navigateTo('flaw')" [class.clickable]="true" title="點擊後查看缺失統計詳細資訊" role="button" tabindex="0">
-      <h2 class="card-title">
-        缺失統計
-        <span class="info-icon-right"><i class="fas fa-info-circle" title="顯示今日缺失單數量統計" aria-hidden="true"></i></span>
-      </h2>
-      <div class="card-content stat-content">
-        <div class="stat-tile-icon">
-          <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+    <!-- 許可單統計 -->
+    <article class="info-card permit-card" (click)="navigateTo('permit')" [class.clickable]="true" role="button" tabindex="0">
+      <h2 class="card-title">許可單統計</h2>
+      <div class="card-content">
+        <div class="permit-header">
+          <div class="permit-total">
+            <span class="permit-label">今日有效許可單</span>
+            <span class="permit-count">{{ todayPermitCount }}件</span>
+          </div>
         </div>
-        <data class="large-value" [value]="todayFlawCount">{{ todayFlawCount }}</data>
-        <p class="stat-subtitle">今日缺失單數</p>
+        <ul class="permit-category-list">
+          @for (stat of permitCategoryStats; track stat.category) {
+            <li class="permit-item">
+              <i [class]="stat.icon" [style.color]="stat.color" aria-hidden="true"></i>
+              <span class="permit-name">{{ stat.displayName }}</span>
+              <span class="permit-badge" [style.background-color]="stat.color">{{ stat.count }}件</span>
+            </li>
+          }
+          @if (permitCategoryStats.length === 0 && todayPermitCount === 0) {
+            <li class="no-data">今日無許可單作業</li>
+          }
+        </ul>
       </div>
-      <!-- 展開圖示 -->
       <div class="expand-icon" aria-hidden="true">
         <i class="fas fa-external-link-alt"></i>
       </div>
     </article>
   </section>
 
-  <!-- 圖表區域 -->
-  <section class="charts-container" aria-label="統計圖表">
-    <!-- 新增的四個圖表卡片 -->
+  <!-- 第二區塊：今日統計圖表 -->
+  <section class="dashboard-section" aria-label="今日統計">
+    <!-- 今日各承攬商違規次數統計 -->
     <article class="info-card">
-      <h2 class="card-title">每月累積出工人數</h2>
-      <div class="card-content">
-        <app-monthly-worker-chart [siteId]="siteId"></app-monthly-worker-chart>
-      </div>
-    </article>
-
-    <article class="info-card">
-      <h2 class="card-title">當月各供應商累積出工人數</h2>
-      <div class="card-content">
-        <app-contractor-worker-chart [siteId]="siteId"></app-contractor-worker-chart>
-      </div>
-    </article>
-
-    <article class="info-card">
-      <h2 class="card-title">今日各供應商違規次數統計</h2>
-      <div class="card-content">
+      <h2 class="card-title">今日各承攬商違規次數統計</h2>
+      <div class="card-content chart-content">
         <app-today-contractor-violation-chart [siteId]="siteId"></app-today-contractor-violation-chart>
       </div>
     </article>
 
+    <!-- 今日進度預計施作 -->
+    <article class="info-card">
+      <h2 class="card-title">今日進度預計施作</h2>
+      <div class="card-content chart-content">
+        <app-today-schedule-chart [siteId]="siteId"></app-today-schedule-chart>
+      </div>
+    </article>
+
+    <!-- 明日預計出工狀況 -->
+    <article class="info-card tomorrow-worker-card">
+      <h2 class="card-title">{{ tomorrowDateShort }}(明日)預計出工狀況</h2>
+      <div class="card-content">
+        <div class="worker-status-list">
+          @for (stat of tomorrowWorkerStats; track stat.contractorName) {
+            <div class="worker-row">
+              <div class="worker-icon">
+                <i class="fas fa-hard-hat" [style.color]="stat.color" aria-hidden="true"></i>
+              </div>
+              <span class="contractor-label">{{ stat.contractorName }}</span>
+              <span class="worker-count-badge" [style.background-color]="stat.color">{{ stat.workerCount }}人</span>
+            </div>
+          }
+          @if (tomorrowWorkerStats.length === 0) {
+            <div class="no-data">明日無預計出工記錄</div>
+          }
+        </div>
+        <div class="total-workers">
+          <span>預計總計：</span>
+          <strong>{{ tomorrowTotalWorkers }}人</strong>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- 第三區塊：月報表統計 -->
+  <section class="dashboard-section" aria-label="月報表統計">
+    <!-- 每月累積出工人數 -->
+    <article class="info-card">
+      <h2 class="card-title">每月累積出工人數</h2>
+      <div class="card-content chart-content">
+        <app-monthly-worker-chart [siteId]="siteId"></app-monthly-worker-chart>
+      </div>
+    </article>
+
+    <!-- 當月各供應商累積出工人數 -->
+    <article class="info-card">
+      <h2 class="card-title">當月各供應商累積出工人數</h2>
+      <div class="card-content chart-content">
+        <app-contractor-worker-chart [siteId]="siteId"></app-contractor-worker-chart>
+      </div>
+    </article>
+
+    <!-- 工安零事故時數 -->
+    <app-zero-accident-hours></app-zero-accident-hours>
+  </section>
+
+  <!-- 第四區塊：違規與進度統計 -->
+  <section class="dashboard-section" aria-label="違規與進度統計">
+    <!-- 當月各供應商違規次數統計 -->
     <article class="info-card">
       <h2 class="card-title">當月各供應商違規次數統計</h2>
-      <div class="card-content">
+      <div class="card-content chart-content">
         <app-contractor-violation-chart [siteId]="siteId"></app-contractor-violation-chart>
       </div>
     </article>
 
-    <article class="info-card">
-      <h2 class="card-title">今日違規種類統計</h2>
-      <div class="card-content">
-        <app-today-violation-type-chart [siteId]="siteId"></app-today-violation-type-chart>
-      </div>
-    </article>
-
+    <!-- 當月違規種類統計 -->
     <article class="info-card">
       <h2 class="card-title">當月違規種類統計</h2>
-      <div class="card-content">
+      <div class="card-content chart-content">
         <app-violation-type-chart [siteId]="siteId"></app-violation-type-chart>
       </div>
     </article>
 
-    <article class="info-card">
-      <h2 class="card-title">工程進度趨勢</h2>
+    <!-- 工程進度 -->
+    <article class="info-card progress-card">
+      <h2 class="card-title">工程進度</h2>
       <div class="card-content">
-        <app-progress-trend-chart [siteId]="siteId"></app-progress-trend-chart>
+        <div class="progress-summary">
+          <div class="progress-main">
+            <div class="progress-percentage">{{ currentProjectProgress }}%</div>
+            <div class="progress-bar-large">
+              <div class="progress-fill" [style.width.%]="currentProjectProgress"></div>
+            </div>
+          </div>
+          <div class="progress-dates">
+            <div class="date-info">
+              <span class="date-label">自</span>
+              <span class="date-value">{{ site?.startDate | date:'yyyy年M月d日' }}</span>
+            </div>
+            <div class="date-info">
+              <span class="date-label">至</span>
+              <span class="date-value">{{ site?.endDate | date:'yyyy年M月d日' }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="progress-trend">
+          <app-progress-trend-chart [siteId]="siteId"></app-progress-trend-chart>
+        </div>
       </div>
     </article>
-
-    <article class="info-card">
-      <h2 class="card-title">缺失趨勢</h2>
-      <div class="card-content">
-        <app-flaw-trend-chart [siteId]="siteId"></app-flaw-trend-chart>
-      </div>
-    </article>
-
   </section>
 </main>

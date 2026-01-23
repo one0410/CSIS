@@ -9,7 +9,11 @@
       "Bash(timeout /t 15 /nobreak)",
       "Bash(npx ng build:*)",
       "Bash(npm run build:dev:*)",
-      "Bash(unzip:*)"
+      "Bash(unzip:*)",
+      "Bash(yarn build)",
+      "Bash(yarn ng build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(powershell -Command \"yarn ng build 2>&1 | Out-String\")"
     ],
     "deny": [],
     "ask": []
