@@ -49,6 +49,15 @@ export interface RawWorkerCountData {
   contractorCounts: Map<string, Set<string>>;
 }
 
+// 分離主承攬商與供應商的出工統計介面
+export interface SeparatedWorkerCountData {
+  date: string;
+  mainContractorCount: number;           // 主承攬商人數
+  mainContractorWorkers: Set<string>;    // 主承攬商工人名單
+  supplierCounts: Map<string, Set<string>>; // 供應商統計（按公司分組）
+  supplierTotalCount: number;            // 供應商總人數
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -62,7 +71,7 @@ export class WorkerCountService {
    */
   private extractWorkerCountsFromMeetings(meetings: any[]): Map<string, Set<string>> {
     const contractorCountMap = new Map<string, Set<string>>();
-    
+
     for (const meeting of meetings) {
       if (meeting.healthWarnings) {
         // 收集所有4個廠商的簽名陣列
@@ -72,16 +81,16 @@ export class WorkerCountService {
           meeting.healthWarnings.attendeeSubcontractor2Signatures || [],
           meeting.healthWarnings.attendeeSubcontractor3Signatures || []
         ];
-        
+
         for (const signatures of allSignatureArrays) {
           for (const signature of signatures) {
             if (signature && signature.name && signature.signature && signature.company) {
               const companyName = signature.company.trim();
-              
+
               if (!contractorCountMap.has(companyName)) {
                 contractorCountMap.set(companyName, new Set());
               }
-              
+
               // 使用工人姓名作為唯一識別（同一個工人在同一公司只計算一次）
               contractorCountMap.get(companyName)!.add(signature.name);
             }
@@ -89,8 +98,58 @@ export class WorkerCountService {
         }
       }
     }
-    
+
     return contractorCountMap;
+  }
+
+  /**
+   * 從工具箱會議記錄中提取簽名數據，分離主承攬商與供應商
+   * 主承攬商：來自 attendeeMainContractorSignatures
+   * 供應商：來自 attendeeSubcontractor1/2/3Signatures
+   * @param meetings 工具箱會議記錄陣列
+   * @returns 分離後的統計數據
+   */
+  private extractSeparatedWorkerCounts(meetings: any[]): {
+    mainContractorWorkers: Set<string>;
+    supplierCounts: Map<string, Set<string>>;
+  } {
+    const mainContractorWorkers = new Set<string>();
+    const supplierCounts = new Map<string, Set<string>>();
+
+    for (const meeting of meetings) {
+      if (meeting.healthWarnings) {
+        // 主承攬商簽名（第一個陣列）
+        const mainContractorSignatures = meeting.healthWarnings.attendeeMainContractorSignatures || [];
+        for (const signature of mainContractorSignatures) {
+          if (signature && signature.name && signature.signature) {
+            mainContractorWorkers.add(signature.name);
+          }
+        }
+
+        // 供應商/分包商簽名（其他三個陣列）
+        const subcontractorArrays = [
+          meeting.healthWarnings.attendeeSubcontractor1Signatures || [],
+          meeting.healthWarnings.attendeeSubcontractor2Signatures || [],
+          meeting.healthWarnings.attendeeSubcontractor3Signatures || []
+        ];
+
+        for (const signatures of subcontractorArrays) {
+          for (const signature of signatures) {
+            if (signature && signature.name && signature.signature && signature.company) {
+              const companyName = signature.company.trim();
+
+              if (!supplierCounts.has(companyName)) {
+                supplierCounts.set(companyName, new Set());
+              }
+
+              supplierCounts.get(companyName)!.add(signature.name);
+            }
+          }
+        }
+      }
+    }
+
+    return { mainContractorWorkers, supplierCounts };
   }
 
   /**
@@ -167,18 +226,18 @@ export class WorkerCountService {
    */
   async getDailyContractorWorkerCount(siteId: string, date: string): Promise<ContractorWorkerCount[]> {
     const rawData = await this.getWorkerCountData(siteId, date, date);
-    
+
     if (rawData.length === 0) {
       return [];
     }
 
     const dayData = rawData[0];
-    
+
     // 轉換為陣列格式，過濾掉沒有簽名或公司名稱為空的項目
     const counts: ContractorWorkerCount[] = Array.from(dayData.contractorCounts.entries())
-      .filter(([contractorName, workerSet]) => 
-        workerSet.size > 0 && 
-        contractorName && 
+      .filter(([contractorName, workerSet]) =>
+        workerSet.size > 0 &&
+        contractorName &&
         contractorName.trim() !== ''
       )
       .map(([contractorName, workerSet]) => ({
@@ -188,6 +247,63 @@ export class WorkerCountService {
       .sort((a, b) => b.workerCount - a.workerCount);
 
     return counts;
+  }
+
+  /**
+   * 查詢指定日期的分離出工人數統計（區分主承攬商與供應商）
+   * 主承攬商：來自工具箱會議的 attendeeMainContractorSignatures
+   * 供應商：來自工具箱會議的 attendeeSubcontractor1/2/3Signatures
+   * @param siteId 工地ID
+   * @param date 查詢日期 (YYYY-MM-DD)
+   * @returns 分離後的出工統計
+   */
+  async getDailySeparatedWorkerCount(siteId: string, date: string): Promise<SeparatedWorkerCountData> {
+    try {
+      // 建立查詢條件
+      const query = {
+        siteId: siteId,
+        formType: 'toolboxMeeting',
+        applyDate: date
+      };
+
+      const toolboxMeetings = await this.mongodbService.getArray('siteForm', query);
+
+      if (!toolboxMeetings || !Array.isArray(toolboxMeetings) || toolboxMeetings.length === 0) {
+        return {
+          date,
+          mainContractorCount: 0,
+          mainContractorWorkers: new Set(),
+          supplierCounts: new Map(),
+          supplierTotalCount: 0
+        };
+      }
+
+      // 提取分離的工人統計
+      const { mainContractorWorkers, supplierCounts } = this.extractSeparatedWorkerCounts(toolboxMeetings);
+
+      // 計算供應商總人數
+      let supplierTotalCount = 0;
+      supplierCounts.forEach((workers) => {
+        supplierTotalCount += workers.size;
+      });
+
+      return {
+        date,
+        mainContractorCount: mainContractorWorkers.size,
+        mainContractorWorkers,
+        supplierCounts,
+        supplierTotalCount
+      };
+    } catch (error) {
+      console.error('查詢分離出工人數失敗:', error);
+      return {
+        date,
+        mainContractorCount: 0,
+        mainContractorWorkers: new Set(),
+        supplierCounts: new Map(),
+        supplierTotalCount: 0
+      };
+    }
   }
 
   /**

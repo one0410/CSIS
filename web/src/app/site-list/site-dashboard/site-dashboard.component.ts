@@ -6,7 +6,7 @@ import { Site } from '../site-list.component';
 import { MongodbService } from '../../services/mongodb.service';
 import { WeatherService } from '../../services/weather.service';
 
-import { WorkerCountService, ContractorWorkerCount } from '../../services/worker-count.service';
+import { WorkerCountService } from '../../services/worker-count.service';
 import { ProgressTrendChartComponent } from '../../shared/progress-trend-chart/progress-trend-chart.component';
 import { ZeroAccidentHoursComponent } from './zero-accident-hours/zero-accident-hours.component';
 import { MonthlyWorkerChartComponent } from './monthly-worker-chart/monthly-worker-chart.component';
@@ -14,7 +14,8 @@ import { ContractorWorkerChartComponent } from './contractor-worker-chart/contra
 import { ContractorViolationChartComponent } from './contractor-violation-chart/contractor-violation-chart.component';
 import { ViolationTypeChartComponent } from './violation-type-chart/violation-type-chart.component';
 import { TodayContractorViolationChartComponent } from './today-contractor-violation-chart/today-contractor-violation-chart.component';
-import { TodayScheduleChartComponent } from './today-schedule-chart/today-schedule-chart.component';
+import { TodayViolationTypeChartComponent } from './today-violation-type-chart/today-violation-type-chart.component';
+import { HeatIndexGaugeComponent } from './heat-index-gauge/heat-index-gauge.component';
 import dayjs from 'dayjs';
 
 // 作業類別統計介面
@@ -55,7 +56,8 @@ interface EnvironmentData {
     ContractorViolationChartComponent,
     ViolationTypeChartComponent,
     TodayContractorViolationChartComponent,
-    TodayScheduleChartComponent,
+    TodayViolationTypeChartComponent,
+    HeatIndexGaugeComponent,
     CommonModule,
     DatePipe
   ],
@@ -99,9 +101,17 @@ export class SiteDashboardComponent implements OnInit, OnDestroy {
   // 廠商工人統計
   contractorWorkerStats: ContractorWorkerStat[] = [];
 
+  // 供應商與帆宣員工分離統計
+  supplierWorkerCount: number = 0;        // 供應商在案人數
+  mainContractorWorkerCount: number = 0;  // 帆宣員工在案人數
+  supplierContractorStats: ContractorWorkerStat[] = [];  // 供應商詳細統計（不含帆宣）
+
   // 明日預計出工統計
   tomorrowWorkerStats: ContractorWorkerStat[] = [];
   tomorrowTotalWorkers: number = 0;
+  tomorrowSupplierWorkerCount: number = 0;        // 明日供應商預計人數
+  tomorrowMainContractorWorkerCount: number = 0;  // 明日帆宣員工預計人數
+  tomorrowSupplierContractorStats: ContractorWorkerStat[] = [];  // 明日供應商詳細統計
 
   constructor(
     private route: ActivatedRoute,
@@ -235,15 +245,18 @@ export class SiteDashboardComponent implements OnInit, OnDestroy {
 
     try {
       // 使用今天的日期作為基準
-      const today = dayjs().format('YYYY-MM-DD');
+      // workStartTime 和 workEndTime 格式為 "YYYY-MM-DDTHH:mm"
+      // 為了正確比較，使用今天的開始和結束時間
+      const todayStart = dayjs().format('YYYY-MM-DD') + 'T00:00';
+      const todayEnd = dayjs().format('YYYY-MM-DD') + 'T23:59';
 
       // 獲取許可單，條件為：工作時間包含今天
       const permits = await this.mongodbService.getArray('siteForm', {
         formType: 'sitePermit',
         siteId: this.siteId,
         $and: [
-          { workStartTime: { $lte: today } },  // 開始時間在今天或之前
-          { workEndTime: { $gte: today } }     // 結束時間在今天或之後
+          { workStartTime: { $lte: todayEnd } },   // 開始時間在今天結束之前
+          { workEndTime: { $gte: todayStart } }    // 結束時間在今天開始之後
         ]
       });
 
@@ -450,43 +463,64 @@ export class SiteDashboardComponent implements OnInit, OnDestroy {
       // 使用今天的日期作為基準
       const today = dayjs().format('YYYY-MM-DD');
 
-      // 獲取今日廠商工人計數資料
-      const workerCounts = await this.workerCountService.getDailyContractorWorkerCount(this.siteId, today);
+      // 獲取今日分離的工人統計（區分主承攬商與供應商）
+      const separatedData = await this.workerCountService.getDailySeparatedWorkerCount(this.siteId, today);
 
-      // 計算總工人數
-      const totalWorkerCount = workerCounts.reduce((sum: number, wc: ContractorWorkerCount) => sum + wc.workerCount, 0);
-      this.todayWorkerCount = totalWorkerCount;
+      // 設定主承攬商人數（來自工具箱會議的主承攬商簽名區域）
+      this.mainContractorWorkerCount = separatedData.mainContractorCount;
+
+      // 設定供應商人數
+      this.supplierWorkerCount = separatedData.supplierTotalCount;
+
+      // 計算總人數
+      this.todayWorkerCount = this.mainContractorWorkerCount + this.supplierWorkerCount;
 
       // 獲取廠商顏色配置
       const contractorConfigs = this.getContractorConfigs();
 
-      // 計算每個廠商的統計數據
-      const stats: ContractorWorkerStat[] = workerCounts.map((wc: ContractorWorkerCount) => {
-        const percentage = totalWorkerCount > 0 ? (wc.workerCount / totalWorkerCount) * 100 : 0;
-        const config = contractorConfigs[wc.contractorName] || contractorConfigs['default'];
+      // 建立供應商詳細統計
+      const supplierStats: ContractorWorkerStat[] = [];
+      const allStats: ContractorWorkerStat[] = [];
 
-        return {
-          contractorName: wc.contractorName,
-          workerCount: wc.workerCount,
-          color: config.color,
-          icon: config.icon,
-          percentage: Math.round(percentage * 10) / 10
-        };
+      separatedData.supplierCounts.forEach((workerSet, companyName) => {
+        if (workerSet.size > 0 && companyName && companyName.trim() !== '') {
+          const percentage = this.todayWorkerCount > 0 ? (workerSet.size / this.todayWorkerCount) * 100 : 0;
+          const config = contractorConfigs[companyName] || contractorConfigs['default'];
+
+          const stat: ContractorWorkerStat = {
+            contractorName: companyName,
+            workerCount: workerSet.size,
+            color: config.color,
+            icon: config.icon,
+            percentage: Math.round(percentage * 10) / 10
+          };
+
+          supplierStats.push(stat);
+          allStats.push(stat);
+        }
       });
 
       // 按工人數量降序排列
-      stats.sort((a, b) => b.workerCount - a.workerCount);
-      this.contractorWorkerStats = stats;
+      allStats.sort((a, b) => b.workerCount - a.workerCount);
+      supplierStats.sort((a, b) => b.workerCount - a.workerCount);
+
+      this.contractorWorkerStats = allStats;
+      this.supplierContractorStats = supplierStats;
 
       console.log('📊 廠商工人統計:', {
-        總工人數: totalWorkerCount,
-        廠商統計: stats
+        總工人數: this.todayWorkerCount,
+        主承攬商員工: this.mainContractorWorkerCount,
+        供應商: this.supplierWorkerCount,
+        供應商詳細: supplierStats
       });
 
     } catch (error) {
       console.error('計算廠商工人統計時出錯:', error);
       this.contractorWorkerStats = [];
+      this.supplierContractorStats = [];
       this.todayWorkerCount = 0;
+      this.mainContractorWorkerCount = 0;
+      this.supplierWorkerCount = 0;
     }
   }
 
@@ -500,43 +534,64 @@ export class SiteDashboardComponent implements OnInit, OnDestroy {
       // 使用明天的日期
       const tomorrow = dayjs().add(1, 'day').format('YYYY-MM-DD');
 
-      // 獲取明日廠商工人計數資料
-      const workerCounts = await this.workerCountService.getDailyContractorWorkerCount(this.siteId, tomorrow);
+      // 獲取明日分離的工人統計（區分主承攬商與供應商）
+      const separatedData = await this.workerCountService.getDailySeparatedWorkerCount(this.siteId, tomorrow);
 
-      // 計算總工人數
-      const totalWorkerCount = workerCounts.reduce((sum: number, wc: ContractorWorkerCount) => sum + wc.workerCount, 0);
-      this.tomorrowTotalWorkers = totalWorkerCount;
+      // 設定主承攬商人數（來自工具箱會議的主承攬商簽名區域）
+      this.tomorrowMainContractorWorkerCount = separatedData.mainContractorCount;
+
+      // 設定供應商人數
+      this.tomorrowSupplierWorkerCount = separatedData.supplierTotalCount;
+
+      // 計算總人數
+      this.tomorrowTotalWorkers = this.tomorrowMainContractorWorkerCount + this.tomorrowSupplierWorkerCount;
 
       // 獲取廠商顏色配置
       const contractorConfigs = this.getContractorConfigs();
 
-      // 計算每個廠商的統計數據
-      const stats: ContractorWorkerStat[] = workerCounts.map((wc: ContractorWorkerCount) => {
-        const percentage = totalWorkerCount > 0 ? (wc.workerCount / totalWorkerCount) * 100 : 0;
-        const config = contractorConfigs[wc.contractorName] || contractorConfigs['default'];
+      // 建立供應商詳細統計
+      const supplierStats: ContractorWorkerStat[] = [];
+      const allStats: ContractorWorkerStat[] = [];
 
-        return {
-          contractorName: wc.contractorName,
-          workerCount: wc.workerCount,
-          color: config.color,
-          icon: config.icon,
-          percentage: Math.round(percentage * 10) / 10
-        };
+      separatedData.supplierCounts.forEach((workerSet, companyName) => {
+        if (workerSet.size > 0 && companyName && companyName.trim() !== '') {
+          const percentage = this.tomorrowTotalWorkers > 0 ? (workerSet.size / this.tomorrowTotalWorkers) * 100 : 0;
+          const config = contractorConfigs[companyName] || contractorConfigs['default'];
+
+          const stat: ContractorWorkerStat = {
+            contractorName: companyName,
+            workerCount: workerSet.size,
+            color: config.color,
+            icon: config.icon,
+            percentage: Math.round(percentage * 10) / 10
+          };
+
+          supplierStats.push(stat);
+          allStats.push(stat);
+        }
       });
 
       // 按工人數量降序排列
-      stats.sort((a, b) => b.workerCount - a.workerCount);
-      this.tomorrowWorkerStats = stats;
+      allStats.sort((a, b) => b.workerCount - a.workerCount);
+      supplierStats.sort((a, b) => b.workerCount - a.workerCount);
+
+      this.tomorrowWorkerStats = allStats;
+      this.tomorrowSupplierContractorStats = supplierStats;
 
       console.log('📊 明日預計出工統計:', {
-        預計總工人數: totalWorkerCount,
-        廠商統計: stats
+        預計總工人數: this.tomorrowTotalWorkers,
+        主承攬商員工: this.tomorrowMainContractorWorkerCount,
+        供應商: this.tomorrowSupplierWorkerCount,
+        供應商詳細: supplierStats
       });
 
     } catch (error) {
       console.error('計算明日預計出工統計時出錯:', error);
       this.tomorrowWorkerStats = [];
+      this.tomorrowSupplierContractorStats = [];
       this.tomorrowTotalWorkers = 0;
+      this.tomorrowMainContractorWorkerCount = 0;
+      this.tomorrowSupplierWorkerCount = 0;
     }
   }
 

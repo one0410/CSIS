@@ -13,7 +13,12 @@
       "Bash(yarn build)",
       "Bash(yarn ng build:*)",
       "Bash(npx tsc:*)",
-      "Bash(powershell -Command \"yarn ng build 2>&1 | Out-String\")"
+      "Bash(powershell -Command \"yarn ng build 2>&1 | Out-String\")",
+      "Bash(ls:*)",
+      "Bash(powershell -Command \"yarn ng build\")",
+      "Bash(powershell -Command \"yarn ng build 2>&1\")",
+      "Bash(timeout:*)",
+      "Bash(ping:*)"
     ],
     "deny": [],
     "ask": []

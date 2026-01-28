@@ -26,9 +26,9 @@
         <label class="btn btn-outline-primary btn-sm" for="month">月</label>
       </div>
 
-      <!-- XML 匯入按鈕 -->
-      <button class="btn btn-success btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#importXmlModal">
-        <i class="fas fa-file-import me-1"></i>匯入 XML
+      <!-- 匯入按鈕 -->
+      <button class="btn btn-success btn-sm text-nowrap" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="fas fa-file-import me-1"></i>匯入進度
       </button>
 
       <!-- 匯出甘特圖按鈕 -->
@@ -431,12 +431,12 @@
 </div>
 }
 
-<!-- 匯入 XML Modal -->
-<div class="modal fade" id="importXmlModal" tabindex="-1" aria-labelledby="importXmlModalLabel" aria-hidden="true">
+<!-- 匯入進度 Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="importXmlModalLabel">匯入 XML 進度表</h5>
+        <h5 class="modal-title" id="importModalLabel">匯入進度表</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -444,22 +444,51 @@
           <!-- 第一階段：檔案選擇 (只在未處理且無結果時顯示) -->
           @if (!isProcessing && !importResult) {
           <div class="mb-3">
-            <div class="drop-zone" (dragover)="onXmlDragOver($event)" (dragleave)="onXmlDragLeave($event)"
-              (drop)="onXmlDrop($event)">
-              請上傳 MS Project XML 檔案, 或將檔案拖放至此
+            <!-- 檔案類型選擇 -->
+            <div class="btn-group w-100 mb-3" role="group" aria-label="檔案類型選擇">
+              <input type="radio" class="btn-check" name="importType" id="importTypeXml" value="xml"
+                [checked]="importFileType === 'xml'" (change)="importFileType = 'xml'">
+              <label class="btn btn-outline-primary" for="importTypeXml">
+                <i class="fas fa-file-code me-1"></i>XML 檔案 (MS Project)
+              </label>
+              <input type="radio" class="btn-check" name="importType" id="importTypeExcel" value="excel"
+                [checked]="importFileType === 'excel'" (change)="importFileType = 'excel'">
+              <label class="btn btn-outline-success" for="importTypeExcel">
+                <i class="fas fa-file-excel me-1"></i>Excel 檔案
+              </label>
             </div>
-            <input type="file" class="form-control" id="xmlFileUpload" accept=".xml" title="選擇XML檔案"
-              (change)="onXmlFileSelected($event)" />
+
+            <div class="drop-zone" (dragover)="onFileDragOver($event)" (dragleave)="onFileDragLeave($event)"
+              (drop)="onFileDrop($event)">
+              @if (importFileType === 'xml') {
+                請上傳 MS Project XML 檔案, 或將檔案拖放至此
+              } @else {
+                請上傳 Excel 檔案 (.xlsx), 或將檔案拖放至此
+              }
+            </div>
+            <input type="file" class="form-control" id="fileUpload"
+              [accept]="importFileType === 'xml' ? '.xml' : '.xlsx,.xls'"
+              [title]="importFileType === 'xml' ? '選擇XML檔案' : '選擇Excel檔案'"
+              (change)="onFileSelected($event)" />
+
             <div class="mt-2 text-muted small">
-              <p>
-                <strong>注意事項：</strong>
-              </p>
+              <p><strong>注意事項：</strong></p>
+              @if (importFileType === 'xml') {
               <ul>
                 <li>支援 Microsoft Project 匯出的 XML 格式檔案。</li>
                 <li>匯入時會以 WBS 為識別，相同 WBS 會更新現有任務。</li>
                 <li>新任務會自動建立，權重預設為 1%。</li>
                 <li>父層任務的日期和權重會自動根據子任務計算。</li>
               </ul>
+              } @else {
+              <ul>
+                <li>支援本系統匯出的 Excel 格式檔案或自定義格式。</li>
+                <li>Excel 檔案必須包含以下欄位：<strong>WBS、工作名稱、開始日期、結束日期</strong></li>
+                <li>匯入時會以 WBS 為識別，相同 WBS 會更新現有任務。</li>
+                <li><strong>重要：</strong>父層任務的開始日和結束日會根據底層子任務自動重新計算。</li>
+                <li>新任務會自動建立，權重預設為 1%。</li>
+              </ul>
+              }
             </div>
           </div>
           }
@@ -522,11 +551,11 @@
       <div class="modal-footer">
         <!-- 關閉按鈕：處理中時禁用，其他時候都可用 -->
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" [disabled]="isProcessing"
-          (click)="closeXmlModal()">關閉</button>
+          (click)="closeImportModal()">關閉</button>
 
         <!-- 第一階段：有成功解析結果且未處理且未完成時，顯示匯入按鈕 -->
         @if (importResult?.success && !isProcessing && !isCompleted) {
-        <button type="button" class="btn btn-primary" (click)="executeXmlImport()">
+        <button type="button" class="btn btn-primary" (click)="executeImport()">
           匯入並套用
         </button>
         }

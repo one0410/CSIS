@@ -10,6 +10,7 @@
     <article class="info-card environment-card" (click)="navigateTo('weather')" [class.clickable]="true" role="button" tabindex="0">
       <h2 class="card-title">環境監測指標</h2>
       <div class="card-content">
+        <!-- 環境指標 -->
         <div class="environment-grid">
           <!-- 溫度 -->
           <div class="env-item">
@@ -60,18 +61,40 @@
             <div class="env-label">噪音</div>
           </div>
         </div>
+        <!-- 熱危害指數儀表 -->
+        <div class="heat-index-section">
+          <h3 class="section-subtitle">熱危害指數</h3>
+          <app-heat-index-gauge
+            [temperature]="environmentData.temperature"
+            [humidity]="environmentData.humidity">
+          </app-heat-index-gauge>
+        </div>
       </div>
       <div class="expand-icon" aria-hidden="true">
         <i class="fas fa-external-link-alt"></i>
       </div>
     </article>
 
-    <!-- 今日即時出工狀況 -->
+    <!-- 今日實時出工狀況 -->
     <article class="info-card worker-status-card">
-      <h2 class="card-title">{{ todayDateShort }}(今日)即時出工狀況</h2>
+      <h2 class="card-title">{{ todayDateShort }}(今日)實時出工狀況</h2>
       <div class="card-content">
+        <!-- 彙總區域 -->
+        <div class="worker-summary">
+          <div class="summary-row">
+            <i class="fas fa-users summary-icon supplier-icon" aria-hidden="true"></i>
+            <span class="summary-label">供應商在案人數</span>
+            <span class="summary-count">{{ supplierWorkerCount }}人</span>
+          </div>
+          <div class="summary-row">
+            <i class="fas fa-building summary-icon main-contractor-icon" aria-hidden="true"></i>
+            <span class="summary-label">帆宣員工在案人數</span>
+            <span class="summary-count">{{ mainContractorWorkerCount }}人</span>
+          </div>
+        </div>
+        <!-- 供應商詳細列表 -->
         <div class="worker-status-list">
-          @for (stat of contractorWorkerStats; track stat.contractorName) {
+          @for (stat of supplierContractorStats; track stat.contractorName) {
             <div class="worker-row">
               <div class="worker-icon">
                 <i class="fas fa-hard-hat" [style.color]="stat.color" aria-hidden="true"></i>
@@ -130,11 +153,11 @@
       </div>
     </article>
 
-    <!-- 今日進度預計施作 -->
+    <!-- 今日違規種類統計 -->
     <article class="info-card">
-      <h2 class="card-title">今日進度預計施作</h2>
+      <h2 class="card-title">今日違規種類統計</h2>
       <div class="card-content chart-content">
-        <app-today-schedule-chart [siteId]="siteId"></app-today-schedule-chart>
+        <app-today-violation-type-chart [siteId]="siteId"></app-today-violation-type-chart>
       </div>
     </article>
 
@@ -142,8 +165,22 @@
     <article class="info-card tomorrow-worker-card">
       <h2 class="card-title">{{ tomorrowDateShort }}(明日)預計出工狀況</h2>
       <div class="card-content">
+        <!-- 彙總區域 -->
+        <div class="worker-summary">
+          <div class="summary-row">
+            <i class="fas fa-users summary-icon supplier-icon" aria-hidden="true"></i>
+            <span class="summary-label">供應商預計出工人數</span>
+            <span class="summary-count">{{ tomorrowSupplierWorkerCount }}人</span>
+          </div>
+          <div class="summary-row">
+            <i class="fas fa-building summary-icon main-contractor-icon" aria-hidden="true"></i>
+            <span class="summary-label">帆宣員工預計出工人數</span>
+            <span class="summary-count">{{ tomorrowMainContractorWorkerCount }}人</span>
+          </div>
+        </div>
+        <!-- 供應商詳細列表 -->
         <div class="worker-status-list">
-          @for (stat of tomorrowWorkerStats; track stat.contractorName) {
+          @for (stat of tomorrowSupplierContractorStats; track stat.contractorName) {
             <div class="worker-row">
               <div class="worker-icon">
                 <i class="fas fa-hard-hat" [style.color]="stat.color" aria-hidden="true"></i>

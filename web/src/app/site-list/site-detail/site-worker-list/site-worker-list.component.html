@@ -975,8 +975,8 @@
                     <td>
                       @if (row.matched && row.matchedWorker) {
                         <span class="text-success">
-                          <i class="fas fa-user me-1"></i>{{ row.matchedWorker?.name }}
-                          ({{ row.matchedWorker?.contractingCompanyName }})
+                          <i class="fas fa-user me-1"></i>{{ row.matchedWorker.name }}
+                          ({{ row.matchedWorker.contractingCompanyName }})
                         </span>
                       } @else {
                         <span class="text-muted">未找到匹配的工人</span>

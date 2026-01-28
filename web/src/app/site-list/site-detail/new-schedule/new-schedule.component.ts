@@ -77,12 +77,16 @@ export class NewScheduleComponent implements OnInit {
   // 進度編輯狀態追蹤
   private editingProgress = new Map<string, boolean>();
   
-  // XML 匯入相關
+  // 匯入相關
   isProcessing = false;
   isCompleted = false;
   processProgress = 0;
   processStatus = '';
   importResult: ImportResult | null = null;
+  selectedFile: File | null = null;
+  importFileType: 'xml' | 'excel' = 'xml';
+
+  // 向後相容
   selectedXmlFile: File | null = null;
   
   private mongodbService = inject(MongodbService);
@@ -340,6 +344,483 @@ export class NewScheduleComponent implements OnInit {
       console.warn('無法儲存檢視模式設定:', error);
     }
   }
+
+  // =============================================
+  // 通用檔案匯入方法 (支援 XML 和 Excel)
+  // =============================================
+
+  // 通用檔案選擇方法
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (this.importFileType === 'xml' && file.name.endsWith('.xml')) {
+      this.selectedFile = file;
+      this.selectedXmlFile = file;
+      this.parseXmlFile(file);
+    } else if (this.importFileType === 'excel' && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+      this.selectedFile = file;
+      this.parseExcelFile(file);
+    } else {
+      alert(this.importFileType === 'xml' ? '請選擇 XML 檔案' : '請選擇 Excel 檔案 (.xlsx 或 .xls)');
+    }
+  }
+
+  // 通用拖放方法
+  onFileDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropZone = event.target as HTMLElement;
+    dropZone.classList.add('drag-over');
+  }
+
+  onFileDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropZone = event.target as HTMLElement;
+    dropZone.classList.remove('drag-over');
+  }
+
+  onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropZone = event.target as HTMLElement;
+    dropZone.classList.remove('drag-over');
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (this.importFileType === 'xml' && file.name.endsWith('.xml')) {
+        this.selectedFile = file;
+        this.selectedXmlFile = file;
+        this.parseXmlFile(file);
+      } else if (this.importFileType === 'excel' && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+        this.selectedFile = file;
+        this.parseExcelFile(file);
+      } else {
+        alert(this.importFileType === 'xml' ? '請選擇 XML 檔案' : '請選擇 Excel 檔案 (.xlsx 或 .xls)');
+      }
+    }
+  }
+
+  // 通用執行匯入方法
+  async executeImport() {
+    if (this.importFileType === 'xml') {
+      await this.executeXmlImport();
+    } else {
+      await this.executeExcelImport();
+    }
+  }
+
+  // 關閉匯入 Modal
+  closeImportModal() {
+    this.isProcessing = false;
+    this.isCompleted = false;
+    this.processProgress = 0;
+    this.processStatus = '';
+    this.importResult = null;
+    this.selectedFile = null;
+    this.selectedXmlFile = null;
+  }
+
+  // =============================================
+  // Excel 匯入相關方法
+  // =============================================
+
+  // 解析 Excel 檔案
+  private async parseExcelFile(file: File) {
+    try {
+      this.isProcessing = true;
+      this.processProgress = 10;
+      this.processStatus = '正在讀取 Excel 檔案...';
+
+      const arrayBuffer = await file.arrayBuffer();
+      this.processProgress = 30;
+      this.processStatus = '正在解析 Excel 內容...';
+
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
+
+      const worksheet = workbook.worksheets[0];
+      if (!worksheet) {
+        throw new Error('找不到工作表');
+      }
+
+      this.processProgress = 50;
+      this.processStatus = '正在分析任務資料...';
+
+      // 找出欄位對應
+      const headerRow = worksheet.getRow(1);
+      const columnMap: { [key: string]: number } = {};
+
+      headerRow.eachCell((cell, colNumber) => {
+        const value = cell.value?.toString().trim() || '';
+        if (value === 'WBS' || value === 'wbs') {
+          columnMap['wbs'] = colNumber;
+        } else if (value === '工作名稱' || value === '名稱' || value === 'Name' || value === 'name') {
+          columnMap['name'] = colNumber;
+        } else if (value === '開始日期' || value === '開始日' || value === 'Start' || value === 'start') {
+          columnMap['start'] = colNumber;
+        } else if (value === '結束日期' || value === '結束日' || value === 'End' || value === 'end' || value === 'Finish' || value === 'finish') {
+          columnMap['end'] = colNumber;
+        }
+      });
+
+      // 檢查必要欄位
+      if (!columnMap['wbs'] || !columnMap['name'] || !columnMap['start'] || !columnMap['end']) {
+        const missingCols = [];
+        if (!columnMap['wbs']) missingCols.push('WBS');
+        if (!columnMap['name']) missingCols.push('工作名稱');
+        if (!columnMap['start']) missingCols.push('開始日期');
+        if (!columnMap['end']) missingCols.push('結束日期');
+        throw new Error(`Excel 檔案缺少必要欄位：${missingCols.join('、')}`);
+      }
+
+      this.processProgress = 70;
+      this.processStatus = '正在處理任務項目...';
+
+      const parsedTasks: ScheduleTask[] = [];
+      const rowCount = worksheet.rowCount;
+
+      // 從第二行開始讀取資料（跳過標題行）
+      for (let rowNum = 2; rowNum <= rowCount; rowNum++) {
+        const row = worksheet.getRow(rowNum);
+        const wbs = this.getCellValue(row.getCell(columnMap['wbs']));
+        const name = this.getCellValue(row.getCell(columnMap['name']));
+        const startValue = row.getCell(columnMap['start']).value;
+        const endValue = row.getCell(columnMap['end']).value;
+
+        // 跳過空行
+        if (!wbs || !name) continue;
+
+        // 解析日期
+        const startDate = this.parseExcelDate(startValue);
+        const endDate = this.parseExcelDate(endValue);
+
+        if (!startDate || !endDate) {
+          console.warn(`行 ${rowNum} 的日期格式不正確，已跳過: WBS=${wbs}, start=${startValue}, end=${endValue}`);
+          continue;
+        }
+
+        // 計算層級（根據 WBS 中的點號數量）
+        const level = (wbs.match(/\./g) || []).length;
+
+        // 計算天數
+        const days = Math.max(1, dayjs(endDate).diff(dayjs(startDate), 'day') + 1);
+
+        const scheduleTask: ScheduleTask = {
+          wbs,
+          name,
+          days,
+          startDate,
+          endDate,
+          weight: 1,
+          level,
+          dailyProgress: {}
+        };
+
+        parsedTasks.push(scheduleTask);
+      }
+
+      if (parsedTasks.length === 0) {
+        throw new Error('Excel 檔案中沒有找到有效的任務資料');
+      }
+
+      this.processProgress = 90;
+      this.processStatus = '完成解析';
+
+      // 統計結果
+      let updateTasks = 0;
+      let newTasks = 0;
+      let unchangedTasks = 0;
+
+      parsedTasks.forEach(task => {
+        const existingTasks = this.findAllTasksByWbs(task.wbs);
+
+        if (existingTasks.length > 0) {
+          const existingTask = existingTasks[0];
+          const nameChanged = existingTask.name !== task.name;
+          const startChanged = existingTask.startDate !== task.startDate;
+          const endChanged = existingTask.endDate !== task.endDate;
+
+          if (nameChanged || startChanged || endChanged || existingTasks.length > 1) {
+            updateTasks++;
+          } else {
+            unchangedTasks++;
+          }
+        } else {
+          newTasks++;
+        }
+      });
+
+      const details: string[] = [];
+      details.push(`總共解析 ${parsedTasks.length} 個任務`);
+      details.push(`需要更新: ${updateTasks} 個`);
+      details.push(`新增任務: ${newTasks} 個`);
+      details.push(`無變更: ${unchangedTasks} 個 (將跳過)`);
+
+      this.processProgress = 100;
+      this.processStatus = '解析完成';
+
+      this.importResult = {
+        success: true,
+        message: `Excel 檔案解析成功！發現 ${parsedTasks.length} 個任務項目。`,
+        details,
+        parsedTasks
+      };
+
+    } catch (error) {
+      console.error('Excel 解析失敗:', error);
+      this.importResult = {
+        success: false,
+        message: 'Excel 檔案解析失敗',
+        details: [error instanceof Error ? error.message : '未知錯誤']
+      };
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  // 取得儲存格值
+  private getCellValue(cell: ExcelJS.Cell): string {
+    if (cell.value === null || cell.value === undefined) {
+      return '';
+    }
+    return cell.value.toString().trim();
+  }
+
+  // 解析 Excel 日期
+  private parseExcelDate(value: any): string | null {
+    if (!value) return null;
+
+    // 如果是 Date 物件
+    if (value instanceof Date) {
+      return dayjs(value).format('YYYY-MM-DD');
+    }
+
+    // 如果是數字（Excel 序列日期）
+    if (typeof value === 'number') {
+      // Excel 日期從 1900-01-01 開始，但有一個 bug：將 1900 當作閏年
+      const excelEpoch = new Date(1899, 11, 30);
+      const date = new Date(excelEpoch.getTime() + value * 24 * 60 * 60 * 1000);
+      return dayjs(date).format('YYYY-MM-DD');
+    }
+
+    // 如果是字串，嘗試解析
+    if (typeof value === 'string') {
+      const parsed = dayjs(value);
+      if (parsed.isValid()) {
+        return parsed.format('YYYY-MM-DD');
+      }
+    }
+
+    // 如果是 ExcelJS 的 richText 或其他物件
+    if (typeof value === 'object' && value.text) {
+      const parsed = dayjs(value.text);
+      if (parsed.isValid()) {
+        return parsed.format('YYYY-MM-DD');
+      }
+    }
+
+    return null;
+  }
+
+  // 執行 Excel 匯入
+  async executeExcelImport() {
+    if (!this.importResult?.parsedTasks) {
+      return;
+    }
+
+    try {
+      this.isProcessing = true;
+      this.processProgress = 0;
+      this.processStatus = '開始匯入任務...';
+
+      const parsedTasks = this.importResult.parsedTasks;
+      let removedCount = 0;
+      let newCount = 0;
+      let skippedCount = 0;
+
+      this.processProgress = 5;
+      this.processStatus = `清理重複 WBS...`;
+
+      // 先清理現有的重複 WBS
+      const cleanedDuplicates = await this.cleanupDuplicateWbs();
+      if (cleanedDuplicates > 0) {
+        console.log(`清理了 ${cleanedDuplicates} 個重複的 WBS，已從資料庫中刪除`);
+      }
+
+      this.processProgress = 10;
+      this.processStatus = `檢查任務差異...`;
+
+      // 分析需要處理的任務
+      const tasksToRemove: string[] = [];
+      const tasksToAdd: ScheduleTask[] = [];
+      const modifiedTaskIds: string[] = [];
+
+      for (const task of parsedTasks) {
+        const existingTasks = this.findAllTasksByWbs(task.wbs);
+
+        if (existingTasks.length > 0) {
+          if (existingTasks.length > 1) {
+            console.log(`發現重複 WBS ${task.wbs}，共 ${existingTasks.length} 個，將全部移除`);
+          }
+
+          const existingTask = existingTasks[0];
+          const nameChanged = existingTask.name !== task.name;
+          const startChanged = existingTask.startDate !== task.startDate;
+          const endChanged = existingTask.endDate !== task.endDate;
+
+          if (nameChanged || startChanged || endChanged || existingTasks.length > 1) {
+            tasksToRemove.push(task.wbs);
+            tasksToAdd.push(task);
+            modifiedTaskIds.push(task.wbs);
+          } else {
+            skippedCount++;
+          }
+        } else {
+          tasksToAdd.push(task);
+          modifiedTaskIds.push(task.wbs);
+        }
+      }
+
+      this.processProgress = 20;
+      this.processStatus = `移除需要更新的任務...`;
+
+      // 移除需要更新的任務
+      if (tasksToRemove.length > 0) {
+        this.removeTasksByWbs(tasksToRemove);
+        removedCount = tasksToRemove.length;
+
+        this.rebuildTaskTree();
+        this.flattenTasks();
+      }
+
+      this.processProgress = 40;
+      this.processStatus = `開始匯入任務...`;
+
+      // 新增需要處理的任務
+      for (let i = 0; i < tasksToAdd.length; i++) {
+        const task = tasksToAdd[i];
+        const progress = 40 + Math.round(((i + 1) / tasksToAdd.length) * 30);
+        this.processProgress = progress;
+        this.processStatus = `正在匯入任務: ${task.name} (${i + 1}/${tasksToAdd.length})`;
+
+        this.insertTaskInOrder(task);
+        newCount++;
+
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+
+      // 只有在真的有變更時才進行後續處理和儲存
+      if (tasksToAdd.length > 0) {
+        this.processProgress = 75;
+        this.processStatus = '重新建立任務結構...';
+
+        // 重新建立樹狀結構
+        this.rebuildTaskTree();
+
+        this.processProgress = 80;
+        this.processStatus = '重新計算父層任務日期（根據子任務）...';
+
+        // 重新計算父層任務的日期和權重（關鍵步驟）
+        this.recalculateParentTasks();
+
+        this.flattenTasks();
+
+        this.processProgress = 90;
+        this.processStatus = '更新日期範圍...';
+
+        this.calculateDateRangeFromTasks();
+        this.generateDateColumns();
+
+        this.processProgress = 95;
+        this.processStatus = '儲存資料...';
+
+        // 儲存所有任務（包含重新計算過日期的父任務）
+        await this.saveAllTasks();
+      } else {
+        this.processProgress = 95;
+        this.processStatus = '無需儲存（沒有變更）...';
+      }
+
+      this.processProgress = 100;
+      this.processStatus = '匯入完成！';
+
+      this.importResult = {
+        success: true,
+        message: `Excel 匯入完成！更新任務：${removedCount} 個，新增任務：${newCount - removedCount} 個，跳過未變更：${skippedCount} 個\n父層任務的日期已根據子任務自動重新計算。`,
+        details: [
+          `總處理任務: ${parsedTasks.length} 個`,
+          `更新任務: ${removedCount} 個`,
+          `新增任務: ${newCount - removedCount} 個`,
+          `跳過未變更: ${skippedCount} 個`,
+          `父層任務日期已自動重新計算`
+        ]
+      };
+
+      this.isCompleted = true;
+
+    } catch (error) {
+      console.error('Excel 匯入失敗:', error);
+      this.importResult = {
+        success: false,
+        message: 'Excel 匯入過程中發生錯誤',
+        details: [error instanceof Error ? error.message : '未知錯誤']
+      };
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  // 儲存所有任務（用於 Excel 匯入後儲存重新計算過的父任務日期）
+  private async saveAllTasks() {
+    try {
+      console.log('儲存所有任務...');
+
+      for (const task of this.flatTasks) {
+        if (task._id) {
+          // 更新現有任務
+          const updateData = {
+            name: task.name,
+            wbs: task.wbs,
+            start: task.startDate,
+            end: task.endDate,
+            weight: task.weight,
+            progressHistory: this.convertDailyProgressToHistory(task.dailyProgress || {})
+          };
+
+          await this.mongodbService.patch('task', task._id, updateData);
+        } else {
+          // 新增任務
+          const newTaskData = {
+            name: task.name,
+            wbs: task.wbs,
+            start: task.startDate,
+            end: task.endDate,
+            weight: task.weight,
+            siteId: this.siteId,
+            dependencies: '',
+            progressHistory: this.convertDailyProgressToHistory(task.dailyProgress || {})
+          };
+
+          const result = await this.mongodbService.post('task', newTaskData);
+          if (result && result._id) {
+            task._id = result._id;
+          }
+        }
+      }
+
+      console.log(`已儲存 ${this.flatTasks.length} 個任務`);
+    } catch (error) {
+      console.error('儲存任務失敗:', error);
+      throw error;
+    }
+  }
+
+  // =============================================
+  // XML 匯入相關方法 (原有方法保留)
+  // =============================================
 
   // 新的檔案選擇方法 - 用於 Modal
   onXmlFileSelected(event: any) {
@@ -661,16 +1142,6 @@ export class NewScheduleComponent implements OnInit {
     this.processStatus = '';
     this.importResult = null;
     this.selectedXmlFile = null;
-  }
-
-  // 保留原有的檔案選擇方法作為備用
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file && file.name.endsWith('.xml')) {
-      // 重定向到新的智能匯入流程
-      this.selectedXmlFile = file;
-      this.parseXmlFile(file);
-    }
   }
 
   /** @deprecated 已棄用，請使用新的智能匯入流程：parseXmlFile() → executeXmlImport() */
