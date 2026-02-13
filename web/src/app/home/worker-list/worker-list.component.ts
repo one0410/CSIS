@@ -93,6 +93,16 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     moreErrors?: number;
   } | null = null;
 
+  // 供應商認證匯入相關屬性
+  showImportSupplierCertModal = false;
+  importSupplierCertPreviewData: {
+    companyName: string;
+    workerName: string;
+    certNumber: string;
+    matched: boolean;
+    matchedWorker?: Worker;
+  }[] = [];
+
   defaultColDef: ColDef = {
     resizable: true,
     sortable: true,
@@ -4273,5 +4283,178 @@ export class WorkerListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  // === 供應商認證匯入相關方法 ===
 
+  openImportSupplierCertModal() {
+    this.importSupplierCertPreviewData = [];
+    this.showImportSupplierCertModal = true;
+  }
+
+  closeImportSupplierCertModal() {
+    this.showImportSupplierCertModal = false;
+    this.importSupplierCertPreviewData = [];
+  }
+
+  clearSupplierCertImportData() {
+    this.importSupplierCertPreviewData = [];
+  }
+
+  getSupplierCertMatchedCount(): number {
+    return this.importSupplierCertPreviewData.filter(row => row.matched).length;
+  }
+
+  getSupplierCertUnmatchedCount(): number {
+    return this.importSupplierCertPreviewData.filter(row => !row.matched).length;
+  }
+
+  async handleSupplierCertFileUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files[0]) return;
+
+    const file = input.files[0];
+
+    try {
+      this.isLoading = true;
+
+      const data = await this.readSupplierCertExcelFile(file);
+      if (!data || data.length === 0) {
+        alert('無法讀取Excel檔案或檔案為空');
+        return;
+      }
+
+      // 尋找相關欄位
+      const headers = Object.keys(data[0]);
+      const companyCol = this.findSupplierCertColumn(headers, ['公司名稱', '公司', '廠商名稱', '廠商']);
+      const nameCol = this.findSupplierCertColumn(headers, ['姓名', '名字', '人員姓名', '工人姓名']);
+      const certCol = this.findSupplierCertColumn(headers, ['工作證號', '證號', '供應商認證', '認證號碼', '背心編號']);
+
+      if (!companyCol) {
+        alert('找不到「公司名稱」相關欄位');
+        return;
+      }
+      if (!nameCol) {
+        alert('找不到「姓名」相關欄位');
+        return;
+      }
+      if (!certCol) {
+        alert('找不到「工作證號」相關欄位');
+        return;
+      }
+
+      // 處理資料並比對工人 - 這裡需要從資料庫獲取所有工人來比對
+      const previewData: typeof this.importSupplierCertPreviewData = [];
+
+      // 獲取所有工人資料用於比對
+      const allWorkers = await this.mongodbService.getArray('worker', {});
+
+      for (const row of data) {
+        const companyName = String(row[companyCol] || '').trim();
+        const workerName = String(row[nameCol] || '').trim();
+        const certNumber = String(row[certCol] || '').trim();
+
+        if (!workerName || !certNumber) continue;
+
+        // 比對工人 - 優先用公司名稱+姓名比對
+        let matchedWorker = allWorkers.find((w: Worker) =>
+          w.name === workerName &&
+          (w.contractingCompanyName === companyName || w.viceContractingCompanyName === companyName)
+        );
+
+        // 如果找不到，也嘗試只用姓名比對
+        if (!matchedWorker) {
+          matchedWorker = allWorkers.find((w: Worker) => w.name === workerName);
+        }
+
+        previewData.push({
+          companyName,
+          workerName,
+          certNumber,
+          matched: !!matchedWorker,
+          matchedWorker
+        });
+      }
+
+      this.importSupplierCertPreviewData = previewData;
+
+    } catch (error) {
+      console.error('處理Excel檔案時發生錯誤', error);
+      alert('處理Excel檔案時發生錯誤');
+    } finally {
+      this.isLoading = false;
+      // 清空 input 以便可以再次選擇相同檔案
+      input.value = '';
+    }
+  }
+
+  private async readSupplierCertExcelFile(file: File): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = e.target?.result;
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+          resolve(jsonData);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('讀取檔案失敗'));
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  private findSupplierCertColumn(headers: string[], candidates: string[]): string | null {
+    // 先嘗試完全匹配
+    for (const candidate of candidates) {
+      const found = headers.find(h => h === candidate);
+      if (found) return found;
+    }
+    // 再嘗試包含匹配
+    for (const candidate of candidates) {
+      const found = headers.find(h => h.includes(candidate));
+      if (found) return found;
+    }
+    return null;
+  }
+
+  async confirmImportSupplierCert() {
+    const matchedRows = this.importSupplierCertPreviewData.filter(row => row.matched && row.matchedWorker);
+
+    if (matchedRows.length === 0) {
+      alert('沒有可匯入的資料');
+      return;
+    }
+
+    if (!confirm(`確定要更新 ${matchedRows.length} 位工人的供應商認證號碼嗎？`)) {
+      return;
+    }
+
+    try {
+      this.isLoading = true;
+
+      for (const row of matchedRows) {
+        if (row.matchedWorker?._id) {
+          await this.mongodbService.patch('worker', row.matchedWorker._id, {
+            supplierIndustrialSafetyNumber: row.certNumber
+          });
+        }
+      }
+
+      alert(`成功更新 ${matchedRows.length} 位工人的供應商認證號碼`);
+
+      // 重新載入工人資料
+      await this.loadWorkersData();
+
+      // 關閉 modal
+      this.closeImportSupplierCertModal();
+
+    } catch (error) {
+      console.error('更新供應商認證時發生錯誤', error);
+      alert('更新供應商認證時發生錯誤');
+    } finally {
+      this.isLoading = false;
+    }
+  }
 }

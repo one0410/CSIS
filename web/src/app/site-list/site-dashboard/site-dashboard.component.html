@@ -36,13 +36,13 @@
             <div class="env-value">{{ environmentData.windSpeed }}km/h</div>
             <div class="env-label">風速</div>
           </div>
-          <!-- PM2.5 -->
+          <!-- 風向 -->
           <div class="env-item">
-            <div class="env-icon pm25" [class.warning]="environmentData.pm25 > 35" [class.danger]="environmentData.pm25 > 75">
-              <i class="fas fa-smog" aria-hidden="true"></i>
+            <div class="env-icon wind-direction">
+              <i class="fas fa-compass" aria-hidden="true"></i>
             </div>
-            <div class="env-value">{{ environmentData.pm25 }}</div>
-            <div class="env-label">PM2.5 μg/m³</div>
+            <div class="env-value">{{ environmentData.windDirection }}</div>
+            <div class="env-label">風向</div>
           </div>
           <!-- PM10 -->
           <div class="env-item">
@@ -52,13 +52,13 @@
             <div class="env-value">{{ environmentData.pm10 }}</div>
             <div class="env-label">PM10 μg/m³</div>
           </div>
-          <!-- 噪音 -->
+          <!-- PM2.5 -->
           <div class="env-item">
-            <div class="env-icon noise">
-              <i class="fas fa-volume-up" aria-hidden="true"></i>
+            <div class="env-icon pm25" [class.warning]="environmentData.pm25 > 35" [class.danger]="environmentData.pm25 > 75">
+              <i class="fas fa-smog" aria-hidden="true"></i>
             </div>
-            <div class="env-value">{{ environmentData.noise }}dB</div>
-            <div class="env-label">噪音</div>
+            <div class="env-value">{{ environmentData.pm25 }}</div>
+            <div class="env-label">PM2.5 μg/m³</div>
           </div>
         </div>
         <!-- 熱危害指數儀表 -->
@@ -121,18 +121,31 @@
         <div class="permit-header">
           <div class="permit-total">
             <span class="permit-label">今日有效許可單</span>
-            <span class="permit-count">{{ todayPermitCount }}件</span>
+            <span class="permit-count">{{ todayPermitCount }}張</span>
           </div>
         </div>
         <ul class="permit-category-list">
-          @for (stat of permitCategoryStats; track stat.category) {
-            <li class="permit-item">
+          <!-- 一般作業 -->
+          <li class="permit-item">
+            <i class="fas fa-clipboard-check" style="color: #0d6efd;" aria-hidden="true"></i>
+            <span class="permit-name">一般作業</span>
+            <span class="permit-badge" style="background-color: #0d6efd;">{{ generalWorkCount }}項</span>
+          </li>
+          <!-- 特殊作業 -->
+          <li class="permit-item permit-group-header">
+            <i class="fas fa-exclamation-triangle" style="color: #dc3545;" aria-hidden="true"></i>
+            <span class="permit-name">特殊作業</span>
+            <span class="permit-badge" style="background-color: #dc3545;">{{ specialWorkTotalCount }}項</span>
+          </li>
+          <!-- 特殊作業子項目 -->
+          @for (stat of specialWorkStats; track stat.category) {
+            <li class="permit-item permit-sub-item">
               <i [class]="stat.icon" [style.color]="stat.color" aria-hidden="true"></i>
               <span class="permit-name">{{ stat.displayName }}</span>
-              <span class="permit-badge" [style.background-color]="stat.color">{{ stat.count }}件</span>
+              <span class="permit-badge" [style.background-color]="stat.color">{{ stat.count }}項</span>
             </li>
           }
-          @if (permitCategoryStats.length === 0 && todayPermitCount === 0) {
+          @if (generalWorkCount === 0 && specialWorkStats.length === 0 && todayPermitCount === 0) {
             <li class="no-data">今日無許可單作業</li>
           }
         </ul>
@@ -161,26 +174,13 @@
       </div>
     </article>
 
-    <!-- 明日預計出工狀況 -->
+    <!-- 明日預計出工狀況（來源：工地許可單） -->
     <article class="info-card tomorrow-worker-card">
       <h2 class="card-title">{{ tomorrowDateShort }}(明日)預計出工狀況</h2>
       <div class="card-content">
-        <!-- 彙總區域 -->
-        <div class="worker-summary">
-          <div class="summary-row">
-            <i class="fas fa-users summary-icon supplier-icon" aria-hidden="true"></i>
-            <span class="summary-label">供應商預計出工人數</span>
-            <span class="summary-count">{{ tomorrowSupplierWorkerCount }}人</span>
-          </div>
-          <div class="summary-row">
-            <i class="fas fa-building summary-icon main-contractor-icon" aria-hidden="true"></i>
-            <span class="summary-label">帆宣員工預計出工人數</span>
-            <span class="summary-count">{{ tomorrowMainContractorWorkerCount }}人</span>
-          </div>
-        </div>
-        <!-- 供應商詳細列表 -->
+        <!-- 承攬商詳細列表 -->
         <div class="worker-status-list">
-          @for (stat of tomorrowSupplierContractorStats; track stat.contractorName) {
+          @for (stat of tomorrowWorkerStats; track stat.contractorName) {
             <div class="worker-row">
               <div class="worker-icon">
                 <i class="fas fa-hard-hat" [style.color]="stat.color" aria-hidden="true"></i>

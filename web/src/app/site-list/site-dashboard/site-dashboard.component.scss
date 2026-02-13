@@ -252,6 +252,11 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       i { color: #10b981; }
     }
 
+    &.wind-direction {
+      background: rgba(6, 182, 212, 0.2);
+      i { color: #06b6d4; }
+    }
+
     &.pm25, &.pm10 {
       background: rgba(139, 92, 246, 0.2);
       i { color: #8b5cf6; }
@@ -265,11 +270,6 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         background: rgba(239, 68, 68, 0.2);
         i { color: #ef4444; }
       }
-    }
-
-    &.noise {
-      background: rgba(236, 72, 153, 0.2);
-      i { color: #ec4899; }
     }
   }
 
@@ -489,22 +489,6 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     list-style: none;
     padding: 0;
     margin: 0;
-    flex: 1;
-    overflow-y: auto;
-    max-height: 180px;
-
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 2px;
-    }
   }
 
   .permit-item {
@@ -537,6 +521,29 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       padding: 3px 8px;
       border-radius: 10px;
       color: white;
+    }
+
+    // 特殊作業群組標題
+    &.permit-group-header {
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 1px solid $border-color;
+    }
+
+    // 特殊作業子項目（縮排顯示）
+    &.permit-sub-item {
+      padding-left: 28px;
+      font-size: 0.8rem;
+
+      .permit-name {
+        font-size: 0.8rem;
+        color: $text-secondary;
+      }
+
+      .permit-badge {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+      }
     }
   }
 

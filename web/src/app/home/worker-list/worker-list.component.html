@@ -25,6 +25,9 @@
       </button>
       <button class="btn btn-primary" [routerLink]="['/admin/worker', 'new']">新增人才</button>
       <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importWorkerModal">匯入人才</button>
+      <button class="btn btn-outline-primary" (click)="openImportSupplierCertModal()" title="從Excel匯入供應商認證號碼">
+        <i class="fas fa-file-import me-1"></i>匯入供應商認證
+      </button>
     </div>
   </div>
 
@@ -288,3 +291,130 @@
     </div>
   </div>
 </div>
+
+<!-- 匯入供應商認證模態框 -->
+@if (showImportSupplierCertModal) {
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-import me-2"></i>匯入供應商認證
+        </h5>
+        <button type="button" class="btn-close" (click)="closeImportSupplierCertModal()"></button>
+      </div>
+      <div class="modal-body">
+        <!-- 上傳區域 -->
+        @if (importSupplierCertPreviewData.length === 0) {
+          <div class="mb-4">
+            <div class="card border-dashed">
+              <div class="card-body text-center py-5">
+                <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
+                <h5>選擇Excel檔案</h5>
+                <p class="text-muted mb-3">
+                  請上傳包含「公司名稱」、「姓名」及「工作證號」欄位的Excel檔案
+                </p>
+                <input
+                  type="file"
+                  class="form-control w-auto mx-auto"
+                  accept=".xlsx,.xls"
+                  (change)="handleSupplierCertFileUpload($event)"
+                  style="max-width: 300px;"
+                  [disabled]="isLoading"
+                />
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- 預覽表格 -->
+        @if (importSupplierCertPreviewData.length > 0) {
+          <div class="mb-3 d-flex justify-content-between align-items-center">
+            <div>
+              <span class="badge bg-success me-2">已比對成功: {{ getSupplierCertMatchedCount() }} 位</span>
+              <span class="badge bg-warning text-dark me-2">未比對成功: {{ getSupplierCertUnmatchedCount() }} 位</span>
+              <span class="badge bg-secondary">總共: {{ importSupplierCertPreviewData.length }} 筆</span>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" (click)="clearSupplierCertImportData()">
+              <i class="fas fa-redo me-1"></i>重新選擇檔案
+            </button>
+          </div>
+          <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-sm table-hover">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th style="width: 50px;">狀態</th>
+                  <th>Excel公司名稱</th>
+                  <th>Excel姓名</th>
+                  <th>工作證號</th>
+                  <th>比對結果</th>
+                  <th>現有供應商認證</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of importSupplierCertPreviewData; track $index) {
+                  <tr [class.table-success]="row.matched" [class.table-warning]="!row.matched">
+                    <td class="text-center">
+                      @if (row.matched) {
+                        <i class="fas fa-check-circle text-success"></i>
+                      } @else {
+                        <i class="fas fa-question-circle text-warning"></i>
+                      }
+                    </td>
+                    <td>{{ row.companyName }}</td>
+                    <td>{{ row.workerName }}</td>
+                    <td>
+                      <span class="badge bg-primary">{{ row.certNumber }}</span>
+                    </td>
+                    <td>
+                      @if (row.matched && row.matchedWorker) {
+                        <span class="text-success">
+                          <i class="fas fa-user me-1"></i>{{ row.matchedWorker.name }}
+                          ({{ row.matchedWorker.contractingCompanyName }})
+                        </span>
+                      } @else {
+                        <span class="text-muted">未找到匹配的工人</span>
+                      }
+                    </td>
+                    <td>
+                      @if (row.matchedWorker?.supplierIndustrialSafetyNumber) {
+                        <span class="badge bg-info">{{ row.matchedWorker?.supplierIndustrialSafetyNumber }}</span>
+                      } @else {
+                        <span class="text-muted">-</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+
+        @if (isLoading) {
+          <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">處理中...</span>
+            </div>
+            <p class="mt-2 text-muted">正在處理Excel檔案...</p>
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeImportSupplierCertModal()">
+          <i class="fas fa-times me-1"></i>取消
+        </button>
+        @if (importSupplierCertPreviewData.length > 0 && getSupplierCertMatchedCount() > 0) {
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="confirmImportSupplierCert()"
+            [disabled]="isLoading"
+          >
+            <i class="fas fa-check me-1"></i>確認匯入 ({{ getSupplierCertMatchedCount() }} 位)
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+}

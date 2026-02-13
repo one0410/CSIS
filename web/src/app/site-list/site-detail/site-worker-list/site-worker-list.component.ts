@@ -1,4 +1,5 @@
 import { Component, computed, signal, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -10,21 +11,13 @@ import { CurrentSiteService } from '../../../services/current-site.service';
 import { AuthService } from '../../../services/auth.service';
 import { GridFSService } from '../../../services/gridfs.service';
 import dayjs from 'dayjs';
+import JSZip from 'jszip';
 import * as XLSX from 'xlsx';
-
-// 供應商認證匯入預覽資料介面
-interface ImportPreviewRow {
-  companyName: string;
-  workerName: string;
-  certNumber: string;
-  matched: boolean;
-  matchedWorker?: Worker;
-}
 
 @Component({
   selector: 'app-site-worker-list',
   standalone: true,
-  imports: [FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './site-worker-list.component.html',
   styleUrls: ['./site-worker-list.component.scss']
 })
@@ -94,9 +87,17 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
     pictures: [] as string[]
   };
 
-  // 供應商認證匯入 modal 相關
-  showImportSupplierCertModal = signal(false);
-  importPreviewData = signal<ImportPreviewRow[]>([]);
+  // 批次匯入相關
+  showBatchImportModal = signal(false);
+  batchImportProcessing = signal(false);
+  batchImportProgress = signal(0);
+  batchImportStatus = signal('');
+  batchImportResult = signal<{
+    success: boolean;
+    message: string;
+    details: string[];
+  } | null>(null);
+  batchImportDragOver = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -1526,175 +1527,491 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
     return new File([blob], newFilename, { type: blob.type });
   }
 
-  // === 供應商認證匯入相關方法 ===
+  // === 批次匯入勞保/意外險 相關方法 ===
 
-  openImportSupplierCertModal() {
-    this.importPreviewData.set([]);
-    this.showImportSupplierCertModal.set(true);
+  openBatchImportModal() {
+    this.showBatchImportModal.set(true);
+    this.batchImportProcessing.set(false);
+    this.batchImportProgress.set(0);
+    this.batchImportStatus.set('');
+    this.batchImportResult.set(null);
+    this.batchImportDragOver = false;
   }
 
-  closeImportSupplierCertModal() {
-    this.showImportSupplierCertModal.set(false);
-    this.importPreviewData.set([]);
+  closeBatchImportModal() {
+    if (this.batchImportProcessing()) return;
+    this.showBatchImportModal.set(false);
+    this.batchImportResult.set(null);
   }
 
-  clearImportData() {
-    this.importPreviewData.set([]);
+  onBatchImportDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.batchImportDragOver = true;
   }
 
-  getMatchedCount(): number {
-    return this.importPreviewData().filter(row => row.matched).length;
+  onBatchImportDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.batchImportDragOver = false;
   }
 
-  getUnmatchedCount(): number {
-    return this.importPreviewData().filter(row => !row.matched).length;
+  onBatchImportDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.batchImportDragOver = false;
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.name.endsWith('.zip')) {
+        this.processBatchImportZip(file);
+      } else {
+        alert('請上傳 .zip 格式的檔案');
+      }
+    }
   }
 
-  async handleSupplierCertFileUpload(event: Event) {
+  onBatchImportFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (!input.files || !input.files[0]) return;
+    if (input.files && input.files[0]) {
+      this.processBatchImportZip(input.files[0]);
+    }
+  }
 
-    const file = input.files[0];
+  private async processBatchImportZip(file: File) {
+    this.batchImportProcessing.set(true);
+    this.batchImportProgress.set(0);
+    this.batchImportStatus.set('正在解析 ZIP 檔案...');
+    this.batchImportResult.set(null);
 
     try {
-      this.isLoading = true;
+      // Phase 1: 解析 ZIP 與 Excel
+      this.batchImportProgress.set(5);
+      const zip = new JSZip();
+      const zipContent = await zip.loadAsync(file, {
+        decodeFileName: (bytes: any) => {
+          try {
+            const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+            return new TextDecoder('utf-8').decode(data);
+          } catch {
+            const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+            return new TextDecoder('big5').decode(data);
+          }
+        }
+      });
 
-      const data = await this.readExcelFile(file);
-      if (!data || data.length === 0) {
-        alert('無法讀取Excel檔案或檔案為空');
+      this.batchImportProgress.set(10);
+      this.batchImportStatus.set('正在尋找 Excel 檔案...');
+
+      // 尋找 Excel 檔案
+      const possibleFileNames = [
+        '人員入場資料.xlsx', '人員入場清單.xlsx', '人員入場資料.xls',
+        '人員入場清單.xls', '人員清單.xlsx', '人員清單.xls'
+      ];
+
+      let excelFilePath = '';
+      for (const filePath of Object.keys(zipContent.files)) {
+        const fileName = filePath.split('/').pop() || '';
+        if (possibleFileNames.some(name => fileName === name) ||
+            (fileName.endsWith('.xlsx') || fileName.endsWith('.xls'))) {
+          excelFilePath = filePath;
+          break;
+        }
+      }
+
+      if (!excelFilePath) {
+        this.batchImportResult.set({
+          success: false,
+          message: '找不到 Excel 檔案',
+          details: ['ZIP 檔案中未找到 Excel 檔案（.xlsx 或 .xls）', '請確認 ZIP 檔案內容是否正確']
+        });
         return;
       }
 
-      // 尋找相關欄位
-      const headers = Object.keys(data[0]);
-      const companyCol = this.findColumn(headers, ['公司名稱', '公司', '廠商名稱', '廠商']);
-      const nameCol = this.findColumn(headers, ['姓名', '名字', '人員姓名', '工人姓名']);
-      const certCol = this.findColumn(headers, ['工作證號', '證號', '供應商認證', '認證號碼', '背心編號']);
+      this.batchImportProgress.set(15);
+      this.batchImportStatus.set('正在解析 Excel 資料...');
 
-      if (!companyCol) {
-        alert('找不到「公司名稱」相關欄位');
+      // 解析 Excel
+      const excelData = await zipContent.files[excelFilePath].async('arraybuffer');
+      const workbook = XLSX.read(excelData, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length === 0) {
+        this.batchImportResult.set({
+          success: false,
+          message: 'Excel 中沒有資料',
+          details: ['Excel 檔案的第一個工作表沒有資料列']
+        });
         return;
       }
-      if (!nameCol) {
-        alert('找不到「姓名」相關欄位');
-        return;
+
+      this.batchImportProgress.set(25);
+      this.batchImportStatus.set(`已讀取 ${jsonData.length} 筆 Excel 資料，正在比對工人...`);
+
+      // Phase 2: 比對工人並更新保險資料
+      const workerIndex = new Map<string, Worker>();
+      for (const worker of this.siteWorkers) {
+        if (worker.idno) {
+          workerIndex.set(worker.idno.trim().toUpperCase(), worker);
+        }
       }
-      if (!certCol) {
-        alert('找不到「工作證號」相關欄位');
-        return;
-      }
 
-      // 處理資料並比對工人
-      const previewData: ImportPreviewRow[] = [];
+      let matchedCount = 0;
+      let laborCount = 0;
+      let accidentCount = 0;
+      let skippedCount = 0;
+      const skippedWorkers: string[] = [];
+      const updatedWorkerIds = new Set<string>();
+      // 追蹤每位工人的各組意外險記錄，key: `${workerId}_${setIdx}` (setIdx: 1/2/3)
+      const accidentInsuranceMap = new Map<string, any>();
 
-      for (const row of data) {
-        const companyName = String(row[companyCol] || '').trim();
-        const workerName = String(row[nameCol] || '').trim();
-        const certNumber = String(row[certCol] || '').trim();
+      for (let i = 0; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        const idno = this.getFieldValue(row, ['身分證', '身份證號碼', '身分證字號', '身份證', 'idno']);
+        if (!idno) {
+          skippedCount++;
+          continue;
+        }
 
-        if (!workerName || !certNumber) continue;
+        const cleanIdno = idno.toString().trim().toUpperCase();
+        const worker = workerIndex.get(cleanIdno);
+        if (!worker || !worker._id) {
+          skippedCount++;
+          const name = this.getFieldValue(row, ['姓名', '員工姓名', '名字']) || cleanIdno;
+          if (skippedWorkers.length < 10) {
+            skippedWorkers.push(`${name} (${cleanIdno})`);
+          }
+          continue;
+        }
 
-        // 比對工人 - 優先在工地工人中比對，再到全部工人中比對
-        let matchedWorker = this.siteWorkers.find(w =>
-          w.name === workerName &&
-          (w.contractingCompanyName === companyName || w.viceContractingCompanyName === companyName)
+        matchedCount++;
+
+        // 處理勞保資料
+        const laborApplyDate = this.formatImportDate(
+          this.getFieldValue(row, ['勞保申請日期', '勞保日期', '勞保申請'])
+        );
+        const laborAssociationDate = this.formatImportDate(
+          this.getFieldValue(row, ['勞工團體入會日期', '勞工團體', '團體入會日期', '工會申請日期'])
         );
 
-        // 如果工地工人中找不到，也嘗試只用姓名比對
-        if (!matchedWorker) {
-          matchedWorker = this.siteWorkers.find(w => w.name === workerName);
+        if (laborApplyDate || laborAssociationDate) {
+          if (!worker.laborInsurance) worker.laborInsurance = [];
+
+          // 檢查是否已有相同 belongSite + applyDate 的記錄
+          const isDuplicate = worker.laborInsurance.some(ins =>
+            ins.belongSite?.toString() === this.siteId?.toString() &&
+            ins.applyDate === laborApplyDate
+          );
+
+          if (!isDuplicate) {
+            worker.laborInsurance.push({
+              belongSite: this.siteId || '',
+              applyDate: laborApplyDate,
+              associationDate: laborAssociationDate,
+              picture: ''
+            });
+            laborCount++;
+            updatedWorkerIds.add(worker._id);
+          }
         }
 
-        previewData.push({
-          companyName,
-          workerName,
-          certNumber,
-          matched: !!matchedWorker,
-          matchedWorker
-        });
+        // 處理意外險資料（最多 3 組）
+        for (let setIdx = 1; setIdx <= 3; setIdx++) {
+          const suffix = setIdx.toString();
+          const accidentStart = this.formatImportDate(
+            this.getFieldValue(row, [
+              `意外險有效期${suffix}(起始日)`, `意外險有效期${suffix}（起始日）`,
+              `意外險開始日期${suffix}`,
+              ...(setIdx === 1 ? ['意外險開始日期', '意外險有效期(起始日)'] : [])
+            ])
+          );
+          const accidentEnd = this.formatImportDate(
+            this.getFieldValue(row, [
+              `意外險有效期${suffix}(截止日)`, `意外險有效期${suffix}（截止日）`,
+              `意外險結束日期${suffix}`,
+              ...(setIdx === 1 ? ['意外險結束日期', '意外險有效期(截止日)'] : [])
+            ])
+          );
+          const accidentAmount = this.getFieldValue(row, [
+            `保險全額${suffix}`, `保險金額${suffix}`,
+            ...(setIdx === 1 ? ['意外險保額', '保險金額', '保險全額'] : [])
+          ]) || '';
+          const accidentSignDate = this.formatImportDate(
+            this.getFieldValue(row, [
+              `加保日期${suffix}`,
+              ...(setIdx === 1 ? ['意外險簽約日期', '加保日期'] : [])
+            ])
+          );
+          const accidentCompany = this.getFieldValue(row, [
+            `保險公司${suffix}`,
+            ...(setIdx === 1 ? ['意外險公司', '保險公司'] : [])
+          ]) || '';
+
+          if (accidentStart) {
+            if (!worker.accidentInsurances) worker.accidentInsurances = [];
+
+            // 檢查是否已有相同 belongSite + start + end 的記錄
+            const isDuplicate = worker.accidentInsurances.some(ins =>
+              ins.belongSite === this.siteId &&
+              ins.start === accidentStart &&
+              ins.end === accidentEnd
+            );
+
+            if (!isDuplicate) {
+              const newRecord = {
+                belongSite: this.siteId || '',
+                start: accidentStart,
+                end: accidentEnd,
+                amount: accidentAmount.toString(),
+                signDate: accidentSignDate,
+                companyName: accidentCompany.toString(),
+                pictures: [] as string[]
+              };
+              worker.accidentInsurances.push(newRecord);
+              accidentInsuranceMap.set(`${worker._id}_${setIdx}`, newRecord);
+              accidentCount++;
+              updatedWorkerIds.add(worker._id);
+            }
+          }
+        }
+
+        // 更新進度
+        const progressPercent = 25 + Math.round((i / jsonData.length) * 30);
+        this.batchImportProgress.set(Math.min(progressPercent, 55));
+        this.batchImportStatus.set(`正在處理 Excel 資料... (${i + 1}/${jsonData.length})`);
       }
 
-      this.importPreviewData.set(previewData);
+      // 儲存已更新的工人資料
+      this.batchImportProgress.set(55);
+      this.batchImportStatus.set('正在儲存保險資料到資料庫...');
 
-    } catch (error) {
-      console.error('處理Excel檔案時發生錯誤', error);
-      alert('處理Excel檔案時發生錯誤');
-    } finally {
-      this.isLoading = false;
-      // 清空 input 以便可以再次選擇相同檔案
-      input.value = '';
-    }
-  }
+      let saveIndex = 0;
+      for (const workerId of updatedWorkerIds) {
+        const worker = this.siteWorkers.find(w => w._id === workerId);
+        if (worker && worker._id) {
+          await this.mongodbService.put('worker', worker._id, worker);
+          saveIndex++;
+          const saveProgress = 55 + Math.round((saveIndex / updatedWorkerIds.size) * 5);
+          this.batchImportProgress.set(Math.min(saveProgress, 60));
+        }
+      }
 
-  private async readExcelFile(file: File): Promise<any[]> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
+      // Phase 3: 處理圖片
+      this.batchImportProgress.set(60);
+      this.batchImportStatus.set('正在掃描圖片檔案...');
+
+      let imageCount = 0;
+      const imageFiles = Object.keys(zipContent.files).filter(path => {
+        const lower = path.toLowerCase();
+        return !zipContent.files[path].dir &&
+          (lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png'));
+      });
+
+      for (let i = 0; i < imageFiles.length; i++) {
+        const filePath = imageFiles[i];
+        const fileName = filePath.split('/').pop() || '';
+        const fileNameWithoutExt = fileName.replace(/\.(jpg|jpeg|png)$/i, '');
+        const parts = fileNameWithoutExt.split('_');
+
+        if (parts.length < 3) continue;
+
+        const fileIdno = parts[0].trim().toUpperCase();
+        const code = parts[parts.length - 1].trim().toUpperCase();
+
+        // 只處理保險相關圖片代碼
+        const isLaborImage = code === 'L';
+        const isAccidentImage = /^G\d+/.test(code);
+        if (!isLaborImage && !isAccidentImage) continue;
+
+        // 比對工人
+        const worker = workerIndex.get(fileIdno);
+        if (!worker || !worker._id) continue;
+
         try {
-          const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-          resolve(jsonData);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      reader.onerror = () => reject(new Error('讀取檔案失敗'));
-      reader.readAsArrayBuffer(file);
-    });
-  }
+          this.batchImportStatus.set(`正在上傳圖片... ${fileName}`);
 
-  private findColumn(headers: string[], candidates: string[]): string | null {
-    // 先嘗試完全匹配
-    for (const candidate of candidates) {
-      const found = headers.find(h => h === candidate);
-      if (found) return found;
-    }
-    // 再嘗試包含匹配
-    for (const candidate of candidates) {
-      const found = headers.find(h => h.includes(candidate));
-      if (found) return found;
-    }
-    return null;
-  }
-
-  async confirmImportSupplierCert() {
-    const matchedRows = this.importPreviewData().filter(row => row.matched && row.matchedWorker);
-
-    if (matchedRows.length === 0) {
-      alert('沒有可匯入的資料');
-      return;
-    }
-
-    if (!confirm(`確定要更新 ${matchedRows.length} 位工人的供應商認證號碼嗎？`)) {
-      return;
-    }
-
-    try {
-      this.isLoading = true;
-
-      for (const row of matchedRows) {
-        if (row.matchedWorker?._id) {
-          await this.mongodbService.patch('worker', row.matchedWorker._id, {
-            supplierIndustrialSafetyNumber: row.certNumber
+          // 讀取圖片
+          const imageBlob = await zipContent.files[filePath].async('blob');
+          const imageFile = new File([imageBlob], fileName, {
+            type: fileName.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg'
           });
+
+          // 壓縮圖片
+          const compressedDataUrl = await this.compressImage(imageFile, 1200, 0.8);
+          const compressedFile = await this.dataUrlToFile(compressedDataUrl, fileName);
+
+          if (isLaborImage) {
+            // 上傳勞保圖片
+            const metadata = {
+              workerId: worker._id,
+              workerName: worker.name,
+              workerIdno: worker.idno,
+              imageType: 'laborInsurance',
+              siteId: this.siteId || '',
+              originalFileName: fileName,
+              uploadSource: 'batchImport'
+            };
+
+            const result = await this.gridFSService.uploadFile(compressedFile, metadata);
+            const imageUrl = `/api/gridfs/${result.filename}`;
+
+            // 找到該工地最新的勞保記錄並設定圖片
+            if (worker.laborInsurance) {
+              const siteInsurances = worker.laborInsurance.filter(
+                ins => ins.belongSite?.toString() === this.siteId?.toString()
+              );
+              if (siteInsurances.length > 0) {
+                const latestInsurance = siteInsurances[siteInsurances.length - 1];
+                if (!latestInsurance.picture) {
+                  latestInsurance.picture = imageUrl;
+                  updatedWorkerIds.add(worker._id);
+                }
+              }
+            }
+            imageCount++;
+
+          } else if (isAccidentImage) {
+            // 解析意外險組別：G1→1, G2→2, G3→3
+            let setIdx = 1;
+            if (code.startsWith('G1')) setIdx = 1;
+            else if (code.startsWith('G2')) setIdx = 2;
+            else if (code.startsWith('G3')) setIdx = 3;
+
+            const metadata = {
+              workerId: worker._id,
+              workerName: worker.name,
+              workerIdno: worker.idno,
+              imageType: 'accidentInsurance',
+              accidentInsuranceSet: setIdx,
+              siteId: this.siteId || '',
+              originalFileName: fileName,
+              uploadSource: 'batchImport'
+            };
+
+            const result = await this.gridFSService.uploadFile(compressedFile, metadata);
+            const imageUrl = `/api/gridfs/${result.filename}`;
+
+            // 透過 Map 精確找到該組別的意外險記錄（避免陣列索引錯位）
+            const mapKey = `${worker._id}_${setIdx}`;
+            const targetInsurance = accidentInsuranceMap.get(mapKey);
+            if (targetInsurance) {
+              if (!targetInsurance.pictures) targetInsurance.pictures = [];
+              if (!targetInsurance.pictures.includes(imageUrl)) {
+                targetInsurance.pictures.push(imageUrl);
+                updatedWorkerIds.add(worker._id);
+              }
+            }
+            imageCount++;
+          }
+        } catch (error) {
+          console.error(`上傳圖片失敗: ${fileName}`, error);
+        }
+
+        const imgProgress = 60 + Math.round(((i + 1) / imageFiles.length) * 25);
+        this.batchImportProgress.set(Math.min(imgProgress, 85));
+      }
+
+      // 圖片處理後再次儲存
+      if (imageCount > 0) {
+        this.batchImportProgress.set(85);
+        this.batchImportStatus.set('正在儲存圖片資料到資料庫...');
+
+        for (const workerId of updatedWorkerIds) {
+          const worker = this.siteWorkers.find(w => w._id === workerId);
+          if (worker && worker._id) {
+            await this.mongodbService.put('worker', worker._id, worker);
+          }
         }
       }
 
-      alert(`成功更新 ${matchedRows.length} 位工人的供應商認證號碼`);
+      // Phase 4: 完成
+      this.batchImportProgress.set(90);
+      this.batchImportStatus.set('正在重新載入資料...');
 
-      // 重新載入工人資料
       await this.loadSiteWorkers();
 
-      // 關閉 modal
-      this.closeImportSupplierCertModal();
+      this.batchImportProgress.set(100);
+
+      // 組建結果
+      const details: string[] = [];
+      details.push(`Excel 共 ${jsonData.length} 筆資料，比對成功 ${matchedCount} 位工人`);
+      if (laborCount > 0) details.push(`新增 ${laborCount} 筆勞保資料`);
+      if (accidentCount > 0) details.push(`新增 ${accidentCount} 筆意外險資料`);
+      if (imageCount > 0) details.push(`上傳 ${imageCount} 張保險證明圖片`);
+      if (skippedCount > 0) {
+        details.push(`跳過 ${skippedCount} 筆（工地中找不到對應工人）`);
+        if (skippedWorkers.length > 0) {
+          details.push(`跳過的工人：${skippedWorkers.join('、')}${skippedCount > 10 ? '...' : ''}`);
+        }
+      }
+
+      this.batchImportResult.set({
+        success: true,
+        message: `匯入完成！新增 ${laborCount} 筆勞保、${accidentCount} 筆意外險、${imageCount} 張圖片`,
+        details
+      });
 
     } catch (error) {
-      console.error('更新供應商認證時發生錯誤', error);
-      alert('更新供應商認證時發生錯誤');
+      console.error('批次匯入失敗:', error);
+      this.batchImportResult.set({
+        success: false,
+        message: '匯入過程中發生錯誤',
+        details: [(error as Error).message || '未知錯誤']
+      });
     } finally {
-      this.isLoading = false;
+      this.batchImportProcessing.set(false);
     }
+  }
+
+  // 從 Excel 行中取得欄位值（支援多種欄位名稱，含模糊比對）
+  // Excel 欄位名稱常含 \r\n 換行符，因此需正規化後做 contains 比對
+  private getFieldValue(row: any, fieldNames: string[]): any {
+    // 第一輪：精確比對
+    for (const fieldName of fieldNames) {
+      if (row[fieldName] !== undefined && row[fieldName] !== null && row[fieldName] !== '') {
+        return row[fieldName];
+      }
+    }
+
+    // 第二輪：正規化後做 contains 比對（處理 Excel 欄位含 \r\n 的情況）
+    const normalize = (s: string) => s.replace(/[\r\n\s]/g, '');
+    for (const fieldName of fieldNames) {
+      const normalizedSearch = normalize(fieldName);
+      for (const key of Object.keys(row)) {
+        const normalizedKey = normalize(key);
+        if (normalizedKey.includes(normalizedSearch) &&
+            row[key] !== undefined && row[key] !== null && row[key] !== '') {
+          return row[key];
+        }
+      }
+    }
+
+    return '';
+  }
+
+  // 格式化匯入日期
+  private formatImportDate(value: any): string {
+    if (!value) return '';
+
+    // 如果是數字（Excel 日期序列號）
+    if (typeof value === 'number') {
+      // Excel 日期序列號轉換
+      const date = new Date((value - 25569) * 86400 * 1000);
+      return dayjs(date).format('YYYY-MM-DD');
+    }
+
+    // 如果是字串，嘗試解析
+    const str = value.toString().trim();
+    if (!str) return '';
+
+    const parsed = dayjs(str);
+    if (parsed.isValid()) {
+      return parsed.format('YYYY-MM-DD');
+    }
+
+    return '';
   }
 }

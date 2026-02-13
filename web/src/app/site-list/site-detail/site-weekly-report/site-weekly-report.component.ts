@@ -8,13 +8,14 @@ import { WeeklyConstructionPermitsComponent } from './weekly-construction-permit
 import { WeeklyDefectSummaryComponent } from './weekly-defect-summary/weekly-defect-summary.component';
 import { WeeklyChecklistStatsComponent } from './weekly-checklist-stats/weekly-checklist-stats.component';
 import { WeeklyImprovementPhotosComponent } from './weekly-improvement-photos/weekly-improvement-photos.component';
+import { WeeklyWorkContentComponent } from './weekly-work-content/weekly-work-content.component';
 import dayjs from 'dayjs';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-site-weekly-report',
   standalone: true,
-  imports: [CommonModule, FormsModule, WeeklyContractorWorkerCountComponent, WeeklyConstructionPermitsComponent, WeeklyDefectSummaryComponent, WeeklyChecklistStatsComponent, WeeklyImprovementPhotosComponent],
+  imports: [CommonModule, FormsModule, WeeklyContractorWorkerCountComponent, WeeklyConstructionPermitsComponent, WeeklyDefectSummaryComponent, WeeklyChecklistStatsComponent, WeeklyImprovementPhotosComponent, WeeklyWorkContentComponent],
   templateUrl: './site-weekly-report.component.html',
   styleUrl: './site-weekly-report.component.scss'
 })

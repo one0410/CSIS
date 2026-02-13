@@ -159,12 +159,12 @@
 
   <!-- 已授權工作人員列表 -->
   <div class="card shadow-sm mb-4">
-    <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <div class="d-flex align-items-center gap-2 flex-wrap">
-        <h5 class="mb-0">
-          <i class="fas fa-id-badge me-2"></i>工地工作人員
-          <span class="badge bg-primary ms-2">{{ filteredSiteWorkers.length }}/{{ siteWorkers.length }}</span>
-        </h5>
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="fas fa-id-badge me-2"></i>工地工作人員
+        <span class="badge bg-primary ms-2">{{ filteredSiteWorkers.length }}/{{ siteWorkers.length }}</span>
+      </h5>
+      <div class="d-flex gap-2 align-items-center">
         @if (hasSelectedWorkers) {
           <span class="badge bg-info">已選擇 {{ getSelectedWorkersCount() }} 位</span>
           <button
@@ -182,14 +182,14 @@
             <i class="fas fa-times-circle me-1"></i>清除選取
           </button>
         }
+        <button
+          class="btn btn-outline-primary btn-sm"
+          (click)="openBatchImportModal()"
+          title="批次匯入勞保及意外險資料"
+          >
+          <i class="fas fa-file-import me-1"></i>批次匯入
+        </button>
       </div>
-      <button
-        class="btn btn-outline-primary btn-sm"
-        (click)="openImportSupplierCertModal()"
-        title="從Excel匯入供應商認證號碼"
-        >
-        <i class="fas fa-file-import me-1"></i>匯入供應商認證
-      </button>
     </div>
 
     <div class="card-body">
@@ -685,6 +685,103 @@
 </div>
 }
 
+<!-- 批次匯入勞保/意外險 模態框 -->
+@if (showBatchImportModal()) {
+<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-import me-2"></i>批次匯入勞保/意外險資料
+        </h5>
+        <button type="button" class="btn-close" (click)="closeBatchImportModal()" [disabled]="batchImportProcessing()"></button>
+      </div>
+      <div class="modal-body">
+        <!-- 第一階段：檔案上傳 -->
+        @if (!batchImportProcessing() && !batchImportResult()) {
+          <div class="mb-3">
+            <div
+              class="drop-zone border border-2 border-dashed rounded p-4 text-center"
+              [class.border-primary]="batchImportDragOver"
+              (dragover)="onBatchImportDragOver($event)"
+              (dragleave)="onBatchImportDragLeave($event)"
+              (drop)="onBatchImportDrop($event)"
+              style="cursor: pointer; background-color: #f8f9fa;"
+            >
+              <i class="fas fa-cloud-upload-alt fs-1 text-muted mb-2 d-block"></i>
+              請上傳 ZIP 壓縮檔，或將檔案拖放至此
+            </div>
+            <input
+              type="file"
+              class="form-control mt-2"
+              accept=".zip"
+              (change)="onBatchImportFileSelected($event)"
+              title="選擇ZIP檔案"
+            />
+            <div class="mt-2 text-muted small">
+              <p><strong>注意事項：</strong></p>
+              <ul>
+                <li>ZIP 檔案格式同「匯入人才」，包含 Excel 及圖片檔案。</li>
+                <li>以<strong>身份證號</strong>比對工地現有工人，僅匯入勞保及意外險資料。</li>
+                <li>Excel 欄位：勞保申請日期、勞工團體入會日期、意外險開始/結束日期、保額、簽約日期、保險公司。</li>
+                <li>圖片代碼：<code>L</code>（勞保證明）、<code>G1</code>/<code>G2</code>/<code>G3</code>（意外險證明）。</li>
+                <li>不會覆蓋已存在的同工地保險記錄。</li>
+              </ul>
+            </div>
+          </div>
+        }
+
+        <!-- 第二階段：處理進度 -->
+        @if (batchImportProcessing()) {
+          <div class="mt-3">
+            <div class="progress mb-2">
+              <div
+                class="progress-bar"
+                role="progressbar"
+                [style.width.%]="batchImportProgress()"
+                [attr.aria-valuenow]="batchImportProgress()"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                {{ batchImportProgress() }}%
+              </div>
+            </div>
+            <p class="text-muted" style="white-space: pre-line;">{{ batchImportStatus() }}</p>
+          </div>
+        }
+
+        <!-- 第三階段：結果顯示 -->
+        @if (batchImportResult()) {
+          <div class="mt-3">
+            <div class="alert" [ngClass]="batchImportResult()!.success ? 'alert-success' : 'alert-danger'">
+              <h6>處理結果</h6>
+              <p>{{ batchImportResult()!.message }}</p>
+              @if (batchImportResult()!.details && batchImportResult()!.details.length > 0) {
+                <ul>
+                  @for (detail of batchImportResult()!.details; track detail) {
+                    <li>{{ detail }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="closeBatchImportModal()"
+          [disabled]="batchImportProcessing()"
+        >
+          <i class="fas fa-times me-1"></i>關閉
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
 <!-- 意外險管理模態框 -->
 @if (showAccidentInsuranceModal()) {
 <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
@@ -892,133 +989,6 @@
         <button type="button" class="btn btn-secondary" (click)="closeAccidentInsuranceModal()">
           <i class="fas fa-times me-1"></i>關閉
         </button>
-      </div>
-    </div>
-  </div>
-</div>
-}
-
-<!-- 匯入供應商認證模態框 -->
-@if (showImportSupplierCertModal()) {
-<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-  <div class="modal-dialog modal-dialog-centered modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">
-          <i class="fas fa-file-import me-2"></i>匯入供應商認證
-        </h5>
-        <button type="button" class="btn-close" (click)="closeImportSupplierCertModal()"></button>
-      </div>
-      <div class="modal-body">
-        <!-- 上傳區域 -->
-        @if (!importPreviewData().length) {
-          <div class="mb-4">
-            <div class="card border-dashed">
-              <div class="card-body text-center py-5">
-                <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
-                <h5>選擇Excel檔案</h5>
-                <p class="text-muted mb-3">
-                  請上傳包含「公司名稱」、「姓名」及「工作證號」欄位的Excel檔案
-                </p>
-                <input
-                  type="file"
-                  class="form-control w-auto mx-auto"
-                  accept=".xlsx,.xls"
-                  (change)="handleSupplierCertFileUpload($event)"
-                  style="max-width: 300px;"
-                  [disabled]="isLoading"
-                />
-              </div>
-            </div>
-          </div>
-        }
-
-        <!-- 預覽表格 -->
-        @if (importPreviewData().length > 0) {
-          <div class="mb-3 d-flex justify-content-between align-items-center">
-            <div>
-              <span class="badge bg-success me-2">已比對成功: {{ getMatchedCount() }} 位</span>
-              <span class="badge bg-warning text-dark me-2">未比對成功: {{ getUnmatchedCount() }} 位</span>
-              <span class="badge bg-secondary">總共: {{ importPreviewData().length }} 筆</span>
-            </div>
-            <button class="btn btn-outline-secondary btn-sm" (click)="clearImportData()">
-              <i class="fas fa-redo me-1"></i>重新選擇檔案
-            </button>
-          </div>
-          <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-            <table class="table table-sm table-hover">
-              <thead class="table-light sticky-top">
-                <tr>
-                  <th style="width: 50px;">狀態</th>
-                  <th>Excel公司名稱</th>
-                  <th>Excel姓名</th>
-                  <th>工作證號</th>
-                  <th>比對結果</th>
-                  <th>現有供應商認證</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of importPreviewData(); track $index) {
-                  <tr [class.table-success]="row.matched" [class.table-warning]="!row.matched">
-                    <td class="text-center">
-                      @if (row.matched) {
-                        <i class="fas fa-check-circle text-success"></i>
-                      } @else {
-                        <i class="fas fa-question-circle text-warning"></i>
-                      }
-                    </td>
-                    <td>{{ row.companyName }}</td>
-                    <td>{{ row.workerName }}</td>
-                    <td>
-                      <span class="badge bg-primary">{{ row.certNumber }}</span>
-                    </td>
-                    <td>
-                      @if (row.matched && row.matchedWorker) {
-                        <span class="text-success">
-                          <i class="fas fa-user me-1"></i>{{ row.matchedWorker.name }}
-                          ({{ row.matchedWorker.contractingCompanyName }})
-                        </span>
-                      } @else {
-                        <span class="text-muted">未找到匹配的工人</span>
-                      }
-                    </td>
-                    <td>
-                      @if (row.matchedWorker?.supplierIndustrialSafetyNumber) {
-                        <span class="badge bg-info">{{ row.matchedWorker?.supplierIndustrialSafetyNumber }}</span>
-                      } @else {
-                        <span class="text-muted">-</span>
-                      }
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-
-        @if (isLoading) {
-          <div class="text-center py-4">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">處理中...</span>
-            </div>
-            <p class="mt-2 text-muted">正在處理Excel檔案...</p>
-          </div>
-        }
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeImportSupplierCertModal()">
-          <i class="fas fa-times me-1"></i>取消
-        </button>
-        @if (importPreviewData().length > 0 && getMatchedCount() > 0) {
-          <button
-            type="button"
-            class="btn btn-primary"
-            (click)="confirmImportSupplierCert()"
-            [disabled]="isLoading"
-          >
-            <i class="fas fa-check me-1"></i>確認匯入 ({{ getMatchedCount() }} 位)
-          </button>
-        }
       </div>
     </div>
   </div>

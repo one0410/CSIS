@@ -236,34 +236,68 @@
               二、申請許可作業類別：（請在內打 v）
             </div>
             <div class="p-3">
-              <div class="row">
-                @if (site() && site()?.constructionTypes ) { @for (category of
-                workCategories; track $index) {
-                <div class="col-md-4 mb-2">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="category{{ $index }}"
-                      (change)="onCategoryChange(category, $event)" [disabled]="isViewMode" [checked]="
-                        permitData.selectedCategories.includes(category)
-                      " />
-                    <label class="form-check-label" for="category{{ $index }}">
-                      {{ $index + 1 }}.{{ category }}
-                    </label>
-                  </div>
+              <!-- 一般作業 -->
+              <div class="mb-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="generalWork"
+                    [checked]="permitData.isGeneralWork"
+                    (change)="onGeneralWorkChange($event)"
+                    [disabled]="isViewMode" />
+                  <label class="form-check-label fw-bold" for="generalWork">
+                    1.一般作業
+                  </label>
                 </div>
-                } }
-                <div class="col-md-4 mb-2">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="otherWork" [(ngModel)]="permitData.otherWork"
-                      name="otherWork" [disabled]="isViewMode" />
-                    <label class="form-check-label" for="otherWork">
-                      {{ workCategories.length + 1 }}.其他：
-                    </label>
-                  </div>
+              </div>
+
+              <!-- 特殊作業 -->
+              <div class="mb-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="specialWork"
+                    [checked]="permitData.isSpecialWork"
+                    (change)="onSpecialWorkChange($event)"
+                    [disabled]="isViewMode" />
+                  <label class="form-check-label fw-bold" for="specialWork">
+                    2.特殊作業
+                  </label>
                 </div>
-                <div class="col-md-12">
-                  <input type="text" class="form-control border-bottom-only ps-3" name="otherWorkContent"
-                    [(ngModel)]="permitData.otherWorkContent" placeholder="請輸入其他作業內容"
-                    [disabled]="!permitData.otherWork || isViewMode" aria-label="其他作業內容" />
+              </div>
+
+              <!-- 特殊作業子項目（全部顯示，但只有選中特殊作業時才啟用） -->
+              <div class="ps-4 border-start border-2 ms-2" [class.opacity-50]="!permitData.isSpecialWork && !isViewMode">
+                <div class="row">
+                  @if (site() && site()?.constructionTypes) {
+                    @for (category of workCategories; track $index) {
+                      <div class="col-md-4 mb-2">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="category{{ $index }}"
+                            (change)="onCategoryChange(category, $event)"
+                            [disabled]="!permitData.isSpecialWork || isViewMode"
+                            [checked]="permitData.selectedCategories.includes(category)" />
+                          <label class="form-check-label" for="category{{ $index }}"
+                            [class.text-muted]="!permitData.isSpecialWork && !isViewMode">
+                            ({{ $index + 1 }}).{{ category }}
+                          </label>
+                        </div>
+                      </div>
+                    }
+                  }
+                  <div class="col-md-4 mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="otherWork"
+                        [(ngModel)]="permitData.otherWork"
+                        name="otherWork"
+                        [disabled]="!permitData.isSpecialWork || isViewMode" />
+                      <label class="form-check-label" for="otherWork"
+                        [class.text-muted]="!permitData.isSpecialWork && !isViewMode">
+                        ({{ workCategories.length + 1 }}).其他：
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-12">
+                    <input type="text" class="form-control border-bottom-only ps-3" name="otherWorkContent"
+                      [(ngModel)]="permitData.otherWorkContent" placeholder="請輸入其他作業內容"
+                      [disabled]="!permitData.otherWork || !permitData.isSpecialWork || isViewMode" aria-label="其他作業內容" />
+                  </div>
                 </div>
               </div>
             </div>

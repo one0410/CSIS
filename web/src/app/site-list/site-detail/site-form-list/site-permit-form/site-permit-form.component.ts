@@ -27,6 +27,8 @@ export interface SitePermitForm extends SiteForm {
   supervisorPhone: string; // 監工電話
   projectNo: string;
   projectName: string;
+  isGeneralWork?: boolean; // 一般作業
+  isSpecialWork?: boolean; // 特殊作業
   selectedCategories: string[];
   otherWork: boolean;
   otherWorkContent: string;
@@ -128,6 +130,8 @@ export class SitePermitFormComponent implements OnInit {
     supervisorPhone: '',
     projectNo: '',
     projectName: '',
+    isGeneralWork: false,
+    isSpecialWork: false,
     selectedCategories: [] as string[],
     otherWorkContent: '',
     otherWork: false,
@@ -434,6 +438,8 @@ export class SitePermitFormComponent implements OnInit {
           workEndTime: formData.workEndTime || '',
           supervisor: formData.supervisor || '',
           supervisorPhone: formData.supervisorPhone || '',
+          isGeneralWork: formData.isGeneralWork || false,
+          isSpecialWork: formData.isSpecialWork || false,
           selectedCategories: formData.selectedCategories || [],
           otherWork: formData.otherWork || false,
           otherWorkContent: formData.otherWorkContent || '',
@@ -456,6 +462,17 @@ export class SitePermitFormComponent implements OnInit {
           workPersonCount: formData.workPersonCount || 0,
           selectedWorkers: formData.selectedWorkers || [],
         };
+
+        // 舊資料兼容性處理：如果沒有 isGeneralWork/isSpecialWork 欄位，
+        // 但有 selectedCategories 或 otherWork，則自動設定為特殊作業
+        if (formData.isGeneralWork === undefined && formData.isSpecialWork === undefined) {
+          const hasSpecialWorkData = (formData.selectedCategories && formData.selectedCategories.length > 0) ||
+                                     formData.otherWork;
+          if (hasSpecialWorkData) {
+            this.permitData.isSpecialWork = true;
+            this.permitData.isGeneralWork = false;
+          }
+        }
 
         // 載入已選擇的人才物件
         if (formData.selectedWorkers && formData.selectedWorkers.length > 0) {
@@ -481,6 +498,36 @@ export class SitePermitFormComponent implements OnInit {
       }
     } catch (error) {
       console.error('載入表單數據失敗', error);
+    }
+  }
+
+  // 處理一般作業選擇變更
+  onGeneralWorkChange(event: Event): void {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    this.permitData.isGeneralWork = isChecked;
+
+    if (isChecked) {
+      // 選擇一般作業時，清除特殊作業選項
+      this.permitData.isSpecialWork = false;
+      this.permitData.selectedCategories = [];
+      this.permitData.otherWork = false;
+      this.permitData.otherWorkContent = '';
+    }
+  }
+
+  // 處理特殊作業選擇變更
+  onSpecialWorkChange(event: Event): void {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    this.permitData.isSpecialWork = isChecked;
+
+    if (isChecked) {
+      // 選擇特殊作業時，清除一般作業選項
+      this.permitData.isGeneralWork = false;
+    } else {
+      // 取消特殊作業時，清除所有特殊作業子項目
+      this.permitData.selectedCategories = [];
+      this.permitData.otherWork = false;
+      this.permitData.otherWorkContent = '';
     }
   }
 
