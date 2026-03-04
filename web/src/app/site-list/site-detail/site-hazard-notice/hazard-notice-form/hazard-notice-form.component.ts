@@ -383,7 +383,7 @@ export class HazardNoticeFormComponent implements OnInit, AfterViewInit {
         // 不再需要更新工人記錄，狀態直接從表單簽名記錄查詢
 
         // 保存表單
-        this.saveForm();
+        await this.saveForm();
       }
     } catch (error) {
       console.error('簽名對話框操作失敗', error);

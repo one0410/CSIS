@@ -61,7 +61,7 @@ app.use('/auth', express.json(), bodyParser.urlencoded({ extended: false }), aut
 // 設定其他路由
 const mongodbApi = require('./routes/mongodbApi');
 // 為 mongodbApi 添加需要的 body parser
-app.use('/', express.json(), bodyParser.urlencoded({ extended: false }), mongodbApi);
+app.use('/', express.json({ limit: '50mb' }), bodyParser.urlencoded({ extended: false, limit: '50mb' }), mongodbApi);
 
 const mongodbGridfsApi = require('./routes/mongodbGridfsApi');
 // GridFS 路由不需要額外的 body parser，multer 會處理
