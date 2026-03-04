@@ -36,9 +36,9 @@ export class FeedbackAdminComponent implements OnInit {
   };
 
   // 篩選條件
-  filterStatus = 'all';
-  filterCategory = 'all';
-  filterPriority = 'all';
+  filterStatus = signal('all');
+  filterCategory = signal('all');
+  filterPriority = signal('all');
 
   // 分類選項
   categories = [
@@ -70,18 +70,21 @@ export class FeedbackAdminComponent implements OnInit {
     let feedbacks = this.feedbacks();
 
     // 狀態篩選
-    if (this.filterStatus !== 'all') {
-      feedbacks = feedbacks.filter(feedback => feedback.status === this.filterStatus);
+    const status = this.filterStatus();
+    if (status !== 'all') {
+      feedbacks = feedbacks.filter(feedback => feedback.status === status);
     }
 
     // 分類篩選
-    if (this.filterCategory !== 'all') {
-      feedbacks = feedbacks.filter(feedback => feedback.category === this.filterCategory);
+    const category = this.filterCategory();
+    if (category !== 'all') {
+      feedbacks = feedbacks.filter(feedback => feedback.category === category);
     }
 
     // 優先級篩選
-    if (this.filterPriority !== 'all') {
-      feedbacks = feedbacks.filter(feedback => feedback.priority === this.filterPriority);
+    const priority = this.filterPriority();
+    if (priority !== 'all') {
+      feedbacks = feedbacks.filter(feedback => feedback.priority === priority);
     }
 
     return feedbacks.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());

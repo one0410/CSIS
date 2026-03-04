@@ -42,7 +42,6 @@
               <th scope="col">施工地點</th>
               <th scope="col">工程(作業)名稱</th>
               <th scope="col">人數</th>
-              <th scope="col">狀態</th>
               <th scope="col" style="width: 120px">操作</th>
             </tr>
           </thead>
@@ -54,17 +53,6 @@
               <td>{{ notice.workLocation }}</td>
               <td>{{ notice.workName }}</td>
               <td>{{ notice.workerSignatures.length }}</td>
-              <td>
-                <span
-                  class="badge"
-                  [ngClass]="{
-                    'bg-warning': notice.status === 'draft',
-                    'bg-success': notice.status === 'published',
-                    'bg-danger': notice.status === 'revoked'
-                  }"
-                  >{{ this.getStatusName(notice.status) }}</span
-                >
-              </td>
               <td>
                 <div class="d-flex gap-1">
                   <button

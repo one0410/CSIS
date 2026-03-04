@@ -1,25 +1,27 @@
-<div class="profile-container">
-  <div class="profile-header">
-    <h1>個人資料</h1>
-    <p class="subtitle">管理您的個人資訊</p>
+<div class="mx-auto px-3 mt-4" style="max-width: 800px;">
+  <div class="text-center mb-4">
+    <h1 class="text-primary">個人資料</h1>
+    <p class="text-muted fw-light">管理您的個人資訊</p>
   </div>
 
   <!-- 載入中提示 -->
   @if (isLoading) {
-    <div class="loading-container">
-      <div class="spinner"></div>
-      <span>資料載入中...</span>
+    <div class="d-flex flex-column align-items-center justify-content-center" style="height: 200px;">
+      <div class="spinner-border text-primary mb-3" role="status">
+        <span class="visually-hidden">載入中...</span>
+      </div>
+      <span class="text-muted">資料載入中...</span>
     </div>
   } @else if (!user) {
-    <div class="error-container">
-      <p>無法載入個人資料，請重新登入後再試。</p>
+    <div class="text-center my-4 p-4 rounded-2 bg-danger bg-opacity-10">
+      <p class="text-danger mb-0">無法載入個人資料，請重新登入後再試。</p>
     </div>
   } @else {
-    <div class="profile-card">
+    <div class="bg-white rounded-3 shadow overflow-hidden">
       <!-- 大頭貼區域 -->
-      <div class="profile-section avatar-section">
-        <h2>個人頭像</h2>
-        <div class="avatar-container">
+      <div class="p-4 border-bottom avatar-section">
+        <h2 class="fs-5 text-primary fw-medium mb-3">個人頭像</h2>
+        <div class="d-flex align-items-center gap-4 avatar-container">
           <div class="avatar-preview">
             @if (user.avatar) {
               <img [src]="user.avatar" alt="個人頭像" class="avatar-image" />
@@ -27,165 +29,158 @@
               <div class="avatar-placeholder">
                 <i class="avatar-icon"></i>
                 <span>{{ user.name?.charAt(0) || 'U' }}</span>
-                  </div>
-  }
-</div>
+              </div>
+            }
+          </div>
 
-<!-- 相機拍照模態視窗 -->
-@if (isCameraOpen) {
-  <div class="camera-modal" (click)="closeCamera()">
-    <div class="camera-container" (click)="$event.stopPropagation()">
-      <div class="camera-header">
-        <h3>相機自拍</h3>
-        <button class="btn-close" (click)="closeCamera()" title="關閉相機">
-          <i class="close-icon"></i>
-        </button>
-      </div>
-      
-      <div class="camera-preview">
-        @if (!photoTaken) {
-          <video #videoElement autoplay playsinline class="video-preview"></video>
-        } @else {
-          <canvas #canvasElement class="photo-preview"></canvas>
-        }
-      </div>
-      
-      <div class="camera-controls">
-        @if (!photoTaken) {
-          <button class="btn-capture" (click)="takePhoto()">
-            <i class="capture-icon"></i>
-            拍照
-          </button>
-          <button class="btn-switch-camera" (click)="switchCamera()">
-            <i class="switch-icon"></i>
-            切換鏡頭
-          </button>
-        } @else {
-          <button class="btn-retake" (click)="retakePhoto()">
-            <i class="retake-icon"></i>
-            重新拍照
-          </button>
-          <button class="btn-confirm" (click)="confirmPhoto()">
-            <i class="confirm-icon"></i>
-            使用此照片
-          </button>
-        }
-        <button class="btn-cancel-camera" (click)="closeCamera()">取消</button>
-      </div>
-    </div>
-  </div>
-}
-          <div class="avatar-actions">
-            <input 
-              type="file" 
-              id="avatarInput" 
-              accept="image/*" 
-              (change)="onAvatarChange($event)" 
+          <!-- 相機拍照模態視窗 -->
+          @if (isCameraOpen) {
+            <div class="camera-modal position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" (click)="closeCamera()">
+              <div class="camera-container bg-white rounded-3 shadow-lg overflow-hidden" (click)="$event.stopPropagation()" style="max-width: 90vw; max-height: 90vh;">
+                <div class="d-flex justify-content-between align-items-center p-3 bg-primary text-white">
+                  <h3 class="mb-0 fs-5">相機自拍</h3>
+                  <button class="btn btn-sm text-white" (click)="closeCamera()" title="關閉相機">
+                    <i class="fas fa-times fs-5"></i>
+                  </button>
+                </div>
+
+                <div class="camera-preview bg-black d-flex align-items-center justify-content-center" style="min-height: 300px;">
+                  @if (!photoTaken) {
+                    <video #videoElement autoplay playsinline class="video-preview"></video>
+                  } @else {
+                    <canvas #canvasElement class="photo-preview"></canvas>
+                  }
+                </div>
+
+                <div class="d-flex justify-content-center gap-3 flex-wrap p-4 bg-light">
+                  @if (!photoTaken) {
+                    <button class="btn btn-primary px-4" (click)="takePhoto()">
+                      <i class="fas fa-camera me-2"></i>拍照
+                    </button>
+                    <button class="btn btn-secondary" (click)="switchCamera()">
+                      <i class="fas fa-sync me-2"></i>切換鏡頭
+                    </button>
+                  } @else {
+                    <button class="btn btn-warning text-white" (click)="retakePhoto()">
+                      <i class="fas fa-redo me-2"></i>重新拍照
+                    </button>
+                    <button class="btn btn-success" (click)="confirmPhoto()">
+                      <i class="fas fa-check me-2"></i>使用此照片
+                    </button>
+                  }
+                  <button class="btn btn-outline-secondary" (click)="closeCamera()">取消</button>
+                </div>
+              </div>
+            </div>
+          }
+
+          <div class="d-flex flex-column gap-2">
+            <input
+              type="file"
+              id="avatarInput"
+              accept="image/*"
+              (change)="onAvatarChange($event)"
               style="display: none;"
             />
-            <button class="btn-upload" (click)="selectAvatar()">
-              <i class="upload-icon"></i>
-              選擇圖片
+            <button class="btn btn-primary btn-sm d-flex align-items-center gap-2" (click)="selectAvatar()">
+              <i class="fas fa-upload"></i>選擇圖片
             </button>
-            <button class="btn-camera" (click)="openCamera()">
-              <i class="camera-icon"></i>
-              相機拍照
+            <button class="btn btn-warning btn-sm text-white d-flex align-items-center gap-2" (click)="openCamera()">
+              <i class="fas fa-camera"></i>相機拍照
             </button>
             @if (user.avatar) {
-              <button class="btn-remove" (click)="removeAvatar()">
-                <i class="remove-icon"></i>
-                移除頭像
+              <button class="btn btn-danger btn-sm d-flex align-items-center gap-2" (click)="removeAvatar()">
+                <i class="fas fa-trash"></i>移除頭像
               </button>
             }
           </div>
         </div>
       </div>
 
-      <div class="profile-section">
-        <h2>基本資訊</h2>
-        
-        <div class="form-group">
-          <label for="account">帳號</label>
+      <div class="p-4 border-bottom">
+        <h2 class="fs-5 text-primary fw-medium mb-3">基本資訊</h2>
+
+        <div class="mb-3">
+          <label class="form-label small text-secondary fw-medium" for="account">帳號</label>
           <div class="input-container">
-            <i class="user-icon"></i>
-            <input type="text" id="account" [(ngModel)]="user.account" readonly />
+            <i class="input-icon fas fa-user"></i>
+            <input type="text" class="form-control ps-5" id="account" [(ngModel)]="user.account" readonly />
           </div>
         </div>
-        
-        <div class="form-group">
-          <label for="employeeId">員工編號</label>
+
+        <div class="mb-3">
+          <label class="form-label small text-secondary fw-medium" for="employeeId">員工編號</label>
           <div class="input-container">
-            <i class="id-icon"></i>
-            <input type="text" id="employeeId" [(ngModel)]="user.employeeId" />
+            <i class="input-icon fas fa-id-card"></i>
+            <input type="text" class="form-control ps-5" id="employeeId" [(ngModel)]="user.employeeId" />
           </div>
         </div>
-        
-        <div class="form-group">
-          <label for="name">姓名</label>
+
+        <div class="mb-3">
+          <label class="form-label small text-secondary fw-medium" for="name">姓名</label>
           <div class="input-container">
-            <i class="name-icon"></i>
-            <input type="text" id="name" [(ngModel)]="user.name" />
+            <i class="input-icon fas fa-user"></i>
+            <input type="text" class="form-control ps-5" id="name" [(ngModel)]="user.name" />
           </div>
         </div>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label for="email">電子郵件</label>
+
+        <div class="d-flex flex-wrap gap-3">
+          <div class="mb-3 flex-fill" style="min-width: 250px;">
+            <label class="form-label small text-secondary fw-medium" for="email">電子郵件</label>
             <div class="input-container">
-              <i class="email-icon"></i>
-              <input type="email" id="email" [(ngModel)]="user.email" />
+              <i class="input-icon fas fa-envelope"></i>
+              <input type="email" class="form-control ps-5" id="email" [(ngModel)]="user.email" />
             </div>
           </div>
-          
-          <div class="form-group">
-            <label for="cell">電話號碼</label>
+
+          <div class="mb-3 flex-fill" style="min-width: 250px;">
+            <label class="form-label small text-secondary fw-medium" for="cell">電話號碼</label>
             <div class="input-container">
-              <i class="phone-icon"></i>
-              <input type="tel" id="cell" [(ngModel)]="user.cell" />
+              <i class="input-icon fas fa-phone"></i>
+              <input type="tel" class="form-control ps-5" id="cell" [(ngModel)]="user.cell" />
             </div>
           </div>
         </div>
-        
-        <div class="form-group">
-          <label for="department">部門</label>
+
+        <div class="mb-3">
+          <label class="form-label small text-secondary fw-medium" for="department">部門</label>
           <div class="input-container">
-            <i class="department-icon"></i>
-            <input type="text" id="department" [(ngModel)]="user.department" />
+            <i class="input-icon fas fa-building"></i>
+            <input type="text" class="form-control ps-5" id="department" [(ngModel)]="user.department" />
           </div>
         </div>
       </div>
-      
-      <div class="profile-section">
-        <h2>安全設定</h2>
-        
-        <div class="form-group">
-          <label for="password">密碼</label>
+
+      <div class="p-4 border-bottom">
+        <h2 class="fs-5 text-primary fw-medium mb-3">安全設定</h2>
+
+        <div class="mb-3">
+          <label class="form-label small text-secondary fw-medium" for="password">密碼</label>
           <div class="input-container">
-            <i class="password-icon"></i>
-            <input type="password" id="password" [(ngModel)]="user.password" />
+            <i class="input-icon fas fa-lock"></i>
+            <input type="password" class="form-control ps-5" id="password" [(ngModel)]="user.password" />
           </div>
         </div>
-        
-        <div class="form-group">
-          <label for="confirmPassword">確認密碼</label>
+
+        <div class="mb-3">
+          <label class="form-label small text-secondary fw-medium" for="confirmPassword">確認密碼</label>
           <div class="input-container">
-            <i class="confirm-password-icon"></i>
-            <input type="password" id="confirmPassword" [(ngModel)]="password2" />
+            <i class="input-icon fas fa-lock"></i>
+            <input type="password" class="form-control ps-5" id="confirmPassword" [(ngModel)]="password2" />
           </div>
         </div>
       </div>
-      
-      <div class="profile-actions">
-        <button class="btn-save" [disabled]="isLoading" (click)="save()">
+
+      <div class="d-flex justify-content-end gap-3 p-4 bg-light">
+        <button class="btn btn-primary px-4" [disabled]="isLoading" (click)="save()">
           @if (isLoading) {
-            <span>儲存中...</span>
+            <span class="spinner-border spinner-border-sm me-2"></span>儲存中...
           } @else {
-            <span>儲存變更</span>
+            儲存變更
           }
         </button>
-        <button class="btn-cancel" [disabled]="isLoading" (click)="cancel()">取消</button>
+        <button class="btn btn-outline-secondary px-4" [disabled]="isLoading" (click)="cancel()">取消</button>
       </div>
     </div>
   }
 </div>
-

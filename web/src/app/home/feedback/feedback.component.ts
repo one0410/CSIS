@@ -35,8 +35,8 @@ export class FeedbackComponent implements OnInit {
 
 
   // 篩選條件
-  filterStatus = 'all';
-  filterCategory = 'all';
+  filterStatus = signal('all');
+  filterCategory = signal('all');
 
   // 分類選項
   categories = [
@@ -72,13 +72,15 @@ export class FeedbackComponent implements OnInit {
     feedbacks = feedbacks.filter(feedback => feedback.submittedBy === userId);
 
     // 狀態篩選
-    if (this.filterStatus !== 'all') {
-      feedbacks = feedbacks.filter(feedback => feedback.status === this.filterStatus);
+    const status = this.filterStatus();
+    if (status !== 'all') {
+      feedbacks = feedbacks.filter(feedback => feedback.status === status);
     }
 
     // 分類篩選
-    if (this.filterCategory !== 'all') {
-      feedbacks = feedbacks.filter(feedback => feedback.category === this.filterCategory);
+    const category = this.filterCategory();
+    if (category !== 'all') {
+      feedbacks = feedbacks.filter(feedback => feedback.category === category);
     }
 
     return feedbacks.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());

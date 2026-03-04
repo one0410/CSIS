@@ -18,93 +18,78 @@
     </div>
   </div>
 
-  <!-- 統計資訊 -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">統計資訊</h5>
-        </div>
-        <div class="card-body">
-          <div class="row text-center">
-            <div class="col-md-2">
-              <div class="bg-light p-3 rounded">
-                <h4 class="mb-1">{{ statistics().total }}</h4>
-                <small class="text-muted">總計</small>
-              </div>
-            </div>
-            <div class="col-md-2">
-              <div class="bg-danger bg-opacity-10 p-3 rounded">
-                <h4 class="mb-1 text-danger">{{ statistics().open }}</h4>
-                <small class="text-muted">開放中</small>
-              </div>
-            </div>
-            <div class="col-md-2">
-              <div class="bg-warning bg-opacity-10 p-3 rounded">
-                <h4 class="mb-1 text-warning">{{ statistics().inProgress }}</h4>
-                <small class="text-muted">處理中</small>
-              </div>
-            </div>
-            <div class="col-md-2">
-              <div class="bg-success bg-opacity-10 p-3 rounded">
-                <h4 class="mb-1 text-success">{{ statistics().resolved }}</h4>
-                <small class="text-muted">已解決</small>
-              </div>
-            </div>
-            <div class="col-md-2">
-              <div class="bg-secondary bg-opacity-10 p-3 rounded">
-                <h4 class="mb-1 text-secondary">{{ statistics().closed }}</h4>
-                <small class="text-muted">已關閉</small>
-              </div>
-            </div>
-            <div class="col-md-2">
-              <div class="bg-danger bg-opacity-10 p-3 rounded">
-                <h4 class="mb-1 text-danger">{{ statistics().high }}</h4>
-                <small class="text-muted">高優先級</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 篩選區域 -->
+  <!-- 統計資訊 + 篩選區域 -->
   <div class="row mb-3">
     <div class="col-12">
       <div class="card">
         <div class="card-body py-2">
-          <div class="row align-items-center">
-            <div class="col-md-3">
-              <label class="form-label small mb-1">狀態篩選</label>
-              <select class="form-select form-select-sm" [(ngModel)]="filterStatus" title="狀態篩選">
+          <!-- 統計數字（手機 3 欄、桌面 6 欄） -->
+          <div class="row text-center g-2 mb-2">
+            <div class="col-4 col-md-2">
+              <div class="bg-light p-2 rounded">
+                <h5 class="mb-0">{{ statistics().total }}</h5>
+                <small class="text-muted" style="font-size: 0.7rem;">總計</small>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <div class="bg-danger bg-opacity-10 p-2 rounded">
+                <h5 class="mb-0 text-danger">{{ statistics().open }}</h5>
+                <small class="text-muted" style="font-size: 0.7rem;">開放中</small>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <div class="bg-warning bg-opacity-10 p-2 rounded">
+                <h5 class="mb-0 text-warning">{{ statistics().inProgress }}</h5>
+                <small class="text-muted" style="font-size: 0.7rem;">處理中</small>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <div class="bg-success bg-opacity-10 p-2 rounded">
+                <h5 class="mb-0 text-success">{{ statistics().resolved }}</h5>
+                <small class="text-muted" style="font-size: 0.7rem;">已解決</small>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <div class="bg-secondary bg-opacity-10 p-2 rounded">
+                <h5 class="mb-0 text-secondary">{{ statistics().closed }}</h5>
+                <small class="text-muted" style="font-size: 0.7rem;">已關閉</small>
+              </div>
+            </div>
+            <div class="col-4 col-md-2">
+              <div class="bg-danger bg-opacity-10 p-2 rounded">
+                <h5 class="mb-0 text-danger">{{ statistics().high }}</h5>
+                <small class="text-muted" style="font-size: 0.7rem;">高優先級</small>
+              </div>
+            </div>
+          </div>
+          <!-- 篩選列 -->
+          <div class="row g-2 align-items-end">
+            <div class="col-4 col-md-3">
+              <select class="form-select form-select-sm" (change)="filterStatus.set($any($event.target).value)" title="狀態篩選">
                 <option value="all">全部狀態</option>
                 @for (status of statusOptions; track status.value) {
-                  <option [value]="status.value">{{ status.label }}</option>
+                  <option [value]="status.value" [selected]="filterStatus() === status.value">{{ status.label }}</option>
                 }
               </select>
             </div>
-            <div class="col-md-3">
-              <label class="form-label small mb-1">分類篩選</label>
-              <select class="form-select form-select-sm" [(ngModel)]="filterCategory" title="分類篩選">
+            <div class="col-4 col-md-3">
+              <select class="form-select form-select-sm" (change)="filterCategory.set($any($event.target).value)" title="分類篩選">
                 <option value="all">全部分類</option>
                 @for (category of categories; track category) {
-                  <option [value]="category">{{ category }}</option>
+                  <option [value]="category" [selected]="filterCategory() === category">{{ category }}</option>
                 }
               </select>
             </div>
-            <div class="col-md-3">
-              <label class="form-label small mb-1">優先級篩選</label>
-              <select class="form-select form-select-sm" [(ngModel)]="filterPriority" title="優先級篩選">
+            <div class="col-4 col-md-3">
+              <select class="form-select form-select-sm" (change)="filterPriority.set($any($event.target).value)" title="優先級篩選">
                 <option value="all">全部優先級</option>
                 @for (priority of priorityOptions; track priority.value) {
-                  <option [value]="priority.value">{{ priority.label }}</option>
+                  <option [value]="priority.value" [selected]="filterPriority() === priority.value">{{ priority.label }}</option>
                 }
               </select>
             </div>
-            <div class="col-md-3">
-              <label class="form-label small mb-1">篩選結果</label>
-              <div class="text-muted small">
+            <div class="col-12 col-md-3">
+              <div class="text-muted small text-end">
                 顯示: {{ filteredFeedbacks().length }} / {{ statistics().total }} 筆
               </div>
             </div>

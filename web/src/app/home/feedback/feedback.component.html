@@ -28,19 +28,19 @@
           <div class="row align-items-center">
             <div class="col-md-4">
               <label class="form-label small mb-1">狀態篩選</label>
-              <select class="form-select form-select-sm" [(ngModel)]="filterStatus" title="狀態篩選">
+              <select class="form-select form-select-sm" (change)="filterStatus.set($any($event.target).value)" title="狀態篩選">
                 <option value="all">全部狀態</option>
                 @for (status of statusOptions; track status.value) {
-                  <option [value]="status.value">{{ status.label }}</option>
+                  <option [value]="status.value" [selected]="filterStatus() === status.value">{{ status.label }}</option>
                 }
               </select>
             </div>
             <div class="col-md-4">
               <label class="form-label small mb-1">分類篩選</label>
-              <select class="form-select form-select-sm" [(ngModel)]="filterCategory" title="分類篩選">
+              <select class="form-select form-select-sm" (change)="filterCategory.set($any($event.target).value)" title="分類篩選">
                 <option value="all">全部分類</option>
                 @for (category of categories; track category) {
-                  <option [value]="category">{{ category }}</option>
+                  <option [value]="category" [selected]="filterCategory() === category">{{ category }}</option>
                 }
               </select>
             </div>

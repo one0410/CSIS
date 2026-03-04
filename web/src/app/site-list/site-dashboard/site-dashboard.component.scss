@@ -1,141 +1,54 @@
-// 全域變數 - 現代化色彩方案
-$primary-color: #4f46e5;
+// 色彩變數
 $primary-light: #818cf8;
-$primary-dark: #3730a3;
-
-$secondary-color: #10b981;
-$secondary-light: #34d399;
-$secondary-dark: #059669;
-
-$accent-color: #f59e0b;
-$accent-light: #fbbf24;
-
-$danger-color: #ef4444;
-$warning-color: #f97316;
-$info-color: #06b6d4;
-$success-color: #22c55e;
-
-// 背景色系
-$background-color: #0f172a;
-$background-secondary: #1e293b;
-$background-tertiary: #334155;
-
-// 卡片背景
-$card-background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
-$card-background-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.06) 100%);
-
-// 文字顏色
 $text-primary: #f1f5f9;
 $text-secondary: #cbd5e1;
 $text-muted: #94a3b8;
-
-// 邊框和分隔線
 $border-color: rgba(255, 255, 255, 0.1);
-$border-color-light: rgba(255, 255, 255, 0.05);
-
-// 陰影系統
-$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-
-$border-radius: 12px;
-$border-radius-sm: 8px;
 $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-// ============ 動畫 ============
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
-}
-
-@keyframes glow {
-  0% {
-    opacity: 0.3;
-    transform: rotate(0deg) scale(1);
-  }
-  100% {
-    opacity: 0.6;
-    transform: rotate(10deg) scale(1.05);
-  }
-}
-
-// ============ 基本樣式 ============
+// ============ 深色背景主題 ============
 .dashboard-container {
-  padding: 20px;
-  background: linear-gradient(135deg, $background-color 0%, #1a202c 100%) !important;
-  color: $text-primary !important;
-  min-height: 100vh;
-  overflow-y: auto;
+  background: linear-gradient(135deg, #0f172a 0%, #1a202c 100%) !important;
   background-image:
     radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+  color: $text-primary !important;
 
-  h1, h2, h3, h4, h5, h6 {
-    color: $text-primary !important;
-  }
+  h1, h2, h3, h4, h5, h6 { color: $text-primary !important; }
+  small { color: $text-secondary !important; }
 
-  small {
-    color: $text-secondary !important;
-  }
-
-  @media (max-width: 768px) {
-    padding: 12px;
-  }
+  @media (max-width: 768px) { padding: 12px !important; }
 }
 
-// ============ 頂部時間顯示 ============
-.dashboard-time-header {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 20px;
+// ============ 時間顯示 ============
+.current-datetime {
+  color: $text-primary;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid $border-color;
 
-  .current-datetime {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: $text-primary;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-    padding: 8px 16px;
-    border-radius: $border-radius-sm;
-    border: 1px solid $border-color;
-  }
-
-  @media (max-width: 768px) {
-    .current-datetime {
-      font-size: 1rem;
-      padding: 6px 12px;
-    }
-  }
+  @media (max-width: 768px) { font-size: 1rem !important; }
 }
 
-// ============ Dashboard Section ============
+// ============ Grid 佈局 ============
 .dashboard-section {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  margin-bottom: 24px;
 
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
+  @media (max-width: 1200px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 768px) { grid-template-columns: 1fr; gap: 16px; }
 }
 
-// ============ 通用卡片樣式 ============
+// ============ 通用卡片 ============
 .info-card {
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border: 1px solid $border-color;
-  border-radius: $border-radius;
+  border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
   transition: $transition;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   position: relative;
   color: $text-primary;
@@ -161,19 +74,13 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       align-items: center;
       justify-content: center;
       opacity: 0.7;
-      transition: all 0.3s ease;
+      transition: $transition;
       z-index: 10;
 
-      i {
-        font-size: 12px;
-        color: white;
-      }
+      i { font-size: 12px; color: white; }
     }
 
-    &:hover .expand-icon {
-      opacity: 1;
-      transform: scale(1.1);
-    }
+    &:hover .expand-icon { opacity: 1; transform: scale(1.1); }
   }
 
   .card-title {
@@ -185,437 +92,152 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-bottom: 1px solid $border-color;
     color: $text-primary;
   }
+}
 
-  .card-content {
-    padding: 16px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    color: $text-primary;
-  }
+// ============ 圖表容器 ============
+.chart-content {
+  min-height: 280px;
+  > * { width: 100%; }
+}
 
-  .chart-content {
-    min-height: 280px;
+// ============ 環境監測 ============
+.environment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+
+  @media (max-width: 480px) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.env-item {
+  padding: 12px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: $transition;
+
+  &:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
+}
+
+.env-icon {
+  width: 48px;
+  height: 48px;
+  i { font-size: 20px; }
+
+  &.temperature { background: rgba(239, 68, 68, 0.2); i { color: #ef4444; } }
+  &.humidity { background: rgba(59, 130, 246, 0.2); i { color: #3b82f6; } }
+  &.wind { background: rgba(16, 185, 129, 0.2); i { color: #10b981; } }
+  &.wind-direction { background: rgba(6, 182, 212, 0.2); i { color: #06b6d4; } }
+  &.pm25, &.pm10 {
+    background: rgba(139, 92, 246, 0.2);
+    i { color: #8b5cf6; }
+    &.warning { background: rgba(245, 158, 11, 0.2); i { color: #f59e0b; } }
+    &.danger { background: rgba(239, 68, 68, 0.2); i { color: #ef4444; } }
   }
 }
 
-// ============ 環境監測卡片 ============
-.environment-card {
-  .environment-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+.env-value { font-size: 1.1rem; color: $text-primary; }
+.env-label { color: $text-secondary; }
 
-    @media (max-width: 480px) {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  .env-item {
-    text-align: center;
-    padding: 12px 8px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: $border-radius-sm;
-    transition: $transition;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transform: translateY(-2px);
-    }
-  }
-
-  .env-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 8px;
-
-    i {
-      font-size: 20px;
-    }
-
-    &.temperature {
-      background: rgba(239, 68, 68, 0.2);
-      i { color: #ef4444; }
-    }
-
-    &.humidity {
-      background: rgba(59, 130, 246, 0.2);
-      i { color: #3b82f6; }
-    }
-
-    &.wind {
-      background: rgba(16, 185, 129, 0.2);
-      i { color: #10b981; }
-    }
-
-    &.wind-direction {
-      background: rgba(6, 182, 212, 0.2);
-      i { color: #06b6d4; }
-    }
-
-    &.pm25, &.pm10 {
-      background: rgba(139, 92, 246, 0.2);
-      i { color: #8b5cf6; }
-
-      &.warning {
-        background: rgba(245, 158, 11, 0.2);
-        i { color: #f59e0b; }
-      }
-
-      &.danger {
-        background: rgba(239, 68, 68, 0.2);
-        i { color: #ef4444; }
-      }
-    }
-  }
-
-  .env-value {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: $text-primary;
-    margin-bottom: 4px;
-  }
-
-  .env-label {
-    font-size: 0.75rem;
-    color: $text-secondary;
-  }
-
-  // 熱危害指數區塊（位於下方）
-  .heat-index-section {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    .section-subtitle {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: $text-secondary;
-      margin: 0 0 8px 0;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    app-heat-index-gauge {
-      max-width: 250px;
-      width: 100%;
-    }
-  }
+.heat-index-section {
+  border-top-color: $border-color !important;
+  .section-subtitle { color: $text-secondary; letter-spacing: 0.5px; }
+  app-heat-index-gauge { max-width: 250px; width: 100%; }
 }
 
-// ============ 工人出工狀況卡片 ============
+// ============ 工人出工卡片共用 ============
 .worker-status-card,
 .tomorrow-worker-card {
-  // 彙總區域樣式
-  .worker-summary {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 12px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid $border-color;
-
-    .summary-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: $border-radius-sm;
-      transition: $transition;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-      }
-    }
-
-    .summary-icon {
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      font-size: 14px;
-
-      &.supplier-icon {
-        background: rgba(245, 158, 11, 0.2);
-        color: #f59e0b;
-      }
-
-      &.main-contractor-icon {
-        background: rgba(59, 130, 246, 0.2);
-        color: #3b82f6;
-      }
-    }
-
-    .summary-label {
-      flex: 1;
-      font-size: 0.85rem;
-      color: $text-secondary;
-    }
-
-    .summary-count {
-      font-size: 1rem;
-      font-weight: 700;
-      color: $text-primary;
-      min-width: 60px;
-      text-align: right;
-    }
+  .summary-row {
+    background: rgba(255, 255, 255, 0.05);
+    transition: $transition;
+    &:hover { background: rgba(255, 255, 255, 0.08); }
   }
 
+  .summary-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    &.supplier-icon { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    &.main-contractor-icon { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+  }
+
+  .summary-label { color: $text-secondary; }
+  .summary-count { color: $text-primary; min-width: 60px; text-align: right; }
+
   .worker-status-list {
-    flex: 1;
-    overflow-y: auto;
     max-height: 200px;
-
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 2px;
-    }
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+    &::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 2px; }
   }
 
   .worker-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px;
-    border-radius: $border-radius-sm;
     transition: $transition;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
+    &:hover { background: rgba(255, 255, 255, 0.05); }
   }
 
   .worker-icon {
     width: 32px;
     height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-
-    i {
-      font-size: 14px;
-    }
+    i { font-size: 14px; }
   }
 
-  .contractor-label {
-    flex: 1;
-    font-size: 0.85rem;
-    color: $text-primary;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  .contractor-label { color: $text-primary; }
 
-  .worker-count-badge {
-    font-size: 0.8rem;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 12px;
-    color: white;
-  }
+  .border-top { border-top-color: $border-color !important; }
+  .border-bottom { border-bottom-color: $border-color !important; }
 
-  .total-workers {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 12px;
-    margin-top: 12px;
-    border-top: 1px solid $border-color;
-    font-size: 0.9rem;
-    color: $text-secondary;
+  strong { color: $primary-light; }
 
-    strong {
-      font-size: 1.1rem;
-      color: $primary-light;
-    }
-  }
-
-  .no-data {
-    text-align: center;
-    padding: 20px;
-    color: $text-muted;
-    font-size: 0.9rem;
-  }
+  .no-data { color: $text-muted; }
 }
 
-// ============ 許可單統計卡片 ============
+// ============ 許可單 ============
 .permit-card {
-  .permit-header {
-    margin-bottom: 12px;
-  }
-
   .permit-total {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
     background: rgba(79, 70, 229, 0.1);
-    border-radius: $border-radius-sm;
     border: 1px solid rgba(79, 70, 229, 0.2);
-
-    .permit-label {
-      font-size: 0.85rem;
-      color: $text-secondary;
-    }
-
-    .permit-count {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: $primary-light;
-    }
   }
 
-  .permit-category-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
+  .permit-count { color: $primary-light; }
 
   .permit-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px;
-    border-radius: $border-radius-sm;
     transition: $transition;
+    &:hover { background: rgba(255, 255, 255, 0.05); }
 
-    &:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
+    i { font-size: 14px; width: 20px; text-align: center; }
 
-    i {
-      font-size: 14px;
-      width: 20px;
-      text-align: center;
-    }
+    &.permit-group-header { border-top-color: $border-color !important; }
 
-    .permit-name {
-      flex: 1;
-      font-size: 0.85rem;
-      color: $text-primary;
-    }
-
-    .permit-badge {
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 10px;
-      color: white;
-    }
-
-    // 特殊作業群組標題
-    &.permit-group-header {
-      margin-top: 8px;
-      padding-top: 12px;
-      border-top: 1px solid $border-color;
-    }
-
-    // 特殊作業子項目（縮排顯示）
     &.permit-sub-item {
-      padding-left: 28px;
       font-size: 0.8rem;
-
-      .permit-name {
-        font-size: 0.8rem;
-        color: $text-secondary;
-      }
-
-      .permit-badge {
-        font-size: 0.7rem;
-        padding: 2px 6px;
-      }
+      .permit-badge { font-size: 0.7rem; padding: 2px 6px; }
     }
   }
 
-  .no-data {
-    text-align: center;
-    padding: 20px;
-    color: $text-muted;
-    font-size: 0.9rem;
-  }
+  .no-data { color: $text-muted; }
 }
 
-// ============ 工程進度卡片 ============
+// ============ 工程進度 ============
 .progress-card {
-  .progress-summary {
-    margin-bottom: 16px;
-  }
-
-  .progress-main {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 12px;
-  }
-
-  .progress-percentage {
-    font-size: 2rem;
-    font-weight: 700;
-    color: $primary-light;
-    min-width: 80px;
-  }
+  .progress-percentage { color: $primary-light; }
 
   .progress-bar-large {
-    flex: 1;
     height: 12px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    overflow: hidden;
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, $primary-color 0%, $primary-light 100%);
-      border-radius: 6px;
+      background: linear-gradient(90deg, #4f46e5 0%, $primary-light 100%);
       transition: width 0.5s ease;
     }
   }
 
-  .progress-dates {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-top: 1px solid $border-color;
-  }
+  .date-label { color: $text-muted; }
+  .date-value { color: $text-secondary; }
+  .border-top { border-top-color: $border-color !important; }
 
-  .date-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .date-label {
-      font-size: 0.8rem;
-      color: $text-muted;
-    }
-
-    .date-value {
-      font-size: 0.85rem;
-      color: $text-secondary;
-    }
-  }
-
-  .progress-trend {
-    min-height: 200px;
-  }
+  .progress-trend { min-height: 200px; }
 }
 
 // ============ 子元件樣式穿透 ============
@@ -623,7 +245,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   .info-card {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
     border: 1px solid $border-color !important;
-    border-radius: $border-radius !important;
+    border-radius: 12px !important;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
     color: $text-primary !important;
     overflow: hidden;
@@ -669,16 +291,10 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 16px;
+    margin: 0 auto 16px;
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(52, 211, 153, 0.1) 100%) !important;
     border: 2px solid rgba(16, 185, 129, 0.3) !important;
-    margin-left: auto;
-    margin-right: auto;
-
-    i {
-      font-size: 32px;
-      color: #34d399 !important;
-    }
+    i { font-size: 32px; color: #34d399 !important; }
   }
 
   .large-value {
@@ -698,23 +314,6 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     margin-bottom: 0;
   }
 
-  .text-muted {
-    color: rgba(255, 255, 255, 0.6) !important;
-  }
-
-  .text-success {
-    color: $secondary-color !important;
-  }
-}
-
-// ============ 圖表容器響應式 ============
-.chart-content {
-  min-height: 280px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  > * {
-    width: 100%;
-  }
+  .text-muted { color: rgba(255, 255, 255, 0.6) !important; }
+  .text-success { color: #10b981 !important; }
 }

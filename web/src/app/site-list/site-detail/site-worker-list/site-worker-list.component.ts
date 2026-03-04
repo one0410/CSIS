@@ -184,10 +184,11 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
       // 清空之前的狀態
       this.workerHazardNoticeStatus.clear();
       
-      // 獲取該工地的所有危害告知表單
+      // 獲取該工地的所有危害告知表單（排除已作廢）
       this.hazardNoticeForms = await this.mongodbService.getArray('siteForm', {
         siteId: this.siteId,
-        formType: 'hazardNotice'
+        formType: 'hazardNotice',
+        status: { $ne: 'revoked' }
       });
       
       // 收集所有已簽名的工人身份證號碼或電話號碼
@@ -1023,9 +1024,10 @@ export class SiteWorkerListComponent implements OnInit, OnDestroy {
     }).length;
   }
 
-  // 取得工安缺失紀錄次數
+  // 取得工安缺失紀錄次數（只計算本工地）
   getSafetyIssueCount(worker: Worker): number {
-    return worker.safetyIssues?.length || 0;
+    if (!worker.safetyIssues || !this.siteId) return 0;
+    return worker.safetyIssues.filter(issue => issue.siteId === this.siteId).length;
   }
 
   calculateAge(birthday: string): string {

@@ -189,6 +189,10 @@ export class DocxTemplateService {
       isNo10: (formData.selectedCategories || []).includes('化學作業'),
       isNo11: (formData.selectedCategories || []).includes('其他'),
 
+      // 一般作業 / 特殊作業
+      isGeneralWork: formData.isGeneralWork || false,
+      isSpecialWork: formData.isSpecialWork || false,
+
       // 備註
       remarks: formData.remarks || '',
 

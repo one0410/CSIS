@@ -78,7 +78,6 @@
               <th scope="col">課程名稱</th>
               <th scope="col">講師</th>
               <th scope="col">簽到人數</th>
-              <th scope="col">狀態</th>
               <th scope="col" style="width: 120px">操作</th>
             </tr>
           </thead>
@@ -89,17 +88,6 @@
               <td>{{ training.courseName }}</td>
               <td>{{ training.instructor }}</td>
               <td>{{ getSignedParticipantsCount(training) }}</td>
-              <td>
-                <span
-                  class="badge"
-                  [ngClass]="{
-                    'bg-warning': training.status === 'draft',
-                    'bg-success': training.status === 'published',
-                    'bg-danger': training.status === 'revoked'
-                  }"
-                  >{{ this.getStatusName(training.status) }}</span
-                >
-              </td>
               <td>
                 <div class="d-flex gap-1">
                   <button

@@ -17,6 +17,7 @@ import { TodayContractorViolationChartComponent } from './today-contractor-viola
 import { TodayViolationTypeChartComponent } from './today-violation-type-chart/today-violation-type-chart.component';
 import { HeatIndexGaugeComponent } from './heat-index-gauge/heat-index-gauge.component';
 import dayjs from 'dayjs';
+import { ObjectID } from 'bson';
 
 // 作業類別統計介面
 interface PermitCategoryStat {
@@ -579,6 +580,8 @@ export class SiteDashboardComponent implements OnInit, OnDestroy {
       const tomorrowStart = dayjs().add(1, 'day').format('YYYY-MM-DD') + 'T00:00';
       const tomorrowEnd = dayjs().add(1, 'day').format('YYYY-MM-DD') + 'T23:59';
 
+      console.log('[明日出工] 查詢範圍:', tomorrowStart, '~', tomorrowEnd, 'siteId:', this.siteId);
+
       // 從工地許可單查詢明日有效的許可單
       const permits = await this.mongodbService.getArray('siteForm', {
         formType: 'sitePermit',
@@ -589,16 +592,43 @@ export class SiteDashboardComponent implements OnInit, OnDestroy {
         ]
       });
 
+      // 收集所有許可單中的 selectedWorkers ID
+      const allWorkerIds = new Set<string>();
+      permits.forEach((permit: any) => {
+        if (permit.selectedWorkers?.length > 0) {
+          permit.selectedWorkers.forEach((id: string) => allWorkerIds.add(id));
+        }
+      });
+
+      // 批次查詢 worker 資料以取得公司名稱
+      const workerCompanyMap = new Map<string, string>();
+      if (allWorkerIds.size > 0) {
+        const workers = await this.mongodbService.getArray('worker', {
+          _id: { $in: Array.from(allWorkerIds).map(id => new ObjectID(id)) }
+        });
+        workers.forEach((w: any) => {
+          // 統一用 toString() 確保 key 為字串（_id 可能是 ObjectID 物件）
+          workerCompanyMap.set(w._id?.toString(), (w.contractingCompanyName || '').trim());
+        });
+      }
+
       // 依承攬商分組，累加施作人數
       const contractorMap = new Map<string, number>();
       let totalWorkers = 0;
 
       permits.forEach((permit: any) => {
-        const contractor = (permit.contractor || '').trim();
-        const count = permit.workPersonCount || 0;
-        if (contractor && count > 0) {
-          contractorMap.set(contractor, (contractorMap.get(contractor) || 0) + count);
-          totalWorkers += count;
+        if (permit.selectedWorkers?.length > 0) {
+          // 有選擇工人：依每位工人的公司分組
+          permit.selectedWorkers.forEach((workerId: string) => {
+            const company = workerCompanyMap.get(workerId?.toString()) || '未指定公司';
+            contractorMap.set(company, (contractorMap.get(company) || 0) + 1);
+            totalWorkers++;
+          });
+        } else if (permit.workPersonCount > 0) {
+          // 無選擇工人但有填施作人數：使用許可單的承攬商欄位
+          const contractor = (permit.contractor || '').trim() || '未指定承攬商';
+          contractorMap.set(contractor, (contractorMap.get(contractor) || 0) + permit.workPersonCount);
+          totalWorkers += permit.workPersonCount;
         }
       });
 

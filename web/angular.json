@@ -22,7 +22,12 @@
               "file-saver",
               "jszip",
               "pizzip",
-              "qrcode"
+              "qrcode",
+              "angular-expressions",
+              "docxtemplater",
+              "docxtemplater-image-module-free",
+              "exceljs",
+              "xmldom"
             ],
             "outputPath": "dist/csis",
             "index": "src/index.html",
