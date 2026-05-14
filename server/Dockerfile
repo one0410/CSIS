@@ -16,12 +16,8 @@ COPY . .
 # 建立最終映像
 FROM oven/bun:1.2.18
 
-# 安裝必要的系統套件 (for sharp 等圖片處理)
+# 安裝必要的系統套件（Bun.Image 內建,不再需要 libvips）
 RUN apt-get update && apt-get install -y \
-    libc6 \
-    libgcc-s1 \
-    libstdc++6 \
-    libvips42 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 

@@ -2,7 +2,6 @@ const express = require('express');
 const { GridFSBucket } = require('mongodb');
 const { EJSON } = require('bson');
 const multer = require('multer');
-const sharp = require('sharp');
 const db = require('../dbConnection');
 const logger = require('../logger');
 
@@ -94,16 +93,13 @@ app.get('/api/gridfs/thumbnail/:filename', async (req, res) => {
             try {
                 const buffer = Buffer.concat(chunks);
 
-                // 使用 Sharp 生成縮圖
-                const thumbnail = await sharp(buffer)
-                    .resize(width, null, { // 保持長寬比，只設定寬度
-                        withoutEnlargement: true, // 不放大小圖
-                        fit: 'inside'
-                    })
-                    .jpeg({ quality: quality }) // 轉換為 JPEG 並設定品質
-                    .toBuffer();
+                // 使用 Bun.Image 生成縮圖（Bun 1.3.14+ 內建，取代 sharp）
+                const thumbnailBytes = await new Bun.Image(buffer)
+                    .resize(width, undefined, { withoutEnlargement: true })
+                    .jpeg({ quality })
+                    .bytes();
 
-                res.send(thumbnail);
+                res.send(Buffer.from(thumbnailBytes));
             } catch (error) {
                 logger.error('生成縮圖失敗:', error);
                 res.status(500).json({
@@ -470,35 +466,39 @@ app.get('/api/gridfs/file/:id', async (req, res) => {
         
         const file = files[0];
         
-        // 設定回應標頭
-        res.set('Content-Type', file.contentType);
         res.set('Content-Disposition', `inline; filename="${encodeURIComponent(file.filename)}"`);
-        
+
         if (thumbnail && file.contentType && file.contentType.startsWith('image/')) {
-            // 使用 sharp 產生縮圖
-            const sharp = require('sharp');
+            // 縮圖統一輸出 JPEG（原邏輯的 Content-Type 寫成 file.contentType 是 bug，body 實際是 jpeg）
+            res.set('Content-Type', 'image/jpeg');
+            res.set('Cache-Control', 'public, max-age=86400');
+
             const downloadStream = bucket.openDownloadStream(file._id);
-            
-            const transformer = sharp()
-                .resize(150, 150, { 
-                    fit: 'cover',
-                    position: 'center'
-                })
-                .jpeg({ quality: 80 });
-            
+            const chunks = [];
+
+            downloadStream.on('data', (chunk) => chunks.push(chunk));
             downloadStream.on('error', (error) => {
                 logger.error('檔案下載錯誤', { fileId: file._id, error: error.message });
                 handleGridFSError(error, res);
             });
-            
-            transformer.on('error', (error) => {
-                logger.error('縮圖產生錯誤', { fileId: file._id, error: error.message });
-                handleGridFSError(error, res);
+            downloadStream.on('end', async () => {
+                try {
+                    const buffer = Buffer.concat(chunks);
+                    // 使用 Bun.Image 生成 150x150 縮圖（取代 sharp）
+                    // Bun.Image 無 fit:'cover' 與 crop API，改用 fit:'inside' 保持長寬比
+                    const thumbnailBytes = await new Bun.Image(buffer)
+                        .resize(150, 150, { fit: 'inside', withoutEnlargement: true })
+                        .jpeg({ quality: 80 })
+                        .bytes();
+                    res.send(Buffer.from(thumbnailBytes));
+                } catch (error) {
+                    logger.error('縮圖產生錯誤', { fileId: file._id, error: error.message });
+                    handleGridFSError(error, res);
+                }
             });
-            
-            downloadStream.pipe(transformer).pipe(res);
         } else {
-            // 直接傳送檔案
+            // 直接傳送原檔（保持 stream pipe，避免大檔案吃滿記憶體）
+            res.set('Content-Type', file.contentType);
             const downloadStream = bucket.openDownloadStream(file._id);
             downloadStream.on('error', (error) => {
                 logger.error('檔案下載錯誤', { fileId: file._id, error: error.message });
