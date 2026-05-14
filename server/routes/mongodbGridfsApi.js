@@ -84,12 +84,16 @@ app.get('/api/gridfs/thumbnail/:filename', async (req, res) => {
 
         const downloadStream = bucket.openDownloadStreamByName(filename);
         const chunks = [];
+        // 防止 stream error 後 end 仍 fire 造成 double res.send (headers already sent)
+        let settled = false;
 
         downloadStream.on('data', (chunk) => {
             chunks.push(chunk);
         });
 
         downloadStream.on('end', async () => {
+            if (settled) return;
+            settled = true;
             try {
                 const buffer = Buffer.concat(chunks);
 
@@ -110,6 +114,8 @@ app.get('/api/gridfs/thumbnail/:filename', async (req, res) => {
         });
 
         downloadStream.on('error', (error) => {
+            if (settled) return;
+            settled = true;
             handleGridFSError(error, res);
         });
     } catch (error) {
@@ -475,17 +481,25 @@ app.get('/api/gridfs/file/:id', async (req, res) => {
 
             const downloadStream = bucket.openDownloadStream(file._id);
             const chunks = [];
+            // 防止 stream error 後 end 仍 fire 造成 double res.send (headers already sent)
+            let settled = false;
 
             downloadStream.on('data', (chunk) => chunks.push(chunk));
             downloadStream.on('error', (error) => {
+                if (settled) return;
+                settled = true;
                 logger.error('檔案下載錯誤', { fileId: file._id, error: error.message });
                 handleGridFSError(error, res);
             });
             downloadStream.on('end', async () => {
+                if (settled) return;
+                settled = true;
                 try {
                     const buffer = Buffer.concat(chunks);
                     // 使用 Bun.Image 生成 150x150 縮圖（取代 sharp）
                     // Bun.Image 無 fit:'cover' 與 crop API，改用 fit:'inside' 保持長寬比
+                    // 前端 CSS 已用 object-fit:cover (daily-photo-stats / weekly-improvement-photos)
+                    // 會在客戶端再裁切，視覺最終一致
                     const thumbnailBytes = await new Bun.Image(buffer)
                         .resize(150, 150, { fit: 'inside', withoutEnlargement: true })
                         .jpeg({ quality: 80 })
