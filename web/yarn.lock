@@ -2433,10 +2433,10 @@ detect-libc@^2.0.1:
   resolved "https://registry.yarnpkg.com/detect-libc/-/detect-libc-2.0.4.tgz#f04715b8ba815e53b4d8109655b6508a6865a7e8"
   integrity sha512-3UDv+G9CsCKO1WKMGw9fwq/SWJYbI0c5Y7LU1AXYoDdbhE2AHQ6N6Nb34sG8Fj7T5APy8qXDCKuuIHd1BR0tVA==
 
-dhtmlx-gantt@^9.0.11:
-  version "9.0.11"
-  resolved "https://registry.yarnpkg.com/dhtmlx-gantt/-/dhtmlx-gantt-9.0.11.tgz#4492c3d42b65b4d98c005f8bdfbb0ad9b2d87290"
-  integrity sha512-tbJ4RYud/uSw4MpdBoTxolW7DzCtOnLNzxpFptP0Zqw1yaaNhU7s4Jfq3RnnkmD5WEdFx9bJ+6w6LovegFDHJw==
+dhtmlx-gantt@^10.0.0:
+  version "10.0.0"
+  resolved "https://registry.yarnpkg.com/dhtmlx-gantt/-/dhtmlx-gantt-10.0.0.tgz#f991e69071b301bdbff699cc6a25562acd4659b1"
+  integrity sha512-6vRr8w+A2TJZSWuMezjAiJzOFfxvTPWgr6wA5VItJG32Sh+yEYUkkcEu90w4+3/SuHNa/h3AwcjOU0sIkDFJ8g==
 
 di@^0.0.1:
   version "0.0.1"

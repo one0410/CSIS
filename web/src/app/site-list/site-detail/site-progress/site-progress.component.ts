@@ -13,7 +13,7 @@ import {
 import { FormsModule } from '@angular/forms';
 
 import { DatePipe } from '@angular/common';
-import { gantt } from 'dhtmlx-gantt';
+import { Gantt } from 'dhtmlx-gantt';
 import { MongodbService } from '../../../services/mongodb.service';
 import { ActivatedRoute } from '@angular/router';
 import { Site } from '../../site-list.component';
@@ -160,21 +160,7 @@ export class SiteProgressComponent
         console.log('使用的項目編號:', this.siteId);
 
         try {
-          // 清理舊的甘特圖實例
-          if (this.ganttChart) {
-            console.log('清理舊的甘特圖實例');
-            try {
-              // 移除所有事件監聽器
-              this.ganttChart.detachAllEvents();
-              // 銷毀甘特圖
-              // this.ganttChart.destructor();
-            } catch (cleanupError) {
-              console.error('清理舊甘特圖時發生錯誤:', cleanupError);
-            }
-            // this.ganttChart = null;
-          }
-
-          // 清理滾動處理器
+          // 清理滾動處理器（舊的甘特圖實例由 initGantt 負責清理）
           this.cleanupGanttScrollHandling();
 
           // 等待資料載入完成
@@ -707,186 +693,6 @@ export class SiteProgressComponent
     return { tasks: ganttTasks, links };
   }
 
-  // 使用 iframe 載入甘特圖，避免 $destroyed 問題
-  loadGanttInIframe() {
-    if (!this.ganttScrollContainer) {
-      console.error('甘特圖容器尚未初始化');
-      return;
-    }
-
-    const scrollContainer = this.ganttScrollContainer.nativeElement;
-
-    // 清理現有元素
-    while (scrollContainer.firstChild) {
-      scrollContainer.removeChild(scrollContainer.firstChild);
-    }
-
-    // 創建 iframe 元素
-    const iframe = document.createElement('iframe');
-    iframe.id = 'gantt-iframe';
-    iframe.style.width = '100%';
-    iframe.style.height = '600px';
-    iframe.style.border = 'none';
-
-    scrollContainer.appendChild(iframe);
-
-    // 建立 iframe 內容
-    const iframeDoc = iframe.contentWindow?.document;
-    if (!iframeDoc) {
-      console.error('無法獲取 iframe 文檔');
-      return;
-    }
-
-    // 建立一個完整的 HTML 文檔，包含甘特圖
-    iframeDoc.open();
-    iframeDoc.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>甘特圖</title>
-        <meta charset="utf-8">
-        <link rel="stylesheet" href="//cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css">
-        <script src="//cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js"></script>
-        <style>
-          html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
-          #gantt_here { width: 100%; height: 100%; }
-        </style>
-      </head>
-      <body>
-        <div id="gantt_here"></div>
-        <script>
-          // iframe 初始化腳本
-          const gantt = window.gantt;
-
-          // 用於從父窗口接收資料
-          window.initGantt = function(tasksData) {
-            const parsedData = JSON.parse(tasksData);
-            
-            gantt.config.xml_date = '%Y-%m-%d';
-            gantt.config.autosize = 'y';
-            gantt.config.fit_tasks = true;
-            gantt.config.show_progress = true;
-            
-            // 啟用自動調度功能，讓父項目自動計算子項目的時程範圍
-            gantt.config.auto_scheduling = true;
-            gantt.config.auto_scheduling_strict = true;
-            gantt.config.auto_scheduling_initial = true;
-            
-            // 設置欄位
-            gantt.config.columns = [
-              { name: 'wbs', label: 'WBS', tree: true, width: 100 },
-              { name: 'text', label: '工程項目', width: 200 },
-              { name: 'start_date', label: '開始日期', align: 'center', width: 100 },
-              { name: 'end_date', label: '結束日期', align: 'center', width: 100 },
-              {
-                name: 'progress',
-                label: '進度',
-                align: 'center',
-                width: 80,
-                template: function(task) {
-                  return Math.round(task.progress * 100) + '%';
-                }
-              }
-            ];
-            
-            // 初始化甘特圖
-            gantt.init('gantt_here');
-            
-            // 載入資料
-            gantt.parse(parsedData);
-            
-            // 設置今天的指示線
-            gantt.addMarker({
-              start_date: new Date(),
-              css: 'today',
-              text: '今天',
-              title: new Date().toLocaleDateString()
-            });
-            
-            // 任務更新時通知父窗口
-            gantt.attachEvent('onAfterTaskUpdate', function(id, task) {
-              window.parent.postMessage({
-                type: 'taskUpdate',
-                id: id,
-                task: task
-              }, '*');
-            });
-            
-            // 任務刪除時通知父窗口
-            gantt.attachEvent('onAfterTaskDelete', function(id) {
-              window.parent.postMessage({
-                type: 'taskDelete',
-                id: id
-              }, '*');
-            });
-            
-            // 連接更新時通知父窗口
-            gantt.attachEvent('onAfterLinkAdd', function(id, link) {
-              window.parent.postMessage({
-                type: 'linkAdd',
-                id: id,
-                link: link
-              }, '*');
-            });
-            
-            // 連接刪除時通知父窗口
-            gantt.attachEvent('onAfterLinkDelete', function(id, link) {
-              window.parent.postMessage({
-                type: 'linkDelete',
-                id: id,
-                link: link
-              }, '*');
-            });
-          };
-        </script>
-      </body>
-      </html>
-    `);
-    iframeDoc.close();
-
-    // 設置監聽 iframe 傳來的消息
-    window.addEventListener('message', this.handleIframeMessage.bind(this));
-
-    // 等待 iframe 加載完成
-    iframe.onload = () => {
-      // 將任務資料轉換並傳送到 iframe
-      const { tasks, links } = this.convertTasksForDhtmlxGantt(this.tasks);
-      const ganttData = {
-        data: tasks,
-        links: links
-      };
-
-      // 將資料發送到 iframe
-      (iframe.contentWindow as any).initGantt(JSON.stringify(ganttData));
-    };
-  }
-
-  // 處理從 iframe 收到的消息
-  handleIframeMessage(event: MessageEvent) {
-    const data = event.data;
-
-    if (!data || !data.type) return;
-
-    switch (data.type) {
-      case 'taskUpdate':
-        this.updateTaskFromGantt(data.id, data.task);
-        break;
-      case 'taskDelete':
-        this.deleteTask(data.id);
-        break;
-      case 'linkAdd':
-        this.updateDependencyFromGantt(data.link);
-        break;
-      case 'linkDelete':
-        this.updateDependencyAfterDelete(data.link);
-        break;
-    }
-  }
-
-  // 靜態標記：甘特圖腳本是否已載入
-  private static ganttScriptLoaded = false;
-  private static ganttScriptLoading = false;
-
   // 初始化甘特圖
   initGantt() {
     if (!this.ganttScrollContainer) {
@@ -901,9 +707,9 @@ export class SiteProgressComponent
       if (this.ganttChart) {
         try {
           this.ganttChart.detachAllEvents();
-          // 不調用 destructor，因為我們重複使用全局 gantt 實例
+          this.ganttChart.destructor();
         } catch (e) {
-          console.error('清理舊甘特圖事件失敗', e);
+          console.error('清理舊甘特圖實例失敗', e);
         }
         this.ganttChart = null;
       }
@@ -922,75 +728,21 @@ export class SiteProgressComponent
       ganttContainer.style.width = '100%';
       scrollContainer.appendChild(ganttContainer);
 
-      // 檢查甘特圖腳本是否已載入
-      if ((window as any).gantt && SiteProgressComponent.ganttScriptLoaded) {
-        console.log('使用已載入的甘特圖腳本');
-        this.setupAndInitGantt(ganttContainer);
-        return;
-      }
-
-      // 如果正在載入中，等待載入完成
-      if (SiteProgressComponent.ganttScriptLoading) {
-        console.log('甘特圖腳本正在載入中，等待...');
-        const checkInterval = setInterval(() => {
-          if (SiteProgressComponent.ganttScriptLoaded && (window as any).gantt) {
-            clearInterval(checkInterval);
-            this.setupAndInitGantt(ganttContainer);
-          }
-        }, 100);
-        return;
-      }
-
-      // 首次載入甘特圖腳本
-      SiteProgressComponent.ganttScriptLoading = true;
-      const script = document.createElement('script');
-      script.onload = () => {
-        console.log('甘特圖腳本載入完成');
-        SiteProgressComponent.ganttScriptLoaded = true;
-        SiteProgressComponent.ganttScriptLoading = false;
-        this.setupAndInitGantt(ganttContainer);
-      };
-      script.onerror = () => {
-        console.error('甘特圖腳本載入失敗');
-        SiteProgressComponent.ganttScriptLoading = false;
-      };
-
-      // 使用固定版本的 URL，允許瀏覽器緩存
-      script.src = '//cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js';
-      document.head.appendChild(script);
-
+      this.setupAndInitGantt(ganttContainer);
     } catch (error) {
       console.error('初始化甘特圖失敗', error);
     }
   }
 
-  // 設置並初始化甘特圖（從全局 gantt 實例）
+  // 設置並初始化甘特圖（使用 npm 套件 dhtmlx-gantt v10 建立獨立實例）
   private setupAndInitGantt(ganttContainer: HTMLElement) {
-    const freshGantt = (window as any).gantt;
-    if (!freshGantt) {
-      console.error('無法獲取 gantt 實例');
-      return;
-    }
-
-    // 設置甘特圖
-    this.ganttChart = freshGantt;
-
-    // 清除之前的資料和事件
-    this.ganttChart.clearAll();
-    this.ganttChart.detachAllEvents();
-
-    this.ganttChart.plugins({ marker: true });
+    this.ganttChart = Gantt.getGanttInstance();
 
     // 配置甘特圖
     this.ganttChart.config.xml_date = '%Y-%m-%d';
     this.ganttChart.config.autosize = 'y';
     this.ganttChart.config.fit_tasks = true;
     this.ganttChart.config.show_progress = true;
-
-    // 啟用自動調度功能，讓父項目自動計算子項目的時程範圍
-    this.ganttChart.config.auto_scheduling = true;
-    this.ganttChart.config.auto_scheduling_strict = true;
-    this.ganttChart.config.auto_scheduling_initial = true;
 
     this.ganttChart.config.lightbox.sections = [
       { name: 'description', height: 100, map_to: 'text', type: 'textarea' },
@@ -1051,6 +803,41 @@ export class SiteProgressComponent
     this.ganttChart.attachEvent('onAfterLinkDelete', (id: string, link: any) => {
       this.updateDependencyAfterDelete(link);
     });
+
+    // 每次重新渲染後重畫「今天」指示線
+    this.ganttChart.attachEvent('onGanttRender', () => {
+      this.renderTodayMarker();
+    });
+  }
+
+  // 繪製「今天」指示線
+  // （v10 Community 版已不含 marker 擴充，改以自訂圖層實作）
+  private renderTodayMarker() {
+    const g = this.ganttChart;
+    if (!g || !g.$task_data) return;
+
+    // 移除舊的指示線
+    g.$task_data
+      .querySelectorAll('.gantt-today-marker')
+      .forEach((el: Element) => el.remove());
+
+    // 今天不在圖表時間範圍內就不繪製
+    const today = new Date();
+    const state = g.getState();
+    if (!state.min_date || !state.max_date) return;
+    if (today < state.min_date || today > state.max_date) return;
+
+    const marker = document.createElement('div');
+    marker.className = 'gantt-today-marker';
+    marker.title = today.toLocaleDateString();
+    marker.style.left = g.posFromDate(today) + 'px';
+
+    const label = document.createElement('div');
+    label.className = 'gantt-today-marker-label';
+    label.textContent = '今天';
+    marker.appendChild(label);
+
+    g.$task_data.appendChild(marker);
   }
 
   // 載入數據到甘特圖
@@ -1071,12 +858,7 @@ export class SiteProgressComponent
       console.log('已載入資料到甘特圖');
 
       // 設置今天的指示線
-      this.ganttChart.addMarker({
-        start_date: new Date(),
-        css: 'today',
-        text: '今天',
-        title: new Date().toLocaleDateString(),
-      });
+      this.renderTodayMarker();
     } catch (parseError) {
       console.error('在解析資料時發生錯誤:', parseError);
     }
@@ -1084,6 +866,10 @@ export class SiteProgressComponent
 
   // 設置甘特圖本地化
   setGanttLocalization() {
+    // 以 v10 內建的繁體中文語系為基礎
+    this.ganttChart.i18n.setLocale('zh_tw');
+
+    // 再套用專案自訂用詞（setLocale 傳入物件時為合併行為）
     this.ganttChart.i18n.setLocale({
       date: {
         month_full: [
