@@ -133,3 +133,15 @@ bun run buildLinux # 編譯為 Linux 執行檔
 | - 週報表 | `site-weekly-report` | `weekly-report` | 6 張卡片 |
 | - 月報表 | `site-monthly-report` | `monthly-report` | 5 張卡片 |
 
+---
+
+## 跨專案 skills（全域，`~/.claude/skills/`）
+
+本專案後端 `csisserver` 跑在 emicro 共用伺服器。部署 / Bun 版本相關程序見全域 skills（按需用 Skill 工具載入）：
+
+- `deploy-emicro-server` — emicro 部署、PM2 + Bun zombie SOP、共用服務清單
+- `bun-version-policy` — Bun 版本紅線（固定 1.3.14，禁 1.3.7-1.3.13）與升級 SOP
+- `bun-hono-serve-gotchas` — hono/cors leak、serveStatic chunked、Bun.serve idleTimeout 等坑
+
+> 註：本 repo 為 **public**，任何檔案（含 CLAUDE.md / skill）皆不可寫入帳密。
+
