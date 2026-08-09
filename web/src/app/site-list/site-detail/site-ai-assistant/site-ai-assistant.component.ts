@@ -1,0 +1,303 @@
+import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import dayjs from 'dayjs';
+import {
+  AI_ALLOWED_EXTENSIONS,
+  AI_MAX_FILE_SIZE,
+  AiCitation,
+  AiDocument,
+  AiService
+} from '../../../services/ai.service';
+import { AuthService } from '../../../services/auth.service';
+import { CurrentSiteService } from '../../../services/current-site.service';
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  sources?: AiCitation[];
+  noEvidence?: boolean;
+  error?: string;
+}
+
+@Component({
+  selector: 'app-site-ai-assistant',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './site-ai-assistant.component.html',
+  styleUrls: ['./site-ai-assistant.component.scss']
+})
+export class SiteAiAssistantComponent implements OnDestroy {
+  private aiService = inject(AiService);
+  private authService = inject(AuthService);
+  private currentSiteService = inject(CurrentSiteService);
+
+  @ViewChild('chatScroll') chatScroll?: ElementRef<HTMLDivElement>;
+
+  site = computed(() => this.currentSiteService.currentSite());
+
+  activeTab = signal<'chat' | 'docs'>('chat');
+
+  // --- 問答 tab ---
+  messages = signal<ChatMessage[]>([]);
+  input = signal('');
+  streaming = signal(false);
+  toolStatus = signal<string | null>(null);
+  private sessionId = crypto.randomUUID();
+  private abortController: AbortController | null = null;
+
+  // --- 文件管理 tab ---
+  documents = signal<AiDocument[]>([]);
+  loadingDocs = signal(false);
+  uploading = signal(false);
+  uploadProgress = signal('');
+  dragOver = signal(false);
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
+
+  readonly acceptExtensions = AI_ALLOWED_EXTENSIONS.join(',');
+
+  constructor() {
+    effect(() => {
+      const currentSite = this.site();
+      if (currentSite?._id) {
+        this.loadDocuments();
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.stopPolling();
+    this.abortController?.abort();
+  }
+
+  // ==========================================================================
+  // 問答
+  // ==========================================================================
+  async send() {
+    const question = this.input().trim();
+    const siteId = this.site()?._id;
+    if (!question || !siteId || this.streaming()) return;
+
+    // history 帶「本則之前」的完整對話(後端取最近 10 則)
+    const history = this.messages()
+      .filter(m => !m.error && m.content)
+      .map(m => ({ role: m.role, content: m.content }));
+
+    this.input.set('');
+    this.messages.update(msgs => [...msgs, { role: 'user', content: question }, { role: 'assistant', content: '' }]);
+    this.streaming.set(true);
+    this.toolStatus.set(null);
+    this.abortController = new AbortController();
+    this.scrollToBottom();
+
+    try {
+      await this.aiService.chatStream(siteId, question, history, this.sessionId, event => {
+        switch (event.type) {
+          case 'citations':
+            this.updateLastMessage(m => {
+              m.sources = event.items;
+              m.noEvidence = event.items.length === 0;
+            });
+            break;
+          case 'tool':
+            this.toolStatus.set(this.toolLabel(event.name));
+            break;
+          case 'clause':
+            this.toolStatus.set(null);
+            this.updateLastMessage(m => (m.content += event.text));
+            this.scrollToBottom();
+            break;
+          case 'rag_unavailable':
+            this.updateLastMessage(m => (m.noEvidence = true));
+            break;
+          case 'error':
+            this.updateLastMessage(m => (m.error = event.error));
+            break;
+          case 'done':
+            break;
+        }
+      }, this.abortController.signal);
+    } catch (error: any) {
+      if (error?.name !== 'AbortError') {
+        console.error(error);
+        this.updateLastMessage(m => (m.error = error?.message || '查詢失敗,請稍後再試'));
+      }
+    } finally {
+      this.streaming.set(false);
+      this.toolStatus.set(null);
+      this.abortController = null;
+      this.scrollToBottom();
+    }
+  }
+
+  stop() {
+    this.abortController?.abort();
+  }
+
+  onInputKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.send();
+    }
+  }
+
+  openCitation(citation: AiCitation) {
+    window.open(this.aiService.documentFileUrl(citation.documentId, citation.page), '_blank');
+  }
+
+  scorePercent(score: number): string {
+    return `${Math.round(score * 100)}%`;
+  }
+
+  private toolLabel(name: string): string {
+    const labels: Record<string, string> = {
+      get_project_progress: '查詢工程進度中…',
+      get_worker_count: '查詢人員數量中…',
+      get_active_permits: '查詢許可單中…',
+      get_site_info: '查詢工地資料中…'
+    };
+    return labels[name] || '查詢工地資料中…';
+  }
+
+  private updateLastMessage(mutate: (m: ChatMessage) => void) {
+    this.messages.update(msgs => {
+      const copy = [...msgs];
+      const last = { ...copy[copy.length - 1] };
+      mutate(last);
+      copy[copy.length - 1] = last;
+      return copy;
+    });
+  }
+
+  private scrollToBottom() {
+    setTimeout(() => {
+      const el = this.chatScroll?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+  }
+
+  // ==========================================================================
+  // 文件管理
+  // ==========================================================================
+  async loadDocuments() {
+    const siteId = this.site()?._id;
+    if (!siteId) return;
+    try {
+      this.loadingDocs.set(true);
+      const docs = await this.aiService.listDocuments(siteId);
+      this.documents.set(docs);
+      this.syncPolling(docs);
+    } catch (error) {
+      console.error('載入文件列表失敗:', error);
+    } finally {
+      this.loadingDocs.set(false);
+    }
+  }
+
+  onFileSelected(event: any) {
+    const files = event.target.files;
+    if (files?.length > 0) {
+      this.handleFiles(files);
+      event.target.value = ''; // 重置才能重選同一檔
+    }
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.dragOver.set(true);
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    this.dragOver.set(false);
+  }
+
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    this.dragOver.set(false);
+    if (event.dataTransfer?.files?.length) {
+      this.handleFiles(event.dataTransfer.files);
+    }
+  }
+
+  private async handleFiles(files: FileList) {
+    const siteId = this.site()?._id;
+    if (!siteId) return;
+
+    const fileArray: File[] = Array.from(files); // FileList 會被清空,先轉 Array
+    const uploadedBy = this.authService.user()?.name || '';
+
+    // 前端先驗格式與大小(後端會再驗一次)
+    for (const file of fileArray) {
+      const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+      if (!AI_ALLOWED_EXTENSIONS.includes(ext)) {
+        alert(`「${file.name}」格式不支援,僅支援:${AI_ALLOWED_EXTENSIONS.join(', ')}`);
+        return;
+      }
+      if (file.size > AI_MAX_FILE_SIZE) {
+        alert(`「${file.name}」超過 50MB 上限`);
+        return;
+      }
+    }
+
+    this.uploading.set(true);
+    let uploaded = 0;
+    try {
+      for (const file of fileArray) {
+        this.uploadProgress.set(`上傳中 ${uploaded + 1}/${fileArray.length}:${file.name}`);
+        await this.aiService.uploadDocument(siteId, file, uploadedBy);
+        uploaded++;
+      }
+    } catch (error: any) {
+      console.error(error);
+      alert(error?.message || '上傳失敗');
+    } finally {
+      this.uploading.set(false);
+      this.uploadProgress.set('');
+      await this.loadDocuments();
+    }
+  }
+
+  async deleteDocument(doc: AiDocument) {
+    const siteId = this.site()?._id;
+    if (!siteId) return;
+    if (!confirm(`確定刪除「${doc.filename}」?刪除後將無法在問答中檢索到此文件。`)) return;
+    try {
+      await this.aiService.deleteDocument(siteId, doc._id);
+      await this.loadDocuments();
+    } catch (error: any) {
+      console.error(error);
+      alert(error?.message || '刪除失敗');
+    }
+  }
+
+  openDocument(doc: AiDocument) {
+    window.open(this.aiService.documentFileUrl(doc._id), '_blank');
+  }
+
+  formatSize(size: number): string {
+    if (size >= 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`;
+    return `${Math.ceil(size / 1024)} KB`;
+  }
+
+  formatTime(time: string): string {
+    return dayjs(time).format('YYYY-MM-DD HH:mm');
+  }
+
+  // pending/processing 存在時每 3 秒輪詢,全部終態即停(AC-1.2 狀態可觀察)
+  private syncPolling(docs: AiDocument[]) {
+    const hasActive = docs.some(d => d.embeddingStatus === 'pending' || d.embeddingStatus === 'processing');
+    if (hasActive && !this.pollTimer) {
+      this.pollTimer = setInterval(() => this.loadDocuments(), 3000);
+    } else if (!hasActive) {
+      this.stopPolling();
+    }
+  }
+
+  private stopPolling() {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+  }
+}

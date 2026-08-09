@@ -76,6 +76,10 @@ const fileApi = require('./routes/fileApi');
 // 需要根據 fileApi 的具體需求來配置
 app.use('/', fileApi);
 
+// AI 文件管理 + RAG 問答(body parser 由 aiApi 內部逐 route 掛,上傳走 multer 不可掛 json)
+const aiApi = require('./routes/aiApi');
+app.use('/', aiApi);
+
 
 // 設定靜態資料夾
 // let wwwrootPath = path.join(__dirname, 'wwwroot/browser');

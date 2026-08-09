@@ -1,0 +1,23 @@
+.chat-bubble {
+  max-width: 75%;
+  word-break: break-word;
+}
+
+.chat-content {
+  white-space: pre-wrap;
+}
+
+.citation-chip {
+  font-size: 0.78rem;
+  padding: 0.15rem 0.5rem;
+}
+
+.upload-zone {
+  border-style: dashed !important;
+  transition: background-color 0.15s;
+
+  &.drag-over {
+    background-color: rgba(13, 110, 253, 0.08);
+    border-color: var(--bs-primary) !important;
+  }
+}

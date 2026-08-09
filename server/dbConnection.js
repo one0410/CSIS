@@ -15,7 +15,9 @@ const SITE_COLLECTIONS = [
     'training',      // 教育訓練
     'schedule',      // 排程
     'progress',      // 進度
-    'photo'          // 照片
+    'photo',         // 照片
+    'ai_documents',      // AI 知識庫文件
+    'ai_conversations'   // AI 問答對話紀錄
 ];
 
 // 建立 siteId 索引的函數
