@@ -355,9 +355,10 @@ app.post('/api/ai/sites/:siteId/chat', express.json({ limit: '1mb' }), async (re
   const history = Array.isArray(req.body?.history) ? req.body.history : [];
   const sessionId = (req.body?.sessionId || '').trim();
 
-  // 全鏈路 abort:client 斷線(關頁、按中止)→ 停止 LLM 生成與檢索
+  // 全鏈路 abort:client 斷線(關頁、按中止)→ 停止 LLM 生成與檢索。
+  // 注意必須聽 res 的 close(req 的 close 在 body 解析完就會觸發,會誤殺 pipeline)
   const pipelineAbort = new AbortController();
-  req.on('close', () => {
+  res.on('close', () => {
     if (!res.writableEnded) pipelineAbort.abort();
   });
 

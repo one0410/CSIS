@@ -16,9 +16,8 @@ const LLM_MODEL = process.env.LLM_MODEL || 'openai/gpt-oss-120b';
 async function streamChat(messages, onDelta, { tools, signal } = {}) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    const err = new Error('GROQ_API_KEY 未設定');
-    err.status = 500;
-    throw err;
+    // 不設 status:設定缺失不是瞬時錯誤,呼叫端不需退避重試
+    throw new Error('GROQ_API_KEY 未設定,請在伺服器 .env 設定後重啟');
   }
 
   const body = { model: LLM_MODEL, messages, stream: true };
