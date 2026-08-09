@@ -16,6 +16,7 @@
 CSIS/
 ├── web/          # Angular 前端
 ├── server/       # Bun/Express 後端
+├── rag-worker/   # Python FastAPI RAG 檢索服務(AI 智慧問答用)
 └── form-config/  # 表單配置版本控制
 ```
 
@@ -126,12 +127,45 @@ bun run buildLinux # 編譯為 Linux 執行檔
 | - 危害告知 | `site-hazard-notice` | `hazardNotice` | `siteForm` |
 | - 機具管理 | `site-equipment` | `equipment` | `equipment` |
 | 照片管理 | `site-photos` | `photos` | GridFS |
+| AI 智慧問答 | `site-ai-assistant` | `ai` | `ai_documents` / `ai_conversations` / GridFS |
 | 教育訓練管理 | `site-training` | `training` | `siteForm` |
 | 工安通報系統 | `site-accident-list` | `accidentList` | `accident` |
 | **報表** | | | |
 | - 日報表 | `site-daily-report` | `daily-report` | 8 張卡片 |
 | - 週報表 | `site-weekly-report` | `weekly-report` | 6 張卡片 |
 | - 月報表 | `site-monthly-report` | `monthly-report` | 5 張卡片 |
+
+---
+
+## AI 智慧問答(RAG)
+
+每個工地一個獨立知識庫 pool(A 工地查不到 B 工地內容),使用者可上傳 PDF/DOCX/XLSX/PPTX/TXT/MD(單檔 50MB),以自然語言問答並附出處(檔名+頁碼+相關度);工地即時狀態(進度/出工人數/在冊工人/許可單)由 LLM tool-calling 直查 MongoDB,口徑與 Dashboard 一致。規格對齊 `2026_AI_Specs_0417.md`。
+
+### 架構
+
+```
+Angular(site/:id/ai)→ Bun /api/ai/*(aiApi/aiLlm/aiTools.js)
+  ├→ rag-worker(FastAPI, 127.0.0.1:8010):MarkItDown/pdfplumber 轉檔、
+  │   chunking、bge-m3 embedding、ChromaDB collection-per-site(site_{siteId})、
+  │   per-site BM25 + RRF + bge-reranker 重排(參考 SuperAI 專案移植)
+  ├→ Groq API(openai/gpt-oss-120b,OpenAI 相容;之後可換地端 vLLM 只改 env)
+  └→ MongoDB:ai_documents(狀態 pending→processing→completed/failed)、
+      ai_conversations、GridFS 原檔(下載端點驗 siteId)
+```
+
+### 關鍵約束
+
+- **siteId 只從路徑參數取**(24-hex 驗證),後端強制注入查詢條件,不信任前端 filter;BM25 索引必須 per-site(全域索引會跨工地洩漏)
+- **AI 設定走 env 不走 serverconfig.json**(`GROQ_API_KEY` / `LLM_MODEL` / `LLM_BASE_URL` / `RAG_WORKER_URL`,放 `server/.env`,已 gitignore;**repo 是 public,key 絕不可入版控**);compiled exe 會自動載入 cwd 的 .env
+- worker 的 embedding 模型選擇持久化在 `rag-worker/data/embedding_model.txt`,改 `EMBEDDING_MODEL` env 會觸發逐 collection 砍庫重建(文件需重新上傳)
+- chat SSE 的 abort 監聽 `res` 的 close(監聽 `req` 會在 body 解析完就誤觸發)
+- worker 本機啟動:`cd rag-worker && venv\Scripts\python rag_server.py`(port 8010,首次會下載 ~4.4GB 模型)
+
+### 部署(server.emicro.tech)
+
+- pm2 服務 `csis_rag_8010`(venv python 直跑 rag_server.py,`HF_HOME=C:\inetpub\csis\rag-worker\hf-cache`、`PYTHONUTF8=1`);csisserver 的 `.env` 在 `C:\inetpub\csis\.env`
+- nginx 的 csis 區塊有獨立 `location /api/ai/`(proxy_read_timeout 300s、proxy_buffering off、client_max_body_size 60m)——timeout 階梯 nginx 300s > axios/fetch 240s
+- 新增/移除 pm2 服務後必 `pm2 save`(否則重開機 resurrect 舊清單)
 
 ---
 
