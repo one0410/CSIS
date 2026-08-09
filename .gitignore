@@ -25,3 +25,4 @@ rag-worker/hf-cache/
 __pycache__/
 
 ~*.docx
+rag-worker/worker.log

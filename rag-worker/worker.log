@@ -1,26 +1,0 @@
-C:\Users\oneroan\GitHub\_NCKU\CSIS\rag-worker\rag_server.py:138: DeprecationWarning: 
-        on_event is deprecated, use lifespan event handlers instead.
-
-        Read more about it in the
-        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
-        
-  @app.on_event("startup")
-[RAG] Starting CSIS RAG worker on 127.0.0.1:8010...
-INFO:     Started server process [43768]
-INFO:     Waiting for application startup.
-[RAG] Loading embedding model: BAAI/bge-m3...
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights:   0%|          | 0/391 [00:00<?, ?it/s]Loading weights: 100%|██████████| 391/391 [00:00<00:00, 48238.75it/s]
-C:\Users\oneroan\GitHub\_NCKU\CSIS\rag-worker\embeddings.py:62: FutureWarning: The `get_sentence_embedding_dimension` method has been renamed to `get_embedding_dimension`.
-  logger.info(f"[RAG] Embedding model loaded: {model_name} (dim={_model.get_sentence_embedding_dimension()})")
-[RAG] Embedding model loaded: BAAI/bge-m3 (dim=1024)
-[RAG] Loading reranker: BAAI/bge-reranker-v2-m3...
-Loading weights:   0%|          | 0/393 [00:00<?, ?it/s]Loading weights: 100%|██████████| 393/393 [00:00<00:00, 8676.00it/s]
-[RAG] Reranker loaded
-[RAG] Initializing ChromaDB at C:\Users\oneroan\GitHub\_NCKU\CSIS\rag-worker\data\chromadb...
-[RAG] Ready. 2 site collections.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
-INFO:     127.0.0.1:4347 - "GET /health HTTP/1.1" 200 OK
-[RAG] BM25 index built for site aaaaaaaaaaaaaaaaaaaaaaaa: 2 chunks
-INFO:     127.0.0.1:49166 - "POST /query HTTP/1.1" 200 OK
