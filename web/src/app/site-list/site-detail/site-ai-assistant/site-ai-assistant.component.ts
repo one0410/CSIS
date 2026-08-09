@@ -11,6 +11,7 @@ import {
 } from '../../../services/ai.service';
 import { AuthService } from '../../../services/auth.service';
 import { CurrentSiteService } from '../../../services/current-site.service';
+import { MongodbService } from '../../../services/mongodb.service';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -18,6 +19,16 @@ interface ChatMessage {
   sources?: AiCitation[];
   noEvidence?: boolean;
   error?: string;
+}
+
+interface AiConversation {
+  _id: string;
+  siteId: string;
+  sessionId: string;
+  userId: string | null;
+  messages: { role: 'user' | 'assistant'; content: string; sources?: AiCitation[]; timestamp: string }[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 @Component({
@@ -31,6 +42,7 @@ export class SiteAiAssistantComponent implements OnDestroy {
   private aiService = inject(AiService);
   private authService = inject(AuthService);
   private currentSiteService = inject(CurrentSiteService);
+  private mongodbService = inject(MongodbService);
 
   @ViewChild('chatScroll') chatScroll?: ElementRef<HTMLDivElement>;
 
@@ -43,8 +55,13 @@ export class SiteAiAssistantComponent implements OnDestroy {
   input = signal('');
   streaming = signal(false);
   toolStatus = signal<string | null>(null);
-  private sessionId = crypto.randomUUID();
+  private sessionId: string = crypto.randomUUID();
   private abortController: AbortController | null = null;
+
+  // --- 歷史對話 ---
+  showHistory = signal(false);
+  historyList = signal<AiConversation[]>([]);
+  loadingHistory = signal(false);
 
   // --- 文件管理 tab ---
   documents = signal<AiDocument[]>([]);
@@ -91,7 +108,8 @@ export class SiteAiAssistantComponent implements OnDestroy {
     this.scrollToBottom();
 
     try {
-      await this.aiService.chatStream(siteId, question, history, this.sessionId, event => {
+      const userId = this.authService.user()?._id || '';
+      await this.aiService.chatStream(siteId, question, history, this.sessionId, userId, event => {
         switch (event.type) {
           case 'citations':
             this.updateLastMessage(m => {
@@ -143,6 +161,68 @@ export class SiteAiAssistantComponent implements OnDestroy {
 
   openCitation(citation: AiCitation) {
     window.open(this.aiService.documentFileUrl(citation.documentId, citation.page), '_blank');
+  }
+
+  // ==========================================================================
+  // 歷史對話
+  // ==========================================================================
+  newConversation() {
+    this.messages.set([]);
+    this.sessionId = crypto.randomUUID();
+    this.showHistory.set(false);
+  }
+
+  async toggleHistory() {
+    if (this.showHistory()) {
+      this.showHistory.set(false);
+      return;
+    }
+    this.showHistory.set(true);
+    const siteId = this.site()?._id;
+    const userId = this.authService.user()?._id;
+    if (!siteId || !userId) return;
+    try {
+      this.loadingHistory.set(true);
+      // 列表只取第一則訊息當標題($slice),完整內容點開時再載
+      const list = await this.mongodbService.getArray('ai_conversations',
+        { siteId, userId },
+        { sort: { updatedAt: -1 }, projection: { messages: { $slice: 1 } }, limit: 50 });
+      this.historyList.set(list);
+    } catch (error) {
+      console.error('載入歷史對話失敗:', error);
+    } finally {
+      this.loadingHistory.set(false);
+    }
+  }
+
+  conversationTitle(conv: AiConversation): string {
+    const first = conv.messages?.find(m => m.role === 'user')?.content || '(無內容)';
+    return first.length > 60 ? first.slice(0, 60) + '…' : first;
+  }
+
+  async openConversation(conv: AiConversation) {
+    const siteId = this.site()?._id;
+    if (!siteId) return;
+    try {
+      const full = await this.mongodbService.getArray('ai_conversations',
+        { siteId, sessionId: conv.sessionId }, { limit: 1 });
+      const messages = full[0]?.messages || [];
+      this.messages.set(messages.map((m: any) => ({
+        role: m.role,
+        content: m.content,
+        sources: m.sources?.length ? m.sources : undefined,
+      })));
+      this.sessionId = conv.sessionId; // 沿用原 session,繼續追問會 append 到同一筆
+      this.showHistory.set(false);
+      this.scrollToBottom();
+    } catch (error) {
+      console.error('載入對話失敗:', error);
+      alert('載入對話失敗');
+    }
+  }
+
+  formatHistoryTime(time: string): string {
+    return dayjs(time).format('MM-DD HH:mm');
   }
 
   scorePercent(score: number): string {

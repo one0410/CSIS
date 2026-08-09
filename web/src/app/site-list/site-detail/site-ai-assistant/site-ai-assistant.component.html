@@ -17,7 +17,39 @@
   <!-- ======================= 智慧問答 ======================= -->
   @if (activeTab() === 'chat') {
     <div class="d-flex flex-column flex-grow-1 overflow-hidden">
-      <div #chatScroll class="flex-grow-1 overflow-auto px-1">
+      <!-- 對話工具列 -->
+      <div class="d-flex gap-2 mb-2">
+        <button class="btn btn-sm btn-outline-secondary" (click)="newConversation()">
+          <i class="fa-solid fa-plus me-1"></i>新對話
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" [class.active]="showHistory()" (click)="toggleHistory()">
+          <i class="fa-solid fa-clock-rotate-left me-1"></i>歷史對話
+        </button>
+      </div>
+
+      <!-- 歷史對話列表(開啟時取代對話區) -->
+      @if (showHistory()) {
+        <div class="flex-grow-1 overflow-auto">
+          @if (loadingHistory()) {
+            <div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>載入中…</div>
+          } @else if (historyList().length === 0) {
+            <div class="text-center text-muted py-4">尚無歷史對話</div>
+          } @else {
+            <div class="list-group">
+              @for (conv of historyList(); track conv.sessionId) {
+                <button class="list-group-item list-group-item-action" (click)="openConversation(conv)">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-truncate me-2">{{ conversationTitle(conv) }}</span>
+                    <small class="text-muted text-nowrap">{{ formatHistoryTime(conv.updatedAt) }}</small>
+                  </div>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <div #chatScroll class="flex-grow-1 overflow-auto px-1" [class.d-none]="showHistory()">
         @if (messages().length === 0) {
           <div class="text-center text-muted mt-5">
             <i class="fa-solid fa-robot fa-3x mb-3"></i>
@@ -66,7 +98,7 @@
       </div>
 
       <!-- 輸入區 -->
-      <div class="border-top pt-2 mt-2">
+      <div class="border-top pt-2 mt-2" [class.d-none]="showHistory()">
         @if (toolStatus() && streaming()) {
           <div class="text-muted small mb-1"><i class="fa-solid fa-gear fa-spin me-1"></i>{{ toolStatus() }}</div>
         }

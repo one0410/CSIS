@@ -97,13 +97,14 @@ export class AiService {
     message: string,
     history: AiChatHistoryMessage[],
     sessionId: string,
+    userId: string,
     onEvent: (event: AiSseEvent) => void,
     signal: AbortSignal
   ): Promise<void> {
     const response = await fetch(`${this.apiBaseUrl}/api/ai/sites/${siteId}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, history, sessionId }),
+      body: JSON.stringify({ message, history, sessionId, userId }),
       signal
     });
 
