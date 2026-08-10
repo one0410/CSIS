@@ -459,6 +459,7 @@ app.post('/api/ai/sites/:siteId/chat', express.json({ limit: '1mb' }), async (re
 
   const tools = getToolDefinitions();
   const toolsUsed = [];
+  const collectedLinks = []; // tool 產生的 UI 連結(如許可單表單頁),隨訊息落庫
   let fullText = '';
 
   try {
@@ -504,7 +505,11 @@ app.post('/api/ai/sites/:siteId/chat', express.json({ limit: '1mb' }), async (re
         toolsUsed.push(toolName);
         logger.info(`AI chat 執行工具: ${toolName} (site=${siteId})`);
         const toolResult = await executeToolCall(siteId, tc);
-        messages.push({ role: 'tool', content: toolResult, tool_call_id: tc.id });
+        messages.push({ role: 'tool', content: toolResult.content, tool_call_id: tc.id });
+        if (toolResult.links?.length) {
+          collectedLinks.push(...toolResult.links);
+          sendEvent({ type: 'links', items: toolResult.links });
+        }
       }
       // 迴圈回 LLM 消化工具結果
     }
@@ -526,6 +531,7 @@ app.post('/api/ai/sites/:siteId/chat', express.json({ limit: '1mb' }), async (re
                     role: 'assistant',
                     content: fullText,
                     sources: citationItems,
+                    links: collectedLinks,
                     toolsUsed,
                     timestamp: now,
                   },

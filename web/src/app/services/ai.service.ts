@@ -25,9 +25,15 @@ export interface AiCitation {
   preview: string;
 }
 
+export interface AiChatLink {
+  label: string;
+  url: string;
+}
+
 export type AiSseEvent =
   | { type: 'citations'; items: AiCitation[] }
   | { type: 'tool'; name: string }
+  | { type: 'links'; items: AiChatLink[] }
   | { type: 'clause'; text: string }
   | { type: 'rag_unavailable'; details: string }
   | { type: 'done'; text: string }

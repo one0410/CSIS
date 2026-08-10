@@ -85,6 +85,19 @@
                     </div>
                   </div>
                 }
+                @if (msg.links && msg.links.length > 0) {
+                  <div class="citations mt-2 pt-2">
+                    <div class="text-muted citations-label mb-1">相關表單:</div>
+                    <div class="d-flex flex-wrap gap-1">
+                      @for (link of msg.links; track $index) {
+                        <button class="btn btn-sm btn-outline-primary citation-chip" (click)="openLink(link)">
+                          <i class="fa-solid fa-file-signature me-1"></i>{{ link.label }}
+                          <i class="fa-solid fa-arrow-up-right-from-square ms-1 small"></i>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
               }
             </div>
           </div>

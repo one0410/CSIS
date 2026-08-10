@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import {
   AI_ALLOWED_EXTENSIONS,
   AI_MAX_FILE_SIZE,
+  AiChatLink,
   AiCitation,
   AiDocument,
   AiService
@@ -17,6 +18,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   sources?: AiCitation[];
+  links?: AiChatLink[];
   noEvidence?: boolean;
   error?: string;
 }
@@ -26,7 +28,7 @@ interface AiConversation {
   siteId: string;
   sessionId: string;
   userId: string | null;
-  messages: { role: 'user' | 'assistant'; content: string; sources?: AiCitation[]; timestamp: string }[];
+  messages: { role: 'user' | 'assistant'; content: string; sources?: AiCitation[]; links?: AiChatLink[]; timestamp: string }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -123,6 +125,9 @@ export class SiteAiAssistantComponent implements OnDestroy {
           case 'tool':
             this.toolStatus.set(this.toolLabel(event.name));
             break;
+          case 'links':
+            this.updateLastMessage(m => (m.links = [...(m.links || []), ...event.items]));
+            break;
           case 'clause':
             this.toolStatus.set(null);
             this.updateLastMessage(m => (m.content += event.text));
@@ -164,6 +169,10 @@ export class SiteAiAssistantComponent implements OnDestroy {
 
   openCitation(citation: AiCitation) {
     window.open(this.aiService.documentFileUrl(citation.documentId, citation.page), '_blank');
+  }
+
+  openLink(link: AiChatLink) {
+    window.open(link.url, '_blank'); // 新分頁開表單頁,保留當前對話
   }
 
   // ==========================================================================
@@ -214,6 +223,7 @@ export class SiteAiAssistantComponent implements OnDestroy {
         role: m.role,
         content: m.content,
         sources: m.sources?.length ? m.sources : undefined,
+        links: m.links?.length ? m.links : undefined,
       })));
       this.sessionId = conv.sessionId; // 沿用原 session,繼續追問會 append 到同一筆
       this.activeTab.set('chat');

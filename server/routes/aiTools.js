@@ -186,7 +186,13 @@ async function getActivePermits(siteId, date) {
     return item;
   });
 
-  return { 日期: day, 有效許可單數: permits.length, 許可單摘要 };
+  // UI 用的表單連結(不進 LLM content):點擊開該張許可單的檢視頁
+  const links = permits.map(p => ({
+    label: `${(p.workStartTime || '').slice(0, 10)} ${p.contractor || ''} 施工許可單`.trim(),
+    url: `/site/${siteId}/forms/permit/${p._id}`,
+  }));
+
+  return { result: { 日期: day, 有效許可單數: permits.length, 許可單摘要 }, links };
 }
 
 async function getSiteInfo(siteId) {
@@ -210,7 +216,9 @@ async function getSiteInfo(siteId) {
 }
 
 /**
- * 執行一個 tool call,回傳 JSON 字串(給 LLM 的 tool message content)。
+ * 執行一個 tool call。
+ * @returns {{ content: string, links?: Array<{label: string, url: string}> }}
+ *   content 是給 LLM 的 tool message(JSON 字串);links 是 UI 顯示的連結(如許可單表單頁)。
  * 任何錯誤(未知工具、壞 JSON args、DB 失敗)都回 error 字串讓 LLM 自行修正,
  * 絕不 throw —— tool 失敗不能讓整個 chat 500。
  */
@@ -220,11 +228,12 @@ async function executeToolCall(siteId, toolCall) {
   try {
     if (toolCall?.function?.arguments) args = JSON.parse(toolCall.function.arguments);
   } catch {
-    return JSON.stringify({ error: '工具參數不是合法 JSON,請修正後重試' });
+    return { content: JSON.stringify({ error: '工具參數不是合法 JSON,請修正後重試' }) };
   }
 
   try {
     let result;
+    let links;
     switch (name) {
       case 'get_project_progress':
         result = await getProjectProgress(siteId);
@@ -232,19 +241,22 @@ async function executeToolCall(siteId, toolCall) {
       case 'get_worker_count':
         result = await getWorkerCount(siteId, args.scope === 'registered' ? 'registered' : 'today_attendance');
         break;
-      case 'get_active_permits':
-        result = await getActivePermits(siteId, args.date);
+      case 'get_active_permits': {
+        const r = await getActivePermits(siteId, args.date);
+        result = r.result;
+        links = r.links;
         break;
+      }
       case 'get_site_info':
         result = await getSiteInfo(siteId);
         break;
       default:
-        return JSON.stringify({ error: `未知的工具:${name}` });
+        return { content: JSON.stringify({ error: `未知的工具:${name}` }) };
     }
-    return JSON.stringify(result);
+    return { content: JSON.stringify(result), links };
   } catch (error) {
     logger.error(`AI tool ${name} 執行失敗:`, error.message);
-    return JSON.stringify({ error: `查詢失敗:${error.message}` });
+    return { content: JSON.stringify({ error: `查詢失敗:${error.message}` }) };
   }
 }
 
