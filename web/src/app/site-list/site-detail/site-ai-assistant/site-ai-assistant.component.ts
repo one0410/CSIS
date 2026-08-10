@@ -48,7 +48,7 @@ export class SiteAiAssistantComponent implements OnDestroy {
 
   site = computed(() => this.currentSiteService.currentSite());
 
-  activeTab = signal<'chat' | 'docs'>('chat');
+  activeTab = signal<'chat' | 'history' | 'docs'>('chat');
 
   // --- 問答 tab ---
   messages = signal<ChatMessage[]>([]);
@@ -59,7 +59,6 @@ export class SiteAiAssistantComponent implements OnDestroy {
   private abortController: AbortController | null = null;
 
   // --- 歷史對話 ---
-  showHistory = signal(false);
   historyList = signal<AiConversation[]>([]);
   loadingHistory = signal(false);
 
@@ -169,15 +168,15 @@ export class SiteAiAssistantComponent implements OnDestroy {
   newConversation() {
     this.messages.set([]);
     this.sessionId = crypto.randomUUID();
-    this.showHistory.set(false);
+    this.activeTab.set('chat');
   }
 
-  async toggleHistory() {
-    if (this.showHistory()) {
-      this.showHistory.set(false);
-      return;
-    }
-    this.showHistory.set(true);
+  openHistoryTab() {
+    this.activeTab.set('history');
+    this.loadHistoryList();
+  }
+
+  async loadHistoryList() {
     const siteId = this.site()?._id;
     const userId = this.authService.user()?._id;
     if (!siteId || !userId) return;
@@ -213,7 +212,7 @@ export class SiteAiAssistantComponent implements OnDestroy {
         sources: m.sources?.length ? m.sources : undefined,
       })));
       this.sessionId = conv.sessionId; // 沿用原 session,繼續追問會 append 到同一筆
-      this.showHistory.set(false);
+      this.activeTab.set('chat');
       this.scrollToBottom();
     } catch (error) {
       console.error('載入對話失敗:', error);
