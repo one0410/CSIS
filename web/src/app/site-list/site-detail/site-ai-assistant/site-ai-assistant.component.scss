@@ -68,6 +68,22 @@
   justify-content: center;
 }
 
+// 使用者頭像:與 top-bar 一致(圖片或名字首字 + 藍紫漸層)
+.avatar-img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #3f51b5, #7986cb);
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+}
+
 .bubble {
   position: relative; // 泡泡尾巴(::before/::after 三角形)定位基準
   max-width: 75%;

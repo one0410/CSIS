@@ -48,6 +48,10 @@ export class SiteAiAssistantComponent implements OnDestroy {
 
   site = computed(() => this.currentSiteService.currentSite());
 
+  // 使用者頭像:比照 top-bar——有 avatar 用圖,否則名字首字(藍紫漸層圓形)
+  userAvatar = computed(() => this.authService.user()?.avatar || null);
+  userInitial = computed(() => this.authService.user()?.name?.charAt(0) || 'U');
+
   activeTab = signal<'chat' | 'history' | 'docs'>('chat');
 
   // --- 問答 tab ---
