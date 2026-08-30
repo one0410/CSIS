@@ -247,7 +247,12 @@ export class SiteAiAssistantComponent implements OnDestroy {
       get_project_progress: '查詢工程進度中…',
       get_worker_count: '查詢人員數量中…',
       get_active_permits: '查詢許可單中…',
-      get_site_info: '查詢工地資料中…'
+      get_site_info: '查詢工地資料中…',
+      get_expected_workforce: '查詢預計出工中…',
+      get_safety_violations: '查詢違規統計中…',
+      get_zero_accident_hours: '查詢零事故時數中…',
+      get_equipment_status: '查詢機具狀態中…',
+      get_weather: '查詢天氣資訊中…'
     };
     return labels[name] || '查詢工地資料中…';
   }
