@@ -26,3 +26,4 @@ __pycache__/
 
 ~*.docx
 rag-worker/worker.log
+server/*.bun-build
