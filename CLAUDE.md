@@ -139,7 +139,7 @@ bun run buildLinux # 編譯為 Linux 執行檔
 
 ## AI 智慧問答(RAG)
 
-每個工地一個獨立知識庫 pool(A 工地查不到 B 工地內容),使用者可上傳 PDF/DOCX/XLSX/PPTX/TXT/MD(單檔 50MB),以自然語言問答並附出處(檔名+頁碼+相關度);工地即時狀態(進度/出工人數/在冊工人/許可單)由 LLM tool-calling 直查 MongoDB,口徑與 Dashboard 一致。規格對齊 `2026_AI_Specs_0417.md`。
+每個工地一個獨立知識庫 pool(A 工地查不到 B 工地內容),使用者可上傳 PDF/DOCX/XLSX/PPTX/TXT/MD(單檔 50MB),以自然語言問答並附出處(檔名+頁碼+相關度);工地即時狀態由 LLM tool-calling 直查 MongoDB(`server/routes/aiTools.js` 共 9 工具:進度、出工/在冊/當月累積人數、許可單〔附表單連結〕、預計出工、違規統計、零事故時數、機具狀態、天氣、工地資料),口徑與 Dashboard 一致。規格對齊 `2026_AI_Specs_0417.md`。
 
 ### 架構
 
