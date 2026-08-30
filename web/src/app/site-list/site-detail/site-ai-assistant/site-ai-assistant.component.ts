@@ -33,6 +33,17 @@ interface AiConversation {
   updatedAt: string;
 }
 
+// crypto.randomUUID() 只在 secure context(HTTPS/localhost)存在;院內以 http://ip 存取時
+// 會整頁白屏。非安全環境退回一個夠用的 fallback(僅作對話分組鍵,無密碼學需求)。
+function newSessionId(): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+  } catch { /* 非安全環境 → 走 fallback */ }
+  return `sess-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 @Component({
   selector: 'app-site-ai-assistant',
   standalone: true,
@@ -61,7 +72,7 @@ export class SiteAiAssistantComponent implements OnDestroy {
   input = signal('');
   streaming = signal(false);
   toolStatus = signal<string | null>(null);
-  private sessionId: string = crypto.randomUUID();
+  private sessionId: string = newSessionId();
   private abortController: AbortController | null = null;
 
   // --- 歷史對話 ---
@@ -168,10 +179,21 @@ export class SiteAiAssistantComponent implements OnDestroy {
   }
 
   openCitation(citation: AiCitation) {
-    window.open(this.aiService.documentFileUrl(citation.documentId, citation.page), '_blank');
+    const siteId = this.site()?._id;
+    // documentId 可能為 null(原檔已刪但向量殘留),避免開出 /null/file 的 400 分頁
+    if (!siteId || !citation.documentId) {
+      alert('此出處的原始文件已不存在');
+      return;
+    }
+    window.open(this.aiService.documentFileUrl(siteId, citation.documentId, citation.page), '_blank');
   }
 
   openLink(link: AiChatLink) {
+    // 只接受站內相對路徑 —— 歷史對話的 links 來自 DB,擋 javascript:/外部 URL 注入
+    if (!link.url || !link.url.startsWith('/')) {
+      console.warn('拒絕開啟非站內連結:', link.url);
+      return;
+    }
     window.open(link.url, '_blank'); // 新分頁開表單頁,保留當前對話
   }
 
@@ -179,8 +201,9 @@ export class SiteAiAssistantComponent implements OnDestroy {
   // 歷史對話
   // ==========================================================================
   newConversation() {
+    this.abortController?.abort(); // 停掉進行中的串流,否則舊 clause 會寫進新對話
     this.messages.set([]);
-    this.sessionId = crypto.randomUUID();
+    this.sessionId = newSessionId();
     this.activeTab.set('chat');
   }
 
@@ -215,6 +238,7 @@ export class SiteAiAssistantComponent implements OnDestroy {
   async openConversation(conv: AiConversation) {
     const siteId = this.site()?._id;
     if (!siteId) return;
+    this.abortController?.abort(); // 停掉進行中的串流,否則舊 clause 會污染載入的對話
     try {
       const full = await this.mongodbService.getArray('ai_conversations',
         { siteId, sessionId: conv.sessionId }, { limit: 1 });
@@ -370,7 +394,9 @@ export class SiteAiAssistantComponent implements OnDestroy {
   }
 
   openDocument(doc: AiDocument) {
-    window.open(this.aiService.documentFileUrl(doc._id), '_blank');
+    const siteId = this.site()?._id;
+    if (!siteId) return;
+    window.open(this.aiService.documentFileUrl(siteId, doc._id), '_blank');
   }
 
   formatSize(size: number): string {

@@ -88,9 +88,9 @@ export class AiService {
     }
   }
 
-  /** 出處原檔連結(PDF 可帶 page 讓瀏覽器跳頁) */
-  documentFileUrl(documentId: string, page?: number | null): string {
-    const url = `${this.apiBaseUrl}/api/ai/documents/${documentId}/file`;
+  /** 出處原檔連結(PDF 可帶 page 讓瀏覽器跳頁);siteId 走路徑,後端據此隔離 */
+  documentFileUrl(siteId: string, documentId: string, page?: number | null): string {
+    const url = `${this.apiBaseUrl}/api/ai/sites/${siteId}/documents/${documentId}/file`;
     return page ? `${url}#page=${page}` : url;
   }
 

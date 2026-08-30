@@ -6,6 +6,8 @@
 // siteId 由呼叫端(chat handler)從路徑參數綁定,不進 LLM 的參數 schema。
 const { ObjectId } = require('mongodb');
 const dayjs = require('dayjs');
+const isSameOrBefore = require('dayjs/plugin/isSameOrBefore');
+dayjs.extend(isSameOrBefore);
 const db = require('../dbConnection');
 const logger = require('../logger');
 
@@ -259,16 +261,18 @@ async function getSiteInfo(siteId) {
   );
   if (!site) return { error: '找不到工地資料' };
 
-  // 工期天數口徑同 Dashboard:總天數含頭尾;已進行天數以工期結束日為上限
+  // 工期天數口徑同 Dashboard:總天數含頭尾;已進行天數以工期結束日為上限。
+  // 用 dayjs 的日曆日 diff(floor 語意)避免 new Date('yyyy-mm-dd') 的 UTC 午夜偏移
+  // 讓夜間比 Dashboard 多算一天(Dashboard 亦為 floor)。
   let 工期總天數;
   let 已進行天數;
   if (site.startDate && site.endDate) {
-    const start = new Date(site.startDate);
-    const end = new Date(site.endDate);
-    工期總天數 = Math.round((end - start) / 86400000) + 1;
-    const today = new Date();
-    const clamped = today > end ? end : today;
-    已進行天數 = Math.max(0, Math.round((clamped - start) / 86400000) + 1);
+    const start = dayjs(site.startDate);
+    const end = dayjs(site.endDate);
+    工期總天數 = end.diff(start, 'day') + 1;
+    const today = dayjs();
+    const clamped = today.isAfter(end) ? end : today;
+    已進行天數 = Math.max(0, clamped.diff(start, 'day') + 1);
   }
 
   return {
@@ -475,6 +479,7 @@ async function getEquipmentStatus(siteId) {
     .project({ name: 1, isQualified: 1, inspectionDate: 1, nextInspectionDate: 1, nextInspectionType: 1 })
     .toArray();
 
+  // 口徑同 current-site.service:nextDate.isSameOrBefore(今天+3天),以日曆日比較
   const threeDaysLater = dayjs().add(3, 'day');
   const disqualified = [];
   const expiring = [];
@@ -483,7 +488,7 @@ async function getEquipmentStatus(siteId) {
       disqualified.push(eq.name || '(未命名機具)');
     }
     const next = nextInspectionDateOf(eq);
-    if (next && next.isBefore(threeDaysLater.add(1, 'day'))) {
+    if (next && next.isSameOrBefore(threeDaysLater, 'day')) {
       expiring.push(`${eq.name || '(未命名機具)'}(下次檢查 ${next.format('YYYY-MM-DD')})`);
     }
   }

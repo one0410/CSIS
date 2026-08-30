@@ -135,10 +135,13 @@ async function indexDocumentAsync(documentId, siteId, filename, buffer) {
     formData.append('site_id', siteId);
     formData.append('file', new Blob([buffer]), filename);
 
+    // 背景任務,無 client 在等 —— timeout 放寬到 15 分鐘。
+    // 若這裡先 abort 但 worker 端(同步 CPU)其實還在跑,會造成「標 failed 但 chunks 已入庫」
+    // 的孤兒:重傳雙份、ragDocId=null 刪不掉。大型/掃描檔 embedding 可能數分鐘,故給足時間。
     const resp = await fetch(`${RAG_WORKER_URL}/upload`, {
       method: 'POST',
       body: formData,
-      signal: AbortSignal.timeout(240000), // timeout 階梯:nginx 300s > Bun 255s > 這裡 240s
+      signal: AbortSignal.timeout(900000),
     });
     const result = await resp.json();
 
@@ -210,24 +213,32 @@ app.delete('/api/ai/sites/:siteId/documents/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: '文件不存在' });
     }
 
-    // 刪 GridFS 原檔(best effort)
+    // 順序很重要:先確認 worker 向量索引刪得掉(據實回報),失敗就整個中止、
+    // 保留 ai_documents 與 GridFS 原檔以免變成刪不掉的孤兒 chunk(向量殘留、記錄卻沒了)。
+    if (doc.ragDocId) {
+      try {
+        const resp = await fetch(`${RAG_WORKER_URL}/documents/${siteId}/${doc.ragDocId}`, {
+          method: 'DELETE',
+          signal: AbortSignal.timeout(30000),
+        });
+        if (!resp.ok) {
+          logger.warn(`worker 索引刪除回應 ${resp.status},保留文件記錄待重試`);
+          return res.status(502).json({ success: false, message: '向量索引刪除失敗,請稍後重試' });
+        }
+      } catch (e) {
+        logger.warn(`worker 索引刪除失敗(保留記錄待重試): ${e.message}`);
+        return res
+          .status(502)
+          .json({ success: false, message: '索引服務暫時無法連線,請稍後重試刪除' });
+      }
+    }
+
+    // 索引已清(或本來就沒有)→ 刪 GridFS 原檔(best effort)+ Mongo 記錄
     if (doc.originalFileId) {
       try {
         await new GridFSBucket(db).delete(new ObjectId(doc.originalFileId));
       } catch (e) {
         logger.warn(`GridFS 原檔刪除失敗(續行): ${e.message}`);
-      }
-    }
-
-    // 刪 worker 向量索引(best effort;worker 掛掉時文件記錄仍要刪得掉)
-    if (doc.ragDocId) {
-      try {
-        await fetch(`${RAG_WORKER_URL}/documents/${siteId}/${doc.ragDocId}`, {
-          method: 'DELETE',
-          signal: AbortSignal.timeout(30000),
-        });
-      } catch (e) {
-        logger.warn(`worker 索引刪除失敗(續行): ${e.message}`);
       }
     }
 
@@ -253,8 +264,11 @@ const MEDIA_TYPES = {
   '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 };
 
-app.get('/api/ai/documents/:id/file', async (req, res) => {
+app.get('/api/ai/sites/:siteId/documents/:id/file', async (req, res) => {
   try {
+    const siteId = validateSiteId(req, res);
+    if (!siteId) return;
+
     let docId;
     try {
       docId = new ObjectId(req.params.id);
@@ -262,13 +276,19 @@ app.get('/api/ai/documents/:id/file', async (req, res) => {
       return res.status(400).json({ success: false, message: '無效的文件 ID' });
     }
 
-    const doc = await db.collection('ai_documents').findOne({ _id: docId });
+    // siteId 一併當查詢條件 —— 跨工地拿別人的 documentId 也查不到(工地隔離)
+    const doc = await db.collection('ai_documents').findOne({ _id: docId, siteId });
     if (!doc || !doc.originalFileId) {
       return res.status(404).json({ success: false, message: '文件不存在' });
     }
 
     res.set('Content-Type', MEDIA_TYPES[doc.fileExt] || 'application/octet-stream');
-    res.set('Content-Disposition', `inline; filename="${encodeURIComponent(doc.filename)}"`);
+    // filename*(RFC 5987)讓中文檔名正確;filename= 保留給不支援的舊瀏覽器 fallback
+    const asciiName = doc.filename.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
+    res.set(
+      'Content-Disposition',
+      `inline; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(doc.filename)}`
+    );
 
     const downloadStream = new GridFSBucket(db).openDownloadStream(new ObjectId(doc.originalFileId));
     downloadStream.on('error', (error) => {
@@ -348,12 +368,22 @@ app.post('/api/ai/sites/:siteId/chat', express.json({ limit: '1mb' }), async (re
   const siteId = validateSiteId(req, res);
   if (!siteId) return;
 
-  const userMessage = (req.body?.message || '').trim();
+  // 型別防護:message/sessionId 非字串時 .trim() 會在 async handler 外裸 throw
+  // (Express 4 不接 async rejection → 請求永久懸掛),故先驗型別
+  const rawMessage = req.body?.message;
+  const userMessage = (typeof rawMessage === 'string' ? rawMessage : '').trim().slice(0, 8000);
   if (!userMessage) {
     return res.status(400).json({ success: false, message: '訊息不可為空' });
   }
-  const history = Array.isArray(req.body?.history) ? req.body.history : [];
-  const sessionId = (req.body?.sessionId || '').trim();
+  const rawSession = req.body?.sessionId;
+  const sessionId = (typeof rawSession === 'string' ? rawSession : '').trim().slice(0, 100);
+  // history 消毒:只收 user/assistant(擋 role:'system' 注入)、content 必須是字串並截長
+  const MAX_HISTORY_CHARS = 4000;
+  const history = Array.isArray(req.body?.history)
+    ? req.body.history
+        .filter(h => h && (h.role === 'user' || h.role === 'assistant') && typeof h.content === 'string')
+        .map(h => ({ role: h.role, content: h.content.slice(0, MAX_HISTORY_CHARS) }))
+    : [];
 
   // 全鏈路 abort:client 斷線(關頁、按中止)→ 停止 LLM 生成與檢索。
   // 注意必須聽 res 的 close(req 的 close 在 body 解析完就會觸發,會誤殺 pipeline)
@@ -511,7 +541,18 @@ app.post('/api/ai/sites/:siteId/chat', express.json({ limit: '1mb' }), async (re
           sendEvent({ type: 'links', items: toolResult.links });
         }
       }
-      // 迴圈回 LLM 消化工具結果
+      // 迴圈回 LLM 消化工具結果 —— 若這是最後一輪且仍有 toolCalls,下面會補一次總結
+    }
+
+    // 工具迴圈耗盡(第 3 輪仍回 toolCalls)後,工具結果尚未被 LLM 消化成文字回答。
+    // 補一次不帶 tools 的呼叫強制產出總結,避免使用者看到空白泡泡且該輪不落庫。
+    if (!fullText.trim() && !pipelineAbort.signal.aborted) {
+      try {
+        const finalResult = await streamChat(messages, onDelta, { signal: pipelineAbort.signal });
+        fullText += finalResult.text;
+      } catch (e) {
+        if (!pipelineAbort.signal.aborted) logger.warn(`AI chat 補總結失敗: ${e.message}`);
+      }
     }
 
     sendEvent({ type: 'done', text: fullText });
@@ -548,8 +589,13 @@ app.post('/api/ai/sites/:siteId/chat', express.json({ limit: '1mb' }), async (re
       }
     }
   } catch (err) {
-    if (err?.name === 'AbortError' || err?.name === 'TimeoutError' || pipelineAbort.signal.aborted) {
+    // 只有 client 真的斷線(pipelineAbort)才靜默收尾;LLM 自身的 180s 逾時
+    // (TimeoutError 但 pipelineAbort 未觸發)要當錯誤回報,否則使用者只看到空白泡泡
+    if (pipelineAbort.signal.aborted) {
       logger.info('AI chat 已被 client 中止');
+    } else if (err?.name === 'TimeoutError') {
+      logger.error('AI chat LLM 回應逾時');
+      sendEvent({ type: 'error', error: 'AI 回應逾時,請稍後再試或縮短問題' });
     } else {
       logger.error(`AI chat 失敗: ${err.message}`);
       sendEvent({ type: 'error', error: err.message });

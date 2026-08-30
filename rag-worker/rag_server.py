@@ -20,6 +20,7 @@ import uuid
 import chromadb
 import uvicorn
 from fastapi import FastAPI, Form, HTTPException, UploadFile, File
+from fastapi.concurrency import run_in_threadpool
 from markitdown import MarkItDown
 from pydantic import BaseModel
 
@@ -191,13 +192,24 @@ async def upload_document(file: UploadFile = File(...), site_id: str = Form(...)
 
     原始檔由 Bun 端存 GridFS,這裡只做解析 → chunking → embedding → 入庫。
     PDF/PPTX 的 chunk 帶 page metadata(citation 跳頁用)。
+
+    解析/embedding 是同步 CPU-bound,以 run_in_threadpool 卸離 event loop,
+    否則單一大檔索引期間會卡住所有工地的 /query(見 review:async 阻塞 event loop)。
     """
     _validate_site_id(site_id)
-    col = _get_collection(site_id)
-
     filename = file.filename or "unknown"
     content_bytes = await file.read()
     ext = os.path.splitext(filename)[1].lower()
+
+    try:
+        return await run_in_threadpool(_process_upload, site_id, filename, ext, content_bytes)
+    except ConversionError as e:
+        return {"error": str(e), "filename": filename}
+
+
+def _process_upload(site_id: str, filename: str, ext: str, content_bytes: bytes) -> dict:
+    """同步:解析 → chunking → embedding → 入庫(在 threadpool 執行)。"""
+    col = _get_collection(site_id)
 
     # 依檔案類型 dispatch:能拿到頁碼就拿,拿不到就 fallback 到無頁碼路徑。
     # 回傳 (list[(chunk_text, page_or_None)], page_count_or_None)
@@ -390,8 +402,10 @@ def _hybrid_search(site_id: str, query: str, n_results: int) -> list[dict]:
     return candidates[:n_results]
 
 
+# def(非 async):embed_query + reranker.predict + jieba 是同步 CPU-bound,
+# FastAPI 對 def endpoint 自動丟 threadpool,避免與索引中的上傳互卡 event loop。
 @app.post("/query")
-async def query_knowledge(req: QueryRequest):
+def query_knowledge(req: QueryRequest):
     """查詢指定工地的知識庫 — Hybrid(dense + BM25,RRF 融合 + 重排)。"""
     _validate_site_id(req.site_id)
     col = _get_collection(req.site_id)
@@ -471,14 +485,22 @@ def _is_low_info(text: str) -> bool:
     return noise / len(non_space) > 0.6
 
 
+class ConversionError(Exception):
+    """markitdown 轉檔失敗 —— 讓上層把該文件標成 failed,而非把錯誤訊息當內容索引。"""
+
+
 def _convert_with_markitdown(file_bytes: bytes, ext: str) -> str:
-    """Convert a binary document (PDF/DOCX/XLSX/PPTX/etc.) to Markdown text via markitdown."""
+    """Convert a binary document (PDF/DOCX/XLSX/PPTX/etc.) to Markdown text via markitdown.
+
+    失敗時 raise ConversionError:早期版本回傳 "[Error converting document: ...]" 字串,
+    會被 chunk/embed/入庫,使用者看到「完成 1 chunk」,錯誤訊息還可能被檢索成「出處」。
+    """
     try:
         result = markitdown.convert_stream(io.BytesIO(file_bytes), file_extension=ext)
         return result.text_content or ""
     except Exception as e:
         logger.error(f"[RAG] markitdown conversion failed for {ext}: {e}")
-        return f"[Error converting document: {e}]"
+        raise ConversionError(f"文件轉換失敗({ext}): {e}") from e
 
 
 _ocr_engine = None  # RapidOCR 單例(首次用到才初始化,載入 onnx 模型較慢)
@@ -805,9 +827,12 @@ def _split_long_block(block: str, max_size: int, overlap: int) -> list[str]:
 def _char_split(text: str, max_size: int, overlap: int) -> list[str]:
     """Last-resort character-level splitting."""
     chunks = []
-    step = max_size - overlap
+    # heading 麵包屑過長時 effective_size 可能 <= overlap,step 會變 0(range 拋 ValueError)
+    # 或負(range 為空、內容靜默消失)。至少前進 1 字,確保一定有進度且不丟內容。
+    step = max(1, max_size - overlap)
+    win = max(1, max_size)
     for i in range(0, len(text), step):
-        chunk = text[i : i + max_size].strip()
+        chunk = text[i : i + win].strip()
         if chunk:
             chunks.append(chunk)
     return chunks
