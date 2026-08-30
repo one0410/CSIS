@@ -1,0 +1,233 @@
+<div class="container-fluid h-100 d-flex flex-column py-3">
+  <!-- Tab 切換 -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'chat'" (click)="activeTab.set('chat')">
+        <i class="fa-solid fa-comments me-1"></i>智慧問答
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'history'" (click)="openHistoryTab()">
+        <i class="fa-solid fa-clock-rotate-left me-1"></i>歷史對話
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'docs'" (click)="activeTab.set('docs')">
+        <i class="fa-solid fa-folder-open me-1"></i>文件管理
+        <span class="badge bg-secondary ms-1">{{ documents().length }}</span>
+      </button>
+    </li>
+  </ul>
+
+  <!-- ======================= 智慧問答 ======================= -->
+  @if (activeTab() === 'chat') {
+    <div class="d-flex flex-column flex-grow-1 overflow-hidden">
+      <!-- 對話工具列 -->
+      <div class="d-flex gap-2 mb-2">
+        <button class="btn btn-sm btn-outline-secondary" (click)="newConversation()">
+          <i class="fa-solid fa-plus me-1"></i>新對話
+        </button>
+      </div>
+
+      <div #chatScroll class="flex-grow-1 overflow-auto p-3 chat-area rounded">
+        @if (messages().length === 0) {
+          <div class="text-center text-muted mt-5">
+            <i class="fa-solid fa-robot fa-3x mb-3"></i>
+            <p class="mb-1">詢問本工地的文件內容或即時狀態,例如:</p>
+            <p class="small mb-0">「上次工程會議的決議是什麼?」「目前工程進度多少?」「今天有幾位工人出工?」</p>
+          </div>
+        }
+        @for (msg of messages(); track $index; let last = $last) {
+          <div class="chat-row mb-3" [class.user]="msg.role === 'user'" [class.ai]="msg.role === 'assistant'">
+            <div class="avatar">
+              @if (msg.role === 'user') {
+                @if (userAvatar()) {
+                  <img [src]="userAvatar()" alt="user avatar" class="avatar-img rounded-circle border">
+                } @else {
+                  <div class="avatar-placeholder rounded-circle border d-flex align-items-center justify-content-center">
+                    {{ userInitial() }}
+                  </div>
+                }
+              } @else {
+                🤖
+              }
+            </div>
+            <div class="bubble">
+              @if (msg.role === 'user') {
+                <div class="bubble-text">{{ msg.content }}</div>
+              } @else {
+                @if (msg.noEvidence && !msg.content) {
+                  <div class="text-warning small mb-1">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>知識庫中無相關文件依據
+                  </div>
+                }
+                <div class="bubble-text">{{ msg.content }}@if (last && streaming() && msg.content) {<span class="cursor">▍</span>}</div>
+                @if (!msg.content && !msg.error && streaming() && last) {
+                  <div class="text-muted small">
+                    <span class="spinner-border spinner-border-sm me-1"></span>{{ toolStatus() || '思考中…' }}
+                  </div>
+                }
+                @if (msg.error) {
+                  <div class="text-danger small"><i class="fa-solid fa-circle-exclamation me-1"></i>{{ msg.error }}</div>
+                }
+                @if (msg.sources && msg.sources.length > 0) {
+                  <div class="citations mt-2 pt-2">
+                    <div class="text-muted citations-label mb-1">引用來源:</div>
+                    <div class="d-flex flex-wrap gap-1">
+                      @for (src of msg.sources; track $index) {
+                        <button class="btn btn-sm btn-outline-secondary citation-chip" (click)="openCitation(src)"
+                                [title]="src.preview">
+                          <i class="fa-regular fa-file-lines me-1"></i>{{ src.filename }}
+                          @if (src.page) { <span>第{{ src.page }}頁</span> }
+                          <span class="badge bg-secondary ms-1">{{ scorePercent(src.score) }}</span>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+                @if (msg.links && msg.links.length > 0) {
+                  <div class="citations mt-2 pt-2">
+                    <div class="text-muted citations-label mb-1">相關表單:</div>
+                    <div class="d-flex flex-wrap gap-1">
+                      @for (link of msg.links; track $index) {
+                        <button class="btn btn-sm btn-outline-primary citation-chip" (click)="openLink(link)">
+                          <i class="fa-solid fa-file-signature me-1"></i>{{ link.label }}
+                          <i class="fa-solid fa-arrow-up-right-from-square ms-1 small"></i>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- 輸入區 -->
+      <div class="border-top pt-2 mt-2">
+        @if (toolStatus() && streaming()) {
+          <div class="text-muted small mb-1"><i class="fa-solid fa-gear fa-spin me-1"></i>{{ toolStatus() }}</div>
+        }
+        <div class="d-flex gap-2 align-items-end">
+          <textarea class="form-control" rows="2" placeholder="請輸入您的問題…(Enter 送出,Shift+Enter 換行)"
+                    [ngModel]="input()" (ngModelChange)="input.set($event)"
+                    (keydown)="onInputKeydown($event)" [disabled]="streaming()"></textarea>
+          @if (streaming()) {
+            <button class="btn btn-outline-danger" (click)="stop()" title="中止回答">
+              <i class="fa-solid fa-stop"></i>
+            </button>
+          } @else {
+            <button class="btn btn-primary" (click)="send()" [disabled]="!input().trim()">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ======================= 歷史對話 ======================= -->
+  @if (activeTab() === 'history') {
+    <div class="flex-grow-1 overflow-auto">
+      @if (loadingHistory()) {
+        <div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>載入中…</div>
+      } @else if (historyList().length === 0) {
+        <div class="text-center text-muted py-4">尚無歷史對話</div>
+      } @else {
+        <div class="list-group">
+          @for (conv of historyList(); track conv.sessionId) {
+            <button class="list-group-item list-group-item-action" (click)="openConversation(conv)">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-truncate me-2">
+                  <i class="fa-regular fa-comment-dots me-2 text-muted"></i>{{ conversationTitle(conv) }}
+                </span>
+                <small class="text-muted text-nowrap">{{ formatHistoryTime(conv.updatedAt) }}</small>
+              </div>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ======================= 文件管理 ======================= -->
+  @if (activeTab() === 'docs') {
+    <div class="flex-grow-1 overflow-auto">
+      <!-- 上傳區 -->
+      <div class="border rounded p-3 mb-3 text-center upload-zone" [class.drag-over]="dragOver()"
+           (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+        @if (uploading()) {
+          <div class="text-muted">
+            <span class="spinner-border spinner-border-sm me-2"></span>{{ uploadProgress() }}
+          </div>
+        } @else {
+          <label class="btn btn-primary mb-1">
+            <i class="fa-solid fa-upload me-1"></i>上傳文件
+            <input type="file" hidden multiple [accept]="acceptExtensions" (change)="onFileSelected($event)">
+          </label>
+          <div class="text-muted small">或將檔案拖放至此。支援 PDF / Word / Excel / PowerPoint / TXT / MD,單檔上限 50MB</div>
+        }
+      </div>
+
+      <!-- 文件列表 -->
+      @if (loadingDocs() && documents().length === 0) {
+        <div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>載入中…</div>
+      } @else if (documents().length === 0) {
+        <div class="text-center text-muted py-4">尚未上傳任何文件</div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>檔名</th>
+                <th class="text-end">頁數</th>
+                <th class="text-end">大小</th>
+                <th>上傳者</th>
+                <th>上傳時間</th>
+                <th>狀態</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (doc of documents(); track doc._id) {
+                <tr>
+                  <td>
+                    <a href="javascript:void(0)" (click)="openDocument(doc)" class="text-decoration-none">
+                      <i class="fa-regular fa-file-lines me-1"></i>{{ doc.filename }}
+                    </a>
+                  </td>
+                  <td class="text-end">{{ doc.metadata.pageCount ?? '—' }}</td>
+                  <td class="text-end">{{ formatSize(doc.size) }}</td>
+                  <td>{{ doc.uploadedBy || '—' }}</td>
+                  <td>{{ formatTime(doc.createdAt) }}</td>
+                  <td>
+                    @switch (doc.embeddingStatus) {
+                      @case ('pending') { <span class="badge bg-secondary">待處理</span> }
+                      @case ('processing') {
+                        <span class="badge bg-warning text-dark">
+                          <span class="spinner-border spinner-border-sm me-1" style="width:0.7rem;height:0.7rem"></span>處理中
+                        </span>
+                      }
+                      @case ('completed') { <span class="badge bg-success">完成</span> }
+                      @case ('failed') {
+                        <span class="badge bg-danger" [title]="doc.errorMessage || '索引失敗'">失敗
+                          <i class="fa-solid fa-circle-info ms-1"></i>
+                        </span>
+                      }
+                    }
+                  </td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteDocument(doc)" title="刪除">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,26 @@
+# CSIS RAG worker 依賴(移植自 SuperAI python/requirements.txt 的 RAG 區段)
+# 注意:務必用這份完整清單;缺 pdfplumber/python-pptx/rank_bm25/jieba/rapidocr/pymupdf
+# 會靜默降級(無頁碼、無 OCR、無 hybrid 檢索),不會報錯。
+
+fastapi
+uvicorn[standard]
+python-multipart
+
+# 向量庫 + embedding
+chromadb
+sentence-transformers
+
+# 文件轉換
+markitdown>=0.1.6   # 0.1.6 修 PDF 轉換 O(n) 記憶體成長
+pdfplumber          # PDF 逐頁解析(chunk 帶頁碼)
+python-pptx         # PPTX 逐 slide 解析
+
+# 掃描型 PDF OCR fallback(純 CPU)
+rapidocr-onnxruntime
+pymupdf             # render PDF 頁面成圖供 OCR
+
+# Hybrid 檢索
+rank_bm25
+jieba
+
+numpy

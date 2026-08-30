@@ -1,0 +1,135 @@
+// 對話樣式移植自 SuperAI text-chat:左右分側 + 頭像 + 帶尾巴三角的泡泡
+.chat-area {
+  background: #f8f9fa;
+}
+
+.chat-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+
+  // 泡泡尾巴(對話三角):
+  // - 靠上(top 12px,對齊頭像),不隨泡泡高度沉底
+  // - 底邊疊入泡泡 1px → 無接縫;上斜邊較平、下斜邊較陡,比等腰三角自然
+  &.user .bubble::after {
+    content: '';
+    position: absolute;
+    top: 12px;
+    right: -6px; // 7px 寬,1px 疊入泡泡
+    border-style: solid;
+    border-width: 5px 0 9px 7px;
+    border-color: transparent transparent transparent var(--bs-primary);
+  }
+
+  &.ai .bubble::before {
+    // 邊框層(整圈大 1px,沿斜邊露出 1px 邊線,與泡泡 1px 邊框接續)
+    content: '';
+    position: absolute;
+    top: 11px;
+    left: -7px;
+    border-style: solid;
+    border-width: 6px 8px 10px 0;
+    border-color: transparent #dee2e6 transparent transparent;
+  }
+
+  &.ai .bubble::after {
+    // 填色層
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: -6px; // 1px 疊入泡泡
+    border-style: solid;
+    border-width: 5px 7px 9px 0;
+    border-color: transparent #fff transparent transparent;
+  }
+
+  &.user {
+    flex-direction: row-reverse;
+
+    .bubble {
+      background: var(--bs-primary);
+      color: #fff;
+    }
+  }
+
+  &.ai .bubble {
+    background: #fff;
+    border: 1px solid #dee2e6;
+  }
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// 使用者頭像:與 top-bar 一致(圖片或名字首字 + 藍紫漸層)
+.avatar-img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #3f51b5, #7986cb);
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.bubble {
+  position: relative; // 泡泡尾巴(::before/::after 三角形)定位基準
+  max-width: 75%;
+  padding: 0.7rem 1rem;
+  border-radius: 14px;
+  line-height: 1.55;
+}
+
+.bubble-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+// 串流游標
+.cursor {
+  display: inline-block;
+  margin-left: 2px;
+  animation: blink 1s steps(1) infinite;
+  color: #6b7280;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+// 引用來源區(泡泡內,虛線分隔)
+.citations {
+  border-top: 1px dashed #dee2e6;
+}
+
+.citations-label {
+  font-size: 0.72rem;
+}
+
+.citation-chip {
+  font-size: 0.78rem;
+  padding: 0.15rem 0.5rem;
+}
+
+.upload-zone {
+  border-style: dashed !important;
+  transition: background-color 0.15s;
+
+  &.drag-over {
+    background-color: rgba(13, 110, 253, 0.08);
+    border-color: var(--bs-primary) !important;
+  }
+}

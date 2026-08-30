@@ -18,4 +18,12 @@ data/
 backup-*/
 deployment-*.log
 
+# RAG worker(data/ 已被上面的 data/ 涵蓋)
+rag-worker/venv/
+rag-worker/logs/
+rag-worker/hf-cache/
+__pycache__/
+
 ~*.docx
+rag-worker/worker.log
+server/*.bun-build

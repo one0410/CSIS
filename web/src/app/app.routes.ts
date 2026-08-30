@@ -146,9 +146,13 @@ export const routes: Routes = [
             path: 'new-schedule', 
             loadComponent: () => import('./site-list/site-detail/new-schedule/new-schedule.component').then(m => m.NewScheduleComponent)
           },
-          { 
-            path: 'photos', 
+          {
+            path: 'photos',
             loadComponent: () => import('./site-list/site-detail/site-photos/site-photos.component').then(m => m.SitePhotosComponent)
+          },
+          {
+            path: 'ai',
+            loadComponent: () => import('./site-list/site-detail/site-ai-assistant/site-ai-assistant.component').then(m => m.SiteAiAssistantComponent)
           },
           { 
             path: 'forms', 
