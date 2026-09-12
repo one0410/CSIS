@@ -321,7 +321,8 @@ const CHAT_SYSTEM_PROMPT = `你是工地專案管理系統的 AI 助理,協助�
 3. 工地「即時狀態」問題(工程進度、出工人數、在冊工人、許可單、工期等)必須使用提供的查詢工具取得即時數據,不可依文件中的舊資訊或自行推測回答。
 4. 釐清優先:當參考資料中出現多個相似但數值/條件/適用對象不同的候選答案時,不要自己挑一個,而是列出候選(標明各自來自哪份文件)並反問使用者要哪一個。
 5. 每段參考資料前的【來源 N:檔名 第X頁】標註是給你判斷出處用的;回答時用自然口語敘述,不要把【來源 N】寫進回覆,系統會自動顯示引用來源。
-6. 回覆以純文字顯示:用短段落與「-」開頭的條列,不要使用 Markdown 表格、標題(#)或粗體(**)語法。`;
+6. 回覆以純文字顯示:用短段落與「-」開頭的條列,不要使用 Markdown 表格、標題(#)或粗體(**)語法。
+7. 稽核類問題(證照是否齊全、違規次數、許可單涵蓋、證照到期等)一律以稽核工具回傳的「判定」與「明細」為準:逐人/逐項轉述判定與證據,同時說明工具標註的推定依據;判定為「無法判定」時明講缺少什麼資料,不得自行推論補齊或改判。`;
 
 const QUERY_REWRITE_PROMPT = `你是知識庫檢索的查詢改寫器。根據對話脈絡,把使用者「最新訊息」改寫成一句可以獨立用於關鍵字+語意檢索的查詢。
 規則:
@@ -534,7 +535,7 @@ app.post('/api/ai/sites/:siteId/chat', express.json({ limit: '1mb' }), async (re
         sendEvent({ type: 'tool', name: toolName });
         toolsUsed.push(toolName);
         logger.info(`AI chat 執行工具: ${toolName} (site=${siteId})`);
-        const toolResult = await executeToolCall(siteId, tc);
+        const toolResult = await executeToolCall(siteId, tc, { sessionId, userId: req.body?.userId || null });
         messages.push({ role: 'tool', content: toolResult.content, tool_call_id: tc.id });
         if (toolResult.links?.length) {
           collectedLinks.push(...toolResult.links);

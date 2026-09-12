@@ -276,7 +276,12 @@ export class SiteAiAssistantComponent implements OnDestroy {
       get_safety_violations: '查詢違規統計中…',
       get_zero_accident_hours: '查詢零事故時數中…',
       get_equipment_status: '查詢機具狀態中…',
-      get_weather: '查詢天氣資訊中…'
+      get_weather: '查詢天氣資訊中…',
+      audit_worker_qualifications: '稽核出工人員證照中…',
+      get_worker_profile: '查詢人員資料中…',
+      get_worker_violations: '查詢違規記錄中…',
+      audit_expiring_certifications: '清查證照到期中…',
+      audit_permit_coverage: '稽核許可單涵蓋中…'
     };
     return labels[name] || '查詢工地資料中…';
   }

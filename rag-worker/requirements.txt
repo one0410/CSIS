@@ -11,7 +11,7 @@ chromadb
 sentence-transformers
 
 # 文件轉換
-markitdown>=0.1.6   # 0.1.6 修 PDF 轉換 O(n) 記憶體成長
+markitdown[docx,xlsx]>=0.1.6   # 0.1.6 修 PDF 轉換 O(n) 記憶體成長;[docx,xlsx] extra 缺了 DOCX/XLSX 會轉檔失敗
 pdfplumber          # PDF 逐頁解析(chunk 帶頁碼)
 python-pptx         # PPTX 逐 slide 解析
 

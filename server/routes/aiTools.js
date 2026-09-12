@@ -95,6 +95,77 @@ function getToolDefinitions() {
         parameters: { type: 'object', properties: {}, required: [] },
       },
     },
+    // ── 稽核工具(2026_AI_Audit_RAG_Plan.md P1/P2)──
+    {
+      type: 'function',
+      function: {
+        name: 'audit_worker_qualifications',
+        description: '稽核:指定日期(預設今天)出工人員是否具備當日特殊作業所需證照。依「同承攬商當日出工者」推定作業人員(許可單無人員名單),逐人給出 符合/不符合/無法判定 與證據。例:「今天做高架作業的人都有高空作業車證照嗎?」',
+        parameters: {
+          type: 'object',
+          properties: {
+            date: { type: 'string', description: '查核日期 YYYY-MM-DD,省略為今天' },
+            category: { type: 'string', description: '只查特定作業類別,如「高架作業」「局限空間作業」;省略則查當日全部特殊作業' },
+          },
+          required: [],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'get_worker_profile',
+        description: '查詢本工地在冊工人的個人檔案:所屬公司、在冊/訪客、證照清單(含到期狀態)、本工地與其他工地的違規次數。以姓名或身分證字號查詢。',
+        parameters: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: '工人姓名' },
+            idno: { type: 'string', description: '身分證字號(可選,同名多人時用)' },
+          },
+          required: [],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'get_worker_violations',
+        description: '查詢某位工人的工安缺失(違規)記錄。this_site = 本工地明細(日期、缺失代碼、責任單位,附缺失單連結);all_sites = 加上其他工地的違規次數與日期(依隔離規則不揭露他站內容)。例:「張三在其他工地違規過幾次?」',
+        parameters: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: '工人姓名' },
+            idno: { type: 'string', description: '身分證字號(可選)' },
+            scope: { type: 'string', enum: ['this_site', 'all_sites'], description: '範圍:this_site 本工地、all_sites 含其他工地' },
+          },
+          required: ['scope'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'audit_expiring_certifications',
+        description: '稽核:列出本工地在冊工人中,證照已過期或將於 N 天內到期者(預設 30 天)',
+        parameters: {
+          type: 'object',
+          properties: { days: { type: 'integer', description: '到期門檻天數,預設 30' } },
+          required: [],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'audit_permit_coverage',
+        description: '稽核:指定日期(預設今天)有出工簽到但沒有有效施工許可單的承攬商。例:「今天有沒有人沒許可單就進場?」',
+        parameters: {
+          type: 'object',
+          properties: { date: { type: 'string', description: '查核日期 YYYY-MM-DD,省略為今天' } },
+          required: [],
+        },
+      },
+    },
     {
       type: 'function',
       function: {
@@ -545,6 +616,329 @@ async function getWeather(siteId) {
   };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 稽核工具(2026_AI_Audit_RAG_Plan.md)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// 作業類別 → 應具證照對照(P0 草案,待帆宣確認後改為正式規則;未列出的類別回「無法判定」)
+// rule: 'each' = 該類別作業的每位出工者都應持證;'supervisor' = 該承攬商當日出工者中至少一人持證(作業主管制)
+const CATEGORY_CERT_RULES = {
+  '高架作業': { certTypes: ['a'], rule: 'each' },
+  '局限空間作業': { certTypes: ['o2'], rule: 'supervisor' },
+  '施工架組裝作業': { certTypes: ['sa'], rule: 'supervisor' },
+  '動火作業': { certTypes: ['ow'], rule: 'each' },
+};
+const CERT_NAMES = {
+  a: '高空作業車操作人員', bosh: '乙級職業安全管理員', aos: '甲級職業安全管理師', aoh: '甲級職業衛生管理師',
+  fr: '急救人員', o2: '缺氧(局限)作業主管', os: '有機溶劑作業主管', sa: '施工架組配作業主管',
+  s: '營造業職業安全衛生業務主管', ma: '一般業職業安全衛生業務主管', sc: '特定化學物質作業主管',
+  dw: '粉塵作業主管', ow: '氧乙炔熔接裝置作業人員', r: '屋頂作業主管', ssa: '鋼構組配作業主管',
+  fs: '模板支撐作業主管', pe: '露天開挖作業主管', rs: '擋土支撐作業主管',
+};
+const certLabel = c => CERT_NAMES[c.type] || c.name || c.type;
+
+// belongSites 混有字串與 {siteId} 兩種形式,查詢須兼容
+const siteMemberFilter = siteId => ({ $or: [{ 'belongSites.siteId': siteId }, { belongSites: siteId }] });
+const isVisitorAt = (w, siteId) =>
+  (w.belongSites || []).some(b => b && typeof b === 'object' && b.siteId === siteId && b.isVisitor);
+const WORKER_PROJECTION = { name: 1, idno: 1, contractingCompanyName: 1, certifications: 1, belongSites: 1, safetyIssues: 1 };
+const dayOf = (s, fallback) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : fallback);
+
+// 以姓名或身分證字號在「本工地在冊」中找工人;同名多人且無 idno → 回候選讓 LLM 反問
+async function findWorkerInSite(siteId, { name, idno }) {
+  const col = db.collection('worker');
+  if (idno) {
+    const w = await col.findOne({ ...siteMemberFilter(siteId), idno: idno.trim().toUpperCase() }, { projection: WORKER_PROJECTION });
+    return { worker: w, candidates: [] };
+  }
+  if (!name) return { worker: null, candidates: [] };
+  const list = await col.find({ ...siteMemberFilter(siteId), name: name.trim() }).project(WORKER_PROJECTION).toArray();
+  if (list.length === 1) return { worker: list[0], candidates: [] };
+  return { worker: null, candidates: list };
+}
+
+// 當日出工者:工具箱會議簽到(主承攬商/供應商分列),依 idno 或 姓名+公司 去重
+async function getAttendees(siteId, day) {
+  const meetings = await db
+    .collection('siteForm')
+    .find({ siteId, formType: 'toolboxMeeting', applyDate: day })
+    .project({ healthWarnings: 1 })
+    .toArray();
+  const seen = new Map();
+  for (const m of meetings) {
+    const hw = m.healthWarnings;
+    if (!hw) continue;
+    const groups = [
+      [hw.attendeeMainContractorSignatures || [], true],
+      [hw.attendeeSubcontractor1Signatures || [], false],
+      [hw.attendeeSubcontractor2Signatures || [], false],
+      [hw.attendeeSubcontractor3Signatures || [], false],
+    ];
+    for (const [sigs, isMain] of groups) {
+      for (const s of sigs) {
+        if (!s || !s.name || !s.signature) continue;
+        const company = (s.company || '').trim();
+        const idno = (s.idno || '').trim().toUpperCase();
+        const key = idno || `${s.name.trim()}@${company}`;
+        if (!seen.has(key)) seen.set(key, { name: s.name.trim(), company, idno, isMain });
+      }
+    }
+  }
+  return [...seen.values()];
+}
+
+async function permitsCovering(siteId, day) {
+  return db
+    .collection('siteForm')
+    .find({ siteId, formType: 'sitePermit', workStartTime: { $lte: `${day}T23:59` }, workEndTime: { $gte: `${day}T00:00` } })
+    .project({ contractor: 1, selectedCategories: 1, isGeneralWork: 1, isSpecialWork: 1, workStartTime: 1, workContent: 1 })
+    .toArray();
+}
+
+const validCertOn = (cert, day) => !!cert && (!cert.withdraw || cert.withdraw >= day);
+
+async function auditWorkerQualifications(siteId, date, category) {
+  const day = dayOf(date, dayjs().format('YYYY-MM-DD'));
+  const [attendees, permits] = await Promise.all([getAttendees(siteId, day), permitsCovering(siteId, day)]);
+  if (!attendees.length) {
+    return { result: { 日期: day, 判定: '無法判定', 說明: '當日無工具箱會議簽到記錄,無出工名單可稽核' }, links: [] };
+  }
+
+  // 承攬商 → 當日特殊作業類別
+  const catsByContractor = new Map();
+  for (const p of permits) {
+    const cats = Array.isArray(p.selectedCategories) ? p.selectedCategories.filter(Boolean) : [];
+    if (!cats.length) continue; // 一般作業不需特殊證照
+    const c = (p.contractor || '').trim();
+    if (!catsByContractor.has(c)) catsByContractor.set(c, new Set());
+    cats.forEach(x => catsByContractor.get(c).add(x));
+  }
+  if (category) {
+    for (const [c, set] of catsByContractor) {
+      const kept = [...set].filter(x => x.includes(category) || category.includes(x));
+      if (kept.length) catsByContractor.set(c, new Set(kept)); else catsByContractor.delete(c);
+    }
+  }
+  if (!catsByContractor.size) {
+    return { result: { 日期: day, 判定: '無需稽核', 說明: category ? `當日無「${category}」許可單` : '當日無特殊作業許可單' }, links: [] };
+  }
+
+  // 一次撈出簽到者對應的工人(idno 優先,姓名為輔)
+  const idnos = attendees.map(a => a.idno).filter(Boolean);
+  const names = attendees.map(a => a.name);
+  const workers = await db
+    .collection('worker')
+    .find({ ...siteMemberFilter(siteId), $or: [{ idno: { $in: idnos } }, { name: { $in: names } }] })
+    .project(WORKER_PROJECTION)
+    .toArray();
+  const matchWorker = a => {
+    if (a.idno) return workers.find(w => (w.idno || '').toUpperCase() === a.idno) || null;
+    const byName = workers.filter(w => w.name === a.name);
+    if (byName.length === 1) return byName[0];
+    return byName.find(w => (w.contractingCompanyName || '').trim() === a.company) || null;
+  };
+
+  const 明細 = [];
+  const links = [];
+  const counts = { 符合: 0, 不符合: 0, 無法判定: 0 };
+  for (const [contractor, cats] of catsByContractor) {
+    const crew = attendees.filter(a => !a.isMain && a.company === contractor);
+    for (const cat of cats) {
+      const rule = CATEGORY_CERT_RULES[cat];
+      if (!crew.length) {
+        明細.push({ 承攬商: contractor, 作業類別: cat, 判定: '無法判定', 原因: '該承攬商當日無出工簽到記錄' });
+        counts['無法判定']++;
+        continue;
+      }
+      if (!rule) {
+        明細.push({ 承攬商: contractor, 作業類別: cat, 判定: '無法判定', 原因: '此作業類別尚未定義應具證照(待對照表確認)', 出工人數: crew.length });
+        counts['無法判定']++;
+        continue;
+      }
+      const need = rule.certTypes.map(t => CERT_NAMES[t]).join('/');
+      const rows = crew.map(a => {
+        const w = matchWorker(a);
+        if (!w) return { 姓名: a.name, 公司: contractor, 作業類別: cat, 應具證照: need, 判定: '無法判定', 原因: '人才名冊查無此人(簽到未填身分證字號或姓名不符)' };
+        const certs = (w.certifications || []).filter(c => rule.certTypes.includes(c.type));
+        const valid = certs.filter(c => validCertOn(c, day));
+        const expired = certs.filter(c => !validCertOn(c, day));
+        const row = { 姓名: a.name, 公司: contractor, 作業類別: cat, 應具證照: need, _wid: w._id };
+        if (valid.length) return { ...row, 判定: '符合', 持有證照: valid.map(c => `${certLabel(c)}(至 ${c.withdraw || '無到期日'})`).join('、') };
+        if (expired.length) return { ...row, 判定: '不符合', 原因: `證照已過期(${expired.map(c => c.withdraw).join('、')})` };
+        return { ...row, 判定: '不符合', 原因: '無此類證照' };
+      });
+      if (rule.rule === 'supervisor') {
+        const anyOk = rows.some(r => r.判定 === '符合');
+        for (const r of rows) {
+          if (r.判定 === '無法判定') continue;
+          r.判定 = anyOk ? '符合' : '不符合';
+          r.規則 = '作業主管制:承攬商當日出工者至少一人持證';
+          if (anyOk) delete r.原因;
+        }
+      }
+      for (const r of rows) {
+        counts[r.判定]++;
+        if (r._wid && r.判定 !== '符合') links.push({ label: `${r.姓名} 人員資料`, url: `/worker/${r._wid}` });
+        delete r._wid;
+        明細.push(r);
+      }
+    }
+  }
+  for (const p of permits) {
+    if (Array.isArray(p.selectedCategories) && p.selectedCategories.length) {
+      links.push({ label: `${(p.workStartTime || '').slice(0, 10)} ${p.contractor || ''} 施工許可單`.trim(), url: `/site/${siteId}/forms/permit/${p._id}` });
+    }
+  }
+  const 判定 = counts['不符合'] ? '不符合' : counts['無法判定'] && !counts['符合'] ? '無法判定' : '符合';
+  return {
+    result: {
+      日期: day,
+      整體判定: 判定,
+      判定總結: counts,
+      推定依據: '許可單無作業人員名單,以「同承攬商當日出工簽到者」推定為該作業人員;證照對照規則為草案',
+      明細,
+    },
+    links: dedupeLinks(links),
+  };
+}
+
+function dedupeLinks(links) {
+  const seen = new Set();
+  return links.filter(l => (seen.has(l.url) ? false : (seen.add(l.url), true)));
+}
+
+function summarizeViolations(w, siteId) {
+  const issues = w.safetyIssues || [];
+  const here = issues.filter(i => i.siteId === siteId);
+  const other = issues.filter(i => i.siteId && i.siteId !== siteId);
+  return {
+    here,
+    other,
+    本工地違規次數: here.length,
+    其他工地違規次數: other.length,
+    其他工地數: new Set(other.map(i => i.siteId)).size,
+    其他工地違規日期: other.map(i => i.issueDate).filter(Boolean).sort(),
+  };
+}
+
+function candidatesResult(candidates, name) {
+  if (!candidates.length) return { error: `本工地在冊人員中查無「${name || ''}」,請確認姓名或提供身分證字號` };
+  return {
+    無法判定: `本工地有 ${candidates.length} 位同名「${name}」,請提供身分證字號或指定公司`,
+    候選: candidates.map(w => ({ 姓名: w.name, 公司: w.contractingCompanyName || '' })),
+  };
+}
+
+async function getWorkerProfile(siteId, args) {
+  const { worker: w, candidates } = await findWorkerInSite(siteId, args);
+  if (!w) return { result: candidatesResult(candidates, args.name), links: [] };
+  const today = dayjs().format('YYYY-MM-DD');
+  const v = summarizeViolations(w, siteId);
+  return {
+    result: {
+      姓名: w.name,
+      公司: w.contractingCompanyName || '',
+      在冊狀態: isVisitorAt(w, siteId) ? '訪客' : '在冊',
+      證照: (w.certifications || []).map(c => ({
+        證照: certLabel(c),
+        到期日: c.withdraw || '未填',
+        狀態: validCertOn(c, today) ? '有效' : '已過期',
+      })),
+      本工地違規次數: v.本工地違規次數,
+      其他工地違規次數: v.其他工地違規次數,
+      其他工地數: v.其他工地數,
+      說明: '其他工地僅提供次數(隔離規則);明細請用 get_worker_violations',
+    },
+    links: [{ label: `${w.name} 人員資料`, url: `/worker/${w._id}` }],
+  };
+}
+
+async function getWorkerViolations(siteId, args) {
+  const { worker: w, candidates } = await findWorkerInSite(siteId, args);
+  if (!w) return { result: candidatesResult(candidates, args.name), links: [] };
+  const v = summarizeViolations(w, siteId);
+  const formIds = v.here.map(i => i.formId).filter(Boolean).map(id => { try { return new ObjectId(id); } catch { return null; } }).filter(Boolean);
+  const forms = formIds.length
+    ? await db.collection('siteForm').find({ _id: { $in: formIds }, siteId }).project({ issueDate: 1, deductionCode: 1, responsibleUnit: 1, supplierName: 1, issueDescription: 1, recordPoints: 1, status: 1 }).toArray()
+    : [];
+  const 本工地明細 = forms.map(f => ({
+    日期: f.issueDate,
+    缺失代碼: f.deductionCode || '',
+    責任單位: f.responsibleUnit === 'supplier' ? (f.supplierName || '供應商') : (f.responsibleUnit || ''),
+    記點: f.recordPoints || '',
+    說明: (f.issueDescription || '').slice(0, 120),
+    狀態: f.status || '',
+  }));
+  const result = { 姓名: w.name, 公司: w.contractingCompanyName || '', 本工地違規次數: v.本工地違規次數, 本工地明細 };
+  if (args.scope === 'all_sites') {
+    result.其他工地違規次數 = v.其他工地違規次數;
+    result.其他工地數 = v.其他工地數;
+    result.其他工地違規日期 = v.其他工地違規日期;
+    result.說明 = '依工地隔離規則,其他工地僅提供次數與日期,不揭露缺失內容';
+  }
+  const links = forms.map(f => ({ label: `${f.issueDate} 工安缺失紀錄單`, url: `/site/${siteId}/forms/safety-issue-record/${f._id}` }));
+  links.push({ label: `${w.name} 人員資料`, url: `/worker/${w._id}` });
+  return { result, links };
+}
+
+async function auditExpiringCertifications(siteId, days) {
+  const n = Number.isFinite(Number(days)) && Number(days) > 0 ? Number(days) : 30;
+  const today = dayjs();
+  const limit = today.add(n, 'day').format('YYYY-MM-DD');
+  const workers = await db.collection('worker').find(siteMemberFilter(siteId)).project(WORKER_PROJECTION).toArray();
+  const rows = [];
+  const links = [];
+  for (const w of workers) {
+    if (isVisitorAt(w, siteId)) continue;
+    for (const c of w.certifications || []) {
+      if (!c.withdraw || c.withdraw > limit) continue;
+      const d = dayjs(c.withdraw).diff(today, 'day');
+      rows.push({ 姓名: w.name, 公司: w.contractingCompanyName || '', 證照: certLabel(c), 到期日: c.withdraw, 狀態: d < 0 ? `已過期 ${-d} 天` : `${d} 天後到期` });
+      if (links.length < 20) links.push({ label: `${w.name} 人員資料`, url: `/worker/${w._id}` });
+    }
+  }
+  rows.sort((a, b) => a.到期日.localeCompare(b.到期日));
+  return { result: { 門檻天數: n, 在冊工人數: workers.length, 到期或即將到期件數: rows.length, 明細: rows }, links: dedupeLinks(links) };
+}
+
+async function auditPermitCoverage(siteId, date) {
+  const day = dayOf(date, dayjs().format('YYYY-MM-DD'));
+  const [attendees, permits] = await Promise.all([getAttendees(siteId, day), permitsCovering(siteId, day)]);
+  const permitted = new Set(permits.map(p => (p.contractor || '').trim()).filter(Boolean));
+  const byCompany = new Map();
+  let mainCount = 0;
+  for (const a of attendees) {
+    if (a.isMain) { mainCount++; continue; }
+    byCompany.set(a.company, (byCompany.get(a.company) || 0) + 1);
+  }
+  const 缺許可單 = [...byCompany].filter(([c]) => !permitted.has(c)).map(([c, n]) => ({ 承攬商: c || '(未填公司)', 出工人數: n }));
+  const 有許可單 = [...byCompany].filter(([c]) => permitted.has(c)).map(([c, n]) => ({ 承攬商: c, 出工人數: n }));
+  const links = permits.map(p => ({ label: `${day} ${p.contractor || ''} 施工許可單`.trim(), url: `/site/${siteId}/forms/permit/${p._id}` }));
+  return {
+    result: {
+      日期: day,
+      整體判定: !attendees.length ? '無法判定(當日無簽到記錄)' : 缺許可單.length ? '不符合' : '符合',
+      有出工且有許可單: 有許可單,
+      有出工但無許可單: 缺許可單,
+      主承攬商出工人數: mainCount,
+      說明: '以工具箱會議簽到公司名稱與許可單承攬商名稱比對(名稱需一致)',
+    },
+    links: dedupeLinks(links),
+  };
+}
+
+// 稽核留痕:每次工具呼叫寫 ai_tool_audit(對應規格書「權限判定紀錄留存」),失敗不影響回答
+async function logToolAudit(siteId, ctx, name, args, crossSite) {
+  try {
+    await db.collection('ai_tool_audit').insertOne({
+      siteId, sessionId: ctx?.sessionId || null, userId: ctx?.userId || null,
+      tool: name, args, crossSite: !!crossSite, at: new Date(),
+    });
+  } catch (e) {
+    logger.warn(`ai_tool_audit 寫入失敗: ${e.message}`);
+  }
+}
+
 /**
  * 執行一個 tool call。
  * @returns {{ content: string, links?: Array<{label: string, url: string}> }}
@@ -552,7 +946,7 @@ async function getWeather(siteId) {
  * 任何錯誤(未知工具、壞 JSON args、DB 失敗)都回 error 字串讓 LLM 自行修正,
  * 絕不 throw —— tool 失敗不能讓整個 chat 500。
  */
-async function executeToolCall(siteId, toolCall) {
+async function executeToolCall(siteId, toolCall, ctx = {}) {
   const name = toolCall?.function?.name;
   let args = {};
   try {
@@ -599,9 +993,36 @@ async function executeToolCall(siteId, toolCall) {
       case 'get_weather':
         result = await getWeather(siteId);
         break;
+      case 'audit_worker_qualifications': {
+        const r = await auditWorkerQualifications(siteId, args.date, args.category);
+        result = r.result; links = r.links;
+        break;
+      }
+      case 'get_worker_profile': {
+        const r = await getWorkerProfile(siteId, args);
+        result = r.result; links = r.links;
+        break;
+      }
+      case 'get_worker_violations': {
+        const r = await getWorkerViolations(siteId, { ...args, scope: args.scope === 'all_sites' ? 'all_sites' : 'this_site' });
+        result = r.result; links = r.links;
+        break;
+      }
+      case 'audit_expiring_certifications': {
+        const r = await auditExpiringCertifications(siteId, args.days);
+        result = r.result; links = r.links;
+        break;
+      }
+      case 'audit_permit_coverage': {
+        const r = await auditPermitCoverage(siteId, args.date);
+        result = r.result; links = r.links;
+        break;
+      }
       default:
         return { content: JSON.stringify({ error: `未知的工具:${name}` }) };
     }
+    const crossSite = name === 'get_worker_violations' && args.scope === 'all_sites';
+    logToolAudit(siteId, ctx, name, args, crossSite || name === 'get_worker_profile');
     return { content: JSON.stringify(result), links };
   } catch (error) {
     logger.error(`AI tool ${name} 執行失敗:`, error.message);
