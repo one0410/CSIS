@@ -44,6 +44,12 @@ async function streamChat(messages, onDelta, { tools, signal } = {}) {
     const errText = await response.text().catch(() => '');
     const err = new Error(`LLM API ${response.status}: ${errText.slice(0, 300)}`);
     err.status = response.status;
+    // 429 時 Groq 會在 header retry-after 或訊息「try again in 1.97s / 600ms」告知等待時間,交給呼叫端退避
+    const ra = Number(response.headers.get('retry-after'));
+    const m = errText.match(/try again in ([\d.]+)\s*(ms|s)\b/i);
+    err.retryAfterMs = Number.isFinite(ra) && ra > 0
+      ? ra * 1000
+      : m ? Math.ceil(parseFloat(m[1]) * (m[2].toLowerCase() === 'ms' ? 1 : 1000)) : 0;
     throw err;
   }
 

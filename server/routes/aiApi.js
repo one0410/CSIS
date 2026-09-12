@@ -505,16 +505,18 @@ app.post('/api/ai/sites/:siteId/chat', express.json({ limit: '1mb' }), async (re
 
       // Groq 偶發空回應 / 429 / 5xx:尚未送出任何 clause 時退避重試(不會造成前端重複內容)
       let result = { text: '', toolCalls: [] };
-      for (let attempt = 1; attempt <= 3; attempt++) {
+      for (let attempt = 1; attempt <= 4; attempt++) {
         try {
           result = await streamChat(messages, onDelta, { tools, signal: pipelineAbort.signal });
         } catch (llmErr) {
           const status = llmErr?.status;
           const transient = status === 429 || (status >= 500 && status < 600);
-          if (transient && attempt < 3 && clausesSent === 0 && !pipelineAbort.signal.aborted) {
-            // 4s/8s:Groq 429 多為每分鐘額度限流,更短的間隔跨不過限流窗
-            logger.warn(`AI chat LLM ${status}(attempt ${attempt}),${attempt * 4000}ms 後重試`);
-            await new Promise(r => setTimeout(r, attempt * 4000));
+          if (transient && attempt < 4 && clausesSent === 0 && !pipelineAbort.signal.aborted) {
+            // Groq 429 是每分鐘 token 額度(免費層 8000 TPM):優先依它回報的 retry-after 等待,
+            // 否則 5s/10s/15s 遞增,上限 30s;稽核題 tool 結果大、第二次呼叫最容易撞上
+            const wait = Math.min(30000, Math.max((llmErr.retryAfterMs || 0) + 1000, attempt * 5000));
+            logger.warn(`AI chat LLM ${status}(attempt ${attempt}),${wait}ms 後重試`);
+            await new Promise(r => setTimeout(r, wait));
             continue;
           }
           throw llmErr;
