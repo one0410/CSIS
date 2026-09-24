@@ -166,6 +166,7 @@ Angular(site/:id/ai)→ Bun /api/ai/*(aiApi/aiLlm/aiTools.js)
 - pm2 服務 `csis_rag_8010`(venv python 直跑 rag_server.py,`HF_HOME=C:\inetpub\csis\rag-worker\hf-cache`、`PYTHONUTF8=1`);csisserver 的 `.env` 在 `C:\inetpub\csis\.env`
 - nginx 的 csis 區塊有獨立 `location /api/ai/`(proxy_read_timeout 300s、proxy_buffering off、client_max_body_size 60m)——timeout 階梯 nginx 300s > axios/fetch 240s
 - 新增/移除 pm2 服務後必 `pm2 save`(否則重開機 resurrect 舊清單)
+- **csisserver.exe 自 2026-09-24 起以 Bun 1.4.2 編譯**(exe 內嵌的是「執行 build 的那個 bun」的 runtime)。本機全域 bun 仍是 1.3.14,`yarn build` 會編出 1.3.14 版——部署用 exe 要改用 `~/.bun/bin/bun142.exe build index.ts --compile --target=bun-windows-x64 --outfile csisserver`,並以 yarn 管相依(勿跑 `bun142 install`,會另生 bun.lock 並改動套件)。回滾檔:伺服器 `C:\inetpub\csis\csisserver_1.3.14.exe.bak-20260924`
 
 ---
 
