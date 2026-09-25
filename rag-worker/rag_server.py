@@ -44,7 +44,7 @@ try:
 except Exception:
     _BM25_AVAILABLE = False
 
-from embeddings import embed_texts, embed_query, get_embedding_model, get_current_model_name
+from embeddings import embed_texts, embed_query, get_embedding_model, get_current_model_name, models_equivalent, is_cloudflare
 from log import get_logger
 
 logger = get_logger("RAG")
@@ -126,7 +126,15 @@ def _check_collections_model(model_name: str) -> None:
                 continue
             existing = chroma_client.get_collection(name)
             old_model = (existing.metadata or {}).get("embedding_model", "unknown")
-            if old_model != model_name:
+            if old_model != model_name and models_equivalent(old_model, model_name):
+                # 向量相同的模型互換(本機 BAAI/bge-m3 ⇄ Cloudflare @cf/baai/bge-m3):只改名稱,不砍庫。
+                # chromadb 1.5.x 的 modify 帶 hnsw:* 會拋「Changing the distance function ... not
+                # supported」,要拿掉;距離函數仍保留在 collection configuration(cosine)裡。
+                meta = {k: v for k, v in (existing.metadata or {}).items() if not k.startswith("hnsw:")}
+                meta["embedding_model"] = model_name
+                existing.modify(metadata=meta)
+                logger.info(f"[RAG] {name}: embedding model renamed '{old_model}' -> '{model_name}' (equivalent, no re-index)")
+            elif old_model != model_name:
                 logger.warning(
                     f"[RAG] Embedding model changed for {name}: '{old_model}' -> '{model_name}'. "
                     f"Deleting collection ({existing.count()} chunks) — re-upload required!"
@@ -179,6 +187,7 @@ async def health():
         "status": "ok",
         "service": "csis-rag",
         "embedding_model": get_current_model_name(),
+        "embedding_backend": "cloudflare" if is_cloudflare(get_current_model_name()) else "local",
         "sites": n_sites,
         "chunks": n_chunks,
         "retrieval": "hybrid (BM25 + dense, RRF)" if _BM25_AVAILABLE else "dense only",

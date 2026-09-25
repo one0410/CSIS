@@ -158,6 +158,7 @@ Angular(site/:id/ai)→ Bun /api/ai/*(aiApi/aiLlm/aiTools.js)
 - **siteId 只從路徑參數取**(24-hex 驗證),後端強制注入查詢條件,不信任前端 filter;BM25 索引必須 per-site(全域索引會跨工地洩漏)
 - **AI 設定走 env 不走 serverconfig.json**(`GROQ_API_KEY` / `LLM_MODEL` / `LLM_BASE_URL` / `RAG_WORKER_URL`,放 `server/.env`,已 gitignore;**repo 是 public,key 絕不可入版控**);compiled exe 會自動載入 cwd 的 .env
 - worker 的 embedding 模型選擇持久化在 `rag-worker/data/embedding_model.txt`,改 `EMBEDDING_MODEL` env 會觸發逐 collection 砍庫重建(文件需重新上傳)
+- **embedding 兩種後端依模型 ID 切換**:`@cf/baai/bge-m3` 走 Cloudflare Workers AI(env `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN`,不載 torch,外網測試站用);其他 ID(預設 `BAAI/bge-m3`)本機 sentence-transformers(客戶端/離線用)。兩者向量 cos = 1.00000(2026-09-25 實測),列在 `EQUIVALENT_MODELS`,互換時啟動檢查只改 collection metadata 不砍庫。切換方式是改 `embedding_model.txt`,**不要設 `EMBEDDING_MODEL` env**(env 優先於持久化檔)。自檢:`venv\Scripts\python test_embeddings_cf.py`(mock,不打外網)
 - chat SSE 的 abort 監聽 `res` 的 close(監聽 `req` 會在 body 解析完就誤觸發)
 - worker 本機啟動:`cd rag-worker && venv\Scripts\python rag_server.py`(port 8010,首次會下載 ~4.4GB 模型)
 
