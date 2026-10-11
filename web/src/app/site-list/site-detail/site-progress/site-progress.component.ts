@@ -745,8 +745,8 @@ export class SiteProgressComponent
       <head>
         <title>甘特圖</title>
         <meta charset="utf-8">
-        <link rel="stylesheet" href="//cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.css">
-        <script src="//cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js"></script>
+        <link rel="stylesheet" href="/vendor/dhtmlx-gantt/dhtmlxgantt.css">
+        <script src="/vendor/dhtmlx-gantt/dhtmlxgantt.js"></script>
         <style>
           html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
           #gantt_here { width: 100%; height: 100%; }
@@ -955,8 +955,9 @@ export class SiteProgressComponent
         SiteProgressComponent.ganttScriptLoading = false;
       };
 
-      // 使用固定版本的 URL，允許瀏覽器緩存
-      script.src = '//cdn.dhtmlx.com/gantt/edge/dhtmlxgantt.js';
+      // 由 npm 的 dhtmlx-gantt 複製到建置輸出(angular.json assets),版本隨 package.json 固定。
+      // 不可用 CDN 的 gantt/edge:它會自動跳到最新主版號(2026-10 跳到 10.x 後 addMarker 失效)
+      script.src = '/vendor/dhtmlx-gantt/dhtmlxgantt.js';
       document.head.appendChild(script);
 
     } catch (error) {
