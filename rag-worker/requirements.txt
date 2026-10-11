@@ -24,3 +24,7 @@ rank_bm25
 jieba
 
 numpy
+
+# 間接相依的安全修補下限(2026-10-11 pip-audit;multidict 7.x 會超出 aiohttp 上限)
+urllib3>=2.8.0
+multidict>=6.9.1,<7
