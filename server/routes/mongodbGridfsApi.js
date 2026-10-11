@@ -13,6 +13,8 @@ const storage = multer.memoryStorage();
 // 配置 multer - 簡化配置，確保能正確解析表單
 const upload = multer({
     storage: storage,
+    // multer 2.x(busboy 1.x)預設以 latin1 解檔名,中文會變亂碼
+    defParamCharset: 'utf8',
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB
     }

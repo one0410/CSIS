@@ -12,11 +12,11 @@
         "pkgbuildLinux": "pkg -t node18-linux-x64 index.ts -o csiserver"
     },
     "devDependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "^1.4.2",
         "@types/express": "^5.0.0",
         "@types/express-ws": "^3.0.5",
         "@types/jsonwebtoken": "^9.0.9",
-        "@types/multer": "^1.4.12",
+        "@types/multer": "^2",
         "@types/node": "^22.13.14",
         "@types/uuid": "^10.0.0",
         "@types/ws": "^8.5.13"
@@ -36,13 +36,12 @@
         "jsonwebtoken": "^9.0.2",
         "jszip": "^3.10.1",
         "mongoose": "^8.8.4",
-        "multer": "1.4.3",
+        "multer": "^2.0.2",
         "pdf-lib": "^1.17.1",
         "socket.io": "^4.8.1",
         "uuid": "^11.1.0",
         "winston": "^3.17.0",
-        "winston-daily-rotate-file": "^5.0.0",
-        "xlsx": "^0.18.5"
+        "winston-daily-rotate-file": "^5.0.0"
     },
     "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

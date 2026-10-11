@@ -21,6 +21,8 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB(規格書 3.1)
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_SIZE },
+  // multer 2.x(busboy 1.x)預設以 latin1 解檔名,中文會變亂碼
+  defParamCharset: 'utf8',
 });
 
 const SITE_ID_RE = /^[0-9a-f]{24}$/;
